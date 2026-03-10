@@ -152,43 +152,8 @@
   .slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--navy); border: 2px solid var(--gold); cursor: pointer; }
   .inp-range-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--gray-mid); font-weight: 300; margin-top: 2px; }
   .inp-formula { font-size: 10px; color: var(--gray-mid); font-style: italic; font-weight: 300; margin-top: 2px; }
-  /* ── AI CHAT ── */
-  .chat-container { display:flex; flex-direction:column; height:520px; background:var(--white); border:1px solid var(--rule); }
-  .chat-history { flex:1; overflow-y:auto; padding:24px; }
-  .chat-input-row { display:flex; gap:0; border-top:1px solid var(--rule); }
-  .chat-input-row input { flex:1; padding:14px 18px; border:none; font-family:'Archivo',sans-serif; font-size:13px; outline:none; background:var(--cream); color:var(--ink); }
-  .chat-input-row button { padding:14px 24px; background:var(--navy); color:var(--white); border:none; font-family:'Archivo',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; cursor:pointer; transition:background .2s; }
-  .chat-input-row button:hover { background:var(--gold); }
-  .chat-header { padding:16px 24px; background:var(--navy); display:flex; align-items:center; gap:12px; }
-  .chat-header .ch-title { font-size:11px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--white); }
-  .chat-header .ch-sub { font-size:10px; color:rgba(255,255,255,0.4); margin-left:auto; }
-
-  /* ── NOTES ── */
-  .notes-area { width:100%; min-height:120px; padding:16px; border:1px solid var(--rule); font-family:'Archivo',sans-serif; font-size:13px; line-height:1.7; color:var(--ink); background:var(--white); resize:vertical; outline:none; }
-  .notes-area:focus { border-color:var(--gold); }
-
-  /* ── MEMO / PRINT ── */
-  .memo-section { margin-bottom:28px; }
-  .memo-section h3 { font-size:9px; font-weight:700; letter-spacing:0.25em; text-transform:uppercase; color:var(--gold); border-bottom:1px solid var(--rule); padding-bottom:8px; margin-bottom:14px; }
-  .memo-row { display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--rule); font-size:13px; }
-  .memo-row .mk { color:var(--gray-mid); font-weight:300; }
-  .memo-row .mv { font-weight:600; color:var(--ink); }
-  @media print {
-    nav, header .hright, #btn-present, .chat-input-row, .inp-group { display:none !important; }
-    .tab-content { display:block !important; }
-    body { background:white; }
-    .wave-deco { display:none; }
-  }
-
-  /* ── PRESENT MODE ── */
-  body.present-mode nav { display:none; }
-  body.present-mode header { min-height:80px; }
-  #tab-present .present-card { background:var(--white); border:1px solid var(--rule); padding:36px 40px; text-align:center; }
-  #tab-present .present-card .big { font-size:56px; font-weight:700; letter-spacing:-0.03em; line-height:1; }
-  #tab-present .present-card .lbl { font-size:10px; font-weight:500; letter-spacing:0.2em; text-transform:uppercase; color:var(--gray-mid); margin-top:10px; }
-
-  /* ── LIVE PRICE NOTE ── */
-  #live-price-note { font-size:10px; color:var(--gray-mid); margin-top:6px; font-style:italic; }
+  @media print { nav,#btn-present,.chat-input-row { display:none!important } .tab-content { display:block!important } }
+  body.present-mode nav { display:none }
 </style>
 </head>
 <body>
@@ -211,17 +176,14 @@
     </div>
   </div>
   <div class="hright">
-    <div class="hkpi">
-      <div class="val" id="live-price">$4,235.00</div>
-      <div class="sub">Precio <span id="price-status" style="color:rgba(255,255,255,0.3)">modelo</span></div>
-    </div>
-    <div class="hkpi"><div class="val" style="color:var(--green)" id="hdr-irr">57.0%</div><div class="sub">Implied IRR</div></div>
+    <div class="hkpi"><div class="val" id="hdr-price">$4,235.00</div><div class="sub">Precio <span id="price-tag" style="color:rgba(255,255,255,0.3)">modelo</span></div></div>
+    <div class="hkpi"><div class="val" style="color:var(--green)">57.0%</div><div class="sub">Implied IRR</div></div>
     <div class="hkpi"><div class="val">610%</div><div class="sub">ROIC 3-4yr</div></div>
-    <div class="hkpi"><div class="val" style="color:var(--green)" id="hdr-mos">+45.0%</div><div class="sub">Margen seguridad</div></div>
+    <div class="hkpi"><div class="val" style="color:var(--green)">+45.0%</div><div class="sub">Margen seguridad</div></div>
     <div class="hkpi" style="border-left:1px solid rgba(255,255,255,0.1);padding-left:20px">
-      <div style="font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Última revisión</div>
-      <div style="font-size:11px;color:var(--gold-lt)" id="last-review-display">06-Mar-2026</div>
-      <div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:2px;cursor:pointer" onclick="document.getElementById('review-modal').style.display='flex'">✎ actualizar</div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px">Última revisión</div>
+      <div style="font-size:11px;color:var(--gold-lt)" id="hdr-review">06-Mar-2026</div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.3);cursor:pointer;margin-top:2px" onclick="document.getElementById('modal-review').style.display='flex'">✎ actualizar</div>
     </div>
   </div>
 </header>
@@ -234,10 +196,10 @@
   <button onclick="sw('irr',this)">Implied IRR</button>
   <button onclick="sw('health',this)">Health Check</button>
   <button onclick="sw('audit',this)">Decisiones CIO</button>
-  <button onclick="sw('breaker',this)" style="color:var(--red);font-weight:600">⚡ Thesis Breaker</button>
-  <button onclick="sw('munger',this)" style="color:#6b4fa0;font-weight:600">🧠 Munger</button>
+  <button onclick="sw('breaker',this)" style="color:#c0392b;font-weight:600">Thesis Breaker</button>
+  <button onclick="sw('munger',this)" style="color:#6b4fa0;font-weight:600">Munger</button>
   <button onclick="sw('memo',this)">Investment Memo</button>
-  <button onclick="togglePresentMode()" id="btn-present">⊞ Present</button>
+  <button onclick="togglePresent()" id="btn-present" style="color:#8a9098">Present</button>
 </nav>
 
 <main>
@@ -589,70 +551,52 @@
 
 <!-- THESIS BREAKER -->
 <div id="tab-breaker" class="tab-content">
-  <div class="slbl" style="color:var(--red)">⚡ Thesis Breaker — Stress Test Cuantitativo</div>
-  <div style="font-size:12px;color:var(--gray-mid);margin-bottom:20px;font-style:italic">Pregúntale al Thesis Breaker sobre los supuestos del modelo. Está entrenado con todos los datos de BKNG FY2025. Ejemplo: "¿Qué pasa con el IRR si el costo de marketing sube 20%?" o "¿A qué precio la tesis se rompe?"</div>
-  <div id="live-price-note"></div>
-  <div style="margin-bottom:20px"></div>
-
-  <!-- CIO NOTES -->
+  <div class="slbl" style="color:#c0392b">Thesis Breaker — Stress Test Cuantitativo</div>
+  <p style="font-size:12px;color:var(--gray-mid);margin-bottom:20px;font-style:italic">Pregunta sobre los supuestos del modelo. Ej: "¿A qué precio la tesis se rompe?" o "¿Qué pasa con el IRR si marketing sube 20%?"</p>
   <div style="background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:20px 24px;margin-bottom:20px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div class="clbl" style="margin-bottom:0">Notas del CIO</div>
       <span id="notes-saved" style="font-size:10px;color:var(--green)"></span>
     </div>
-    <textarea id="cio-notes-area" class="notes-area" placeholder="Escribe tus notas sobre la tesis, preguntas pendientes, observaciones del modelo..."></textarea>
+    <textarea id="cio-notes" rows="4" style="width:100%;padding:12px;border:1px solid var(--rule);font-family:Archivo,sans-serif;font-size:13px;line-height:1.6;resize:vertical;outline:none" placeholder="Notas sobre la tesis..."></textarea>
   </div>
-
-  <!-- BREAKER CHAT -->
-  <div class="chat-container">
-    <div class="chat-header">
-      <div style="width:8px;height:8px;border-radius:50%;background:var(--red)"></div>
-      <div class="ch-title">Thesis Breaker — DCE Investment Assistant</div>
-      <div class="ch-sub">Contexto: BKNG FY2025 · Columbia Framework</div>
+  <div style="background:var(--white);border:1px solid var(--rule)">
+    <div style="background:var(--navy);padding:14px 20px;display:flex;align-items:center;gap:10px">
+      <div style="width:8px;height:8px;border-radius:50%;background:#c0392b"></div>
+      <span style="font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--white)">Thesis Breaker — DCE Investment Assistant</span>
+      <span style="margin-left:auto;font-size:10px;color:rgba(255,255,255,0.4)">Contexto: BKNG FY2025</span>
     </div>
-    <div class="chat-history" id="breaker-history">
-      <div style="margin-bottom:16px"><div style="font-size:9px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">DCE Assistant</div><div style="border-left:2px solid var(--red);padding:12px 16px;font-size:13px;line-height:1.7">Thesis Breaker activo. Tengo cargado el modelo completo de BKNG FY2025. Puedes preguntarme sobre sensibilidad de supuestos, escenarios de quiebre de tesis, o análisis cuantitativo de riesgos. ¿Por dónde empezamos?</div></div>
+    <div id="breaker-hist" style="height:420px;overflow-y:auto;padding:20px">
+      <div style="border-left:2px solid #c0392b;padding:12px 16px;font-size:13px;line-height:1.7;margin-bottom:16px">Thesis Breaker activo. Tengo cargado el modelo completo de BKNG FY2025. ¿Por dónde empezamos?</div>
     </div>
-    <div class="chat-input-row">
-      <input type="text" id="breaker-input" placeholder="Ej: ¿A qué ROIC el IRR cae por debajo del hurdle?" onkeydown="if(event.key==='Enter') sendAIMessage('breaker-input','breaker-history','breaker-history', BKNG_CONTEXT + ' Eres el THESIS BREAKER: enfócate en encontrar los supuestos más frágiles del modelo y cuantificar escenarios de quiebre. Sé directo y numérico.')">
-      <button onclick="sendAIMessage('breaker-input','breaker-history','breaker-history', BKNG_CONTEXT + ' Eres el THESIS BREAKER: enfócate en encontrar los supuestos más frágiles del modelo y cuantificar escenarios de quiebre. Sé directo y numérico.')">Enviar</button>
+    <div style="display:flex;border-top:1px solid var(--rule)">
+      <input type="text" id="breaker-in" placeholder="Ej: ¿A qué ROIC el IRR cae por debajo del hurdle?" style="flex:1;padding:14px 18px;border:none;font-family:Archivo,sans-serif;font-size:13px;background:var(--cream);outline:none" onkeydown="if(event.key==='Enter')sendBreaker()">
+      <button onclick="sendBreaker()" style="padding:14px 24px;background:var(--navy);color:var(--white);border:none;font-family:Archivo,sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer">Enviar</button>
     </div>
   </div>
 </div>
 
 <!-- MUNGER -->
 <div id="tab-munger" class="tab-content">
-  <div class="slbl" style="color:#6b4fa0">🧠 DCE Munger Digital — Audit de Razonamiento</div>
-  <div style="font-size:12px;color:var(--gray-mid);margin-bottom:20px;font-style:italic">Auditoría meta-cognitiva de la tesis. Busca sesgos, inconsistencias lógicas, y errores de marco. Ejemplo: "¿Hay sesgo de confirmación en la normalización del NOPAT?" o "¿El moat está bien fundamentado?"</div>
-
-  <!-- MUNGER PROMPTS RÁPIDOS -->
+  <div class="slbl" style="color:#6b4fa0">DCE Munger Digital — Audit de Razonamiento</div>
+  <p style="font-size:12px;color:var(--gray-mid);margin-bottom:20px;font-style:italic">Auditoría meta-cognitiva. Busca sesgos, inconsistencias lógicas y errores de marco.</p>
   <div class="g3" style="margin-bottom:20px">
-    <div class="card" style="cursor:pointer;border-color:rgba(107,79,160,0.2)" onclick="quickMunger('Audita el razonamiento detrás del ROIC de BKNG. ¿Es real el moat o hay distorsión contable que lo infla artificialmente?')">
-      <div class="clbl">¿Moat real o contable?</div>
-      <div style="font-size:12px;color:var(--gray-mid);line-height:1.5">Audit del ROIC 610% vs. marginal real</div>
-    </div>
-    <div class="card" style="cursor:pointer;border-color:rgba(107,79,160,0.2)" onclick="quickMunger('¿Hay sesgo de confirmación en la decisión de normalizar el NOPAT excluyendo el impairment y transformation costs de FY2025?')">
-      <div class="clbl">Normalización NOPAT</div>
-      <div style="font-size:12px;color:var(--gray-mid);line-height:1.5">¿Sesgo en excluir $662M de FY2025?</div>
-    </div>
-    <div class="card" style="cursor:pointer;border-color:rgba(107,79,160,0.2)" onclick="quickMunger('El mercado paga 1.81× EPV por BKNG. ¿Está el CIO cometiendo un error de marco al usar Implied IRR en lugar de margen de seguridad tradicional para justificar la valoración?')">
-      <div class="clbl">Marco IRR vs. MoS</div>
-      <div style="font-size:12px;color:var(--gray-mid);line-height:1.5">¿Correcto usar IRR cuando precio &gt; EPV?</div>
-    </div>
+    <div class="card" style="cursor:pointer" onclick="qm(1)"><div class="clbl">Moat real o contable?</div><div style="font-size:12px;color:var(--gray-mid)">Audit del ROIC 610% vs marginal real</div></div>
+    <div class="card" style="cursor:pointer" onclick="qm(2)"><div class="clbl">Normalización NOPAT</div><div style="font-size:12px;color:var(--gray-mid)">Sesgo en excluir $662M de FY2025?</div></div>
+    <div class="card" style="cursor:pointer" onclick="qm(3)"><div class="clbl">Marco IRR vs MoS</div><div style="font-size:12px;color:var(--gray-mid)">Correcto usar IRR cuando precio &gt; EPV?</div></div>
   </div>
-
-  <div class="chat-container">
-    <div class="chat-header">
+  <div style="background:var(--white);border:1px solid var(--rule)">
+    <div style="background:var(--navy);padding:14px 20px;display:flex;align-items:center;gap:10px">
       <div style="width:8px;height:8px;border-radius:50%;background:#6b4fa0"></div>
-      <div class="ch-title">DCE Munger Digital — Meta-cognitive Audit</div>
-      <div class="ch-sub">Inspirado en Charlie Munger · Columbia Framework</div>
+      <span style="font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--white)">DCE Munger Digital</span>
+      <span style="margin-left:auto;font-size:10px;color:rgba(255,255,255,0.4)">Inspirado en Charlie Munger</span>
     </div>
-    <div class="chat-history" id="munger-history">
-      <div style="margin-bottom:16px"><div style="font-size:9px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:#6b4fa0;margin-bottom:6px">DCE Munger Digital</div><div style="border-left:2px solid #6b4fa0;padding:12px 16px;font-size:13px;line-height:1.7">Munger activo. Mi rol es auditar la calidad del razonamiento detrás de la tesis BKNG — no los números, sino la lógica. Busco sesgos cognitivos, errores de marco, y preguntas que el CIO debería hacerse antes de decidir. ¿Qué parte de la tesis quieres que revise primero?</div></div>
+    <div id="munger-hist" style="height:420px;overflow-y:auto;padding:20px">
+      <div style="border-left:2px solid #6b4fa0;padding:12px 16px;font-size:13px;line-height:1.7;margin-bottom:16px">Munger activo. Mi rol es auditar la calidad del razonamiento — no los números, sino la lógica. ¿Qué parte de la tesis quieres revisar?</div>
     </div>
-    <div class="chat-input-row">
-      <input type="text" id="munger-input" placeholder="Ej: ¿Estoy siendo demasiado optimista con el Connected Trip strategy?" onkeydown="if(event.key==='Enter') sendAIMessage('munger-input','munger-history','munger-history', BKNG_CONTEXT + ' Eres el DCE MUNGER DIGITAL: audita la calidad del razonamiento, busca sesgos cognitivos (confirmación, disponibilidad, anclaje), inconsistencias lógicas y preguntas que el CIO debería hacerse. Inspírate en Charlie Munger y el pensamiento inverso. No repitas datos — cuestiona el razonamiento.')">
-      <button onclick="sendAIMessage('munger-input','munger-history','munger-history', BKNG_CONTEXT + ' Eres el DCE MUNGER DIGITAL: audita la calidad del razonamiento, busca sesgos cognitivos (confirmación, disponibilidad, anclaje), inconsistencias lógicas y preguntas que el CIO debería hacerse. Inspírate en Charlie Munger y el pensamiento inverso. No repitas datos — cuestiona el razonamiento.')">Enviar</button>
+    <div style="display:flex;border-top:1px solid var(--rule)">
+      <input type="text" id="munger-in" placeholder="Ej: Estoy siendo demasiado optimista con Connected Trip?" style="flex:1;padding:14px 18px;border:none;font-family:Archivo,sans-serif;font-size:13px;background:var(--cream);outline:none" onkeydown="if(event.key==='Enter')sendMunger()">
+      <button onclick="sendMunger()" style="padding:14px 24px;background:var(--navy);color:var(--white);border:none;font-family:Archivo,sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer">Enviar</button>
     </div>
   </div>
 </div>
@@ -660,85 +604,57 @@
 <!-- INVESTMENT MEMO -->
 <div id="tab-memo" class="tab-content">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-    <div class="slbl" style="margin-bottom:0;border:none">Investment Memo — Booking Holdings (BKNG)</div>
-    <button onclick="exportMemo()" style="background:var(--navy);color:var(--white);border:none;padding:10px 20px;font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer">⬇ Exportar PDF</button>
+    <div class="slbl" style="margin-bottom:0;border:none;padding:0">Investment Memo — BKNG</div>
+    <button onclick="window.print()" style="background:var(--navy);color:var(--white);border:none;padding:10px 20px;font-family:Archivo,sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer">Exportar PDF</button>
   </div>
-
-  <div style="background:var(--white);border:1px solid var(--rule);padding:40px 48px;max-width:860px" id="memo-body">
-    <!-- HEADER MEMO -->
-    <div style="border-bottom:2px solid var(--navy);padding-bottom:20px;margin-bottom:28px">
-      <div style="font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">DCE Holdings — Investment Office</div>
-      <div style="font-size:22px;font-weight:700;color:var(--navy);letter-spacing:-0.02em">Booking Holdings Inc. (BKNG)</div>
-      <div style="font-size:13px;color:var(--gray-mid);margin-top:4px">NASDAQ · Consumer Discretionary · Online Travel Agency</div>
-      <div style="display:flex;gap:32px;margin-top:16px">
-        <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">Fecha modelo</span><br><span style="font-weight:600;font-size:13px">06-Mar-2026</span></div>
-        <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">Precio</span><br><span style="font-weight:600;font-size:13px">$4,235.00</span></div>
-        <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">Market Cap</span><br><span style="font-weight:600;font-size:13px">$138B</span></div>
-        <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">EV</span><br><span style="font-weight:600;font-size:13px">$140.3B</span></div>
-        <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">Última revisión</span><br><span style="font-weight:600;font-size:13px" id="memo-last-review">06-Mar-2026</span></div>
+  <div style="background:var(--white);border:1px solid var(--rule);padding:40px 48px;max-width:860px">
+    <div style="border-bottom:2px solid var(--navy);padding-bottom:18px;margin-bottom:24px">
+      <div style="font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">DCE Holdings — Investment Office</div>
+      <div style="font-size:22px;font-weight:700;color:var(--navy)">Booking Holdings Inc. (BKNG)</div>
+      <div style="font-size:13px;color:var(--gray-mid);margin-top:4px">NASDAQ · Consumer Discretionary · Online Travel Agency · FY2025</div>
+      <div style="display:flex;gap:28px;margin-top:14px;flex-wrap:wrap">
+        <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--gray-mid)">Precio</div><div style="font-weight:600">$4,235.00</div></div>
+        <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--gray-mid)">Market Cap</div><div style="font-weight:600">$138B</div></div>
+        <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--gray-mid)">EV</div><div style="font-weight:600">$140.3B</div></div>
+        <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--gray-mid)">Última revisión</div><div style="font-weight:600" id="memo-review">06-Mar-2026</div></div>
       </div>
     </div>
-
-    <!-- COLUMBIA LADDER -->
-    <div class="memo-section">
-      <h3>Columbia Ladder</h3>
-      <div class="memo-row"><span class="mk">Reproduction Value / acción</span><span class="mv">$623.62</span></div>
-      <div class="memo-row"><span class="mk">EPV / acción (NOPAT ÷ WACC)</span><span class="mv">$2,341.12</span></div>
-      <div class="memo-row"><span class="mk">Precio actual</span><span class="mv">$4,235.00</span></div>
-      <div class="memo-row"><span class="mk">EPV / RV (franchise test)</span><span class="mv" style="color:var(--green)">3.75× ✓ Moat confirmado</span></div>
-      <div class="memo-row"><span class="mk">Precio / EPV</span><span class="mv" style="color:var(--red)">1.81× — mercado paga prima de crecimiento</span></div>
+    <div style="margin-bottom:24px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:12px">Columbia Ladder</div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--rule);font-size:13px"><span style="color:var(--gray-mid)">Reproduction Value / acción</span><span style="font-weight:600">$623.62</span></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--rule);font-size:13px"><span style="color:var(--gray-mid)">EPV / acción</span><span style="font-weight:600">$2,341.12</span></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--rule);font-size:13px"><span style="color:var(--gray-mid)">Precio actual</span><span style="font-weight:600">$4,235.00</span></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--rule);font-size:13px"><span style="color:var(--gray-mid)">EPV/RV</span><span style="font-weight:600;color:var(--green)">3.75× — Moat confirmado</span></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px"><span style="color:var(--gray-mid)">Precio/EPV</span><span style="font-weight:600;color:var(--red)">1.81× — Prima de crecimiento</span></div>
     </div>
-
-    <!-- VALORACIÓN -->
-    <div class="memo-section">
-      <h3>Valoración — Implied IRR Framework</h3>
-      <div class="memo-row"><span class="mk">NOPAT Normalizado</span><span class="mv">$7,590M</span></div>
-      <div class="memo-row"><span class="mk">WACC</span><span class="mv">9.52% (β=1.10, Ke=10.35%, ERP=5.50%)</span></div>
-      <div class="memo-row"><span class="mk">Distribution Yield</span><span class="mv">6.67%</span></div>
-      <div class="memo-row"><span class="mk">Crecimiento orgánico</span><span class="mv">2.0%</span></div>
-      <div class="memo-row"><span class="mk">Crecimiento por reinversión (ROIC 398%)</span><span class="mv">40.6%</span></div>
-      <div class="memo-row"><span class="mk">Exit múltiplo supuesto</span><span class="mv">20× EV/NOPAT (actual 18.5×)</span></div>
-      <div class="memo-row"><span class="mk">Implied IRR (Equity)</span><span class="mv" style="color:var(--green);font-size:16px">57.0%</span></div>
-      <div class="memo-row"><span class="mk">Hurdle Rate DCE</span><span class="mv">12.0%</span></div>
-      <div class="memo-row"><span class="mk">Margen de Seguridad</span><span class="mv" style="color:var(--green)">+45.0%</span></div>
+    <div style="margin-bottom:24px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:12px">Implied IRR</div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--rule);font-size:13px"><span style="color:var(--gray-mid)">NOPAT Normalizado</span><span style="font-weight:600">$7,590M</span></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--rule);font-size:13px"><span style="color:var(--gray-mid)">WACC</span><span style="font-weight:600">9.52%</span></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--rule);font-size:13px"><span style="color:var(--gray-mid)">Implied IRR</span><span style="font-weight:600;color:var(--green);font-size:16px">57.0%</span></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--rule);font-size:13px"><span style="color:var(--gray-mid)">Hurdle Rate DCE</span><span style="font-weight:600">12.0%</span></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px"><span style="color:var(--gray-mid)">Margen de Seguridad</span><span style="font-weight:600;color:var(--green)">+45.0%</span></div>
     </div>
-
-    <!-- CALIDAD -->
-    <div class="memo-section">
-      <h3>Calidad del Negocio</h3>
-      <div class="memo-row"><span class="mk">Revenue CAGR 3yr</span><span class="mv">16.3%</span></div>
-      <div class="memo-row"><span class="mk">FCF Margin FY2025</span><span class="mv">33.8%</span></div>
-      <div class="memo-row"><span class="mk">Operating Margin FY2025</span><span class="mv">32.8%</span></div>
-      <div class="memo-row"><span class="mk">Marginal ROIC 3yr (growth)</span><span class="mv">136%</span></div>
-      <div class="memo-row"><span class="mk">Modelo de negocio</span><span class="mv">OTA capital-light · WC negativo · duopolio BKNG/EXPE</span></div>
-      <div class="memo-row"><span class="mk">Riesgo principal</span><span class="mv">Dependencia Google/metasearch · equity negativo</span></div>
+    <div style="margin-bottom:24px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--rule);padding-bottom:8px;margin-bottom:12px">Notas del CIO</div>
+      <div id="memo-notes" style="min-height:60px;padding:12px;border:1px solid var(--rule);font-size:13px;line-height:1.7;white-space:pre-wrap;color:var(--ink)">(sin notas)</div>
     </div>
-
-    <!-- NOTAS CIO -->
-    <div class="memo-section">
-      <h3>Notas del CIO</h3>
-      <div style="min-height:80px;padding:14px;border:1px solid var(--rule);font-size:13px;line-height:1.7;color:var(--ink);white-space:pre-wrap" id="memo-cio-notes">(sin notas)</div>
-    </div>
-
-    <!-- FOOTER MEMO -->
-    <div style="border-top:1px solid var(--rule);padding-top:16px;margin-top:8px;font-size:10px;color:var(--gray-mid)">
-      DCE Holdings Investment Office · Modelo Columbia Framework · Solo para uso interno · Sin veredicto de inversión — decisión del CIO
-    </div>
+    <div style="font-size:10px;color:var(--gray-mid);border-top:1px solid var(--rule);padding-top:12px">DCE Holdings Investment Office · Modelo Columbia · Solo uso interno · Sin veredicto — decisión del CIO</div>
   </div>
 </div>
 
-<!-- PRESENT MODE -->
+<!-- PRESENT -->
 <div id="tab-present" class="tab-content">
-  <div class="slbl">Modo Presentación — Booking Holdings (BKNG)</div>
+  <div class="slbl">Modo Presentación</div>
   <div class="g3" style="margin-bottom:24px">
-    <div class="present-card card"><div class="big gold">$4,235</div><div class="lbl">Precio Actual</div></div>
-    <div class="present-card card"><div class="big green">57.0%</div><div class="lbl">Implied IRR</div></div>
-    <div class="present-card card"><div class="big" style="color:var(--green)">+45.0%</div><div class="lbl">Margen de Seguridad vs. Hurdle 12%</div></div>
+    <div class="card" style="text-align:center;padding:36px"><div style="font-size:52px;font-weight:700;color:var(--gold);line-height:1">$4,235</div><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:var(--gray-mid);margin-top:10px">Precio Actual</div></div>
+    <div class="card" style="text-align:center;padding:36px"><div style="font-size:52px;font-weight:700;color:var(--green);line-height:1">57.0%</div><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:var(--gray-mid);margin-top:10px">Implied IRR</div></div>
+    <div class="card" style="text-align:center;padding:36px"><div style="font-size:52px;font-weight:700;color:var(--green);line-height:1">+45%</div><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:var(--gray-mid);margin-top:10px">Margen de Seguridad</div></div>
   </div>
   <div class="g3" style="margin-bottom:24px">
-    <div class="present-card card"><div class="big" style="font-size:40px">$2,341</div><div class="lbl">EPV por Acción</div></div>
-    <div class="present-card card"><div class="big green" style="font-size:40px">3.75×</div><div class="lbl">EPV / RV — Moat Confirmado</div></div>
-    <div class="present-card card"><div class="big gold" style="font-size:40px">1.81×</div><div class="lbl">Precio / EPV — Prima de Crecimiento</div></div>
+    <div class="card" style="text-align:center;padding:32px"><div style="font-size:38px;font-weight:700;color:var(--ink);line-height:1">$2,341</div><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:var(--gray-mid);margin-top:8px">EPV por Acción</div></div>
+    <div class="card" style="text-align:center;padding:32px"><div style="font-size:38px;font-weight:700;color:var(--green);line-height:1">3.75×</div><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:var(--gray-mid);margin-top:8px">EPV/RV — Moat Confirmado</div></div>
+    <div class="card" style="text-align:center;padding:32px"><div style="font-size:38px;font-weight:700;color:var(--gold);line-height:1">1.81×</div><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:var(--gray-mid);margin-top:8px">Precio/EPV — Prima Crecimiento</div></div>
   </div>
   <div class="g4">
     <div class="card"><div class="clbl">NOPAT Normalizado</div><div class="cval gold">$7,590M</div></div>
@@ -746,8 +662,8 @@
     <div class="card"><div class="clbl">Revenue CAGR 3yr</div><div class="cval green">16.3%</div></div>
     <div class="card"><div class="clbl">WACC</div><div class="cval gold">9.52%</div></div>
   </div>
-  <div style="text-align:center;margin-top:32px">
-    <button onclick="togglePresentMode()" style="background:var(--navy);color:var(--white);border:none;padding:12px 32px;font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer">✕ Salir del modo presentación</button>
+  <div style="text-align:center;margin-top:28px">
+    <button onclick="togglePresent()" style="background:var(--navy);color:var(--white);border:none;padding:12px 32px;font-family:Archivo,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer">Salir del modo presentación</button>
   </div>
 </div>
 
@@ -1023,9 +939,9 @@ function resetIRR() {
 
 function sw(id, btn) {
   document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
-  document.querySelectorAll('nav button:not(#btn-present)').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(e => e.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
-  if (btn && btn.id !== 'btn-present') btn.classList.add('active');
+  btn.classList.add('active');
 }
 
 ['sl-wacc','sl-growth','sl-exit','sl-buybacks','sl-horizon','sl-hurdle'].forEach(id => {
@@ -1033,211 +949,143 @@ function sw(id, btn) {
   if (el) el.addEventListener('input', updateIRR);
 });
 updateIRR();
-
-// ── API PROXY ─────────────────────────────────────────────────────
-// Password stored in sessionStorage so you only type it once per session
-let DASHBOARD_PWD = sessionStorage.getItem('dceh_pwd') || '';
-
-function ensurePassword() {
-  if (!DASHBOARD_PWD) {
-    DASHBOARD_PWD = prompt('DCE Investment Office — Contraseña:') || '';
-    if (DASHBOARD_PWD) sessionStorage.setItem('dceh_pwd', DASHBOARD_PWD);
-  }
-  return DASHBOARD_PWD;
+// ── SW OVERRIDE ──────────────────────────────────────────────────────
+function sw(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(function(e){e.classList.remove('active');});
+  document.querySelectorAll('nav button').forEach(function(e){e.classList.remove('active');});
+  document.getElementById('tab-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
 }
 
-async function callClaude(body) {
-  const pwd = ensurePassword();
-  const response = await fetch('/api/claude', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-dashboard-auth': pwd,
-    },
-    body: JSON.stringify(body),
-  });
-  if (response.status === 401) {
-    sessionStorage.removeItem('dceh_pwd');
-    DASHBOARD_PWD = '';
-    throw new Error('Contraseña incorrecta');
-  }
-  return response.json();
-}
-const MODEL_PRICE = 4235.00;
-const MODEL_EV    = 140316.165;
-
-async function fetchLivePrice() {
-  try {
-    const r = await callClaude({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 100,
-        messages: [{ role: 'user', content: 'What is the current stock price of BKNG (Booking Holdings)? Reply with ONLY a number, no text, no $ sign.' }],
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }]
-    );
-    const txt = d.content?.find(b => b.type === 'text')?.text?.trim();
-    const price = parseFloat(txt?.replace(/[^0-9.]/g,''));
-    if (price && price > 100) {
-      document.getElementById('live-price').textContent = '$' + price.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-      document.getElementById('price-status').textContent = 'live ●';
-      document.getElementById('price-status').style.color = '#4aaa6a';
-      // Recalculate IRR with live price
-      const liveEV = MODEL_EV * (price / MODEL_PRICE);
-      document.getElementById('live-price-note').textContent = `Precio live: $${price.toLocaleString()} · EV ajustado: $${(liveEV/1000).toFixed(0)}B`;
-    }
-  } catch(e) {
-    document.getElementById('price-status').textContent = 'modelo';
-  }
-}
-fetchLivePrice();
-
-// ── LAST REVIEW DATE ──────────────────────────────────────────────
-let lastReview = localStorage.getItem('bkng_last_review') || '06-Mar-2026';
-document.getElementById('last-review-display').textContent = lastReview;
-document.getElementById('review-date-input').value = lastReview;
-
-function saveReviewDate() {
-  lastReview = document.getElementById('review-date-input').value;
-  localStorage.setItem('bkng_last_review', lastReview);
-  document.getElementById('last-review-display').textContent = lastReview;
-  document.getElementById('review-modal').style.display = 'none';
-}
-
-// ── CIO NOTES ─────────────────────────────────────────────────────
-const notesKey = 'bkng_cio_notes';
-const savedNotes = localStorage.getItem(notesKey) || '';
-document.getElementById('cio-notes-area').value = savedNotes;
-document.getElementById('cio-notes-area').addEventListener('input', function() {
-  localStorage.setItem(notesKey, this.value);
-  document.getElementById('notes-saved').textContent = 'Guardado ✓';
-  setTimeout(() => document.getElementById('notes-saved').textContent = '', 2000);
-});
-
-// Load notes into memo too
-document.getElementById('memo-cio-notes').textContent = savedNotes || '(sin notas)';
-document.getElementById('cio-notes-area').addEventListener('input', function() {
-  document.getElementById('memo-cio-notes').textContent = this.value || '(sin notas)';
-});
-
-// ── AI CHAT ENGINE ────────────────────────────────────────────────
-const BKNG_CONTEXT = `Eres DCE Investment Assistant, el asistente de análisis de inversión del CIO de DCE Holdings Investment Office (micro family office, Guatemala). Tu rol es ayudar al CIO a auditar y validar tesis de inversión usando el framework Columbia Business School (Asset Value → EPV → Growth Value).
-
-DATOS DEL MODELO BKNG (FY2025):
-- Empresa: Booking Holdings Inc. (BKNG / NASDAQ)
-- Precio: $4,235.00 | Market Cap: $138B | EV: $140.3B
-- Net Revenue: $26,917M | Operating Income: $8,825M (32.8% margen)
-- NOPAT Ajustado: $7,590M | FCF: $9,087M (33.8% margen)
-- WACC: 9.52% (β=1.10, Ke=10.35%, ERP=5.50%)
-- ROIC Contable FY2025: 610% (distorsionado por equity negativo vía buybacks)
-- Marginal ROIC 3yr: 136% | ROIC Seleccionado IRR: 398%
-- Invested Capital: $1,243M (comprimido por WC negativo -$9,757M)
-- Reproduction Value/acción: $623.62
-- EPV/acción: $2,341.12 (NOPAT $7,590M ÷ WACC 9.52%)
-- Precio/EPV: 1.81× (mercado paga prima de crecimiento)
-- EPV/RV: 3.75× (moat confirmado)
-- Implied IRR: 57.0% | Hurdle Rate: 12% | MoS: +45.0%
-- Buybacks sostenibles: $6,500M/año | Dividendos: $1,248M
-- Crecimiento orgánico supuesto: 2.0% | Exit múltiplo: 20×
-- Deuda total: $18,736M | Equity negativo: -$5,578M (efecto buybacks)
-- Marketing/Revenue: 30.4% (riesgo Google/metasearch dependency)
-- Revenue CAGR 3yr: 16.3% | FCF CAGR 3yr: 13.7%
-- S&M vida útil: 3 años | R&D: N/A
-- Normalización FY2025: excluye Impairment $457M + Transformation $205M
-
-RIESGOS CLAVE:
-1. Dependencia Google/metasearch (costo marketing inflación)
-2. Equity negativo (flexibilidad financiera limitada)
-3. Exposición cíclica viajes (OTA modelo)
-4. Regulación EU
-
-OPORTUNIDADES:
-1. Connected Trip strategy
-2. Flights/attractions (37%/80% crecimiento tickets)
-3. Payments monetization
-4. AI-driven customer service
-
-Responde siempre en español. Sé directo, técnico y conciso. Cuando hagas análisis de sensibilidad usa los números del modelo. Cuando identifiques riesgos, cuantifícalos si puedes.`;
-
-async function sendAIMessage(inputId, historyId, containerId, systemPrompt) {
-  const input = document.getElementById(inputId);
-  const msg = input.value.trim();
-  if (!msg) return;
-
-  const history = document.getElementById(historyId);
-  const container = document.getElementById(containerId);
-
-  // Add user message
-  history.innerHTML += `<div style="margin-bottom:16px"><div style="font-size:9px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:6px">CIO</div><div style="background:var(--cream);border:1px solid var(--rule);padding:12px 16px;font-size:13px;line-height:1.6">${msg}</div></div>`;
-  input.value = '';
-  history.innerHTML += `<div id="ai-typing-${containerId}" style="margin-bottom:16px"><div style="font-size:9px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">DCE Assistant</div><div style="padding:12px 16px;font-size:13px;color:var(--gray-mid);font-style:italic">Analizando...</div></div>`;
-  container.scrollTop = container.scrollHeight;
-
-  try {
-    const response = await callClaude({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: msg }]
-      })
-    });
-    const data = await response.json();
-    const reply = data.content?.[0]?.text || 'Error al obtener respuesta.';
-    const typingEl = document.getElementById(`ai-typing-${containerId}`);
-    if (typingEl) typingEl.innerHTML = `<div style="font-size:9px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">DCE Assistant</div><div style="border-left:2px solid var(--gold);padding:12px 16px;font-size:13px;line-height:1.7;white-space:pre-wrap">${reply}</div>`;
-  } catch(e) {
-    const typingEl = document.getElementById(`ai-typing-${containerId}`);
-    if (typingEl) typingEl.innerHTML = `<div style="color:var(--red);font-size:12px;padding:12px">Error de conexión con la API.</div>`;
-  }
-  container.scrollTop = container.scrollHeight;
-}
-
-// ── PRESENT MODE ──────────────────────────────────────────────────
-let presentActive = false;
-function togglePresentMode() {
-  presentActive = !presentActive;
-  const btn = document.getElementById('btn-present');
-  if (presentActive) {
+// ── PRESENT MODE ──────────────────────────────────────────────────────
+var presentOn = false;
+function togglePresent() {
+  presentOn = !presentOn;
+  var btn = document.getElementById('btn-present');
+  if (presentOn) {
     document.body.classList.add('present-mode');
-    btn.textContent = '✕ Exit Present';
+    btn.textContent = 'Exit Present';
     btn.style.color = 'var(--red)';
-    // Switch to overview
-    document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
-    document.getElementById('tab-present').classList.add('active');
+    sw('present', null);
   } else {
     document.body.classList.remove('present-mode');
-    btn.textContent = '⊞ Present';
-    btn.style.color = 'var(--gray-mid)';
-    document.getElementById('tab-present').classList.remove('active');
-    document.getElementById('tab-overview').classList.add('active');
+    btn.textContent = 'Present';
+    btn.style.color = '#8a9098';
+    sw('overview', document.querySelector('nav button'));
   }
 }
 
-// ── PDF EXPORT ────────────────────────────────────────────────────
-function exportMemo() {
-  window.print();
+// ── REVIEW DATE ───────────────────────────────────────────────────────
+var reviewDate = localStorage.getItem('bkng_review') || '06-Mar-2026';
+function updateReviewDisplay() {
+  document.getElementById('hdr-review').textContent = reviewDate;
+  var m = document.getElementById('memo-review');
+  if (m) m.textContent = reviewDate;
+  document.getElementById('review-input').value = reviewDate;
 }
-// ── QUICK MUNGER ─────────────────────────────────────────────────
-function quickMunger(question) {
-  document.getElementById('munger-input').value = question;
-  sw('munger', null);
-  sendAIMessage('munger-input','munger-history','munger-history', BKNG_CONTEXT + ' Eres el DCE MUNGER DIGITAL: audita la calidad del razonamiento, busca sesgos cognitivos, inconsistencias lógicas. Inspírate en Charlie Munger. No repitas datos — cuestiona el razonamiento.');
+updateReviewDisplay();
+function saveReview() {
+  reviewDate = document.getElementById('review-input').value;
+  localStorage.setItem('bkng_review', reviewDate);
+  updateReviewDisplay();
+  document.getElementById('modal-review').style.display = 'none';
 }
 
-// Sync last review to memo
-setTimeout(() => {
-  const el = document.getElementById('memo-last-review');
-  if (el) el.textContent = lastReview;
-}, 100);
+// ── CIO NOTES ─────────────────────────────────────────────────────────
+var notesEl = document.getElementById('cio-notes');
+notesEl.value = localStorage.getItem('bkng_notes') || '';
+document.getElementById('memo-notes').textContent = notesEl.value || '(sin notas)';
+notesEl.addEventListener('input', function() {
+  localStorage.setItem('bkng_notes', this.value);
+  document.getElementById('memo-notes').textContent = this.value || '(sin notas)';
+  document.getElementById('notes-saved').textContent = 'Guardado';
+  setTimeout(function(){ document.getElementById('notes-saved').textContent = ''; }, 2000);
+});
+
+// ── AI CONTEXT ────────────────────────────────────────────────────────
+var CTX = 'Eres DCE Investment Assistant, el asistente del CIO de DCE Holdings Investment Office (Guatemala). Usas el framework Columbia Business School (Asset Value, EPV, Growth Value). Datos BKNG FY2025: Precio $4235, Market Cap $138B, EV $140.3B, Revenue $26917M, NOPAT $7590M, FCF $9087M (33.8%), WACC 9.52% (beta 1.10), ROIC contable 610% (equity negativo por buybacks), Marginal ROIC 3yr 136%, EPV/accion $2341, RV/accion $624, Precio/EPV 1.81x, Implied IRR 57%, Hurdle 12%, MoS +45%, Buybacks $6500M/yr, Marketing/Revenue 30.4%, Revenue CAGR 3yr 16.3%. Responde en español, directo y numerico.';
+var BREAKER_P = CTX + ' Eres THESIS BREAKER: encuentra supuestos fragiles y cuantifica escenarios de quiebre.';
+var MUNGER_P  = CTX + ' Eres DCE MUNGER DIGITAL: audita el razonamiento, busca sesgos cognitivos, inspírate en Charlie Munger. Cuestiona la logica, no repitas datos.';
+var QMS = ['', 'Es real el moat de BKNG o el ROIC 610% es una distorsion contable por equity negativo?', 'Hay sesgo de confirmacion en excluir $662M de normalizacion en FY2025?', 'Es correcto usar Implied IRR como criterio cuando el precio ya esta por encima del EPV?'];
+
+// ── AI CALL ───────────────────────────────────────────────────────────
+async function callClaude(body) {
+  var pwd = sessionStorage.getItem('dceh_pwd') || '';
+  if (!pwd) {
+    pwd = prompt('DCE Investment Office - Contrasena:') || '';
+    if (pwd) sessionStorage.setItem('dceh_pwd', pwd);
+  }
+  var r = await fetch('/api/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-dashboard-auth': pwd },
+    body: JSON.stringify(body)
+  });
+  if (r.status === 401) {
+    sessionStorage.removeItem('dceh_pwd');
+    throw new Error('Contrasena incorrecta');
+  }
+  return r.json();
+}
+
+async function sendChat(inputId, histId, systemPrompt) {
+  var input = document.getElementById(inputId);
+  var msg = input.value.trim();
+  if (!msg) return;
+  var hist = document.getElementById(histId);
+  hist.innerHTML += '<div style="margin-bottom:14px"><div style="font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:5px">CIO</div><div style="background:var(--cream);border:1px solid var(--rule);padding:11px 15px;font-size:13px;line-height:1.6">' + msg + '</div></div>';
+  input.value = '';
+  var typingId = 'typing-' + Date.now();
+  hist.innerHTML += '<div id="' + typingId + '" style="margin-bottom:14px"><div style="font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:5px">DCE Assistant</div><div style="padding:11px 15px;font-size:13px;color:var(--gray-mid);font-style:italic">Analizando...</div></div>';
+  hist.scrollTop = hist.scrollHeight;
+  try {
+    var data = await callClaude({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: systemPrompt, messages: [{ role: 'user', content: msg }] });
+    var reply = (data.content && data.content[0]) ? data.content[0].text : 'Error al obtener respuesta.';
+    var el = document.getElementById(typingId);
+    if (el) el.innerHTML = '<div style="font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:5px">DCE Assistant</div><div style="border-left:2px solid var(--gold);padding:11px 15px;font-size:13px;line-height:1.7;white-space:pre-wrap">' + reply + '</div>';
+  } catch(e) {
+    var el2 = document.getElementById(typingId);
+    if (el2) el2.innerHTML = '<div style="color:var(--red);font-size:12px;padding:11px">' + e.message + '</div>';
+  }
+  hist.scrollTop = hist.scrollHeight;
+}
+
+function sendBreaker() { sendChat('breaker-in', 'breaker-hist', BREAKER_P); }
+function sendMunger()  { sendChat('munger-in',  'munger-hist',  MUNGER_P); }
+function qm(n) {
+  document.getElementById('munger-in').value = QMS[n];
+  sw('munger', null);
+  sendMunger();
+}
+
+// ── LIVE PRICE ────────────────────────────────────────────────────────
+async function fetchPrice() {
+  try {
+    var data = await callClaude({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 80,
+      messages: [{ role: 'user', content: 'Current stock price of BKNG? Reply with ONLY the number.' }],
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }]
+    });
+    var txt = data.content && data.content.find(function(b){ return b.type==='text'; });
+    var price = parseFloat(txt && txt.text && txt.text.replace(/[^0-9.]/g,''));
+    if (price > 100) {
+      document.getElementById('hdr-price').textContent = '$' + price.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+      document.getElementById('price-tag').textContent = 'live';
+      document.getElementById('price-tag').style.color = '#4aaa6a';
+    }
+  } catch(e) {}
+}
 </script>
-<div id="review-modal" style="display:none;position:fixed;inset:0;background:rgba(27,38,66,0.6);z-index:1000;align-items:center;justify-content:center">
-  <div style="background:var(--white);padding:32px;width:360px;border-top:3px solid var(--gold)">
-    <div style="font-size:11px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--navy);margin-bottom:16px">Actualizar fecha de revisión</div>
-    <input id="review-date-input" type="text" placeholder="06-Mar-2026" style="width:100%;padding:10px 14px;border:1px solid var(--rule);font-family:'Archivo',sans-serif;font-size:14px;margin-bottom:16px;outline:none">
-    <div style="display:flex;gap:10px">
-      <button onclick="saveReviewDate()" style="flex:1;background:var(--navy);color:var(--white);border:none;padding:10px;font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer">Guardar</button>
-      <button onclick="document.getElementById('review-modal').style.display='none'" style="flex:1;background:var(--cream);color:var(--gray-mid);border:1px solid var(--rule);padding:10px;font-family:'Archivo',sans-serif;font-size:11px;cursor:pointer">Cancelar</button>
+<!-- REVIEW MODAL -->
+<div id="modal-review" style="display:none;position:fixed;inset:0;background:rgba(27,38,66,0.6);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:var(--white);padding:32px;width:340px;border-top:3px solid var(--gold)">
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--navy);margin-bottom:14px">Fecha de revisión</div>
+    <input id="review-input" type="text" placeholder="06-Mar-2026" style="width:100%;padding:10px 14px;border:1px solid var(--rule);font-family:Archivo,sans-serif;font-size:14px;margin-bottom:14px;outline:none">
+    <div style="display:flex;gap:8px">
+      <button onclick="saveReview()" style="flex:1;background:var(--navy);color:var(--white);border:none;padding:10px;font-family:Archivo,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer">Guardar</button>
+      <button onclick="document.getElementById('modal-review').style.display='none'" style="flex:1;background:var(--cream);color:var(--gray-mid);border:1px solid var(--rule);padding:10px;font-family:Archivo,sans-serif;cursor:pointer">Cancelar</button>
     </div>
   </div>
 </div>
-
 </body>
 </html>
