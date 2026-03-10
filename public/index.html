@@ -29,7 +29,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--cream); color: var(--ink); font-family: 'Archivo','Helvetica Neue',Helvetica,sans-serif; font-size: 15px; line-height: 1.5; min-height: 100vh; }
 
-  .wave-deco { position: fixed; pointer-events: none; z-index: 0; opacity: 0.07; }
+  .wave-deco { position: fixed; pointer-events: none; z-index: -1; opacity: 0.07; }
   .wave-deco.tr { top: -40px; right: -60px; width: 480px; }
   .wave-deco.bl { bottom: -60px; left: -40px; width: 420px; transform: rotate(180deg); }
 
@@ -159,12 +159,8 @@
 <body>
 
 <!-- WAVE DECORATIONS from brandbook -->
-<svg class="wave-deco tr" viewBox="0 0 500 380" fill="none">
-  <path d="M500,0 Q340,110 190,72 Q40,34 0,190" stroke="#b88b47" stroke-width="1"/><path d="M500,22 Q352,122 202,84 Q52,46 12,202" stroke="#b88b47" stroke-width="1"/><path d="M500,44 Q364,134 214,96 Q64,58 24,214" stroke="#b88b47" stroke-width="1"/><path d="M500,66 Q376,146 226,108 Q76,70 36,226" stroke="#b88b47" stroke-width="1"/><path d="M500,88 Q388,158 238,120 Q88,82 48,238" stroke="#b88b47" stroke-width="1"/><path d="M500,110 Q400,170 250,132 Q100,94 60,250" stroke="#b88b47" stroke-width="1"/><path d="M500,132 Q412,182 262,144 Q112,106 72,262" stroke="#b88b47" stroke-width="1"/><path d="M500,154 Q424,194 274,156 Q124,118 84,274" stroke="#b88b47" stroke-width="1"/><path d="M500,176 Q436,206 286,168 Q136,130 96,286" stroke="#b88b47" stroke-width="1"/><path d="M500,198 Q448,218 298,180 Q148,142 108,298" stroke="#b88b47" stroke-width="1"/>
-</svg>
-<svg class="wave-deco bl" viewBox="0 0 500 380" fill="none">
-  <path d="M0,380 Q160,270 310,308 Q460,346 500,190" stroke="#b88b47" stroke-width="1"/><path d="M0,358 Q148,258 298,296 Q448,334 488,178" stroke="#b88b47" stroke-width="1"/><path d="M0,336 Q136,246 286,284 Q436,322 476,166" stroke="#b88b47" stroke-width="1"/><path d="M0,314 Q124,234 274,272 Q424,310 464,154" stroke="#b88b47" stroke-width="1"/><path d="M0,292 Q112,222 262,260 Q412,298 452,142" stroke="#b88b47" stroke-width="1"/><path d="M0,270 Q100,210 250,248 Q400,286 440,130" stroke="#b88b47" stroke-width="1"/><path d="M0,248 Q88,198 238,236 Q388,274 428,118" stroke="#b88b47" stroke-width="1"/>
-</svg>
+
+
 
 <header>
   <div class="hbrand">
