@@ -20,9 +20,16 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    return res.status(response.status).json(data);
+    
+    // Log error details for debugging
+    if (!response.ok) {
+      console.error('Anthropic error:', response.status, JSON.stringify(data));
+    }
+    
+    return res.status(response.ok ? 200 : response.status).json(data);
 
   } catch (error) {
+    console.error('Proxy error:', error.message);
     return res.status(500).json({ error: 'Proxy error', detail: error.message });
   }
 }
