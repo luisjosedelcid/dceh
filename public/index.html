@@ -978,10 +978,12 @@ function togglePresent() {
 // ── REVIEW DATE ───────────────────────────────────────────────────────
 var reviewDate = localStorage.getItem('bkng_review') || '06-Mar-2026';
 function updateReviewDisplay() {
-  document.getElementById('hdr-review').textContent = reviewDate;
+  var hdr = document.getElementById('hdr-review');
+  if (hdr) hdr.textContent = reviewDate;
   var m = document.getElementById('memo-review');
   if (m) m.textContent = reviewDate;
-  document.getElementById('review-input').value = reviewDate;
+  var ri = document.getElementById('review-input');
+  if (ri) ri.value = reviewDate;
 }
 updateReviewDisplay();
 function saveReview() {
