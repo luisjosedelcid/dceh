@@ -1036,7 +1036,7 @@ async function sendChat(inputId, histId, systemPrompt) {
   hist.innerHTML += '<div id="' + typingId + '" style="margin-bottom:14px"><div style="font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:5px">DCE Assistant</div><div style="padding:11px 15px;font-size:13px;color:var(--gray-mid);font-style:italic">Analizando...</div></div>';
   hist.scrollTop = hist.scrollHeight;
   try {
-    var data = await callClaude({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: systemPrompt, messages: [{ role: 'user', content: msg }] });
+    var data = await callClaude({ model: 'claude-sonnet-4-5', max_tokens: 1000, system: systemPrompt, messages: [{ role: 'user', content: msg }] });
     var reply = (data.content && data.content[0]) ? data.content[0].text : 'Error al obtener respuesta.';
     var el = document.getElementById(typingId);
     if (el) el.innerHTML = '<div style="font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:5px">DCE Assistant</div><div style="border-left:2px solid var(--gold);padding:11px 15px;font-size:13px;line-height:1.7;white-space:pre-wrap">' + reply + '</div>';
@@ -1059,7 +1059,7 @@ function qm(n) {
 async function fetchPrice() {
   try {
     var data = await callClaude({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5',
       max_tokens: 80,
       messages: [{ role: 'user', content: 'Current stock price of BKNG? Reply with ONLY the number.' }],
       tools: [{ type: 'web_search_20250305', name: 'web_search' }]
