@@ -152,12 +152,49 @@
   .slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--navy); border: 2px solid var(--gold); cursor: pointer; }
   .inp-range-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--gray-mid); font-weight: 300; margin-top: 2px; }
   .inp-formula { font-size: 10px; color: var(--gray-mid); font-style: italic; font-weight: 300; margin-top: 2px; }
+  /* ── AI CHAT ── */
+  .chat-container { display:flex; flex-direction:column; height:520px; background:var(--white); border:1px solid var(--rule); }
+  .chat-history { flex:1; overflow-y:auto; padding:24px; }
+  .chat-input-row { display:flex; gap:0; border-top:1px solid var(--rule); }
+  .chat-input-row input { flex:1; padding:14px 18px; border:none; font-family:'Archivo',sans-serif; font-size:13px; outline:none; background:var(--cream); color:var(--ink); }
+  .chat-input-row button { padding:14px 24px; background:var(--navy); color:var(--white); border:none; font-family:'Archivo',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; cursor:pointer; transition:background .2s; }
+  .chat-input-row button:hover { background:var(--gold); }
+  .chat-header { padding:16px 24px; background:var(--navy); display:flex; align-items:center; gap:12px; }
+  .chat-header .ch-title { font-size:11px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--white); }
+  .chat-header .ch-sub { font-size:10px; color:rgba(255,255,255,0.4); margin-left:auto; }
 
-  .pdf-viewer { background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);margin-bottom:20px;max-height:500px;overflow-y:auto }
-  .pdf-page { padding:20px 24px;border-bottom:1px solid var(--rule) }
-  .pdf-page-num { font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:10px }
-  .pdf-header { font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--navy);margin:12px 0 4px }
-  .pdf-line { font-size:12px;color:var(--ink);line-height:1.6;padding:1px 0 }
+  /* ── NOTES ── */
+  .notes-area { width:100%; min-height:120px; padding:16px; border:1px solid var(--rule); font-family:'Archivo',sans-serif; font-size:13px; line-height:1.7; color:var(--ink); background:var(--white); resize:vertical; outline:none; }
+  .notes-area:focus { border-color:var(--gold); }
+
+  /* ── MEMO / PRINT ── */
+  .memo-section { margin-bottom:28px; }
+  .memo-section h3 { font-size:9px; font-weight:700; letter-spacing:0.25em; text-transform:uppercase; color:var(--gold); border-bottom:1px solid var(--rule); padding-bottom:8px; margin-bottom:14px; }
+  .memo-row { display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--rule); font-size:13px; }
+  .memo-row .mk { color:var(--gray-mid); font-weight:300; }
+  .memo-row .mv { font-weight:600; color:var(--ink); }
+  @media print {
+    nav, header .hright, #btn-present, .chat-input-row, .inp-group { display:none !important; }
+    .tab-content { display:block !important; }
+    body { background:white; }
+    .wave-deco { display:none; }
+  }
+
+  /* ── PRESENT MODE ── */
+  body.present-mode nav { display:none; }
+  body.present-mode header { min-height:80px; }
+  #tab-present .present-card { background:var(--white); border:1px solid var(--rule); padding:36px 40px; text-align:center; }
+  #tab-present .present-card .big { font-size:56px; font-weight:700; letter-spacing:-0.03em; line-height:1; }
+  #tab-present .present-card .lbl { font-size:10px; font-weight:500; letter-spacing:0.2em; text-transform:uppercase; color:var(--gray-mid); margin-top:10px; }
+
+  /* ── LIVE PRICE NOTE ── */
+  #live-price-note { font-size:10px; color:var(--gray-mid); margin-top:6px; font-style:italic; }
+
+  .pdf-viewer{background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);margin-bottom:20px;max-height:500px;overflow-y:auto}
+  .pdf-page{padding:18px 22px;border-bottom:1px solid var(--rule)}
+  .pdf-page-num{font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:8px}
+  .pdf-header{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--navy);margin:10px 0 4px}
+  .pdf-line{font-size:12px;color:var(--ink);line-height:1.6;padding:1px 0}
 </style>
 </head>
 <body>
@@ -180,10 +217,18 @@
     </div>
   </div>
   <div class="hright">
-    <div class="hkpi"><div class="val">$4,235.00</div><div class="sub">Precio mercado</div></div>
-    <div class="hkpi"><div class="val" style="color:var(--green)">57.0%</div><div class="sub">Implied IRR</div></div>
+    <div class="hkpi">
+      <div class="val" id="live-price">$4,235.00</div>
+      <div class="sub">Precio <span id="price-status" style="color:rgba(255,255,255,0.3)">modelo</span></div>
+    </div>
+    <div class="hkpi"><div class="val" style="color:var(--green)" id="hdr-irr">57.0%</div><div class="sub">Implied IRR</div></div>
     <div class="hkpi"><div class="val">610%</div><div class="sub">ROIC 3-4yr</div></div>
-    <div class="hkpi"><div class="val" style="color:var(--green)">+45.0%</div><div class="sub">Margen seguridad</div></div>
+    <div class="hkpi"><div class="val" style="color:var(--green)" id="hdr-mos">+45.0%</div><div class="sub">Margen seguridad</div></div>
+    <div class="hkpi" style="border-left:1px solid rgba(255,255,255,0.1);padding-left:20px">
+      <div style="font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Última revisión</div>
+      <div style="font-size:11px;color:var(--gold-lt)" id="last-review-display">06-Mar-2026</div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:2px;cursor:pointer" onclick="document.getElementById('review-modal').style.display='flex'">✎ actualizar</div>
+    </div>
   </div>
 </header>
 
@@ -195,6 +240,10 @@
   <button onclick="sw('irr',this)">Implied IRR</button>
   <button onclick="sw('health',this)">Health Check</button>
   <button onclick="sw('audit',this)">Decisiones CIO</button>
+  <button onclick="sw('breaker',this)" style="color:var(--red);font-weight:600">⚡ Thesis Breaker</button>
+  <button onclick="sw('munger',this)" style="color:#6b4fa0;font-weight:600">🧠 Munger</button>
+  <button onclick="sw('memo',this)">Investment Memo</button>
+  <button onclick="togglePresentMode()" id="btn-present">⊞ Present</button>
 </nav>
 
 <main>
@@ -544,291 +593,8 @@
   </div>
 </div>
 
-</main>
-
-<footer>
-  <div class="fl"><strong>DCE</strong> Holdings — Investment Office</div>
-  <div class="fr">Booking Holdings (BKNG) &nbsp;·&nbsp; Modelo Columbia &nbsp;·&nbsp; 6 de marzo, 2026 &nbsp;·&nbsp; USD Millones &nbsp;·&nbsp; Sin veredicto de inversión — decisión del CIO</div>
-</footer>
-
-<script>
-Chart.defaults.font.family = "'Archivo','Helvetica Neue',sans-serif";
-Chart.defaults.font.size = 10;
-Chart.defaults.color = '#8a9098';
-
-const G = '#b88b47', GN = '#2a7a56', RD = '#9b2335', GM = '#8a9098', GT = '#606060', GL = '#d4aa6a';
-const dg = { grid: { color: 'rgba(27,38,66,0.06)', drawBorder: false }, ticks: { color: '#9a9ea6', font: { size: 10 } } };
-const dgp = { ...dg, ticks: { ...dg.ticks, callback: v => v + '%' } };
-const dgb = { ...dg, ticks: { ...dg.ticks, callback: v => '$' + (Math.abs(v)/1000).toFixed(0) + 'B' } };
-const leg = { position: 'top', labels: { boxWidth: 9, color: GT, padding: 12 } };
-const yr = ['FY20','FY21','FY22','FY23','FY24','FY25'];
-
-new Chart(document.getElementById('c1'), { type: 'bar', data: { labels: yr, datasets: [
-  { label: 'Net Revenue', data: [6796,10958,17090,21365,23739,26917], backgroundColor: 'rgba(184,139,71,0.68)', borderRadius: 2 },
-  { label: 'NOPAT Ajustado', data: [2207,2007,4082,4672,6071,7590], backgroundColor: 'rgba(76,175,136,0.62)', borderRadius: 2 }
-]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
-
-new Chart(document.getElementById('c2'), { type: 'line', data: { labels: yr, datasets: [
-  { label: 'Margen Operativo', data: [-9.3,22.8,29.9,27.3,31.8,32.8], borderColor: G, backgroundColor: 'rgba(184,139,71,0.07)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4, pointBackgroundColor: G },
-  { label: 'Margen Neto', data: [0.9,10.6,17.9,20.1,24.8,20.1], borderColor: GN, backgroundColor: 'rgba(76,175,136,0.05)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4, pointBackgroundColor: GN }
-]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgp } } });
-
-new Chart(document.getElementById('c3'), { type: 'bar', data: { labels: yr, datasets: [
-  { label: 'CFO', data: [85,2820,6554,7344,8323,9409], backgroundColor: 'rgba(184,139,71,0.65)', borderRadius: 2 },
-  { label: 'FCF', data: [-201,2516,6186,6999,7894,9087], backgroundColor: 'rgba(76,175,136,0.58)', borderRadius: 2 },
-  { label: 'Buybacks', data: [-1303,-163,-6621,-10377,-6509,-6440], backgroundColor: 'rgba(224,96,96,0.5)', borderRadius: 2 }
-]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
-
-new Chart(document.getElementById('c4'), { type: 'doughnut', data: {
-  labels: ['Buybacks ($6,440M)','Dividendos ($1,248M)','CapEx ($322M)','Deuda Neta ($1,289M)','Exceso Caja ($255M)'],
-  datasets: [{ data: [6440,1248,322,1289,255], backgroundColor: [G,GN,'#7acfaa',GL,GT], borderWidth: 0, hoverOffset: 10 }]
-}, options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 9, color: GM, font: { size: 10 } } } }, cutout: '65%' } });
-
-new Chart(document.getElementById('c5'), { type: 'bar', data: { labels: yr, datasets: [
-  { label: 'Net Revenue', data: [6796,10958,17090,21365,23739,26917], backgroundColor: 'rgba(184,139,71,0.65)', borderRadius: 2 },
-  { label: 'Operating Income', data: [-631,2496,5102,5835,7555,8825], backgroundColor: 'rgba(76,175,136,0.58)', borderRadius: 2 },
-  { label: 'Net Income', data: [59,1165,3058,4289,5882,5404], backgroundColor: 'rgba(122,207,170,0.42)', borderRadius: 2 }
-]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
-
-new Chart(document.getElementById('c6'), { type: 'doughnut', data: {
-  labels: ['Marketing ($8,186M)','Personnel ($3,403M)','Sales & Other ($3,453M)','G&A ($857M)','IT ($908M)','D&A ($623M)','Otros ($662M)'],
-  datasets: [{ data: [8186,3403,3453,857,908,623,662], backgroundColor: [G,'#8a9ab5',RD,GN,GL,'#4a7a6a',GT], borderWidth: 0, hoverOffset: 8 }]
-}, options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 9, color: GM, font: { size: 10 } } } }, cutout: '58%' } });
-
-new Chart(document.getElementById('c7'), { type: 'bar', data: { labels: yr, datasets: [
-  { label: 'CFO', data: [85,2820,6554,7344,8323,9409], backgroundColor: 'rgba(184,139,71,0.65)', borderRadius: 2 },
-  { label: 'CFI', data: [2637,-998,-518,1486,129,-313], backgroundColor: 'rgba(76,175,136,0.55)', borderRadius: 2 },
-  { label: 'CFF', data: [1561,-1216,-4897,-8909,-4204,-8915], backgroundColor: 'rgba(224,96,96,0.5)', borderRadius: 2 }
-]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
-
-new Chart(document.getElementById('c8'), { type: 'line', data: { labels: yr, datasets: [
-  { label: 'NOPAT Ajustado', data: [2207,2007,4082,4672,6071,7590], borderColor: G, backgroundColor: 'rgba(184,139,71,0.08)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: G },
-  { label: 'Net Income Reportado', data: [59,1165,3058,4289,5882,5404], borderColor: GT, borderDash: [5,4], backgroundColor: 'transparent', tension: 0.3, borderWidth: 1.5, pointRadius: 3 }
-]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
-
-new Chart(document.getElementById('c9'), { type: 'bar', data: { labels: yr, datasets: [
-  { label: 'Total Activos', data: [21874,23641,22542,24342,27708,29264], backgroundColor: 'rgba(184,139,71,0.2)', borderColor: G, borderWidth: 1.5, borderRadius: 2 },
-  { label: 'Total Pasivos', data: [16981,17463,20103,27086,31728,34842], backgroundColor: 'rgba(224,96,96,0.28)', borderColor: RD, borderWidth: 1, borderRadius: 2 },
-  { label: 'Patrimonio', data: [4893,6178,2834,-2744,-4020,-5578], backgroundColor: 'rgba(76,175,136,0.38)', borderColor: GN, borderWidth: 1, borderRadius: 2 }
-]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
-
-new Chart(document.getElementById('c10'), { type: 'line', data: { labels: yr, datasets: [
-  { label: 'ROIC Ajustado (%)', data: [100.9,47.7,110.1,164.9,707.9,610.4], borderColor: G, backgroundColor: 'rgba(184,139,71,0.08)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: G },
-  { label: 'WACC (9.52%)', data: [9.52,9.52,9.52,9.52,9.52,9.52], borderColor: RD, borderDash: [6,4], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0 }
-]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: { ...dg, ticks: { ...dg.ticks, callback: v => v + '%' } } } } });
-
-new Chart(document.getElementById('c11'), { type: 'doughnut', data: {
-  labels: ['PP&E ($807M)','WC Operativo (−$9,757M)','Other LT Assets ($2,310M)','S&M Asset ($7,883M)','(Equity Negativo)'],
-  datasets: [{ data: [807,9757,2310,7883,5578], backgroundColor: [GN,'#3a6080',RD,G,GL], borderWidth: 0, hoverOffset: 8 }]
-}, options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 9, color: GM, font: { size: 9 } } } }, cutout: '60%' } });
-
-new Chart(document.getElementById('c12'), { type: 'radar', data: {
-  labels: ['Solidez\nFinanciera','Rentabilidad','Crecimiento','Asset-Light','Capital\nAllocation','Rule of 40'],
-  datasets: [{ label: 'Visa FY2025', data: [90,95,80,92,88,95], backgroundColor: 'rgba(184,139,71,0.1)', borderColor: G, borderWidth: 2, pointBackgroundColor: G, pointRadius: 4 }]
-}, options: { responsive: true, scales: { r: { min: 0, max: 100, grid: { color: 'rgba(27,38,66,0.07)' }, angleLines: { color: 'rgba(27,38,66,0.07)' }, pointLabels: { font: { size: 10 }, color: GT }, ticks: { display: false } } }, plugins: { legend: { display: false } } } });
-
-// ── INCOME STATEMENT TABLE ────────────────────────────────────────
-const IS_ROWS = [
-  { l: 'INGRESOS',                          t: 'section' },
-  { l: 'Merchant Revenues',                 t: 'normal',   v: [2117, 3696, 7193, 10936, 14142, 17755] },
-  { l: 'Agency Revenues',                   t: 'normal',   v: [4314, 6663, 9003, 9414, 8524, 7968] },
-  { l: 'Advertising & Other',               t: 'normal',   v: [365, 599, 894, 1015, 1073, 1194] },
-  { l: 'Net Revenues',                      t: 'subtotal', v: [6796, 10958, 17090, 21365, 23739, 26917] },
-  { l: '',                                  t: 'spacer' },
-  { l: 'GASTOS OPERATIVOS',                 t: 'section' },
-  { l: 'Marketing Expenses',                t: 'normal',   v: [-2179, -3801, -5993, -6773, -7278, -8186], neg: true },
-  { l: 'Sales and Other Expenses',          t: 'normal',   v: [-755, -881, -1986, -2744, -3120, -3453], neg: true },
-  { l: 'Personnel (incl. SBC)',             t: 'normal',   v: [-1944, -2314, -2465, -3294, -3354, -3403], neg: true },
-  { l: 'General and Administrative',        t: 'normal',   v: [-581, -620, -766, -1555, -1036, -857], neg: true },
-  { l: 'Information Technology',            t: 'normal',   v: [-299, -412, -526, -655, -771, -908], neg: true },
-  { l: 'D&A',                               t: 'normal',   v: [-458, -421, -451, -504, -591, -623], neg: true },
-  { l: 'Restructuring / Impairment / Other',t: 'normal',   v: [-1211, -13, 199, -5, -34, -662], neg: true },
-  { l: 'Total OpEx',                        t: 'subtotal', v: [-7427, -8462, -11988, -15530, -16184, -18092], neg: true },
-  { l: '',                                  t: 'spacer' },
-  { l: 'Operating Income',                  t: 'total',    v: [-631, 2496, 5102, 5835, 7555, 8825] },
-  { l: 'Margen Operativo',                  t: 'margin',   v: [-9.3, 22.8, 29.9, 27.3, 31.8, 32.8] },
-  { l: '',                                  t: 'spacer' },
-  { l: 'NON-OPERATING',                     t: 'section' },
-  { l: 'Interest Expense',                  t: 'normal',   v: [-356, -334, -391, -897, -1295, -1617], neg: true },
-  { l: 'Interest & Dividend Income',        t: 'normal',   v: [0, 0, 219, 1020, 1114, 921] },
-  { l: 'Other Income (Expense), Net',       t: 'normal',   v: [1554, -697, -1007, -477, -82, -1297] },
-  { l: 'EBT',                               t: 'subtotal', v: [567, 1465, 3923, 5481, 7292, 6832] },
-  { l: 'Income Tax Expense',                t: 'normal',   v: [-508, -300, -865, -1192, -1410, -1428], neg: true },
-  { l: 'ETR Efectiva',                      t: 'margin',   v: [89.6, 20.5, 22.1, 21.7, 19.3, 20.9] },
-  { l: '',                                  t: 'spacer' },
-  { l: 'Net Income (GAAP)',                 t: 'total',    v: [59, 1165, 3058, 4289, 5882, 5404] },
-  { l: 'Margen Neto',                       t: 'margin',   v: [0.9, 10.6, 17.9, 20.1, 24.8, 20.1] },
-  { l: '',                                  t: 'spacer' },
-  { l: 'AJUSTES DCE',                       t: 'section' },
-  { l: '(+) Impairment + Transformation',   t: 'normal',   v: [null, null, null, null, null, 662] },
-  { l: '(−) S&M Growth Expense',            t: 'normal',   v: [null, null, null, null, null, -774], neg: true },
-  { l: 'NOPAT Ajustado DCE',               t: 'total',    v: [2207, 2007, 4082, 4672, 6071, 7590] },
-  { l: 'Margen NOPAT',                      t: 'margin',   v: [32.5, 18.3, 23.9, 21.9, 25.6, 28.2] },
-];
-
-function fmtIS(v, neg, type) {
-  if (v === null || v === undefined) return '<span style="color:var(--gray-mid)">—</span>';
-  if (type === 'margin') return '<span style="color:var(--gray-txt)">' + v.toFixed(1) + '%</span>';
-  const abs = Math.abs(v);
-  const s = abs >= 1000 ? (abs/1000).toFixed(1) + 'B' : abs.toLocaleString();
-  if (v < 0) return '<span style="color:var(--red)">(' + s + ')</span>';
-  return s;
-}
-
-const tbody = document.getElementById('is-tbody');
-if (tbody) {
-  IS_ROWS.forEach(row => {
-    const tr = document.createElement('tr');
-    if (row.t === 'spacer') {
-      tr.innerHTML = '<td colspan="7" style="height:6px;background:var(--cream)"></td>';
-      tbody.appendChild(tr); return;
-    }
-    if (row.t === 'section') {
-      tr.innerHTML = `<td colspan="7" style="padding:8px 18px;background:rgba(27,38,66,0.04);font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--navy);border-top:1px solid var(--rule);">${row.l}</td>`;
-      tbody.appendChild(tr); return;
-    }
-    const isTotal    = row.t === 'total';
-    const isSubtotal = row.t === 'subtotal';
-    const isMarg     = row.t === 'margin';
-    const bg    = isTotal ? 'background:rgba(27,38,66,0.03);' : '';
-    const fw    = (isTotal || isSubtotal) ? 'font-weight:700;' : 'font-weight:400;';
-    const lc    = isTotal ? 'color:var(--navy);' : isMarg ? 'color:var(--gray-mid);font-style:italic;' : 'color:var(--ink);';
-    const bdr   = (isTotal || isSubtotal) ? 'border-top:1px solid var(--rule);' : '';
-    let html = `<td style="padding:8px 18px;${bg}${fw}${lc}${bdr}font-size:${isMarg?'11':'12'}px;">${row.l}</td>`;
-    row.v.forEach((val, i) => {
-      const isFY25 = i === 5;
-      const cellStyle = `text-align:right;padding:8px ${isFY25?'18':'14'}px 8px 14px;${bg}${fw}${bdr}font-size:${isMarg?'11':'12'}px;font-variant-numeric:tabular-nums;${isFY25?'border-left:1px solid var(--rule);':''}`;
-      html += `<td style="${cellStyle}">${fmtIS(val, row.neg, row.t)}</td>`;
-    });
-    tr.innerHTML = html;
-    tbody.appendChild(tr);
-  });
-}
-// ─────────────────────────────────────────────────────────────────
-const BASE = {
-  roic: 398, growth: 2.0, exit: 20, buybacks: 6500, horizon: 5, hurdle: 12.0
-};
-
-// Fixed model constants (FY2025)
-const NOPAT      = 7589.6;
-const EV         = 140316.165;
-const DIVIDENDS  = 1248;
-const INTEREST   = 1617;
-const REINV_RATE = 0.10194;
-const DE_RATIO   = 0.13958;
-const NET_BORR   = 0.06705;
-const ACTUAL_MULT= 18.488;
-
-function calcIRR(roic, growth, exitMult, buybacks, horizon, hurdle) {
-  const dist         = DIVIDENDS + buybacks + INTEREST;
-  const distYield    = dist / EV;
-  // reinvGrowth now driven by the ROIC slider (roic is in %, e.g. 398 = 3.98x)
-  const reinvGrowth  = REINV_RATE * (roic / 100);
-  const totalGrowth  = (growth / 100) + reinvGrowth;
-  const multImpact   = (Math.pow(exitMult / ACTUAL_MULT, 1 / horizon) - 1);
-  const baseReturn   = distYield + totalGrowth + multImpact;
-  const levBoost     = DE_RATIO * (baseReturn - NET_BORR);
-  const equityReturn = baseReturn + levBoost;
-  const mos          = equityReturn - (hurdle / 100);
-  return { distYield, reinvGrowth, growthOrg: growth/100, multImpact, levBoost, equityReturn, mos, dist, buybacks };
-}
-
-function fmtPct(v) {
-  const s = (v * 100).toFixed(2);
-  return (v >= 0 ? '' : '') + s + '%';
-}
-function fmtPctSigned(v) {
-  const s = Math.abs(v * 100).toFixed(2);
-  return (v >= 0 ? '+' : '−') + s + '%';
-}
-function barW(v, max) {
-  return Math.max(0, Math.min(100, Math.abs(v * 100) / max * 100)).toFixed(1) + '%';
-}
-
-function updateIRR() {
-  const roic     = parseFloat(document.getElementById('sl-wacc').value);
-  const growth   = parseFloat(document.getElementById('sl-growth').value);
-  const exit     = parseFloat(document.getElementById('sl-exit').value);
-  const buybacks = parseFloat(document.getElementById('sl-buybacks').value);
-  const horizon  = parseFloat(document.getElementById('sl-horizon').value);
-  const hurdle   = parseFloat(document.getElementById('sl-hurdle').value);
-
-  // Update displays
-  document.getElementById('disp-wacc').textContent     = roic.toFixed(0) + '%';
-  document.getElementById('disp-growth').textContent   = growth.toFixed(1) + '%';
-  document.getElementById('disp-exit').textContent     = exit + '×';
-  document.getElementById('disp-buybacks').textContent = '$' + (buybacks/1000).toFixed(0) + ',' + String(buybacks).slice(-3) + 'M';
-  document.getElementById('disp-horizon').textContent  = horizon + ' años';
-  document.getElementById('disp-hurdle').textContent   = hurdle.toFixed(1) + '%';
-  document.getElementById('irr-exit-label').textContent= exit + '×';
-  document.getElementById('irr-hurdle-label').textContent = hurdle.toFixed(1) + '%';
-
-  const r = calcIRR(roic, growth, exit, buybacks, horizon, hurdle);
-  const MAX_SCALE = 20; // % scale for bars
-
-  // Result cards
-  const totalPct = (r.equityReturn * 100).toFixed(1) + '%';
-  const mosPct   = (r.mos >= 0 ? '+' : '') + (r.mos * 100).toFixed(1) + '%';
-  const totalEl  = document.getElementById('irr-total-display');
-  const mosEl    = document.getElementById('irr-mos-display');
-  totalEl.textContent = totalPct;
-  mosEl.textContent   = mosPct;
-  totalEl.style.color = r.equityReturn >= hurdle/100 ? 'var(--green)' : 'var(--red)';
-  mosEl.style.color   = r.mos >= 0 ? 'var(--green)' : 'var(--red)';
-
-  // Bars
-  const comps = [
-    { bar: 'bar-dist',  pct: 'pct-dist',  val: r.distYield,   label: fmtPct(r.distYield) },
-    { bar: 'bar-org',   pct: 'pct-org',   val: r.growthOrg,   label: fmtPct(r.growthOrg), color: 'var(--green)' },
-    { bar: 'bar-reinv', pct: 'pct-reinv', val: r.reinvGrowth, label: fmtPct(r.reinvGrowth) },
-    { bar: 'bar-mult',  pct: 'pct-mult',  val: r.multImpact,  label: fmtPctSigned(r.multImpact) },
-    { bar: 'bar-lev',   pct: 'pct-lev',   val: r.levBoost,    label: fmtPctSigned(r.levBoost) },
-  ];
-  comps.forEach(c => {
-    document.getElementById(c.bar).style.width = barW(c.val, MAX_SCALE);
-    const pEl = document.getElementById(c.pct);
-    pEl.textContent = c.label;
-    pEl.style.color = c.val < 0 ? 'var(--red)' : (c.color || 'var(--ink)');
-  });
-  const totalW = barW(r.equityReturn, MAX_SCALE);
-  document.getElementById('bar-total').style.width = totalW;
-  const tEl = document.getElementById('pct-total');
-  tEl.textContent = (r.equityReturn * 100).toFixed(2) + '%';
-  tEl.style.color = r.equityReturn >= hurdle/100 ? 'var(--green)' : 'var(--red)';
-
-  // Detail cards
-  const totalDistM = (r.dist / 1000).toFixed(0);
-  document.getElementById('detail-buybacks').textContent  = '$' + buybacks.toLocaleString() + 'M';
-  document.getElementById('detail-total-dist').textContent= '$' + Math.round(r.dist).toLocaleString() + 'M';
-  document.getElementById('detail-payout').textContent    = (r.dist / NOPAT * 100).toFixed(1) + '%';
-  document.getElementById('detail-yield').textContent     = (r.distYield * 100).toFixed(2) + '%';
-}
-
-function resetIRR() {
-  document.getElementById('sl-wacc').value     = BASE.roic;
-  document.getElementById('sl-growth').value   = BASE.growth;
-  document.getElementById('sl-exit').value     = BASE.exit;
-  document.getElementById('sl-buybacks').value = BASE.buybacks;
-  document.getElementById('sl-horizon').value  = BASE.horizon;
-  document.getElementById('sl-hurdle').value   = BASE.hurdle;
-  updateIRR();
-}
-
-function sw(id, btn) {
-  document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
-  document.querySelectorAll('nav button').forEach(e => e.classList.remove('active'));
-  document.getElementById('tab-' + id).classList.add('active');
-  btn.classList.add('active');
-}
-
-['sl-wacc','sl-growth','sl-exit','sl-buybacks','sl-horizon','sl-hurdle'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('input', updateIRR);
-});
-updateIRR();
-</script>
-</body>
-</html>id="tab-breaker" class="tab-content">
+<!-- THESIS BREAKER -->
+<div id="tab-breaker" class="tab-content">
   <div class="slbl" style="color:#c0392b">Thesis Breaker v1.1 — Stress Test Cuantitativo</div>
   <p style="font-size:12px;color:var(--gray-mid);margin-bottom:16px;font-style:italic">Análisis de ruptura de tesis BKNG · 16 páginas · 9 de marzo, 2026</p>
   <div style="margin-bottom:16px">
@@ -1343,7 +1109,8 @@ updateIRR();
 <div class="pdf-line">Confidencial — Solo para uso interno Página 16</div>
 </div>
   </div>
-</div>id="tab-munger" class="tab-content">
+</div>
+ id="tab-munger" class="tab-content">
   <div class="slbl" style="color:#6b4fa0">Munger Digital v3.1 — Audit de Razonamiento</div>
   <p style="font-size:12px;color:var(--gray-mid);margin-bottom:16px;font-style:italic">Score 6.0/10 · Convicción Condicional · 9 páginas · Marzo 2026</p>
   <div style="margin-bottom:16px">
@@ -1598,3 +1365,568 @@ updateIRR();
 </div>
   </div>
 </div>
+
+<!-- INVESTMENT MEMO -->
+<div id="tab-memo" class="tab-content">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+    <div class="slbl" style="margin-bottom:0;border:none">Investment Memo — Booking Holdings (BKNG)</div>
+    <button onclick="exportMemo()" style="background:var(--navy);color:var(--white);border:none;padding:10px 20px;font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer">⬇ Exportar PDF</button>
+  </div>
+
+  <div style="background:var(--white);border:1px solid var(--rule);padding:40px 48px;max-width:860px" id="memo-body">
+    <!-- HEADER MEMO -->
+    <div style="border-bottom:2px solid var(--navy);padding-bottom:20px;margin-bottom:28px">
+      <div style="font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">DCE Holdings — Investment Office</div>
+      <div style="font-size:22px;font-weight:700;color:var(--navy);letter-spacing:-0.02em">Booking Holdings Inc. (BKNG)</div>
+      <div style="font-size:13px;color:var(--gray-mid);margin-top:4px">NASDAQ · Consumer Discretionary · Online Travel Agency</div>
+      <div style="display:flex;gap:32px;margin-top:16px">
+        <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">Fecha modelo</span><br><span style="font-weight:600;font-size:13px">06-Mar-2026</span></div>
+        <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">Precio</span><br><span style="font-weight:600;font-size:13px">$4,235.00</span></div>
+        <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">Market Cap</span><br><span style="font-weight:600;font-size:13px">$138B</span></div>
+        <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">EV</span><br><span style="font-weight:600;font-size:13px">$140.3B</span></div>
+        <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">Última revisión</span><br><span style="font-weight:600;font-size:13px" id="memo-last-review">06-Mar-2026</span></div>
+      </div>
+    </div>
+
+    <!-- COLUMBIA LADDER -->
+    <div class="memo-section">
+      <h3>Columbia Ladder</h3>
+      <div class="memo-row"><span class="mk">Reproduction Value / acción</span><span class="mv">$623.62</span></div>
+      <div class="memo-row"><span class="mk">EPV / acción (NOPAT ÷ WACC)</span><span class="mv">$2,341.12</span></div>
+      <div class="memo-row"><span class="mk">Precio actual</span><span class="mv">$4,235.00</span></div>
+      <div class="memo-row"><span class="mk">EPV / RV (franchise test)</span><span class="mv" style="color:var(--green)">3.75× ✓ Moat confirmado</span></div>
+      <div class="memo-row"><span class="mk">Precio / EPV</span><span class="mv" style="color:var(--red)">1.81× — mercado paga prima de crecimiento</span></div>
+    </div>
+
+    <!-- VALORACIÓN -->
+    <div class="memo-section">
+      <h3>Valoración — Implied IRR Framework</h3>
+      <div class="memo-row"><span class="mk">NOPAT Normalizado</span><span class="mv">$7,590M</span></div>
+      <div class="memo-row"><span class="mk">WACC</span><span class="mv">9.52% (β=1.10, Ke=10.35%, ERP=5.50%)</span></div>
+      <div class="memo-row"><span class="mk">Distribution Yield</span><span class="mv">6.67%</span></div>
+      <div class="memo-row"><span class="mk">Crecimiento orgánico</span><span class="mv">2.0%</span></div>
+      <div class="memo-row"><span class="mk">Crecimiento por reinversión (ROIC 398%)</span><span class="mv">40.6%</span></div>
+      <div class="memo-row"><span class="mk">Exit múltiplo supuesto</span><span class="mv">20× EV/NOPAT (actual 18.5×)</span></div>
+      <div class="memo-row"><span class="mk">Implied IRR (Equity)</span><span class="mv" style="color:var(--green);font-size:16px">57.0%</span></div>
+      <div class="memo-row"><span class="mk">Hurdle Rate DCE</span><span class="mv">12.0%</span></div>
+      <div class="memo-row"><span class="mk">Margen de Seguridad</span><span class="mv" style="color:var(--green)">+45.0%</span></div>
+    </div>
+
+    <!-- CALIDAD -->
+    <div class="memo-section">
+      <h3>Calidad del Negocio</h3>
+      <div class="memo-row"><span class="mk">Revenue CAGR 3yr</span><span class="mv">16.3%</span></div>
+      <div class="memo-row"><span class="mk">FCF Margin FY2025</span><span class="mv">33.8%</span></div>
+      <div class="memo-row"><span class="mk">Operating Margin FY2025</span><span class="mv">32.8%</span></div>
+      <div class="memo-row"><span class="mk">Marginal ROIC 3yr (growth)</span><span class="mv">136%</span></div>
+      <div class="memo-row"><span class="mk">Modelo de negocio</span><span class="mv">OTA capital-light · WC negativo · duopolio BKNG/EXPE</span></div>
+      <div class="memo-row"><span class="mk">Riesgo principal</span><span class="mv">Dependencia Google/metasearch · equity negativo</span></div>
+    </div>
+
+    <!-- NOTAS CIO -->
+    <div class="memo-section">
+      <h3>Notas del CIO</h3>
+      <div style="min-height:80px;padding:14px;border:1px solid var(--rule);font-size:13px;line-height:1.7;color:var(--ink);white-space:pre-wrap" id="memo-cio-notes">(sin notas)</div>
+    </div>
+
+    <!-- FOOTER MEMO -->
+    <div style="border-top:1px solid var(--rule);padding-top:16px;margin-top:8px;font-size:10px;color:var(--gray-mid)">
+      DCE Holdings Investment Office · Modelo Columbia Framework · Solo para uso interno · Sin veredicto de inversión — decisión del CIO
+    </div>
+  </div>
+</div>
+
+<!-- PRESENT MODE -->
+<div id="tab-present" class="tab-content">
+  <div class="slbl">Modo Presentación — Booking Holdings (BKNG)</div>
+  <div class="g3" style="margin-bottom:24px">
+    <div class="present-card card"><div class="big gold">$4,235</div><div class="lbl">Precio Actual</div></div>
+    <div class="present-card card"><div class="big green">57.0%</div><div class="lbl">Implied IRR</div></div>
+    <div class="present-card card"><div class="big" style="color:var(--green)">+45.0%</div><div class="lbl">Margen de Seguridad vs. Hurdle 12%</div></div>
+  </div>
+  <div class="g3" style="margin-bottom:24px">
+    <div class="present-card card"><div class="big" style="font-size:40px">$2,341</div><div class="lbl">EPV por Acción</div></div>
+    <div class="present-card card"><div class="big green" style="font-size:40px">3.75×</div><div class="lbl">EPV / RV — Moat Confirmado</div></div>
+    <div class="present-card card"><div class="big gold" style="font-size:40px">1.81×</div><div class="lbl">Precio / EPV — Prima de Crecimiento</div></div>
+  </div>
+  <div class="g4">
+    <div class="card"><div class="clbl">NOPAT Normalizado</div><div class="cval gold">$7,590M</div></div>
+    <div class="card"><div class="clbl">FCF Margin</div><div class="cval green">33.8%</div></div>
+    <div class="card"><div class="clbl">Revenue CAGR 3yr</div><div class="cval green">16.3%</div></div>
+    <div class="card"><div class="clbl">WACC</div><div class="cval gold">9.52%</div></div>
+  </div>
+  <div style="text-align:center;margin-top:32px">
+    <button onclick="togglePresentMode()" style="background:var(--navy);color:var(--white);border:none;padding:12px 32px;font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer">✕ Salir del modo presentación</button>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <div class="fl"><strong>DCE</strong> Holdings — Investment Office</div>
+  <div class="fr">Booking Holdings (BKNG) &nbsp;·&nbsp; Modelo Columbia &nbsp;·&nbsp; 6 de marzo, 2026 &nbsp;·&nbsp; USD Millones &nbsp;·&nbsp; Sin veredicto de inversión — decisión del CIO</div>
+</footer>
+
+<script>
+Chart.defaults.font.family = "'Archivo','Helvetica Neue',sans-serif";
+Chart.defaults.font.size = 10;
+Chart.defaults.color = '#8a9098';
+
+const G = '#b88b47', GN = '#2a7a56', RD = '#9b2335', GM = '#8a9098', GT = '#606060', GL = '#d4aa6a';
+const dg = { grid: { color: 'rgba(27,38,66,0.06)', drawBorder: false }, ticks: { color: '#9a9ea6', font: { size: 10 } } };
+const dgp = { ...dg, ticks: { ...dg.ticks, callback: v => v + '%' } };
+const dgb = { ...dg, ticks: { ...dg.ticks, callback: v => '$' + (Math.abs(v)/1000).toFixed(0) + 'B' } };
+const leg = { position: 'top', labels: { boxWidth: 9, color: GT, padding: 12 } };
+const yr = ['FY20','FY21','FY22','FY23','FY24','FY25'];
+
+new Chart(document.getElementById('c1'), { type: 'bar', data: { labels: yr, datasets: [
+  { label: 'Net Revenue', data: [6796,10958,17090,21365,23739,26917], backgroundColor: 'rgba(184,139,71,0.68)', borderRadius: 2 },
+  { label: 'NOPAT Ajustado', data: [2207,2007,4082,4672,6071,7590], backgroundColor: 'rgba(76,175,136,0.62)', borderRadius: 2 }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
+
+new Chart(document.getElementById('c2'), { type: 'line', data: { labels: yr, datasets: [
+  { label: 'Margen Operativo', data: [-9.3,22.8,29.9,27.3,31.8,32.8], borderColor: G, backgroundColor: 'rgba(184,139,71,0.07)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4, pointBackgroundColor: G },
+  { label: 'Margen Neto', data: [0.9,10.6,17.9,20.1,24.8,20.1], borderColor: GN, backgroundColor: 'rgba(76,175,136,0.05)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4, pointBackgroundColor: GN }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgp } } });
+
+new Chart(document.getElementById('c3'), { type: 'bar', data: { labels: yr, datasets: [
+  { label: 'CFO', data: [85,2820,6554,7344,8323,9409], backgroundColor: 'rgba(184,139,71,0.65)', borderRadius: 2 },
+  { label: 'FCF', data: [-201,2516,6186,6999,7894,9087], backgroundColor: 'rgba(76,175,136,0.58)', borderRadius: 2 },
+  { label: 'Buybacks', data: [-1303,-163,-6621,-10377,-6509,-6440], backgroundColor: 'rgba(224,96,96,0.5)', borderRadius: 2 }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
+
+new Chart(document.getElementById('c4'), { type: 'doughnut', data: {
+  labels: ['Buybacks ($6,440M)','Dividendos ($1,248M)','CapEx ($322M)','Deuda Neta ($1,289M)','Exceso Caja ($255M)'],
+  datasets: [{ data: [6440,1248,322,1289,255], backgroundColor: [G,GN,'#7acfaa',GL,GT], borderWidth: 0, hoverOffset: 10 }]
+}, options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 9, color: GM, font: { size: 10 } } } }, cutout: '65%' } });
+
+new Chart(document.getElementById('c5'), { type: 'bar', data: { labels: yr, datasets: [
+  { label: 'Net Revenue', data: [6796,10958,17090,21365,23739,26917], backgroundColor: 'rgba(184,139,71,0.65)', borderRadius: 2 },
+  { label: 'Operating Income', data: [-631,2496,5102,5835,7555,8825], backgroundColor: 'rgba(76,175,136,0.58)', borderRadius: 2 },
+  { label: 'Net Income', data: [59,1165,3058,4289,5882,5404], backgroundColor: 'rgba(122,207,170,0.42)', borderRadius: 2 }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
+
+new Chart(document.getElementById('c6'), { type: 'doughnut', data: {
+  labels: ['Marketing ($8,186M)','Personnel ($3,403M)','Sales & Other ($3,453M)','G&A ($857M)','IT ($908M)','D&A ($623M)','Otros ($662M)'],
+  datasets: [{ data: [8186,3403,3453,857,908,623,662], backgroundColor: [G,'#8a9ab5',RD,GN,GL,'#4a7a6a',GT], borderWidth: 0, hoverOffset: 8 }]
+}, options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 9, color: GM, font: { size: 10 } } } }, cutout: '58%' } });
+
+new Chart(document.getElementById('c7'), { type: 'bar', data: { labels: yr, datasets: [
+  { label: 'CFO', data: [85,2820,6554,7344,8323,9409], backgroundColor: 'rgba(184,139,71,0.65)', borderRadius: 2 },
+  { label: 'CFI', data: [2637,-998,-518,1486,129,-313], backgroundColor: 'rgba(76,175,136,0.55)', borderRadius: 2 },
+  { label: 'CFF', data: [1561,-1216,-4897,-8909,-4204,-8915], backgroundColor: 'rgba(224,96,96,0.5)', borderRadius: 2 }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
+
+new Chart(document.getElementById('c8'), { type: 'line', data: { labels: yr, datasets: [
+  { label: 'NOPAT Ajustado', data: [2207,2007,4082,4672,6071,7590], borderColor: G, backgroundColor: 'rgba(184,139,71,0.08)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: G },
+  { label: 'Net Income Reportado', data: [59,1165,3058,4289,5882,5404], borderColor: GT, borderDash: [5,4], backgroundColor: 'transparent', tension: 0.3, borderWidth: 1.5, pointRadius: 3 }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
+
+new Chart(document.getElementById('c9'), { type: 'bar', data: { labels: yr, datasets: [
+  { label: 'Total Activos', data: [21874,23641,22542,24342,27708,29264], backgroundColor: 'rgba(184,139,71,0.2)', borderColor: G, borderWidth: 1.5, borderRadius: 2 },
+  { label: 'Total Pasivos', data: [16981,17463,20103,27086,31728,34842], backgroundColor: 'rgba(224,96,96,0.28)', borderColor: RD, borderWidth: 1, borderRadius: 2 },
+  { label: 'Patrimonio', data: [4893,6178,2834,-2744,-4020,-5578], backgroundColor: 'rgba(76,175,136,0.38)', borderColor: GN, borderWidth: 1, borderRadius: 2 }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
+
+new Chart(document.getElementById('c10'), { type: 'line', data: { labels: yr, datasets: [
+  { label: 'ROIC Ajustado (%)', data: [100.9,47.7,110.1,164.9,707.9,610.4], borderColor: G, backgroundColor: 'rgba(184,139,71,0.08)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: G },
+  { label: 'WACC (9.52%)', data: [9.52,9.52,9.52,9.52,9.52,9.52], borderColor: RD, borderDash: [6,4], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0 }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: { ...dg, ticks: { ...dg.ticks, callback: v => v + '%' } } } } });
+
+new Chart(document.getElementById('c11'), { type: 'doughnut', data: {
+  labels: ['PP&E ($807M)','WC Operativo (−$9,757M)','Other LT Assets ($2,310M)','S&M Asset ($7,883M)','(Equity Negativo)'],
+  datasets: [{ data: [807,9757,2310,7883,5578], backgroundColor: [GN,'#3a6080',RD,G,GL], borderWidth: 0, hoverOffset: 8 }]
+}, options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 9, color: GM, font: { size: 9 } } } }, cutout: '60%' } });
+
+new Chart(document.getElementById('c12'), { type: 'radar', data: {
+  labels: ['Solidez\nFinanciera','Rentabilidad','Crecimiento','Asset-Light','Capital\nAllocation','Rule of 40'],
+  datasets: [{ label: 'Visa FY2025', data: [90,95,80,92,88,95], backgroundColor: 'rgba(184,139,71,0.1)', borderColor: G, borderWidth: 2, pointBackgroundColor: G, pointRadius: 4 }]
+}, options: { responsive: true, scales: { r: { min: 0, max: 100, grid: { color: 'rgba(27,38,66,0.07)' }, angleLines: { color: 'rgba(27,38,66,0.07)' }, pointLabels: { font: { size: 10 }, color: GT }, ticks: { display: false } } }, plugins: { legend: { display: false } } } });
+
+// ── INCOME STATEMENT TABLE ────────────────────────────────────────
+const IS_ROWS = [
+  { l: 'INGRESOS',                          t: 'section' },
+  { l: 'Merchant Revenues',                 t: 'normal',   v: [2117, 3696, 7193, 10936, 14142, 17755] },
+  { l: 'Agency Revenues',                   t: 'normal',   v: [4314, 6663, 9003, 9414, 8524, 7968] },
+  { l: 'Advertising & Other',               t: 'normal',   v: [365, 599, 894, 1015, 1073, 1194] },
+  { l: 'Net Revenues',                      t: 'subtotal', v: [6796, 10958, 17090, 21365, 23739, 26917] },
+  { l: '',                                  t: 'spacer' },
+  { l: 'GASTOS OPERATIVOS',                 t: 'section' },
+  { l: 'Marketing Expenses',                t: 'normal',   v: [-2179, -3801, -5993, -6773, -7278, -8186], neg: true },
+  { l: 'Sales and Other Expenses',          t: 'normal',   v: [-755, -881, -1986, -2744, -3120, -3453], neg: true },
+  { l: 'Personnel (incl. SBC)',             t: 'normal',   v: [-1944, -2314, -2465, -3294, -3354, -3403], neg: true },
+  { l: 'General and Administrative',        t: 'normal',   v: [-581, -620, -766, -1555, -1036, -857], neg: true },
+  { l: 'Information Technology',            t: 'normal',   v: [-299, -412, -526, -655, -771, -908], neg: true },
+  { l: 'D&A',                               t: 'normal',   v: [-458, -421, -451, -504, -591, -623], neg: true },
+  { l: 'Restructuring / Impairment / Other',t: 'normal',   v: [-1211, -13, 199, -5, -34, -662], neg: true },
+  { l: 'Total OpEx',                        t: 'subtotal', v: [-7427, -8462, -11988, -15530, -16184, -18092], neg: true },
+  { l: '',                                  t: 'spacer' },
+  { l: 'Operating Income',                  t: 'total',    v: [-631, 2496, 5102, 5835, 7555, 8825] },
+  { l: 'Margen Operativo',                  t: 'margin',   v: [-9.3, 22.8, 29.9, 27.3, 31.8, 32.8] },
+  { l: '',                                  t: 'spacer' },
+  { l: 'NON-OPERATING',                     t: 'section' },
+  { l: 'Interest Expense',                  t: 'normal',   v: [-356, -334, -391, -897, -1295, -1617], neg: true },
+  { l: 'Interest & Dividend Income',        t: 'normal',   v: [0, 0, 219, 1020, 1114, 921] },
+  { l: 'Other Income (Expense), Net',       t: 'normal',   v: [1554, -697, -1007, -477, -82, -1297] },
+  { l: 'EBT',                               t: 'subtotal', v: [567, 1465, 3923, 5481, 7292, 6832] },
+  { l: 'Income Tax Expense',                t: 'normal',   v: [-508, -300, -865, -1192, -1410, -1428], neg: true },
+  { l: 'ETR Efectiva',                      t: 'margin',   v: [89.6, 20.5, 22.1, 21.7, 19.3, 20.9] },
+  { l: '',                                  t: 'spacer' },
+  { l: 'Net Income (GAAP)',                 t: 'total',    v: [59, 1165, 3058, 4289, 5882, 5404] },
+  { l: 'Margen Neto',                       t: 'margin',   v: [0.9, 10.6, 17.9, 20.1, 24.8, 20.1] },
+  { l: '',                                  t: 'spacer' },
+  { l: 'AJUSTES DCE',                       t: 'section' },
+  { l: '(+) Impairment + Transformation',   t: 'normal',   v: [null, null, null, null, null, 662] },
+  { l: '(−) S&M Growth Expense',            t: 'normal',   v: [null, null, null, null, null, -774], neg: true },
+  { l: 'NOPAT Ajustado DCE',               t: 'total',    v: [2207, 2007, 4082, 4672, 6071, 7590] },
+  { l: 'Margen NOPAT',                      t: 'margin',   v: [32.5, 18.3, 23.9, 21.9, 25.6, 28.2] },
+];
+
+function fmtIS(v, neg, type) {
+  if (v === null || v === undefined) return '<span style="color:var(--gray-mid)">—</span>';
+  if (type === 'margin') return '<span style="color:var(--gray-txt)">' + v.toFixed(1) + '%</span>';
+  const abs = Math.abs(v);
+  const s = abs >= 1000 ? (abs/1000).toFixed(1) + 'B' : abs.toLocaleString();
+  if (v < 0) return '<span style="color:var(--red)">(' + s + ')</span>';
+  return s;
+}
+
+const tbody = document.getElementById('is-tbody');
+if (tbody) {
+  IS_ROWS.forEach(row => {
+    const tr = document.createElement('tr');
+    if (row.t === 'spacer') {
+      tr.innerHTML = '<td colspan="7" style="height:6px;background:var(--cream)"></td>';
+      tbody.appendChild(tr); return;
+    }
+    if (row.t === 'section') {
+      tr.innerHTML = `<td colspan="7" style="padding:8px 18px;background:rgba(27,38,66,0.04);font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--navy);border-top:1px solid var(--rule);">${row.l}</td>`;
+      tbody.appendChild(tr); return;
+    }
+    const isTotal    = row.t === 'total';
+    const isSubtotal = row.t === 'subtotal';
+    const isMarg     = row.t === 'margin';
+    const bg    = isTotal ? 'background:rgba(27,38,66,0.03);' : '';
+    const fw    = (isTotal || isSubtotal) ? 'font-weight:700;' : 'font-weight:400;';
+    const lc    = isTotal ? 'color:var(--navy);' : isMarg ? 'color:var(--gray-mid);font-style:italic;' : 'color:var(--ink);';
+    const bdr   = (isTotal || isSubtotal) ? 'border-top:1px solid var(--rule);' : '';
+    let html = `<td style="padding:8px 18px;${bg}${fw}${lc}${bdr}font-size:${isMarg?'11':'12'}px;">${row.l}</td>`;
+    row.v.forEach((val, i) => {
+      const isFY25 = i === 5;
+      const cellStyle = `text-align:right;padding:8px ${isFY25?'18':'14'}px 8px 14px;${bg}${fw}${bdr}font-size:${isMarg?'11':'12'}px;font-variant-numeric:tabular-nums;${isFY25?'border-left:1px solid var(--rule);':''}`;
+      html += `<td style="${cellStyle}">${fmtIS(val, row.neg, row.t)}</td>`;
+    });
+    tr.innerHTML = html;
+    tbody.appendChild(tr);
+  });
+}
+// ─────────────────────────────────────────────────────────────────
+const BASE = {
+  roic: 398, growth: 2.0, exit: 20, buybacks: 6500, horizon: 5, hurdle: 12.0
+};
+
+// Fixed model constants (FY2025)
+const NOPAT      = 7589.6;
+const EV         = 140316.165;
+const DIVIDENDS  = 1248;
+const INTEREST   = 1617;
+const REINV_RATE = 0.10194;
+const DE_RATIO   = 0.13958;
+const NET_BORR   = 0.06705;
+const ACTUAL_MULT= 18.488;
+
+function calcIRR(roic, growth, exitMult, buybacks, horizon, hurdle) {
+  const dist         = DIVIDENDS + buybacks + INTEREST;
+  const distYield    = dist / EV;
+  // reinvGrowth now driven by the ROIC slider (roic is in %, e.g. 398 = 3.98x)
+  const reinvGrowth  = REINV_RATE * (roic / 100);
+  const totalGrowth  = (growth / 100) + reinvGrowth;
+  const multImpact   = (Math.pow(exitMult / ACTUAL_MULT, 1 / horizon) - 1);
+  const baseReturn   = distYield + totalGrowth + multImpact;
+  const levBoost     = DE_RATIO * (baseReturn - NET_BORR);
+  const equityReturn = baseReturn + levBoost;
+  const mos          = equityReturn - (hurdle / 100);
+  return { distYield, reinvGrowth, growthOrg: growth/100, multImpact, levBoost, equityReturn, mos, dist, buybacks };
+}
+
+function fmtPct(v) {
+  const s = (v * 100).toFixed(2);
+  return (v >= 0 ? '' : '') + s + '%';
+}
+function fmtPctSigned(v) {
+  const s = Math.abs(v * 100).toFixed(2);
+  return (v >= 0 ? '+' : '−') + s + '%';
+}
+function barW(v, max) {
+  return Math.max(0, Math.min(100, Math.abs(v * 100) / max * 100)).toFixed(1) + '%';
+}
+
+function updateIRR() {
+  const roic     = parseFloat(document.getElementById('sl-wacc').value);
+  const growth   = parseFloat(document.getElementById('sl-growth').value);
+  const exit     = parseFloat(document.getElementById('sl-exit').value);
+  const buybacks = parseFloat(document.getElementById('sl-buybacks').value);
+  const horizon  = parseFloat(document.getElementById('sl-horizon').value);
+  const hurdle   = parseFloat(document.getElementById('sl-hurdle').value);
+
+  // Update displays
+  document.getElementById('disp-wacc').textContent     = roic.toFixed(0) + '%';
+  document.getElementById('disp-growth').textContent   = growth.toFixed(1) + '%';
+  document.getElementById('disp-exit').textContent     = exit + '×';
+  document.getElementById('disp-buybacks').textContent = '$' + (buybacks/1000).toFixed(0) + ',' + String(buybacks).slice(-3) + 'M';
+  document.getElementById('disp-horizon').textContent  = horizon + ' años';
+  document.getElementById('disp-hurdle').textContent   = hurdle.toFixed(1) + '%';
+  document.getElementById('irr-exit-label').textContent= exit + '×';
+  document.getElementById('irr-hurdle-label').textContent = hurdle.toFixed(1) + '%';
+
+  const r = calcIRR(roic, growth, exit, buybacks, horizon, hurdle);
+  const MAX_SCALE = 20; // % scale for bars
+
+  // Result cards
+  const totalPct = (r.equityReturn * 100).toFixed(1) + '%';
+  const mosPct   = (r.mos >= 0 ? '+' : '') + (r.mos * 100).toFixed(1) + '%';
+  const totalEl  = document.getElementById('irr-total-display');
+  const mosEl    = document.getElementById('irr-mos-display');
+  totalEl.textContent = totalPct;
+  mosEl.textContent   = mosPct;
+  totalEl.style.color = r.equityReturn >= hurdle/100 ? 'var(--green)' : 'var(--red)';
+  mosEl.style.color   = r.mos >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Bars
+  const comps = [
+    { bar: 'bar-dist',  pct: 'pct-dist',  val: r.distYield,   label: fmtPct(r.distYield) },
+    { bar: 'bar-org',   pct: 'pct-org',   val: r.growthOrg,   label: fmtPct(r.growthOrg), color: 'var(--green)' },
+    { bar: 'bar-reinv', pct: 'pct-reinv', val: r.reinvGrowth, label: fmtPct(r.reinvGrowth) },
+    { bar: 'bar-mult',  pct: 'pct-mult',  val: r.multImpact,  label: fmtPctSigned(r.multImpact) },
+    { bar: 'bar-lev',   pct: 'pct-lev',   val: r.levBoost,    label: fmtPctSigned(r.levBoost) },
+  ];
+  comps.forEach(c => {
+    document.getElementById(c.bar).style.width = barW(c.val, MAX_SCALE);
+    const pEl = document.getElementById(c.pct);
+    pEl.textContent = c.label;
+    pEl.style.color = c.val < 0 ? 'var(--red)' : (c.color || 'var(--ink)');
+  });
+  const totalW = barW(r.equityReturn, MAX_SCALE);
+  document.getElementById('bar-total').style.width = totalW;
+  const tEl = document.getElementById('pct-total');
+  tEl.textContent = (r.equityReturn * 100).toFixed(2) + '%';
+  tEl.style.color = r.equityReturn >= hurdle/100 ? 'var(--green)' : 'var(--red)';
+
+  // Detail cards
+  const totalDistM = (r.dist / 1000).toFixed(0);
+  document.getElementById('detail-buybacks').textContent  = '$' + buybacks.toLocaleString() + 'M';
+  document.getElementById('detail-total-dist').textContent= '$' + Math.round(r.dist).toLocaleString() + 'M';
+  document.getElementById('detail-payout').textContent    = (r.dist / NOPAT * 100).toFixed(1) + '%';
+  document.getElementById('detail-yield').textContent     = (r.distYield * 100).toFixed(2) + '%';
+}
+
+function resetIRR() {
+  document.getElementById('sl-wacc').value     = BASE.roic;
+  document.getElementById('sl-growth').value   = BASE.growth;
+  document.getElementById('sl-exit').value     = BASE.exit;
+  document.getElementById('sl-buybacks').value = BASE.buybacks;
+  document.getElementById('sl-horizon').value  = BASE.horizon;
+  document.getElementById('sl-hurdle').value   = BASE.hurdle;
+  updateIRR();
+}
+
+function sw(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('nav button:not(#btn-present)').forEach(e => e.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  if (btn && btn.id !== 'btn-present') btn.classList.add('active');
+}
+
+['sl-wacc','sl-growth','sl-exit','sl-buybacks','sl-horizon','sl-hurdle'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', updateIRR);
+});
+updateIRR();
+
+// ── LIVE PRICE ────────────────────────────────────────────────────
+const MODEL_PRICE = 4235.00;
+const MODEL_EV    = 140316.165;
+
+async function fetchLivePrice() {
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 100,
+        messages: [{ role: 'user', content: 'What is the current stock price of BKNG (Booking Holdings)? Reply with ONLY a number, no text, no $ sign.' }],
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }]
+      })
+    });
+    const d = await r.json();
+    const txt = d.content?.find(b => b.type === 'text')?.text?.trim();
+    const price = parseFloat(txt?.replace(/[^0-9.]/g,''));
+    if (price && price > 100) {
+      document.getElementById('live-price').textContent = '$' + price.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+      document.getElementById('price-status').textContent = 'live ●';
+      document.getElementById('price-status').style.color = '#4aaa6a';
+      // Recalculate IRR with live price
+      const liveEV = MODEL_EV * (price / MODEL_PRICE);
+      document.getElementById('live-price-note').textContent = `Precio live: $${price.toLocaleString()} · EV ajustado: $${(liveEV/1000).toFixed(0)}B`;
+    }
+  } catch(e) {
+    document.getElementById('price-status').textContent = 'modelo';
+  }
+}
+fetchLivePrice();
+
+// ── LAST REVIEW DATE ──────────────────────────────────────────────
+let lastReview = localStorage.getItem('bkng_last_review') || '06-Mar-2026';
+document.getElementById('last-review-display').textContent = lastReview;
+document.getElementById('review-date-input').value = lastReview;
+
+function saveReviewDate() {
+  lastReview = document.getElementById('review-date-input').value;
+  localStorage.setItem('bkng_last_review', lastReview);
+  document.getElementById('last-review-display').textContent = lastReview;
+  document.getElementById('review-modal').style.display = 'none';
+}
+
+// ── CIO NOTES ─────────────────────────────────────────────────────
+const notesKey = 'bkng_cio_notes';
+const savedNotes = localStorage.getItem(notesKey) || '';
+document.getElementById('cio-notes-area').value = savedNotes;
+document.getElementById('cio-notes-area').addEventListener('input', function() {
+  localStorage.setItem(notesKey, this.value);
+  document.getElementById('notes-saved').textContent = 'Guardado ✓';
+  setTimeout(() => document.getElementById('notes-saved').textContent = '', 2000);
+});
+
+// Load notes into memo too
+document.getElementById('memo-cio-notes').textContent = savedNotes || '(sin notas)';
+document.getElementById('cio-notes-area').addEventListener('input', function() {
+  document.getElementById('memo-cio-notes').textContent = this.value || '(sin notas)';
+});
+
+// ── AI CHAT ENGINE ────────────────────────────────────────────────
+const BKNG_CONTEXT = `Eres DCE Investment Assistant, el asistente de análisis de inversión del CIO de DCE Holdings Investment Office (micro family office, Guatemala). Tu rol es ayudar al CIO a auditar y validar tesis de inversión usando el framework Columbia Business School (Asset Value → EPV → Growth Value).
+
+DATOS DEL MODELO BKNG (FY2025):
+- Empresa: Booking Holdings Inc. (BKNG / NASDAQ)
+- Precio: $4,235.00 | Market Cap: $138B | EV: $140.3B
+- Net Revenue: $26,917M | Operating Income: $8,825M (32.8% margen)
+- NOPAT Ajustado: $7,590M | FCF: $9,087M (33.8% margen)
+- WACC: 9.52% (β=1.10, Ke=10.35%, ERP=5.50%)
+- ROIC Contable FY2025: 610% (distorsionado por equity negativo vía buybacks)
+- Marginal ROIC 3yr: 136% | ROIC Seleccionado IRR: 398%
+- Invested Capital: $1,243M (comprimido por WC negativo -$9,757M)
+- Reproduction Value/acción: $623.62
+- EPV/acción: $2,341.12 (NOPAT $7,590M ÷ WACC 9.52%)
+- Precio/EPV: 1.81× (mercado paga prima de crecimiento)
+- EPV/RV: 3.75× (moat confirmado)
+- Implied IRR: 57.0% | Hurdle Rate: 12% | MoS: +45.0%
+- Buybacks sostenibles: $6,500M/año | Dividendos: $1,248M
+- Crecimiento orgánico supuesto: 2.0% | Exit múltiplo: 20×
+- Deuda total: $18,736M | Equity negativo: -$5,578M (efecto buybacks)
+- Marketing/Revenue: 30.4% (riesgo Google/metasearch dependency)
+- Revenue CAGR 3yr: 16.3% | FCF CAGR 3yr: 13.7%
+- S&M vida útil: 3 años | R&D: N/A
+- Normalización FY2025: excluye Impairment $457M + Transformation $205M
+
+RIESGOS CLAVE:
+1. Dependencia Google/metasearch (costo marketing inflación)
+2. Equity negativo (flexibilidad financiera limitada)
+3. Exposición cíclica viajes (OTA modelo)
+4. Regulación EU
+
+OPORTUNIDADES:
+1. Connected Trip strategy
+2. Flights/attractions (37%/80% crecimiento tickets)
+3. Payments monetization
+4. AI-driven customer service
+
+Responde siempre en español. Sé directo, técnico y conciso. Cuando hagas análisis de sensibilidad usa los números del modelo. Cuando identifiques riesgos, cuantifícalos si puedes.`;
+
+async function sendAIMessage(inputId, historyId, containerId, systemPrompt) {
+  const input = document.getElementById(inputId);
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  const history = document.getElementById(historyId);
+  const container = document.getElementById(containerId);
+
+  // Add user message
+  history.innerHTML += `<div style="margin-bottom:16px"><div style="font-size:9px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:6px">CIO</div><div style="background:var(--cream);border:1px solid var(--rule);padding:12px 16px;font-size:13px;line-height:1.6">${msg}</div></div>`;
+  input.value = '';
+  history.innerHTML += `<div id="ai-typing-${containerId}" style="margin-bottom:16px"><div style="font-size:9px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">DCE Assistant</div><div style="padding:12px 16px;font-size:13px;color:var(--gray-mid);font-style:italic">Analizando...</div></div>`;
+  container.scrollTop = container.scrollHeight;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: msg }]
+      })
+    });
+    const data = await response.json();
+    const reply = data.content?.[0]?.text || 'Error al obtener respuesta.';
+    const typingEl = document.getElementById(`ai-typing-${containerId}`);
+    if (typingEl) typingEl.innerHTML = `<div style="font-size:9px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">DCE Assistant</div><div style="border-left:2px solid var(--gold);padding:12px 16px;font-size:13px;line-height:1.7;white-space:pre-wrap">${reply}</div>`;
+  } catch(e) {
+    const typingEl = document.getElementById(`ai-typing-${containerId}`);
+    if (typingEl) typingEl.innerHTML = `<div style="color:var(--red);font-size:12px;padding:12px">Error de conexión con la API.</div>`;
+  }
+  container.scrollTop = container.scrollHeight;
+}
+
+// ── PRESENT MODE ──────────────────────────────────────────────────
+let presentActive = false;
+function togglePresentMode() {
+  presentActive = !presentActive;
+  const btn = document.getElementById('btn-present');
+  if (presentActive) {
+    document.body.classList.add('present-mode');
+    btn.textContent = '✕ Exit Present';
+    btn.style.color = 'var(--red)';
+    // Switch to overview
+    document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+    document.getElementById('tab-present').classList.add('active');
+  } else {
+    document.body.classList.remove('present-mode');
+    btn.textContent = '⊞ Present';
+    btn.style.color = 'var(--gray-mid)';
+    document.getElementById('tab-present').classList.remove('active');
+    document.getElementById('tab-overview').classList.add('active');
+  }
+}
+
+// ── PDF EXPORT ────────────────────────────────────────────────────
+function exportMemo() {
+  window.print();
+}
+// ── QUICK MUNGER ─────────────────────────────────────────────────
+function quickMunger(question) {
+  document.getElementById('munger-input').value = question;
+  sw('munger', null);
+  sendAIMessage('munger-input','munger-history','munger-history', BKNG_CONTEXT + ' Eres el DCE MUNGER DIGITAL: audita la calidad del razonamiento, busca sesgos cognitivos, inconsistencias lógicas. Inspírate en Charlie Munger. No repitas datos — cuestiona el razonamiento.');
+}
+
+// Sync last review to memo
+setTimeout(() => {
+  const el = document.getElementById('memo-last-review');
+  if (el) el.textContent = lastReview;
+}, 100);
+</script>
+<div id="review-modal" style="display:none;position:fixed;inset:0;background:rgba(27,38,66,0.6);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:var(--white);padding:32px;width:360px;border-top:3px solid var(--gold)">
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--navy);margin-bottom:16px">Actualizar fecha de revisión</div>
+    <input id="review-date-input" type="text" placeholder="06-Mar-2026" style="width:100%;padding:10px 14px;border:1px solid var(--rule);font-family:'Archivo',sans-serif;font-size:14px;margin-bottom:16px;outline:none">
+    <div style="display:flex;gap:10px">
+      <button onclick="saveReviewDate()" style="flex:1;background:var(--navy);color:var(--white);border:none;padding:10px;font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer">Guardar</button>
+      <button onclick="document.getElementById('review-modal').style.display='none'" style="flex:1;background:var(--cream);color:var(--gray-mid);border:1px solid var(--rule);padding:10px;font-family:'Archivo',sans-serif;font-size:11px;cursor:pointer">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
