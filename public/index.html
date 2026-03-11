@@ -29,18 +29,10 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--cream); color: var(--ink); font-family: 'Archivo','Helvetica Neue',Helvetica,sans-serif; font-size: 15px; line-height: 1.5; min-height: 100vh; }
 
-  .wave-deco { position: fixed; pointer-events: none; z-index: -1; opacity: 0.07; }
+  .wave-deco { position: fixed; pointer-events: none; z-index: 0; opacity: 0.07; }
   .wave-deco.tr { top: -40px; right: -60px; width: 480px; }
   .wave-deco.bl { bottom: -60px; left: -40px; width: 420px; transform: rotate(180deg); }
 
-
-  /* PDF VIEWER */
-  .pdf-viewer { background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);margin-bottom:20px;max-height:520px;overflow-y:auto;padding:0 }
-  .pdf-page { padding:24px 28px;border-bottom:1px solid var(--rule) }
-  .pdf-page-num { font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--rule) }
-  .pdf-header { font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--navy);margin:14px 0 6px;padding-top:10px }
-  .pdf-table-row { font-family:'Courier New',monospace;font-size:11px;color:var(--ink);padding:2px 0;white-space:pre-wrap }
-  .pdf-line { font-size:12px;color:var(--ink);line-height:1.6;padding:1px 0 }
   /* HEADER */
   header { position: relative; z-index: 10; background: var(--navy); border-bottom: 2px solid var(--gold); padding: 0 48px; display: flex; align-items: stretch; min-height: 70px; }
   .hbrand { display: flex; align-items: center; gap: 18px; padding: 16px 28px 16px 0; border-right: 1px solid rgba(255,255,255,0.1); margin-right: 28px; }
@@ -160,15 +152,23 @@
   .slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--navy); border: 2px solid var(--gold); cursor: pointer; }
   .inp-range-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--gray-mid); font-weight: 300; margin-top: 2px; }
   .inp-formula { font-size: 10px; color: var(--gray-mid); font-style: italic; font-weight: 300; margin-top: 2px; }
-  @media print { nav,#btn-present,.chat-input-row { display:none!important } .tab-content { display:block!important } }
-  body.present-mode nav { display:none }
+
+  .pdf-viewer { background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);margin-bottom:20px;max-height:500px;overflow-y:auto }
+  .pdf-page { padding:20px 24px;border-bottom:1px solid var(--rule) }
+  .pdf-page-num { font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:10px }
+  .pdf-header { font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--navy);margin:12px 0 4px }
+  .pdf-line { font-size:12px;color:var(--ink);line-height:1.6;padding:1px 0 }
 </style>
 </head>
 <body>
 
 <!-- WAVE DECORATIONS from brandbook -->
-
-
+<svg class="wave-deco tr" viewBox="0 0 500 380" fill="none">
+  <path d="M500,0 Q340,110 190,72 Q40,34 0,190" stroke="#b88b47" stroke-width="1"/><path d="M500,22 Q352,122 202,84 Q52,46 12,202" stroke="#b88b47" stroke-width="1"/><path d="M500,44 Q364,134 214,96 Q64,58 24,214" stroke="#b88b47" stroke-width="1"/><path d="M500,66 Q376,146 226,108 Q76,70 36,226" stroke="#b88b47" stroke-width="1"/><path d="M500,88 Q388,158 238,120 Q88,82 48,238" stroke="#b88b47" stroke-width="1"/><path d="M500,110 Q400,170 250,132 Q100,94 60,250" stroke="#b88b47" stroke-width="1"/><path d="M500,132 Q412,182 262,144 Q112,106 72,262" stroke="#b88b47" stroke-width="1"/><path d="M500,154 Q424,194 274,156 Q124,118 84,274" stroke="#b88b47" stroke-width="1"/><path d="M500,176 Q436,206 286,168 Q136,130 96,286" stroke="#b88b47" stroke-width="1"/><path d="M500,198 Q448,218 298,180 Q148,142 108,298" stroke="#b88b47" stroke-width="1"/>
+</svg>
+<svg class="wave-deco bl" viewBox="0 0 500 380" fill="none">
+  <path d="M0,380 Q160,270 310,308 Q460,346 500,190" stroke="#b88b47" stroke-width="1"/><path d="M0,358 Q148,258 298,296 Q448,334 488,178" stroke="#b88b47" stroke-width="1"/><path d="M0,336 Q136,246 286,284 Q436,322 476,166" stroke="#b88b47" stroke-width="1"/><path d="M0,314 Q124,234 274,272 Q424,310 464,154" stroke="#b88b47" stroke-width="1"/><path d="M0,292 Q112,222 262,260 Q412,298 452,142" stroke="#b88b47" stroke-width="1"/><path d="M0,270 Q100,210 250,248 Q400,286 440,130" stroke="#b88b47" stroke-width="1"/><path d="M0,248 Q88,198 238,236 Q388,274 428,118" stroke="#b88b47" stroke-width="1"/>
+</svg>
 
 <header>
   <div class="hbrand">
@@ -180,15 +180,10 @@
     </div>
   </div>
   <div class="hright">
-    <div class="hkpi"><div class="val" id="hdr-price">$4,235.00</div><div class="sub">Precio <span id="price-tag" style="color:rgba(255,255,255,0.3)">modelo</span></div></div>
+    <div class="hkpi"><div class="val">$4,235.00</div><div class="sub">Precio mercado</div></div>
     <div class="hkpi"><div class="val" style="color:var(--green)">57.0%</div><div class="sub">Implied IRR</div></div>
     <div class="hkpi"><div class="val">610%</div><div class="sub">ROIC 3-4yr</div></div>
     <div class="hkpi"><div class="val" style="color:var(--green)">+45.0%</div><div class="sub">Margen seguridad</div></div>
-    <div class="hkpi" style="border-left:1px solid rgba(255,255,255,0.1);padding-left:20px">
-      <div style="font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px">Última revisión</div>
-      <div style="font-size:11px;color:var(--gold-lt)" id="hdr-review">06-Mar-2026</div>
-      <div style="font-size:9px;color:rgba(255,255,255,0.3);cursor:pointer;margin-top:2px" onclick="document.getElementById('modal-review').style.display='flex'">✎ actualizar</div>
-    </div>
   </div>
 </header>
 
@@ -200,10 +195,6 @@
   <button onclick="sw('irr',this)">Implied IRR</button>
   <button onclick="sw('health',this)">Health Check</button>
   <button onclick="sw('audit',this)">Decisiones CIO</button>
-  <button onclick="sw('breaker',this)" style="color:#c0392b;font-weight:600">Thesis Breaker</button>
-  <button onclick="sw('munger',this)" style="color:#6b4fa0;font-weight:600">Munger</button>
-  <button onclick="sw('memo',this)">Investment Memo</button>
-  <button onclick="togglePresent()" id="btn-present" style="color:#8a9098">Present</button>
 </nav>
 
 <main>
@@ -212,15 +203,15 @@
 <div id="tab-overview" class="tab-content active">
   <div class="slbl">Resumen Ejecutivo</div>
   <div class="g4">
-    <div class="card accent"><div class="clbl">Market Cap</div><div class="cval gold">$142B</div><div class="csub">32.6M acciones diluidas</div></div>
-    <div class="card"><div class="clbl">Enterprise Value</div><div class="cval">$144B</div><div class="csub">MktCap + Deuda + Leases − Caja</div></div>
-    <div class="card"><div class="clbl">NOPAT Normalizado</div><div class="cval">$7,420M</div><div class="csub">Margen normalizado 31.8% FY22-25</div></div>
-    <div class="card"><div class="clbl">FCF FY2025</div><div class="cval">$9,087M</div><div class="csub">Margen FCF 33.8%</div></div>
+    <div class="card accent"><div class="clbl">Market Cap</div><div class="cval gold">$629B</div><div class="csub">1,966M acciones diluidas</div></div>
+    <div class="card"><div class="clbl">Enterprise Value</div><div class="cval">$634B</div><div class="csub">MktCap + Deuda + Leases − Caja</div></div>
+    <div class="card"><div class="clbl">NOPAT Normalizado</div><div class="cval">$20,955M</div><div class="csub">Ajustado litigios + S&M Cap.</div></div>
+    <div class="card"><div class="clbl">FCF FY2025</div><div class="cval">$21,577M</div><div class="csub">Margen FCF 53.9%</div></div>
   </div>
   <div class="g3">
-    <div class="card accent"><div class="clbl">Implied IRR (Equity)</div><div class="cval green">19.7%</div><div class="csub">Hurdle Rate 12% <span class="badge bg">MoS +7.7pp</span></div></div>
-    <div class="card accent"><div class="clbl">ROIC Ajustado 3-4yr Avg</div><div class="cval green">610%</div><div class="csub">vs. WACC 8.61% · Spread +83pp</div></div>
-    <div class="card accent"><div class="clbl">WACC</div><div class="cval gold">8.61%</div><div class="csub">β 1.20 · Ke 9.23% · ERP 4.23%</div></div>
+    <div class="card accent"><div class="clbl">Implied IRR (Equity)</div><div class="cval green">13.9%</div><div class="csub">Hurdle Rate 10% <span class="badge bg">MoS +3.9%</span></div></div>
+    <div class="card accent"><div class="clbl">ROIC Ajustado 3-4yr Avg</div><div class="cval green">610%</div><div class="csub">vs. WACC 7.14% · Spread +35.5%</div></div>
+    <div class="card accent"><div class="clbl">WACC</div><div class="cval gold">7.14%</div><div class="csub">β 0.78 · Ke 7.35% · ERP 4.23%</div></div>
   </div>
   <div class="g2">
     <div class="chart-card"><div class="clbl">Revenue & NOPAT — FY2020–2025 ($M)</div><canvas id="c1"></canvas></div>
@@ -310,7 +301,7 @@
   <div class="g4">
     <div class="card accent"><div class="clbl">ROIC FY2025</div><div class="cval green">46.2%</div><div class="csub">Ajustado S&M capitalizado</div></div>
     <div class="card accent"><div class="clbl">ROIC 3-4yr Avg</div><div class="cval green">610%</div><div class="csub">FY2022–2025 promedio</div></div>
-    <div class="card"><div class="clbl">WACC</div><div class="cval gold">8.61%</div><div class="csub">Costo promedio ponderado</div></div>
+    <div class="card"><div class="clbl">WACC</div><div class="cval gold">7.14%</div><div class="csub">Costo promedio ponderado</div></div>
     <div class="card" style="border-color:rgba(76,175,136,0.25)"><div class="clbl">ROIC − WACC Spread</div><div class="cval green">+35.5%</div><div class="csub">Crea valor económico <span class="badge bg">✓</span></div></div>
   </div>
   <div class="g2">
@@ -335,7 +326,7 @@
   <div class="g3" style="margin-bottom:20px">
     <div class="card" style="border-left:3px solid var(--green)">
       <div class="clbl">Retorno Total Equity</div>
-      <div class="cval green" id="irr-total-display">19.7%</div>
+      <div class="cval green" id="irr-total-display">13.9%</div>
       <div class="csub">Recalculado en tiempo real</div>
     </div>
     <div class="card" style="border-left:3px solid var(--gold)">
@@ -459,7 +450,7 @@
     <div class="itotal">
       <span class="ilbl" style="font-weight:700;font-size:13px;color:var(--ink)">Total Retorno Equity</span>
       <div class="itrack"><div class="ifill" id="bar-total" style="background:linear-gradient(90deg,var(--gold),var(--green))"></div></div>
-      <span class="ipct" id="pct-total" style="font-size:16px;font-weight:700;">19.7%</span>
+      <span class="ipct" id="pct-total" style="font-size:16px;font-weight:700;">13.9%</span>
     </div>
   </div>
 
@@ -553,22 +544,302 @@
   </div>
 </div>
 
-<!-- THESIS BREAKER -->
-<div id="tab-breaker" class="tab-content">
+</main>
+
+<footer>
+  <div class="fl"><strong>DCE</strong> Holdings — Investment Office</div>
+  <div class="fr">Booking Holdings (BKNG) &nbsp;·&nbsp; Modelo Columbia &nbsp;·&nbsp; 6 de marzo, 2026 &nbsp;·&nbsp; USD Millones &nbsp;·&nbsp; Sin veredicto de inversión — decisión del CIO</div>
+</footer>
+
+<script>
+Chart.defaults.font.family = "'Archivo','Helvetica Neue',sans-serif";
+Chart.defaults.font.size = 10;
+Chart.defaults.color = '#8a9098';
+
+const G = '#b88b47', GN = '#2a7a56', RD = '#9b2335', GM = '#8a9098', GT = '#606060', GL = '#d4aa6a';
+const dg = { grid: { color: 'rgba(27,38,66,0.06)', drawBorder: false }, ticks: { color: '#9a9ea6', font: { size: 10 } } };
+const dgp = { ...dg, ticks: { ...dg.ticks, callback: v => v + '%' } };
+const dgb = { ...dg, ticks: { ...dg.ticks, callback: v => '$' + (Math.abs(v)/1000).toFixed(0) + 'B' } };
+const leg = { position: 'top', labels: { boxWidth: 9, color: GT, padding: 12 } };
+const yr = ['FY20','FY21','FY22','FY23','FY24','FY25'];
+
+new Chart(document.getElementById('c1'), { type: 'bar', data: { labels: yr, datasets: [
+  { label: 'Net Revenue', data: [6796,10958,17090,21365,23739,26917], backgroundColor: 'rgba(184,139,71,0.68)', borderRadius: 2 },
+  { label: 'NOPAT Ajustado', data: [2207,2007,4082,4672,6071,7590], backgroundColor: 'rgba(76,175,136,0.62)', borderRadius: 2 }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
+
+new Chart(document.getElementById('c2'), { type: 'line', data: { labels: yr, datasets: [
+  { label: 'Margen Operativo', data: [-9.3,22.8,29.9,27.3,31.8,32.8], borderColor: G, backgroundColor: 'rgba(184,139,71,0.07)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4, pointBackgroundColor: G },
+  { label: 'Margen Neto', data: [0.9,10.6,17.9,20.1,24.8,20.1], borderColor: GN, backgroundColor: 'rgba(76,175,136,0.05)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4, pointBackgroundColor: GN }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgp } } });
+
+new Chart(document.getElementById('c3'), { type: 'bar', data: { labels: yr, datasets: [
+  { label: 'CFO', data: [85,2820,6554,7344,8323,9409], backgroundColor: 'rgba(184,139,71,0.65)', borderRadius: 2 },
+  { label: 'FCF', data: [-201,2516,6186,6999,7894,9087], backgroundColor: 'rgba(76,175,136,0.58)', borderRadius: 2 },
+  { label: 'Buybacks', data: [-1303,-163,-6621,-10377,-6509,-6440], backgroundColor: 'rgba(224,96,96,0.5)', borderRadius: 2 }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
+
+new Chart(document.getElementById('c4'), { type: 'doughnut', data: {
+  labels: ['Buybacks ($6,440M)','Dividendos ($1,248M)','CapEx ($322M)','Deuda Neta ($1,289M)','Exceso Caja ($255M)'],
+  datasets: [{ data: [6440,1248,322,1289,255], backgroundColor: [G,GN,'#7acfaa',GL,GT], borderWidth: 0, hoverOffset: 10 }]
+}, options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 9, color: GM, font: { size: 10 } } } }, cutout: '65%' } });
+
+new Chart(document.getElementById('c5'), { type: 'bar', data: { labels: yr, datasets: [
+  { label: 'Net Revenue', data: [6796,10958,17090,21365,23739,26917], backgroundColor: 'rgba(184,139,71,0.65)', borderRadius: 2 },
+  { label: 'Operating Income', data: [-631,2496,5102,5835,7555,8825], backgroundColor: 'rgba(76,175,136,0.58)', borderRadius: 2 },
+  { label: 'Net Income', data: [59,1165,3058,4289,5882,5404], backgroundColor: 'rgba(122,207,170,0.42)', borderRadius: 2 }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
+
+new Chart(document.getElementById('c6'), { type: 'doughnut', data: {
+  labels: ['Marketing ($8,186M)','Personnel ($3,403M)','Sales & Other ($3,453M)','G&A ($857M)','IT ($908M)','D&A ($623M)','Otros ($662M)'],
+  datasets: [{ data: [8186,3403,3453,857,908,623,662], backgroundColor: [G,'#8a9ab5',RD,GN,GL,'#4a7a6a',GT], borderWidth: 0, hoverOffset: 8 }]
+}, options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 9, color: GM, font: { size: 10 } } } }, cutout: '58%' } });
+
+new Chart(document.getElementById('c7'), { type: 'bar', data: { labels: yr, datasets: [
+  { label: 'CFO', data: [85,2820,6554,7344,8323,9409], backgroundColor: 'rgba(184,139,71,0.65)', borderRadius: 2 },
+  { label: 'CFI', data: [2637,-998,-518,1486,129,-313], backgroundColor: 'rgba(76,175,136,0.55)', borderRadius: 2 },
+  { label: 'CFF', data: [1561,-1216,-4897,-8909,-4204,-8915], backgroundColor: 'rgba(224,96,96,0.5)', borderRadius: 2 }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
+
+new Chart(document.getElementById('c8'), { type: 'line', data: { labels: yr, datasets: [
+  { label: 'NOPAT Ajustado', data: [2207,2007,4082,4672,6071,7590], borderColor: G, backgroundColor: 'rgba(184,139,71,0.08)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: G },
+  { label: 'Net Income Reportado', data: [59,1165,3058,4289,5882,5404], borderColor: GT, borderDash: [5,4], backgroundColor: 'transparent', tension: 0.3, borderWidth: 1.5, pointRadius: 3 }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
+
+new Chart(document.getElementById('c9'), { type: 'bar', data: { labels: yr, datasets: [
+  { label: 'Total Activos', data: [21874,23641,22542,24342,27708,29264], backgroundColor: 'rgba(184,139,71,0.2)', borderColor: G, borderWidth: 1.5, borderRadius: 2 },
+  { label: 'Total Pasivos', data: [16981,17463,20103,27086,31728,34842], backgroundColor: 'rgba(224,96,96,0.28)', borderColor: RD, borderWidth: 1, borderRadius: 2 },
+  { label: 'Patrimonio', data: [4893,6178,2834,-2744,-4020,-5578], backgroundColor: 'rgba(76,175,136,0.38)', borderColor: GN, borderWidth: 1, borderRadius: 2 }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
+
+new Chart(document.getElementById('c10'), { type: 'line', data: { labels: yr, datasets: [
+  { label: 'ROIC Ajustado (%)', data: [100.9,47.7,110.1,164.9,707.9,610.4], borderColor: G, backgroundColor: 'rgba(184,139,71,0.08)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: G },
+  { label: 'WACC (9.52%)', data: [9.52,9.52,9.52,9.52,9.52,9.52], borderColor: RD, borderDash: [6,4], backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0 }
+]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: { ...dg, ticks: { ...dg.ticks, callback: v => v + '%' } } } } });
+
+new Chart(document.getElementById('c11'), { type: 'doughnut', data: {
+  labels: ['PP&E ($807M)','WC Operativo (−$9,757M)','Other LT Assets ($2,310M)','S&M Asset ($7,883M)','(Equity Negativo)'],
+  datasets: [{ data: [807,9757,2310,7883,5578], backgroundColor: [GN,'#3a6080',RD,G,GL], borderWidth: 0, hoverOffset: 8 }]
+}, options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 9, color: GM, font: { size: 9 } } } }, cutout: '60%' } });
+
+new Chart(document.getElementById('c12'), { type: 'radar', data: {
+  labels: ['Solidez\nFinanciera','Rentabilidad','Crecimiento','Asset-Light','Capital\nAllocation','Rule of 40'],
+  datasets: [{ label: 'Visa FY2025', data: [90,95,80,92,88,95], backgroundColor: 'rgba(184,139,71,0.1)', borderColor: G, borderWidth: 2, pointBackgroundColor: G, pointRadius: 4 }]
+}, options: { responsive: true, scales: { r: { min: 0, max: 100, grid: { color: 'rgba(27,38,66,0.07)' }, angleLines: { color: 'rgba(27,38,66,0.07)' }, pointLabels: { font: { size: 10 }, color: GT }, ticks: { display: false } } }, plugins: { legend: { display: false } } } });
+
+// ── INCOME STATEMENT TABLE ────────────────────────────────────────
+const IS_ROWS = [
+  { l: 'INGRESOS',                          t: 'section' },
+  { l: 'Merchant Revenues',                 t: 'normal',   v: [2117, 3696, 7193, 10936, 14142, 17755] },
+  { l: 'Agency Revenues',                   t: 'normal',   v: [4314, 6663, 9003, 9414, 8524, 7968] },
+  { l: 'Advertising & Other',               t: 'normal',   v: [365, 599, 894, 1015, 1073, 1194] },
+  { l: 'Net Revenues',                      t: 'subtotal', v: [6796, 10958, 17090, 21365, 23739, 26917] },
+  { l: '',                                  t: 'spacer' },
+  { l: 'GASTOS OPERATIVOS',                 t: 'section' },
+  { l: 'Marketing Expenses',                t: 'normal',   v: [-2179, -3801, -5993, -6773, -7278, -8186], neg: true },
+  { l: 'Sales and Other Expenses',          t: 'normal',   v: [-755, -881, -1986, -2744, -3120, -3453], neg: true },
+  { l: 'Personnel (incl. SBC)',             t: 'normal',   v: [-1944, -2314, -2465, -3294, -3354, -3403], neg: true },
+  { l: 'General and Administrative',        t: 'normal',   v: [-581, -620, -766, -1555, -1036, -857], neg: true },
+  { l: 'Information Technology',            t: 'normal',   v: [-299, -412, -526, -655, -771, -908], neg: true },
+  { l: 'D&A',                               t: 'normal',   v: [-458, -421, -451, -504, -591, -623], neg: true },
+  { l: 'Restructuring / Impairment / Other',t: 'normal',   v: [-1211, -13, 199, -5, -34, -662], neg: true },
+  { l: 'Total OpEx',                        t: 'subtotal', v: [-7427, -8462, -11988, -15530, -16184, -18092], neg: true },
+  { l: '',                                  t: 'spacer' },
+  { l: 'Operating Income',                  t: 'total',    v: [-631, 2496, 5102, 5835, 7555, 8825] },
+  { l: 'Margen Operativo',                  t: 'margin',   v: [-9.3, 22.8, 29.9, 27.3, 31.8, 32.8] },
+  { l: '',                                  t: 'spacer' },
+  { l: 'NON-OPERATING',                     t: 'section' },
+  { l: 'Interest Expense',                  t: 'normal',   v: [-356, -334, -391, -897, -1295, -1617], neg: true },
+  { l: 'Interest & Dividend Income',        t: 'normal',   v: [0, 0, 219, 1020, 1114, 921] },
+  { l: 'Other Income (Expense), Net',       t: 'normal',   v: [1554, -697, -1007, -477, -82, -1297] },
+  { l: 'EBT',                               t: 'subtotal', v: [567, 1465, 3923, 5481, 7292, 6832] },
+  { l: 'Income Tax Expense',                t: 'normal',   v: [-508, -300, -865, -1192, -1410, -1428], neg: true },
+  { l: 'ETR Efectiva',                      t: 'margin',   v: [89.6, 20.5, 22.1, 21.7, 19.3, 20.9] },
+  { l: '',                                  t: 'spacer' },
+  { l: 'Net Income (GAAP)',                 t: 'total',    v: [59, 1165, 3058, 4289, 5882, 5404] },
+  { l: 'Margen Neto',                       t: 'margin',   v: [0.9, 10.6, 17.9, 20.1, 24.8, 20.1] },
+  { l: '',                                  t: 'spacer' },
+  { l: 'AJUSTES DCE',                       t: 'section' },
+  { l: '(+) Impairment + Transformation',   t: 'normal',   v: [null, null, null, null, null, 662] },
+  { l: '(−) S&M Growth Expense',            t: 'normal',   v: [null, null, null, null, null, -774], neg: true },
+  { l: 'NOPAT Ajustado DCE',               t: 'total',    v: [2207, 2007, 4082, 4672, 6071, 7590] },
+  { l: 'Margen NOPAT',                      t: 'margin',   v: [32.5, 18.3, 23.9, 21.9, 25.6, 28.2] },
+];
+
+function fmtIS(v, neg, type) {
+  if (v === null || v === undefined) return '<span style="color:var(--gray-mid)">—</span>';
+  if (type === 'margin') return '<span style="color:var(--gray-txt)">' + v.toFixed(1) + '%</span>';
+  const abs = Math.abs(v);
+  const s = abs >= 1000 ? (abs/1000).toFixed(1) + 'B' : abs.toLocaleString();
+  if (v < 0) return '<span style="color:var(--red)">(' + s + ')</span>';
+  return s;
+}
+
+const tbody = document.getElementById('is-tbody');
+if (tbody) {
+  IS_ROWS.forEach(row => {
+    const tr = document.createElement('tr');
+    if (row.t === 'spacer') {
+      tr.innerHTML = '<td colspan="7" style="height:6px;background:var(--cream)"></td>';
+      tbody.appendChild(tr); return;
+    }
+    if (row.t === 'section') {
+      tr.innerHTML = `<td colspan="7" style="padding:8px 18px;background:rgba(27,38,66,0.04);font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--navy);border-top:1px solid var(--rule);">${row.l}</td>`;
+      tbody.appendChild(tr); return;
+    }
+    const isTotal    = row.t === 'total';
+    const isSubtotal = row.t === 'subtotal';
+    const isMarg     = row.t === 'margin';
+    const bg    = isTotal ? 'background:rgba(27,38,66,0.03);' : '';
+    const fw    = (isTotal || isSubtotal) ? 'font-weight:700;' : 'font-weight:400;';
+    const lc    = isTotal ? 'color:var(--navy);' : isMarg ? 'color:var(--gray-mid);font-style:italic;' : 'color:var(--ink);';
+    const bdr   = (isTotal || isSubtotal) ? 'border-top:1px solid var(--rule);' : '';
+    let html = `<td style="padding:8px 18px;${bg}${fw}${lc}${bdr}font-size:${isMarg?'11':'12'}px;">${row.l}</td>`;
+    row.v.forEach((val, i) => {
+      const isFY25 = i === 5;
+      const cellStyle = `text-align:right;padding:8px ${isFY25?'18':'14'}px 8px 14px;${bg}${fw}${bdr}font-size:${isMarg?'11':'12'}px;font-variant-numeric:tabular-nums;${isFY25?'border-left:1px solid var(--rule);':''}`;
+      html += `<td style="${cellStyle}">${fmtIS(val, row.neg, row.t)}</td>`;
+    });
+    tr.innerHTML = html;
+    tbody.appendChild(tr);
+  });
+}
+// ─────────────────────────────────────────────────────────────────
+const BASE = {
+  roic: 398, growth: 2.0, exit: 20, buybacks: 6500, horizon: 5, hurdle: 12.0
+};
+
+// Fixed model constants (FY2025)
+const NOPAT      = 7589.6;
+const EV         = 140316.165;
+const DIVIDENDS  = 1248;
+const INTEREST   = 1617;
+const REINV_RATE = 0.10194;
+const DE_RATIO   = 0.13958;
+const NET_BORR   = 0.06705;
+const ACTUAL_MULT= 18.488;
+
+function calcIRR(roic, growth, exitMult, buybacks, horizon, hurdle) {
+  const dist         = DIVIDENDS + buybacks + INTEREST;
+  const distYield    = dist / EV;
+  // reinvGrowth now driven by the ROIC slider (roic is in %, e.g. 398 = 3.98x)
+  const reinvGrowth  = REINV_RATE * (roic / 100);
+  const totalGrowth  = (growth / 100) + reinvGrowth;
+  const multImpact   = (Math.pow(exitMult / ACTUAL_MULT, 1 / horizon) - 1);
+  const baseReturn   = distYield + totalGrowth + multImpact;
+  const levBoost     = DE_RATIO * (baseReturn - NET_BORR);
+  const equityReturn = baseReturn + levBoost;
+  const mos          = equityReturn - (hurdle / 100);
+  return { distYield, reinvGrowth, growthOrg: growth/100, multImpact, levBoost, equityReturn, mos, dist, buybacks };
+}
+
+function fmtPct(v) {
+  const s = (v * 100).toFixed(2);
+  return (v >= 0 ? '' : '') + s + '%';
+}
+function fmtPctSigned(v) {
+  const s = Math.abs(v * 100).toFixed(2);
+  return (v >= 0 ? '+' : '−') + s + '%';
+}
+function barW(v, max) {
+  return Math.max(0, Math.min(100, Math.abs(v * 100) / max * 100)).toFixed(1) + '%';
+}
+
+function updateIRR() {
+  const roic     = parseFloat(document.getElementById('sl-wacc').value);
+  const growth   = parseFloat(document.getElementById('sl-growth').value);
+  const exit     = parseFloat(document.getElementById('sl-exit').value);
+  const buybacks = parseFloat(document.getElementById('sl-buybacks').value);
+  const horizon  = parseFloat(document.getElementById('sl-horizon').value);
+  const hurdle   = parseFloat(document.getElementById('sl-hurdle').value);
+
+  // Update displays
+  document.getElementById('disp-wacc').textContent     = roic.toFixed(0) + '%';
+  document.getElementById('disp-growth').textContent   = growth.toFixed(1) + '%';
+  document.getElementById('disp-exit').textContent     = exit + '×';
+  document.getElementById('disp-buybacks').textContent = '$' + (buybacks/1000).toFixed(0) + ',' + String(buybacks).slice(-3) + 'M';
+  document.getElementById('disp-horizon').textContent  = horizon + ' años';
+  document.getElementById('disp-hurdle').textContent   = hurdle.toFixed(1) + '%';
+  document.getElementById('irr-exit-label').textContent= exit + '×';
+  document.getElementById('irr-hurdle-label').textContent = hurdle.toFixed(1) + '%';
+
+  const r = calcIRR(roic, growth, exit, buybacks, horizon, hurdle);
+  const MAX_SCALE = 20; // % scale for bars
+
+  // Result cards
+  const totalPct = (r.equityReturn * 100).toFixed(1) + '%';
+  const mosPct   = (r.mos >= 0 ? '+' : '') + (r.mos * 100).toFixed(1) + '%';
+  const totalEl  = document.getElementById('irr-total-display');
+  const mosEl    = document.getElementById('irr-mos-display');
+  totalEl.textContent = totalPct;
+  mosEl.textContent   = mosPct;
+  totalEl.style.color = r.equityReturn >= hurdle/100 ? 'var(--green)' : 'var(--red)';
+  mosEl.style.color   = r.mos >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Bars
+  const comps = [
+    { bar: 'bar-dist',  pct: 'pct-dist',  val: r.distYield,   label: fmtPct(r.distYield) },
+    { bar: 'bar-org',   pct: 'pct-org',   val: r.growthOrg,   label: fmtPct(r.growthOrg), color: 'var(--green)' },
+    { bar: 'bar-reinv', pct: 'pct-reinv', val: r.reinvGrowth, label: fmtPct(r.reinvGrowth) },
+    { bar: 'bar-mult',  pct: 'pct-mult',  val: r.multImpact,  label: fmtPctSigned(r.multImpact) },
+    { bar: 'bar-lev',   pct: 'pct-lev',   val: r.levBoost,    label: fmtPctSigned(r.levBoost) },
+  ];
+  comps.forEach(c => {
+    document.getElementById(c.bar).style.width = barW(c.val, MAX_SCALE);
+    const pEl = document.getElementById(c.pct);
+    pEl.textContent = c.label;
+    pEl.style.color = c.val < 0 ? 'var(--red)' : (c.color || 'var(--ink)');
+  });
+  const totalW = barW(r.equityReturn, MAX_SCALE);
+  document.getElementById('bar-total').style.width = totalW;
+  const tEl = document.getElementById('pct-total');
+  tEl.textContent = (r.equityReturn * 100).toFixed(2) + '%';
+  tEl.style.color = r.equityReturn >= hurdle/100 ? 'var(--green)' : 'var(--red)';
+
+  // Detail cards
+  const totalDistM = (r.dist / 1000).toFixed(0);
+  document.getElementById('detail-buybacks').textContent  = '$' + buybacks.toLocaleString() + 'M';
+  document.getElementById('detail-total-dist').textContent= '$' + Math.round(r.dist).toLocaleString() + 'M';
+  document.getElementById('detail-payout').textContent    = (r.dist / NOPAT * 100).toFixed(1) + '%';
+  document.getElementById('detail-yield').textContent     = (r.distYield * 100).toFixed(2) + '%';
+}
+
+function resetIRR() {
+  document.getElementById('sl-wacc').value     = BASE.roic;
+  document.getElementById('sl-growth').value   = BASE.growth;
+  document.getElementById('sl-exit').value     = BASE.exit;
+  document.getElementById('sl-buybacks').value = BASE.buybacks;
+  document.getElementById('sl-horizon').value  = BASE.horizon;
+  document.getElementById('sl-hurdle').value   = BASE.hurdle;
+  updateIRR();
+}
+
+function sw(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(e => e.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+['sl-wacc','sl-growth','sl-exit','sl-buybacks','sl-horizon','sl-hurdle'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', updateIRR);
+});
+updateIRR();
+</script>
+</body>
+</html>id="tab-breaker" class="tab-content">
   <div class="slbl" style="color:#c0392b">Thesis Breaker v1.1 — Stress Test Cuantitativo</div>
-  <p style="font-size:12px;color:var(--gray-mid);margin-bottom:16px;font-style:italic">Análisis de ruptura de la tesis de inversión BKNG. 16 páginas · 9 de marzo, 2026</p>
-  <div style="margin-bottom:20px">
-    <a href="DCE_Booking_Holdings_BKNG_Thesis_Breaker.pdf" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:var(--white);padding:10px 20px;font-family:Archivo,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;border-top:2px solid var(--gold)">
-      ↗ Abrir Thesis Breaker PDF
-    </a>
+  <p style="font-size:12px;color:var(--gray-mid);margin-bottom:16px;font-style:italic">Análisis de ruptura de tesis BKNG · 16 páginas · 9 de marzo, 2026</p>
+  <div style="margin-bottom:16px">
+    <a href="DCE_Booking_Holdings_BKNG_Thesis_Breaker.pdf" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:var(--white);padding:10px 20px;font-family:Archivo,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;border-top:2px solid var(--gold)">↗ Abrir PDF en nueva pestaña</a>
   </div>
-  <div class="pdf-viewer" id="breaker-pdf">
-    <div style="background:var(--navy);padding:12px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5">
-      <span style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--white)">Thesis Breaker v1.1 — Reporte Completo</span>
-      <span style="margin-left:auto;font-size:10px;color:rgba(255,255,255,0.4)">9 de marzo, 2026 · 16 páginas</span>
+  <div class="pdf-viewer">
+    <div style="background:var(--navy);padding:10px 18px;position:sticky;top:0;z-index:5;display:flex;align-items:center">
+      <span style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--white)">Thesis Breaker v1.1</span>
+      <span style="margin-left:auto;font-size:10px;color:rgba(255,255,255,0.4)">16 páginas</span>
     </div>
-    <div class="pdf-page">
-<div class="pdf-page-num">Página 1 de 16</div>
+    <div class="pdf-page"><div class="pdf-page-num">Página 1 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">THESIS BREAKER v1.1</div>
 <div class="pdf-line">Booking Holdings (BKNG) — Estrés de la Tesis de Inversión</div>
@@ -607,8 +878,7 @@
 <div class="pdf-line">Equity ~140bps.</div>
 <div class="pdf-line">Confidencial — Solo para uso interno Página 1</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 2 de 16</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 2 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">Secci</div>
 <div class="pdf-line"># Severidad Hallazgo</div>
@@ -627,8 +897,7 @@
 <div class="pdf-line">régimen actual de múltiplos.</div>
 <div class="pdf-line">Confidencial — Solo para uso interno Página 2</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 3 de 16</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 3 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">Sección 0: Integridad Estructural del Modelo</div>
 <div class="pdf-line">Checklist Obligatorio</div>
@@ -676,8 +945,7 @@
 <div class="pdf-line">CFO muy superior al NOPAT (CFO/Net Income = 1.74x). El modelo es apto para stress test detallado.</div>
 <div class="pdf-line">Confidencial — Solo para uso interno Página 3</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 4 de 16</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 4 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">Sección 1: Radiografía del Modelo</div>
 <div class="pdf-line">Estructura</div>
@@ -701,8 +969,7 @@
 <div class="pdf-line">orden correcto. Cross-references entre NOPAT, EPV, ROIC e Implied IRR validadas.</div>
 <div class="pdf-line">Confidencial — Solo para uso interno Página 4</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 5 de 16</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 5 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">Sección 2: Valoración — Framework Columbia</div>
 <div class="pdf-line">RV (Reproduction Value): $506/acción</div>
@@ -741,8 +1008,7 @@
 <div class="pdf-line">Implied IRR: 19.7% Return to Equity</div>
 <div class="pdf-line">Confidencial — Solo para uso interno Página 5</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 6 de 16</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 6 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">Componente Valor Peso en Return</div>
 <div class="pdf-line">Distribution Yield 6.48% 33% del retorno</div>
@@ -775,8 +1041,7 @@
 <div class="pdf-line">el mercado re-evalúa la durabilidad de ese ROIC, el MoS desaparecería.</div>
 <div class="pdf-line">Confidencial — Solo para uso interno Página 6</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 7 de 16</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 7 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">Sección 3: Supuestos Clave — Identificación y</div>
 <div class="pdf-line">Sensibilidad</div>
@@ -814,8 +1079,7 @@
 <div class="pdf-line">NOPAT de $9,000M a WACC de 7.0%, el EPV queda en $3,328 — un 24% por debajo del precio. Esto</div>
 <div class="pdf-line">Confidencial — Solo para uso interno Página 7</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 8 de 16</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 8 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">confirma que el precio de mercado requiere crecimiento significativo para justificarse.</div>
 <div class="pdf-line">Consistencia ROIC Promedio vs. Marginal ROIC</div>
@@ -835,8 +1099,7 @@
 <div class="pdf-line">comprimen el ROIC hacia el promedio sectorial (~30%) en la próxima década.</div>
 <div class="pdf-line">Confidencial — Solo para uso interno Página 8</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 9 de 16</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 9 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">Sección 4: WACC y Estructura del Modelo</div>
 <div class="pdf-line">Descomposición del WACC</div>
@@ -868,8 +1131,7 @@
 <div class="pdf-line">vs. FY2025 (36.2%), lo cual es conservador.</div>
 <div class="pdf-line">Confidencial — Solo para uso interno Página 9</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 10 de 16</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 10 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">Sección 5: ROIC y Reinversión</div>
 <div class="pdf-line">Sostenibilidad del ROIC</div>
@@ -909,8 +1171,7 @@
 <div class="pdf-line">3. S&amp;M Growth de $774M es el único motor de reinversión. Diferencia entre marketing total ($8,186M) y</div>
 <div class="pdf-line">Confidencial — Solo para uso interno Página 10</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 11 de 16</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 11 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">economic amortization ($7,412M). Razonable pero conservador — Connected Trip requiere inversión más allá</div>
 <div class="pdf-line">del marketing.</div>
@@ -928,8 +1189,7 @@
 <div class="pdf-line">iliquidez. CFO/Net Income = 1.74x confirma calidad de caja.</div>
 <div class="pdf-line">Confidencial — Solo para uso interno Página 11</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 12 de 16</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 12 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">Sección 6: Escenario Adverso Cuantificado</div>
 <div class="pdf-line">Supuestos del Bear Case</div>
@@ -965,8 +1225,7 @@
 <div class="pdf-line">Total Growth 3.63%</div>
 <div class="pdf-line">Confidencial — Solo para uso interno Página 12</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 13 de 16</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 13 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">Componente Bear</div>
 <div class="pdf-line">Return to Enterprise 6.48% + 3.63% = 10.11%</div>
@@ -988,8 +1247,7 @@
 <div class="pdf-line">crecimiento fallan.</div>
 <div class="pdf-line">Confidencial — Solo para uso interno Página 13</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 14 de 16</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 14 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">Sección 7: Los 3 Números Que Rompen la Tesis</div>
 <div class="pdf-line">Número 1: ROIC — La Variable que Multiplica Todo</div>
@@ -1029,8 +1287,7 @@
 <div class="pdf-line">riesgos doble golpe al NOPAT. Take rate y Google disruption son riesgos correlacionados.</div>
 <div class="pdf-line">Confidencial — Solo para uso interno Página 14</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 15 de 16</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 15 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">Sección 8: Clasificación de Riesgo por Escalera</div>
 <div class="pdf-line">Posición en la Escalera</div>
@@ -1053,8 +1310,7 @@
 <div class="pdf-line">y la durabilidad del moat ante Google/AI disruption.</div>
 <div class="pdf-line">Confidencial — Solo para uso interno Página 15</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 16 de 16</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 16 de 16</div>
 <div class="pdf-line">DCE Holdings — Thesis Breaker v1.1 Booking Holdings (BKNG) | 9 de marzo de 2026</div>
 <div class="pdf-line">Resumen Cuantitativo Final</div>
 <div class="pdf-line">Métrica Valor Señal</div>
@@ -1087,23 +1343,18 @@
 <div class="pdf-line">Confidencial — Solo para uso interno Página 16</div>
 </div>
   </div>
-</div>
-<!-- MUNGER -->
-<div id="tab-munger" class="tab-content">
-  <div class="slbl" style="color:#6b4fa0">DCE Munger Digital — Audit de Razonamiento</div>
-  <p style="font-size:12px;color:var(--gray-mid);margin-bottom:16px;font-style:italic">Evaluación meta-cognitiva de la tesis BKNG. Score 6.0/10 · Convicción Condicional · 9 páginas</p>
-  <div style="margin-bottom:20px">
-    <a href="DCE_Booking_Holdings_BKNG_Munger_Digital.pdf" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:var(--white);padding:10px 20px;font-family:Archivo,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;border-top:2px solid var(--gold)">
-      ↗ Abrir Munger Digital PDF
-    </a>
+</div>id="tab-munger" class="tab-content">
+  <div class="slbl" style="color:#6b4fa0">Munger Digital v3.1 — Audit de Razonamiento</div>
+  <p style="font-size:12px;color:var(--gray-mid);margin-bottom:16px;font-style:italic">Score 6.0/10 · Convicción Condicional · 9 páginas · Marzo 2026</p>
+  <div style="margin-bottom:16px">
+    <a href="DCE_Booking_Holdings_BKNG_Munger_Digital.pdf" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:var(--white);padding:10px 20px;font-family:Archivo,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;border-top:2px solid var(--gold)">↗ Abrir PDF en nueva pestaña</a>
   </div>
-  <div class="pdf-viewer" id="munger-pdf">
-    <div style="background:var(--navy);padding:12px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5">
-      <span style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--white)">Munger Digital v3.1 — Reporte Completo</span>
-      <span style="margin-left:auto;font-size:10px;color:rgba(255,255,255,0.4)">Marzo 2026 · 9 páginas</span>
+  <div class="pdf-viewer">
+    <div style="background:var(--navy);padding:10px 18px;position:sticky;top:0;z-index:5;display:flex;align-items:center">
+      <span style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--white)">Munger Digital v3.1</span>
+      <span style="margin-left:auto;font-size:10px;color:rgba(255,255,255,0.4)">9 páginas</span>
     </div>
-    <div class="pdf-page">
-<div class="pdf-page-num">Página 1 de 9</div>
+    <div class="pdf-page"><div class="pdf-page-num">Página 1 de 9</div>
 <div class="pdf-header">DCE HOLDINGS</div>
 <div class="pdf-header">MUNGER DIGITAL</div>
 <div class="pdf-line">Evaluación Meta-Cognitiva de la Tesis de Inversión</div>
@@ -1115,8 +1366,7 @@
 <div class="pdf-line">$4.363 $2.562 19,7% 99,9% 6,0/10</div>
 <div class="pdf-line">DCE Munger Digital v3.1 | Marzo 2026 Confidencial — Solo para uso interno</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 2 de 9</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 2 de 9</div>
 <div class="pdf-line">DCE MUNGER DIGITAL v3.1 Booking Holdings (BKNG) | Marzo 2026</div>
 <div class="pdf-header">1. SIMPLIFICACIÓN RADICAL</div>
 <div class="pdf-line">¿Puede explicarse esta empresa en una frase?</div>
@@ -1153,8 +1403,7 @@
 <div class="pdf-line">replica en menos de una década.</div>
 <div class="pdf-line">DCE Holdings — Confidencial Página 2 NO contiene veredicto de inversión</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 3 de 9</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 3 de 9</div>
 <div class="pdf-line">DCE MUNGER DIGITAL v3.1 Booking Holdings (BKNG) | Marzo 2026</div>
 <div class="pdf-line">Capa 2 — Customer Captivity (MEDIA, mejorando): Genius Tier 2/3 acumula high-50% de room nights. Pero</div>
 <div class="pdf-line">el multi-homing del viajero casual sigue siendo trivial. Connected Trip (high-20% growth YoY) promete crear</div>
@@ -1191,8 +1440,7 @@
 <div class="pdf-line">contextualización contable.</div>
 <div class="pdf-line">DCE Holdings — Confidencial Página 3 NO contiene veredicto de inversión</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 4 de 9</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 4 de 9</div>
 <div class="pdf-line">DCE MUNGER DIGITAL v3.1 Booking Holdings (BKNG) | Marzo 2026</div>
 <div class="pdf-line">4. INCENTIVOS: ¿ESTÁN ALINEADOS?</div>
 <div class="pdf-line">Estructura de Compensación del CEO (Glenn Fogel, FY2024)</div>
@@ -1231,8 +1479,7 @@
 <div class="pdf-line">Europa (80% revenue).</div>
 <div class="pdf-line">DCE Holdings — Confidencial Página 4 NO contiene veredicto de inversión</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 5 de 9</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 5 de 9</div>
 <div class="pdf-line">DCE MUNGER DIGITAL v3.1 Booking Holdings (BKNG) | Marzo 2026</div>
 <div class="pdf-line">Sesgo 6 — FX oculto: Crecimiento FY2025 de +13,4% incluye +300 pb de tailwind FX. En moneda constante</div>
 <div class="pdf-line">fue ~+10%. El inversor que no distingue sobreestima el momentum.</div>
@@ -1260,8 +1507,7 @@
 <div class="pdf-line">crecimiento se materialice.</div>
 <div class="pdf-line">DCE Holdings — Confidencial Página 5 NO contiene veredicto de inversión</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 6 de 9</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 6 de 9</div>
 <div class="pdf-line">DCE MUNGER DIGITAL v3.1 Booking Holdings (BKNG) | Marzo 2026</div>
 <div class="pdf-line">7. PRE-MORTEM: ¿QUÉ MATA ESTA INVERSIÓN EN 5 AÑOS?</div>
 <div class="pdf-line">Escenario 1 — Google Travel + Gemini (25-30%): Google integra IA agéntica con reserva directa, eliminando</div>
@@ -1299,8 +1545,7 @@
 <div class="pdf-line">(3) La IA agéntica puede agregar sin intermediario fijo.</div>
 <div class="pdf-line">DCE Holdings — Confidencial Página 6 NO contiene veredicto de inversión</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 7 de 9</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 7 de 9</div>
 <div class="pdf-line">DCE MUNGER DIGITAL v3.1 Booking Holdings (BKNG) | Marzo 2026</div>
 <div class="pdf-line">La honestidad intelectual exige reconocer: este riesgo es el mayor no-cuantificado de la tesis. El modelo</div>
 <div class="pdf-line">Columbia captura el moat actual (EPV/RV = 5,07x), pero no modeliza la probabilidad de erosión por</div>
@@ -1308,8 +1553,7 @@
 <div class="pdf-line">horizonte.</div>
 <div class="pdf-line">DCE Holdings — Confidencial Página 7 NO contiene veredicto de inversión</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 8 de 9</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 8 de 9</div>
 <div class="pdf-line">DCE MUNGER DIGITAL v3.1 Booking Holdings (BKNG) | Marzo 2026</div>
 <div class="pdf-header">SÍNTESIS Y CALIFICACIÓN GLOBAL</div>
 <div class="pdf-line">Scorecard Munger</div>
@@ -1345,8 +1589,7 @@
 <div class="pdf-line">(cid:127) FCF margin cae por debajo del 25%</div>
 <div class="pdf-line">DCE Holdings — Confidencial Página 8 NO contiene veredicto de inversión</div>
 </div>
-<div class="pdf-page">
-<div class="pdf-page-num">Página 9 de 9</div>
+<div class="pdf-page"><div class="pdf-page-num">Página 9 de 9</div>
 <div class="pdf-line">DCE MUNGER DIGITAL v3.1 Booking Holdings (BKNG) | Marzo 2026</div>
 <div class="pdf-line">DCE Holdings — Munger Digital v3.1 | Este documento NO contiene veredicto de inversión (COMPRA / NO INVERTIR /</div>
 <div class="pdf-line">MONITOREAR). La evaluación es meta-cognitiva: calidad del pensamiento, no dirección de la decisión. El nivel de convicción (ALTA</div>
