@@ -1,19 +1,8 @@
-
-Copiar
-
 {
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/public/landing.html"
-    },
-    {
-      "source": "/bkng",
-      "destination": "/public/index.html"
-    },
-    {
-      "source": "/visa",
-      "destination": "/public/visa.html"
-    }
+  "routes": [
+    { "src": "/", "dest": "/public/landing.html" },
+    { "src": "/bkng", "dest": "/public/index.html" },
+    { "src": "/visa", "dest": "/public/visa.html" },
+    { "src": "/api/(.*)", "dest": "/api/$1" }
   ]
 }
