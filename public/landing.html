@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — Investment Office</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:     #0d1b2a;
+    --navy-mid: #162435;
+    --navy-lt:  #1e3048;
+    --gold:     #b88b47;
+    --gold-lt:  #d4a85a;
+    --gold-rule:#b88b47;
+    --white:    #f5f2ec;
+    --ink:      #1a1a1a;
+    --gray-mid: #8a8a8a;
+    --rule:     #e0dbd0;
+    --green:    #2e7d52;
+    --red:      #c0392b;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'Archivo', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── BACKGROUND TEXTURE ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(184,139,71,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 90% 80%, rgba(184,139,71,0.05) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  /* ── DIAGONAL LINES ── */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 40px,
+      rgba(184,139,71,0.025) 40px,
+      rgba(184,139,71,0.025) 41px
+    );
+    pointer-events: none;
+  }
+
+  /* ── PASSWORD GATE ── */
+  #gate {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--navy);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 32px;
+    transition: opacity 0.5s ease;
+  }
+
+  #gate.fade-out { opacity: 0; pointer-events: none; }
+
+  .gate-logo {
+    text-align: center;
+  }
+  .gate-logo .big {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .gate-logo .sub {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+  }
+
+  .gate-divider {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, var(--gold-rule), transparent);
+  }
+
+  .gate-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .gate-form label {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+  }
+
+  .gate-form input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(184,139,71,0.4);
+    color: var(--white);
+    font-family: 'Archivo', sans-serif;
+    font-size: 16px;
+    padding: 8px 16px;
+    text-align: center;
+    width: 220px;
+    outline: none;
+    letter-spacing: 0.2em;
+    transition: border-color 0.2s;
+  }
+  .gate-form input:focus { border-color: var(--gold); }
+
+  .gate-btn {
+    background: transparent;
+    border: 1px solid rgba(184,139,71,0.5);
+    border-top: 2px solid var(--gold);
+    color: var(--gold-lt);
+    font-family: 'Archivo', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    padding: 10px 32px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .gate-btn:hover { background: rgba(184,139,71,0.1); border-color: var(--gold); }
+
+  #gate-error {
+    font-size: 10px;
+    color: var(--red);
+    letter-spacing: 0.1em;
+    min-height: 14px;
+    text-align: center;
+  }
+
+  /* ── MAIN CONTENT ── */
+  #main {
+    position: relative; z-index: 1;
+    opacity: 0;
+    transition: opacity 0.6s ease 0.1s;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  #main.visible { opacity: 1; }
+
+  /* ── HEADER ── */
+  header {
+    padding: 32px 60px 28px;
+    border-bottom: 1px solid rgba(184,139,71,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .h-brand {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .h-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--white);
+    letter-spacing: 0.02em;
+  }
+  .h-logo strong { color: var(--gold); }
+
+  .h-divider {
+    width: 1px; height: 28px;
+    background: rgba(184,139,71,0.3);
+  }
+
+  .h-subtitle {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    line-height: 1.8;
+  }
+
+  .h-date {
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.1em;
+    text-align: right;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 64px 60px 48px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .hero-eyebrow {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: block;
+    width: 24px; height: 1px;
+    background: var(--gold);
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 42px;
+    font-weight: 400;
+    line-height: 1.15;
+    color: var(--white);
+    max-width: 600px;
+    margin-bottom: 20px;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--gold-lt);
+  }
+
+  .hero-desc {
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.8;
+    max-width: 480px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── COVERED UNIVERSE ── */
+  .universe {
+    padding: 56px 60px;
+    flex: 1;
+  }
+
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+  }
+
+  /* ── COMPANY CARD ── */
+  .company-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-top: 2px solid var(--gold);
+    padding: 28px 28px 24px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-decoration: none;
+    display: block;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .company-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(184,139,71,0.04) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  .company-card:hover {
+    border-color: rgba(184,139,71,0.5);
+    border-top-color: var(--gold-lt);
+    background: rgba(255,255,255,0.055);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+  .company-card:hover::before { opacity: 1; }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .card-ticker {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1;
+  }
+
+  .card-badge {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid;
+  }
+
+  .badge-condicional { color: #e6a817; border-color: rgba(230,168,23,0.4); background: rgba(230,168,23,0.08); }
+  .badge-alta { color: var(--green); border-color: rgba(46,125,82,0.4); background: rgba(46,125,82,0.08); }
+  .badge-insuf { color: var(--red); border-color: rgba(192,57,43,0.4); background: rgba(192,57,43,0.08); }
+  .badge-pending { color: rgba(255,255,255,0.35); border-color: rgba(255,255,255,0.15); }
+
+  .card-name {
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.05em;
+    margin-bottom: 20px;
+    margin-top: -4px;
+  }
+
+  .card-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 22px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .metric-val {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .metric-val.green { color: #4aaa6a; }
+  .metric-val.gold  { color: var(--gold-lt); }
+  .metric-val.red   { color: #e05555; }
+
+  .metric-lbl {
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-date {
+    font-size: 9px;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 0.08em;
+  }
+
+  .card-arrow {
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    transition: transform 0.2s;
+  }
+  .company-card:hover .card-arrow { transform: translateX(4px); }
+
+  /* ── PLACEHOLDER CARD ── */
+  .card-placeholder {
+    background: rgba(255,255,255,0.015);
+    border: 1px dashed rgba(255,255,255,0.08);
+    border-top: 2px solid rgba(184,139,71,0.2);
+    padding: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+  }
+
+  .placeholder-inner {
+    text-align: center;
+  }
+
+  .placeholder-inner .plus {
+    font-size: 20px;
+    color: rgba(184,139,71,0.3);
+    margin-bottom: 10px;
+  }
+  .placeholder-inner .txt {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.15);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 20px 60px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-txt {
+    font-size: 9px;
+    color: rgba(255,255,255,0.2);
+    letter-spacing: 0.1em;
+  }
+
+  .footer-framework {
+    font-size: 9px;
+    color: rgba(184,139,71,0.4);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .company-card { animation: fadeUp 0.5s ease both; }
+  .company-card:nth-child(1) { animation-delay: 0.1s; }
+  .company-card:nth-child(2) { animation-delay: 0.2s; }
+  .company-card:nth-child(3) { animation-delay: 0.3s; }
+  .card-placeholder           { animation: fadeUp 0.5s ease 0.3s both; }
+</style>
+</head>
+<body>
+
+<!-- ── PASSWORD GATE ── -->
+<div id="gate">
+  <div class="gate-logo">
+    <span class="big">DCE Holdings</span>
+    <span class="sub">Investment Office — Confidencial</span>
+  </div>
+  <div class="gate-divider"></div>
+  <div class="gate-form">
+    <label>Contraseña de acceso</label>
+    <input type="password" id="pwd-input" placeholder="··········" onkeydown="if(event.key==='Enter') checkPwd()">
+    <div id="gate-error"></div>
+    <button class="gate-btn" onclick="checkPwd()">Ingresar</button>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div id="main">
+
+  <header>
+    <div class="h-brand">
+      <div class="h-logo"><strong>DCE</strong> Holdings</div>
+      <div class="h-divider"></div>
+      <div class="h-subtitle">
+        Investment Office<br>
+        Modelo Columbia — Quality Growth
+      </div>
+    </div>
+    <div class="h-date" id="hdr-date"></div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-eyebrow">Universo Cubierto</div>
+    <h1 class="hero-title">Análisis de <em>valor fundamental</em><br>bajo el marco Columbia</h1>
+    <p class="hero-desc">Valuación disciplinada usando Asset Value → Earnings Power Value → Growth Value. Cada empresa analizada con Thesis Breaker y Munger Digital antes de cualquier decisión de capital.</p>
+  </div>
+
+  <div class="universe">
+    <div class="section-label">Empresas — FY2025</div>
+    <div class="cards-grid">
+
+      <!-- BKNG -->
+      <a class="company-card" href="/bkng" onclick="passThrough(event, '/bkng')">
+        <div class="card-header">
+          <div>
+            <div class="card-ticker">BKNG</div>
+          </div>
+          <div class="card-badge badge-condicional">Condicional</div>
+        </div>
+        <div class="card-name">Booking Holdings · NASDAQ · Travel Services</div>
+        <div class="card-metrics">
+          <div>
+            <div class="metric-val green">19.7%</div>
+            <div class="metric-lbl">Implied IRR</div>
+          </div>
+          <div>
+            <div class="metric-val gold">2.17×</div>
+            <div class="metric-lbl">Precio / EPV</div>
+          </div>
+          <div>
+            <div class="metric-val green">+7.7pp</div>
+            <div class="metric-lbl">MoS IRR</div>
+          </div>
+          <div>
+            <div class="metric-val">99.9%</div>
+            <div class="metric-lbl">ROIC FY25</div>
+          </div>
+          <div>
+            <div class="metric-val gold">8.61%</div>
+            <div class="metric-lbl">WACC</div>
+          </div>
+          <div>
+            <div class="metric-val">6.0/10</div>
+            <div class="metric-lbl">Munger Score</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="card-date">Revisado 09-Mar-2026</span>
+          <span class="card-arrow">Abrir dashboard →</span>
+        </div>
+      </a>
+
+      <!-- VISA -->
+      <a class="company-card" href="/visa" onclick="passThrough(event, '/visa')">
+        <div class="card-header">
+          <div>
+            <div class="card-ticker">V</div>
+          </div>
+          <div class="card-badge badge-alta">Alta Convicción</div>
+        </div>
+        <div class="card-name">Visa Inc. · NYSE · Payment Networks</div>
+        <div class="card-metrics">
+          <div>
+            <div class="metric-val green">13.9%</div>
+            <div class="metric-lbl">Implied IRR</div>
+          </div>
+          <div>
+            <div class="metric-val gold">2.17×</div>
+            <div class="metric-lbl">Precio / EPV</div>
+          </div>
+          <div>
+            <div class="metric-val green">+3.9pp</div>
+            <div class="metric-lbl">MoS IRR</div>
+          </div>
+          <div>
+            <div class="metric-val">46.2%</div>
+            <div class="metric-lbl">ROIC FY25</div>
+          </div>
+          <div>
+            <div class="metric-val gold">7.14%</div>
+            <div class="metric-lbl">WACC</div>
+          </div>
+          <div>
+            <div class="metric-val">—</div>
+            <div class="metric-lbl">Munger Score</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="card-date">Revisado Mar-2026</span>
+          <span class="card-arrow">Abrir dashboard →</span>
+        </div>
+      </a>
+
+      <!-- PLACEHOLDER -->
+      <div class="card-placeholder">
+        <div class="placeholder-inner">
+          <div class="plus">+</div>
+          <div class="txt">Próxima empresa</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <span class="footer-txt">DCE Holdings Investment Office — Confidencial · Solo uso interno</span>
+    <span class="footer-framework">Columbia Business School Framework</span>
+  </footer>
+
+</div>
+
+<script>
+const CORRECT = 'Test1';
+
+function checkPwd() {
+  const val = document.getElementById('pwd-input').value;
+  if (val === CORRECT) {
+    sessionStorage.setItem('dce_auth', val);
+    document.getElementById('gate').classList.add('fade-out');
+    setTimeout(() => {
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('main').classList.add('visible');
+    }, 500);
+    document.getElementById('gate-error').textContent = '';
+  } else {
+    document.getElementById('gate-error').textContent = 'Contraseña incorrecta';
+    document.getElementById('pwd-input').value = '';
+    document.getElementById('pwd-input').focus();
+  }
+}
+
+function passThrough(e, url) {
+  e.preventDefault();
+  sessionStorage.setItem('dce_auth', CORRECT);
+  window.location.href = url;
+}
+
+// Auto-unlock if already authenticated
+window.addEventListener('DOMContentLoaded', () => {
+  // Set date
+  const d = new Date();
+  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  document.getElementById('hdr-date').textContent =
+    d.getDate().toString().padStart(2,'0') + '-' + months[d.getMonth()] + '-' + d.getFullYear();
+
+  // Check session
+  if (sessionStorage.getItem('dce_auth') === CORRECT) {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('main').classList.add('visible');
+  } else {
+    setTimeout(() => document.getElementById('pwd-input').focus(), 100);
+  }
+});
+</script>
+</body>
+</html>
