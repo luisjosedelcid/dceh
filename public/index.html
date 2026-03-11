@@ -217,13 +217,21 @@
     </div>
   </div>
   <div class="hright">
-    <div class="hkpi">
-      <div class="val" id="live-price">$4,235.00</div>
-      <div class="sub">Precio <span id="price-status" style="color:rgba(255,255,255,0.3)">modelo</span></div>
+    <div class="hkpi" style="min-width:140px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="val" id="live-price" style="display:none">$4,362.70</div>
+        <input id="price-input" type="text" value="4,362.70"
+          style="background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.25);color:var(--gold-lt);font-family:Archivo,sans-serif;font-size:18px;font-weight:700;width:110px;text-align:right;outline:none;padding:2px 4px"
+          oninput="onPriceInput(this.value)"
+          onfocus="this.select()"
+          placeholder="Precio">
+        <div id="price-recalc-icon" style="font-size:10px;color:rgba(255,255,255,0.3);display:none">↻</div>
+      </div>
+      <div class="sub">Precio mercado <span id="price-status" style="color:var(--green);font-size:9px"></span></div>
     </div>
-    <div class="hkpi"><div class="val" style="color:var(--green)" id="hdr-irr">57.0%</div><div class="sub">Implied IRR</div></div>
+    <div class="hkpi"><div class="val" style="color:var(--green)" id="hdr-irr">19.7%</div><div class="sub">Implied IRR</div></div>
     <div class="hkpi"><div class="val">610%</div><div class="sub">ROIC 3-4yr</div></div>
-    <div class="hkpi"><div class="val" style="color:var(--green)" id="hdr-mos">+45.0%</div><div class="sub">Margen seguridad</div></div>
+    <div class="hkpi"><div class="val" style="color:var(--green)" id="hdr-mos">+7.7%</div><div class="sub">Margen seguridad</div></div>
     <div class="hkpi" style="border-left:1px solid rgba(255,255,255,0.1);padding-left:20px">
       <div style="font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Última revisión</div>
       <div style="font-size:11px;color:var(--gold-lt)" id="last-review-display">06-Mar-2026</div>
@@ -234,14 +242,17 @@
 
 <nav>
   <button class="active" onclick="sw('overview',this)">Overview</button>
-  <button onclick="sw('columbia',this)">Columbia Ladder</button>
   <button onclick="sw('financials',this)">Financials</button>
+  <button onclick="sw('adj',this)">Adjustments</button>
+  <button onclick="sw('rv',this)">Reprod. Value</button>
+  <button onclick="sw('epv',this)">EPV</button>
   <button onclick="sw('roic',this)">ROIC & Capital</button>
   <button onclick="sw('irr',this)">Implied IRR</button>
   <button onclick="sw('health',this)">Health Check</button>
   <button onclick="sw('audit',this)">Decisiones CIO</button>
-  <button onclick="window.open('DCE_Booking_Holdings_BKNG_Thesis_Breaker.pdf','_blank')" style="color:var(--red);font-weight:600">⚡ Thesis Breaker</button>
-  <button onclick="window.open('DCE_Booking_Holdings_BKNG_Munger_Digital.pdf','_blank')" style="color:#6b4fa0;font-weight:600">🧠 Munger</button>
+  <button onclick="window.open('https://drive.google.com/file/d/1JPh6IsQGBGXd92TV-Vr8xc0tyAoI8G0Q/view?usp=sharing','_blank')" style="font-weight:600">Informe de Valoración</button>
+  <button onclick="window.open('https://drive.google.com/file/d/1ZSMPZ5mayaPiWXs1KOyNqxyO37_ZKuh4/view?usp=sharing','_blank')" style="color:var(--red);font-weight:600">Thesis Breaker</button>
+  <button onclick="window.open('https://drive.google.com/file/d/1-PlXAaTs6oUodwuuPbnwp6BgxU3pXuFu/view?usp=sharing','_blank')" style="color:#6b4fa0;font-weight:600">Munger</button>
   <button onclick="sw('memo',this)">Investment Memo</button>
   <button onclick="togglePresentMode()" id="btn-present">⊞ Present</button>
 </nav>
@@ -272,41 +283,200 @@
   </div>
 </div>
 
-<!-- COLUMBIA LADDER -->
-<div id="tab-columbia" class="tab-content">
-  <div class="slbl">Columbia Ladder — NAV → EPV → Precio de Mercado</div>
-  <div class="ladder">
-    <div class="lcol"><div class="lbar nav" style="height:38px"></div><div class="lval">$5.69</div><div class="llbl">NAV por Acción</div><div class="lnote">Piso de liquidación</div></div>
-    <div class="lcol"><div class="lbar epv" style="height:128px"></div><div class="lval">$147.60</div><div class="llbl">EPV por Acción</div><div class="lnote">Poder de ganancias sin crecimiento</div></div>
-    <div class="lcol"><div class="lbar mkt" style="height:255px"></div><div class="lval">$4,235.00</div><div class="llbl">Precio de Mercado</div><div class="lnote">Prima implícita de crecimiento: 2.17× EPV</div></div>
+<!-- REPRODUCTION VALUE -->
+<div id="tab-rv" class="tab-content">
+  <div class="slbl">Reproduction Value — Valor de Reposición del Negocio</div>
+  <div class="g4" style="margin-bottom:18px">
+    <div class="card accent"><div class="clbl">RV Total ($M)</div><div class="cval gold" id="rv-total">$5,166M</div><div class="csub">Activos netos a valor de reposición</div></div>
+    <div class="card accent"><div class="clbl">RV / Acción</div><div class="cval gold" id="rv-per-share">$505.58</div><div class="csub">32.64M acciones diluidas</div></div>
+    <div class="card"><div class="clbl">Precio / RV</div><div class="cval red" id="rv-price-rv">8.6×</div><div class="csub">Prima sobre valor de reposición</div></div>
+    <div class="card" style="border-left:3px solid var(--green)">
+      <div class="clbl">EPV / RV — Moat Test</div>
+      <div class="cval green" id="rv-epv-rv">5.07× <span class="badge bg">MOAT ✓</span></div>
+      <div class="csub" id="rv-moat-note">Franquicia confirmada — EPV supera ampliamente el costo de reposición</div>
+    </div>
   </div>
-  <div class="g3">
-    <div class="card accent"><div class="clbl">EPV / NAV — Franchise Test</div><div class="cval green">25.9×</div><div class="csub">Ratio &gt;2× = moat duradero <span class="badge bg">MOAT</span></div></div>
-    <div class="card"><div class="clbl">Precio / EPV</div><div class="cval red">2.17×</div><div class="csub">Prima de crecimiento implícita del mercado</div></div>
-    <div class="card"><div class="clbl">Precio / NAV</div><div class="cval">56.2×</div><div class="csub">Prima sobre valor de liquidación</div></div>
+
+  <!-- SLIDERS COMO % DEL BOOK VALUE BASE -->
+  <div class="slbl">Ajuste de Supuestos — % del Book Value de Referencia</div>
+  <div style="background:var(--white);border:1px solid var(--rule);padding:28px 32px;margin-bottom:20px">
+    <div style="font-size:11px;color:var(--gray-mid);font-style:italic;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--rule)">
+      Los sliders ajustan cada componente como porcentaje de su valor base (100% = valor del modelo FY2025). Útil para sensibilidad y escenarios de estrés.
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:28px 40px;">
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">PP&E Neto</span>
+          <span class="inp-val-display" id="disp-rv-ppe">$2,024M</span>
+        </div>
+        <input type="range" class="slider" id="sl-rv-ppe" min="50" max="200" step="5" value="100">
+        <div class="inp-range-labels"><span>50%</span><span>200%</span></div>
+        <div class="inp-formula">Base: $2,024M · Reposición al 100% book value neto</div>
+      </div>
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">Capital de Trabajo</span>
+          <span class="inp-val-display" id="disp-rv-wc">$2,115M</span>
+        </div>
+        <input type="range" class="slider" id="sl-rv-wc" min="50" max="200" step="5" value="100">
+        <div class="inp-range-labels"><span>50%</span><span>200%</span></div>
+        <div class="inp-formula">Base: $2,115M · WC operativo positivo (ex-merchant payables)</div>
+      </div>
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">S&M Asset Capitalizado</span>
+          <span class="inp-val-display" id="disp-rv-sm">$4,564M</span>
+        </div>
+        <input type="range" class="slider" id="sl-rv-sm" min="50" max="200" step="5" value="100">
+        <div class="inp-range-labels"><span>50%</span><span>200%</span></div>
+        <div class="inp-formula">Base: $4,564M · 3yr Marketing ($8.2B avg) ÷ vida útil 3 años</div>
+      </div>
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">Intangibles PIM</span>
+          <span class="inp-val-display" id="disp-rv-intang">$15,750M</span>
+        </div>
+        <input type="range" class="slider" id="sl-rv-intang" min="50" max="200" step="5" value="100">
+        <div class="inp-range-labels"><span>50%</span><span>200%</span></div>
+        <div class="inp-formula">Base: $15,750M · Brand $10B + Tech $2.8B + Customers $2.95B</div>
+      </div>
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">Deferred Tax Asset</span>
+          <span class="inp-val-display" id="disp-rv-dta">$448M</span>
+        </div>
+        <input type="range" class="slider" id="sl-rv-dta" min="0" max="200" step="5" value="100">
+        <div class="inp-range-labels"><span>0%</span><span>200%</span></div>
+        <div class="inp-formula">Base: $448M · Ajuste 70% del book (Decisión #14)</div>
+      </div>
+    </div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--rule);display:flex;align-items:center;gap:12px">
+      <button onclick="resetRV()" style="font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:8px 18px;background:none;border:1px solid var(--rule);color:var(--gray-txt);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--rule)';this.style.color='var(--gray-txt)'">↺ Reset a supuestos base</button>
+      <span style="font-size:11px;color:var(--gray-mid);font-style:italic">Deuda + Leases fija: −$19,293M · Goodwill excluido (Decisión #13)</span>
+    </div>
   </div>
-  <div class="slbl">Bridge EPV — Operaciones → Equity</div>
+
+  <!-- WATERFALL RV -->
+  <div class="slbl">Composición del Reproduction Value</div>
+  <div style="background:var(--white);border:1px solid var(--rule);padding:24px 28px;margin-bottom:20px">
+    <div id="rv-waterfall" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:2px solid var(--gold-rule);margin-top:8px">
+      <span style="font-size:12px;font-weight:700;color:var(--navy)">RV Total (Equity)</span>
+      <span style="font-size:18px;font-weight:700;color:var(--gold)" id="rv-total-wf">$5,166M</span>
+    </div>
+  </div>
+
+  <!-- DETALLE INTANGIBLES -->
   <div class="g2">
+    <div class="card"><div class="clbl">Detalle Intangibles PIM ($M)</div><div class="kv">
+      <div class="row"><span class="k">Brand Value (Booking.com)</span><span class="v">$10,000M</span></div>
+      <div class="row"><span class="k">Technology Platform</span><span class="v">$2,800M</span></div>
+      <div class="row"><span class="k">Customer Relationships</span><span class="v">$2,950M</span></div>
+      <div class="row"><span class="k" style="font-weight:600">Total Intangibles PIM</span><span class="v gold">$15,750M</span></div>
+      <div class="row"><span class="k" style="font-style:italic;font-size:11px">Goodwill excluido</span><span class="v" style="color:var(--gray-mid)">$0M</span></div>
+    </div></div>
+    <div class="card"><div class="clbl">Decisiones Clave — RV</div><div class="kv">
+      <div class="row"><span class="k">Goodwill</span><span class="v" style="color:var(--red)">0% — reconstruir desde cero</span></div>
+      <div class="row"><span class="k">DTA Recognition</span><span class="v">70% del book value</span></div>
+      <div class="row"><span class="k">S&M Vida Útil</span><span class="v">3 años</span></div>
+      <div class="row"><span class="k">Deuda + Leases</span><span class="v">−$19,293M (fija)</span></div>
+      <div class="row"><span class="k">Precio / RV</span><span class="v red" id="rv-price-rv-2">8.6×</span></div>
+    </div></div>
+  </div>
+</div>
+
+<!-- EARNINGS POWER VALUE -->
+<div id="tab-epv" class="tab-content">
+  <div class="slbl">Earnings Power Value — Valor del Poder de Ganancias Sostenible</div>
+  <div class="g4" style="margin-bottom:18px">
+    <div class="card accent"><div class="clbl">EPV Operaciones ($M)</div><div class="cval gold" id="epv-ops">$86,224M</div><div class="csub">NOPAT ÷ WACC</div></div>
+    <div class="card accent"><div class="clbl">EPV Equity ($M)</div><div class="cval gold" id="epv-eq">$83,621M</div><div class="csub">Post-bridge financiero</div></div>
+    <div class="card accent"><div class="clbl">EPV / Acción</div><div class="cval gold" id="epv-ps">$2,562</div><div class="csub">32.64M acciones diluidas</div></div>
+    <div class="card" style="border-left:3px solid var(--gold)">
+      <div class="clbl">Precio / EPV</div>
+      <div class="cval" id="epv-price-epv" style="color:var(--red)">1.70×</div>
+      <div class="csub" id="epv-interp">Mercado paga prima de crecimiento implícita</div>
+    </div>
+  </div>
+
+  <!-- SLIDERS EPV -->
+  <div class="slbl">Supuestos EPV — Edita en tiempo real</div>
+  <div style="background:var(--white);border:1px solid var(--rule);padding:28px 32px;margin-bottom:20px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:28px 40px;">
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">NOPAT Normalizado ($M)</span>
+          <span class="inp-val-display" id="disp-epv-nopat">$7,420M</span>
+        </div>
+        <input type="range" class="slider" id="sl-epv-nopat" min="4000" max="12000" step="50" value="7420">
+        <div class="inp-range-labels"><span>$4,000M</span><span>$12,000M</span></div>
+        <div class="inp-formula">GAAP $8,825M + impairment $662M − S&M growth $774M − tax @20%</div>
+      </div>
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">WACC</span>
+          <span class="inp-val-display" id="disp-epv-wacc">8.61%</span>
+        </div>
+        <input type="range" class="slider" id="sl-epv-wacc" min="5" max="15" step="0.1" value="8.61">
+        <div class="inp-range-labels"><span>5%</span><span>15%</span></div>
+        <div class="inp-formula">Base: 8.61% · β 1.20, Ke 9.23%, ERP 4.23% (Damodaran Jan 2026)</div>
+      </div>
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">Tax Rate Efectivo</span>
+          <span class="inp-val-display" id="disp-epv-tax">20.0%</span>
+        </div>
+        <input type="range" class="slider" id="sl-epv-tax" min="15" max="30" step="0.5" value="20">
+        <div class="inp-range-labels"><span>15%</span><span>30%</span></div>
+        <div class="inp-formula">Mediana ETR FY2022-2025 ≈ 20.5% (Decisión #5)</div>
+      </div>
+    </div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--rule);display:flex;align-items:center;gap:12px">
+      <button onclick="resetEPV()" style="font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:8px 18px;background:none;border:1px solid var(--rule);color:var(--gray-txt);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--rule)';this.style.color='var(--gray-txt)'">↺ Reset a supuestos base</button>
+      <span style="font-size:11px;color:var(--gray-mid);font-style:italic">Sin crecimiento supuesto — EPV es valor estacionario puro</span>
+    </div>
+  </div>
+
+  <!-- BRIDGE EPV -->
+  <div class="slbl">Bridge EPV — EBIT → Equity</div>
+  <div class="g2" style="margin-bottom:20px">
     <div class="card"><div class="clbl">Construcción EPV ($M)</div><div class="kv">
-      <div class="row"><span class="k">NOPAT Normalizado</span><span class="v">$7,590M</span></div>
-      <div class="row"><span class="k">÷ WACC (9.52%)</span><span class="v">$79,695M</span></div>
+      <div class="row"><span class="k">EBIT FY2025 (GAAP, normalizado)</span><span class="v">$9,487M</span></div>
+      <div class="row"><span class="k">×(1 − Tax Rate 20%)</span><span class="v" style="color:var(--gray-txt)">— </span></div>
+      <div class="row"><span class="k">NOPAT Ajustado</span><span class="v" id="bridge-nopat">$7,420M</span></div>
+      <div class="row"><span class="k">÷ WACC</span><span class="v" id="bridge-wacc">8.61%</span></div>
+      <div class="row"><span class="k" style="font-weight:600">EPV Operaciones</span><span class="v gold" id="bridge-epv-ops">$86,224M</span></div>
       <div class="row"><span class="k">(+) Exceso Caja</span><span class="v green">+$15,428M</span></div>
       <div class="row"><span class="k">(+) LT Investments</span><span class="v green">+$582M</span></div>
       <div class="row"><span class="k">(−) Deuda Total</span><span class="v red">−$18,736M</span></div>
       <div class="row"><span class="k">(−) Lease Liabilities</span><span class="v red">−$557M</span></div>
-      <div class="row"><span class="k" style="font-weight:600">Equity EPV</span><span class="v gold">$76,412M</span></div>
-      <div class="row"><span class="k" style="font-weight:600">EPV por Acción</span><span class="v gold">$2,341.12</span></div>
+      <div class="row"><span class="k" style="font-weight:700;color:var(--navy)">EPV Equity</span><span class="v gold" id="bridge-epv-eq">$83,621M</span></div>
+      <div class="row"><span class="k" style="font-weight:700">EPV / Acción</span><span class="v gold" id="bridge-epv-ps">$2,562</span></div>
     </div></div>
     <div class="card"><div class="clbl">WACC — Componentes</div><div class="kv">
-      <div class="row"><span class="k">Risk-Free Rate (Rf)</span><span class="v">4.30%</span></div>
-      <div class="row"><span class="k">Beta (β)</span><span class="v">1.10</span></div>
-      <div class="row"><span class="k">Equity Risk Premium</span><span class="v">5.50%</span></div>
-      <div class="row"><span class="k">Ke (CAPM)</span><span class="v">10.35%</span></div>
-      <div class="row"><span class="k">Kd after-tax</span><span class="v">3.60%</span></div>
-      <div class="row"><span class="k">Peso Deuda D/(D+E)</span><span class="v">12.25%</span></div>
-      <div class="row"><span class="k">Peso Equity E/(D+E)</span><span class="v">87.75%</span></div>
-      <div class="row"><span class="k" style="font-weight:600">WACC Final</span><span class="v gold">9.52%</span></div>
+      <div class="row"><span class="k">Risk-Free Rate (Rf)</span><span class="v">4.15%</span></div>
+      <div class="row"><span class="k">Beta (β)</span><span class="v">1.20</span></div>
+      <div class="row"><span class="k">Equity Risk Premium</span><span class="v">4.23%</span></div>
+      <div class="row"><span class="k">Ke (CAPM)</span><span class="v">9.23%</span></div>
+      <div class="row"><span class="k">Kd after-tax</span><span class="v">4.05%</span></div>
+      <div class="row"><span class="k">Peso Deuda D/(D+E)</span><span class="v">12.0%</span></div>
+      <div class="row"><span class="k">Peso Equity E/(D+E)</span><span class="v">88.0%</span></div>
+      <div class="row"><span class="k" style="font-weight:600">WACC Final</span><span class="v gold">8.61%</span></div>
+    </div>
+    <div style="margin-top:14px;padding:12px;background:var(--cream);font-size:11px;color:var(--gray-txt);line-height:1.7">
+      <strong>Concepto EPV:</strong> El EPV asume que las ganancias actuales persisten indefinidamente sin crecimiento adicional. Es el "piso de valoración" de una empresa con moat. Un precio &gt; EPV implica que el mercado asigna valor al crecimiento futuro.
     </div></div>
+  </div>
+
+  <!-- SENSITIVITY TABLE -->
+  <div class="slbl">Tabla de Sensibilidad — P/EPV por NOPAT × WACC</div>
+  <div style="background:var(--white);border:1px solid var(--rule);padding:20px 24px;overflow-x:auto;margin-bottom:20px">
+    <div id="epv-sensitivity"></div>
+    <div style="margin-top:12px;font-size:10px;color:var(--gray-mid)">
+      <span style="display:inline-block;width:12px;height:12px;background:rgba(42,122,86,.18);margin-right:4px;vertical-align:middle"></span>≤ 1.5× precio atractivo &nbsp;
+      <span style="display:inline-block;width:12px;height:12px;background:rgba(184,139,71,.18);margin-right:4px;vertical-align:middle"></span>≤ 2.0× precio justo &nbsp;
+      <span style="display:inline-block;width:12px;height:12px;background:rgba(155,35,53,.1);margin-right:4px;vertical-align:middle"></span>&gt; 2.0× prima de crecimiento
+    </div>
   </div>
 </div>
 
@@ -342,6 +512,222 @@
       </tbody>
     </table>
   </div>
+
+  <!-- BALANCE SHEET -->
+  <div class="slbl">Balance General — FY2020–2025 ($M)</div>
+  <div class="card" style="padding:0;margin-bottom:20px;overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px;">
+      <thead>
+        <tr style="background:var(--navy);">
+          <th style="text-align:left;padding:11px 18px;font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--gold-rule);width:28%;">Concepto</th>
+          <th style="text-align:right;padding:11px 14px;font-size:9px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5);border-bottom:1px solid var(--gold-rule);">FY2020</th>
+          <th style="text-align:right;padding:11px 14px;font-size:9px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5);border-bottom:1px solid var(--gold-rule);">FY2021</th>
+          <th style="text-align:right;padding:11px 14px;font-size:9px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5);border-bottom:1px solid var(--gold-rule);">FY2022</th>
+          <th style="text-align:right;padding:11px 14px;font-size:9px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5);border-bottom:1px solid var(--gold-rule);">FY2023</th>
+          <th style="text-align:right;padding:11px 14px;font-size:9px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5);border-bottom:1px solid var(--gold-rule);">FY2024</th>
+          <th style="text-align:right;padding:11px 18px 11px 14px;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--gold-rule);">FY2025</th>
+        </tr>
+      </thead>
+      <tbody id="bs-tbody">
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CASH FLOW STATEMENT -->
+  <div class="slbl">Estado de Flujos de Caja — FY2020–2025 ($M)</div>
+  <div class="card" style="padding:0;margin-bottom:20px;overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px;">
+      <thead>
+        <tr style="background:var(--navy);">
+          <th style="text-align:left;padding:11px 18px;font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--gold-rule);width:28%;">Concepto</th>
+          <th style="text-align:right;padding:11px 14px;font-size:9px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5);border-bottom:1px solid var(--gold-rule);">FY2020</th>
+          <th style="text-align:right;padding:11px 14px;font-size:9px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5);border-bottom:1px solid var(--gold-rule);">FY2021</th>
+          <th style="text-align:right;padding:11px 14px;font-size:9px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5);border-bottom:1px solid var(--gold-rule);">FY2022</th>
+          <th style="text-align:right;padding:11px 14px;font-size:9px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5);border-bottom:1px solid var(--gold-rule);">FY2023</th>
+          <th style="text-align:right;padding:11px 14px;font-size:9px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5);border-bottom:1px solid var(--gold-rule);">FY2024</th>
+          <th style="text-align:right;padding:11px 18px 11px 14px;font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--gold-rule);">FY2025</th>
+        </tr>
+      </thead>
+      <tbody id="cf-tbody">
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ADJUSTMENTS -->
+<div id="tab-adj" class="tab-content">
+  <div class="slbl">Normalizaciones NOPAT — Ajustes DCE FY2025</div>
+
+  <!-- SUMMARY KPI CARDS -->
+  <div class="g4" style="margin-bottom:18px">
+    <div class="card accent">
+      <div class="clbl">GAAP Operating Income</div>
+      <div class="cval gold">$8,825M</div>
+      <div class="csub">Reportado FY2025 (10-K)</div>
+    </div>
+    <div class="card">
+      <div class="clbl">NOPAT Ajustado DCE</div>
+      <div class="cval green" id="adj-nopat-final">$7,420M</div>
+      <div class="csub">Post-normalización + tax</div>
+    </div>
+    <div class="card">
+      <div class="clbl">S&M Asset Capitalizado</div>
+      <div class="cval gold" id="adj-sm-asset">$4,564M</div>
+      <div class="csub">Activo de marketing en RV</div>
+    </div>
+    <div class="card" style="border-left:3px solid var(--gold)">
+      <div class="clbl">EPV Impacto (÷ WACC 8.61%)</div>
+      <div class="cval" id="adj-epv-impact" style="color:var(--gold)">$86,224M</div>
+      <div class="csub">EPV Operaciones resultante</div>
+    </div>
+  </div>
+
+  <!-- BRIDGE WATERFALL -->
+  <div class="slbl">Bridge GAAP → NOPAT Ajustado DCE</div>
+  <div style="background:var(--white);border:1px solid var(--rule);padding:28px 32px;margin-bottom:20px">
+    <div id="adj-bridge" style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding-top:14px;border-top:2px solid var(--gold-rule);margin-top:8px">
+      <span style="font-size:13px;font-weight:700;color:var(--navy)">NOPAT Ajustado DCE (post-tax)</span>
+      <span style="font-size:20px;font-weight:700;color:var(--green)" id="adj-bridge-total">$7,420M</span>
+    </div>
+  </div>
+
+  <!-- THREE ADJUSTMENT PANELS SIDE BY SIDE -->
+  <div class="g3" style="align-items:start">
+
+    <!-- PANEL 1: S&M CAPITALIZATION -->
+    <div style="background:var(--white);border:1px solid var(--rule);padding:24px 26px">
+      <div class="slbl" style="margin-bottom:16px">S&M Capitalización</div>
+      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:18px;line-height:1.6">
+        Marketing capitalizable tratado como inversión. Crea S&M Asset en RV y reduce NOPAT por el gasto de crecimiento incremental.
+      </div>
+
+      <div class="inp-group" style="margin-bottom:16px">
+        <div class="inp-header">
+          <span class="inp-label">Vida Útil S&M (años)</span>
+          <span class="inp-val-display" id="disp-adj-life">3 años</span>
+        </div>
+        <input type="range" class="slider" id="sl-adj-life" min="1" max="6" step="1" value="3">
+        <div class="inp-range-labels"><span>1 año</span><span>6 años</span></div>
+        <div class="inp-formula">Performance mktg: 2-3 años · Brand: 4-6 años</div>
+      </div>
+
+      <div class="inp-group" style="margin-bottom:16px">
+        <div class="inp-header">
+          <span class="inp-label">% Marketing que es Growth</span>
+          <span class="inp-val-display" id="disp-adj-growth-pct">9.4%</span>
+        </div>
+        <input type="range" class="slider" id="sl-adj-growth-pct" min="0" max="30" step="0.5" value="9.4">
+        <div class="inp-range-labels"><span>0%</span><span>30%</span></div>
+        <div class="inp-formula">YoY Δ Marketing / Revenue FY2025 = $774M / $26,917M</div>
+      </div>
+
+      <div class="kv" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)">
+        <div class="row"><span class="k">Total Marketing FY2025</span><span class="v">$8,186M</span></div>
+        <div class="row"><span class="k">S&M Growth Expense</span><span class="v red" id="adj-sm-growth">$774M</span></div>
+        <div class="row"><span class="k">S&M Asset (vida útil × avg 3yr)</span><span class="v gold" id="adj-sm-asset-kv">$4,564M</span></div>
+        <div class="row"><span class="k">Impacto NOPAT (−growth, post-tax)</span><span class="v red" id="adj-sm-nopat-impact">−$619M</span></div>
+      </div>
+    </div>
+
+    <!-- PANEL 2: NON-RECURRING ITEMS -->
+    <div style="background:var(--white);border:1px solid var(--rule);padding:24px 26px">
+      <div class="slbl" style="margin-bottom:16px">Non-Recurring Items</div>
+      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:18px;line-height:1.6">
+        Partidas no recurrentes excluidas para normalizar el poder de ganancias sostenible. Toggle para incluir/excluir cada partida.
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:10px 14px;border:1px solid var(--rule);transition:border-color .2s" id="lbl-impairment">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--ink)">Goodwill Impairment</div>
+            <div style="font-size:10px;color:var(--gray-mid);margin-top:2px">Eliminado en FY2020 ($1,062M) — no recurrente</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:12px;font-weight:600;color:var(--green)" id="val-impairment">+$457M</span>
+            <input type="checkbox" id="chk-impairment" checked style="width:16px;height:16px;accent-color:var(--navy);cursor:pointer">
+          </div>
+        </label>
+
+        <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:10px 14px;border:1px solid var(--rule);transition:border-color .2s" id="lbl-transform">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--ink)">Transformation Costs</div>
+            <div style="font-size:10px;color:var(--gray-mid);margin-top:2px">Costos de reestructura FY2025 — no recurrentes</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:12px;font-weight:600;color:var(--green)" id="val-transform">+$205M</span>
+            <input type="checkbox" id="chk-transform" checked style="width:16px;height:16px;accent-color:var(--navy);cursor:pointer">
+          </div>
+        </label>
+
+        <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:10px 14px;border:1px solid var(--rule);transition:border-color .2s" id="lbl-other-nr">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--ink)">Other Non-Recurring</div>
+            <div style="font-size:10px;color:var(--gray-mid);margin-top:2px">Otros items discrecionales</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:12px;font-weight:600;color:var(--gray-mid)">$0M</span>
+            <input type="number" id="inp-other-nr" value="0" min="-2000" max="2000" step="50"
+              style="width:70px;padding:4px 8px;border:1px solid var(--rule);font-family:Archivo,sans-serif;font-size:12px;text-align:right;outline:none">
+          </div>
+        </label>
+      </div>
+
+      <div class="kv" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--rule)">
+        <div class="row"><span class="k">Total Addbacks pre-tax</span><span class="v green" id="adj-nr-total">+$662M</span></div>
+        <div class="row"><span class="k">Impacto NOPAT (post-tax @20%)</span><span class="v green" id="adj-nr-nopat">+$530M</span></div>
+      </div>
+    </div>
+
+    <!-- PANEL 3: TAX RATE -->
+    <div style="background:var(--white);border:1px solid var(--rule);padding:24px 26px">
+      <div class="slbl" style="margin-bottom:16px">Tax Rate Normalizado</div>
+      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:18px;line-height:1.6">
+        ETR normalizada aplicada al EBIT ajustado. Mediana histórica FY2022–2025 ≈ 20.5%.
+      </div>
+
+      <div class="inp-group" style="margin-bottom:16px">
+        <div class="inp-header">
+          <span class="inp-label">Tax Rate Normalizado</span>
+          <span class="inp-val-display" id="disp-adj-tax">20.0%</span>
+        </div>
+        <input type="range" class="slider" id="sl-adj-tax" min="15" max="30" step="0.5" value="20">
+        <div class="inp-range-labels"><span>15%</span><span>30%</span></div>
+        <div class="inp-formula">ETR reportada FY2025: 20.9% · Mediana 3yr: 20.5%</div>
+      </div>
+
+      <div class="kv" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--rule)">
+        <div class="row"><span class="k">ETR Reportada FY2025</span><span class="v">20.9%</span></div>
+        <div class="row"><span class="k">ETR FY2024</span><span class="v">19.3%</span></div>
+        <div class="row"><span class="k">ETR FY2023</span><span class="v">21.7%</span></div>
+        <div class="row"><span class="k">ETR FY2022</span><span class="v">22.1%</span></div>
+        <div class="row"><span class="k">Tax Rate Seleccionado</span><span class="v gold" id="adj-tax-selected">20.0%</span></div>
+        <div class="row"><span class="k">EBIT Ajustado pre-tax</span><span class="v" id="adj-ebit-adj">$9,487M</span></div>
+        <div class="row"><span class="k">Tax Expense Normalizado</span><span class="v red" id="adj-tax-expense">−$1,897M</span></div>
+      </div>
+
+      <div style="margin-top:16px;padding:10px 12px;background:var(--cream);font-size:10px;color:var(--gray-txt);line-height:1.7">
+        <strong>Nota:</strong> Se aplica la ETR normalizada sobre el EBIT ajustado (post addbacks de no-recurrentes), no sobre el EBT GAAP que incluye non-operating items.
+      </div>
+    </div>
+  </div>
+
+  <!-- NOPAT DETAIL TABLE -->
+  <div class="slbl" style="margin-top:8px">Tabla de Normalización Detallada — FY2025 ($M)</div>
+  <div class="card" style="padding:0;margin-bottom:20px;overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead>
+        <tr style="background:var(--navy)">
+          <th style="text-align:left;padding:10px 18px;font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--gold-rule);width:45%">Concepto</th>
+          <th style="text-align:right;padding:10px 14px;font-size:9px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.6);border-bottom:1px solid var(--gold-rule)">Importe ($M)</th>
+          <th style="text-align:left;padding:10px 18px;font-size:9px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5);border-bottom:1px solid var(--gold-rule)">Fuente / Decisión</th>
+        </tr>
+      </thead>
+      <tbody id="adj-table-body"></tbody>
+    </table>
+  </div>
+
+  <button onclick="resetAdj()" style="font-family:Archivo,sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:9px 20px;background:none;border:1px solid var(--rule);color:var(--gray-txt);cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--rule)';this.style.color='var(--gray-txt)'">↺ Reset a supuestos base</button>
 </div>
 
 <!-- ROIC -->
@@ -380,7 +766,7 @@
     </div>
     <div class="card" style="border-left:3px solid var(--gold)">
       <div class="clbl">Margen de Seguridad</div>
-      <div class="cval" id="irr-mos-display" style="color:var(--green)">+45.0%</div>
+      <div class="cval" id="irr-mos-display" style="color:var(--green)">+7.7%</div>
       <div class="csub">vs. Hurdle Rate <span id="irr-hurdle-label">10.0%</span></div>
     </div>
     <div class="card">
@@ -401,7 +787,7 @@
           <span class="inp-label">ROIC Seleccionado</span>
           <span class="inp-val-display" id="disp-wacc">398%</span>
         </div>
-        <input type="range" class="slider" id="sl-wacc" min="50" max="800" step="10" value="398">
+        <input type="range" class="slider" id="sl-wacc" min="20" max="200" step="0.5" value="91.5">
         <div class="inp-range-labels"><span>50%</span><span>800%</span></div>
         <div class="inp-formula">Marginal 3-4yr: 136% · Contable: 610% · Base modelo: 398%</div>
       </div>
@@ -412,7 +798,7 @@
           <span class="inp-label">Crecimiento Orgánico</span>
           <span class="inp-val-display" id="disp-growth">2.00%</span>
         </div>
-        <input type="range" class="slider" id="sl-growth" min="0" max="20" step="0.5" value="2">
+        <input type="range" class="slider" id="sl-growth" min="0" max="20" step="0.5" value="1.5">
         <div class="inp-range-labels"><span>0%</span><span>20%</span></div>
         <div class="inp-formula">Pricing + viajes digitales — Decisión #17</div>
       </div>
@@ -511,7 +897,7 @@
       <div class="row"><span class="k">Intereses pre-tax</span><span class="v">$1,617M</span></div>
       <div class="row"><span class="k" style="font-weight:600;color:var(--ink)">Total Distribuciones</span><span class="v gold" id="detail-total-dist">$9,365M</span></div>
       <div class="row"><span class="k">Payout Rate (Dist/NOPAT)</span><span class="v" id="detail-payout">123.4%</span></div>
-      <div class="row"><span class="k">Distribution Yield (Dist/EV)</span><span class="v" id="detail-yield">6.67%</span></div>
+      <div class="row"><span class="k">Distribution Yield (Dist/EV)</span><span class="v" id="detail-yield" id="memo-dist-yield">6.48%</span></div>
     </div></div>
     <div class="card"><div class="clbl">Reinversión ($M)</div><div class="kv">
       <div class="row"><span class="k">Growth CapEx</span><span class="v dim">$0M (CapEx &lt; D&A)</span></div>
@@ -538,7 +924,7 @@
         <tr><td>Net Debt / EBITDA</td><td class="mono">0.22×</td><td class="dim">&lt;3.0×</td><td><span class="pass">✓ PASS</span></td></tr>
         <tr><td>Deuda / Total Activos</td><td class="mono" style="color:var(--red)">64.0%</td><td class="dim">&lt;60%</td><td><span class="fail">✗ FAIL</span></td></tr>
         <tr class="cat"><td colspan="4">Rentabilidad</td></tr>
-        <tr><td>Margen Operativo</td><td class="mono">32.8%</td><td class="dim">&gt;20%</td><td><span class="pass">✓ PASS</span></td></tr>
+        <tr><td>Margen Operativo</td><td class="mono">34.5%</td><td class="dim">&gt;20%</td><td><span class="pass">✓ PASS</span></td></tr>
         <tr><td>Margen Neto</td><td class="mono">20.1%</td><td class="dim">&gt;15%</td><td><span class="pass">✓ PASS</span></td></tr>
         <tr><td>FCF Margin</td><td class="mono">33.8%</td><td class="dim">&gt;15%</td><td><span class="pass">✓ PASS</span></td></tr>
         <tr><td>ROIC − WACC Spread</td><td class="mono" style="color:var(--green)">+600%</td><td class="dim">&gt;0%</td><td><span class="pass">✓ PASS</span></td></tr>
@@ -548,7 +934,7 @@
       <thead><tr><th>Métrica</th><th>Valor</th><th>Umbral</th><th>Estado</th></tr></thead>
       <tbody>
         <tr class="cat"><td colspan="4">Crecimiento</td></tr>
-        <tr><td>Revenue CAGR 3yr (FY22-25)</td><td class="mono">16.3%</td><td class="dim">&gt;5%</td><td><span class="pass">✓ PASS</span></td></tr>
+        <tr><td>Revenue CAGR 3yr (FY22-25)</td><td class="mono">13.4%</td><td class="dim">&gt;5%</td><td><span class="pass">✓ PASS</span></td></tr>
         <tr><td>FCF CAGR 3yr (FY22-25)</td><td class="mono">13.7%</td><td class="dim">&gt;5%</td><td><span class="pass">✓ PASS</span></td></tr>
         <tr><td>EBITDA Growth YoY</td><td class="mono">16.0%</td><td class="dim">&gt;5%</td><td><span class="pass">✓ PASS</span></td></tr>
         <tr class="cat"><td colspan="4">Específicos BKNG / OTA</td></tr>
@@ -611,7 +997,7 @@
       <div style="font-size:13px;color:var(--gray-mid);margin-top:4px">NASDAQ · Consumer Discretionary · Online Travel Agency</div>
       <div style="display:flex;gap:32px;margin-top:16px">
         <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">Fecha modelo</span><br><span style="font-weight:600;font-size:13px">06-Mar-2026</span></div>
-        <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">Precio</span><br><span style="font-weight:600;font-size:13px">$4,235.00</span></div>
+        <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">Precio</span><br><span style="font-weight:600;font-size:13px">$4,362.70</span></div>
         <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">Market Cap</span><br><span style="font-weight:600;font-size:13px">$138B</span></div>
         <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">EV</span><br><span style="font-weight:600;font-size:13px">$140.3B</span></div>
         <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gray-mid)">Última revisión</span><br><span style="font-weight:600;font-size:13px" id="memo-last-review">06-Mar-2026</span></div>
@@ -621,34 +1007,34 @@
     <!-- COLUMBIA LADDER -->
     <div class="memo-section">
       <h3>Columbia Ladder</h3>
-      <div class="memo-row"><span class="mk">Reproduction Value / acción</span><span class="mv">$623.62</span></div>
-      <div class="memo-row"><span class="mk">EPV / acción (NOPAT ÷ WACC)</span><span class="mv">$2,341.12</span></div>
-      <div class="memo-row"><span class="mk">Precio actual</span><span class="mv">$4,235.00</span></div>
-      <div class="memo-row"><span class="mk">EPV / RV (franchise test)</span><span class="mv" style="color:var(--green)">3.75× ✓ Moat confirmado</span></div>
-      <div class="memo-row"><span class="mk">Precio / EPV</span><span class="mv" style="color:var(--red)">1.81× — mercado paga prima de crecimiento</span></div>
+      <div class="memo-row"><span class="mk">Reproduction Value / acción</span><span class="mv">$505.58</span></div>
+      <div class="memo-row"><span class="mk">EPV / acción (NOPAT ÷ WACC)</span><span class="mv">$2,562.00</span></div>
+      <div class="memo-row"><span class="mk">Precio actual</span><span class="mv" id="memo-price">$4,362.70</span></div>
+      <div class="memo-row"><span class="mk">EPV / RV (franchise test)</span><span class="mv" style="color:var(--green)">5.07× ✓ Moat confirmado</span></div>
+      <div class="memo-row"><span class="mk">Precio / EPV</span><span class="mv" style="color:var(--red)" id="memo-price-epv">2.17× — mercado paga prima de crecimiento</span></div>
     </div>
 
     <!-- VALORACIÓN -->
     <div class="memo-section">
       <h3>Valoración — Implied IRR Framework</h3>
-      <div class="memo-row"><span class="mk">NOPAT Normalizado</span><span class="mv">$7,590M</span></div>
-      <div class="memo-row"><span class="mk">WACC</span><span class="mv">9.52% (β=1.10, Ke=10.35%, ERP=5.50%)</span></div>
-      <div class="memo-row"><span class="mk">Distribution Yield</span><span class="mv">6.67%</span></div>
-      <div class="memo-row"><span class="mk">Crecimiento orgánico</span><span class="mv">2.0%</span></div>
-      <div class="memo-row"><span class="mk">Crecimiento por reinversión (ROIC 398%)</span><span class="mv">40.6%</span></div>
+      <div class="memo-row"><span class="mk">NOPAT Normalizado</span><span class="mv">$7,420M</span></div>
+      <div class="memo-row"><span class="mk">WACC</span><span class="mv">8.61% (β=1.20, Ke=9.23%, ERP=4.23%)</span></div>
+      <div class="memo-row"><span class="mk">Distribution Yield</span><span class="mv" id="memo-dist-yield">6.48%</span></div>
+      <div class="memo-row"><span class="mk">Crecimiento orgánico</span><span class="mv">1.5%</span></div>
+      <div class="memo-row"><span class="mk">Crecimiento por reinversión (ROIC 91.5%)</span><span class="mv">9.5%</span></div>
       <div class="memo-row"><span class="mk">Exit múltiplo supuesto</span><span class="mv">20× EV/NOPAT (actual 18.5×)</span></div>
-      <div class="memo-row"><span class="mk">Implied IRR (Equity)</span><span class="mv" style="color:var(--green);font-size:16px">57.0%</span></div>
+      <div class="memo-row"><span class="mk">Implied IRR (Equity)</span><span class="mv" style="color:var(--green);font-size:16px" id="memo-irr">19.7%</span></div>
       <div class="memo-row"><span class="mk">Hurdle Rate DCE</span><span class="mv">12.0%</span></div>
-      <div class="memo-row"><span class="mk">Margen de Seguridad</span><span class="mv" style="color:var(--green)">+45.0%</span></div>
+      <div class="memo-row"><span class="mk">Margen de Seguridad</span><span class="mv" style="color:var(--green)" id="memo-mos">+7.7%</span></div>
     </div>
 
     <!-- CALIDAD -->
     <div class="memo-section">
       <h3>Calidad del Negocio</h3>
-      <div class="memo-row"><span class="mk">Revenue CAGR 3yr</span><span class="mv">16.3%</span></div>
+      <div class="memo-row"><span class="mk">Revenue CAGR 3yr</span><span class="mv">13.4%</span></div>
       <div class="memo-row"><span class="mk">FCF Margin FY2025</span><span class="mv">33.8%</span></div>
-      <div class="memo-row"><span class="mk">Operating Margin FY2025</span><span class="mv">32.8%</span></div>
-      <div class="memo-row"><span class="mk">Marginal ROIC 3yr (growth)</span><span class="mv">136%</span></div>
+      <div class="memo-row"><span class="mk">Operating Margin FY2025</span><span class="mv">34.5%</span></div>
+      <div class="memo-row"><span class="mk">Marginal ROIC 3yr (growth)</span><span class="mv">113%</span></div>
       <div class="memo-row"><span class="mk">Modelo de negocio</span><span class="mv">OTA capital-light · WC negativo · duopolio BKNG/EXPE</span></div>
       <div class="memo-row"><span class="mk">Riesgo principal</span><span class="mv">Dependencia Google/metasearch · equity negativo</span></div>
     </div>
@@ -671,8 +1057,8 @@
   <div class="slbl">Modo Presentación — Booking Holdings (BKNG)</div>
   <div class="g3" style="margin-bottom:24px">
     <div class="present-card card"><div class="big gold">$4,235</div><div class="lbl">Precio Actual</div></div>
-    <div class="present-card card"><div class="big green">57.0%</div><div class="lbl">Implied IRR</div></div>
-    <div class="present-card card"><div class="big" style="color:var(--green)">+45.0%</div><div class="lbl">Margen de Seguridad vs. Hurdle 12%</div></div>
+    <div class="present-card card"><div class="big green">19.7%</div><div class="lbl">Implied IRR</div></div>
+    <div class="present-card card"><div class="big" style="color:var(--green)">+7.7%</div><div class="lbl">Margen de Seguridad vs. Hurdle 12%</div></div>
   </div>
   <div class="g3" style="margin-bottom:24px">
     <div class="present-card card"><div class="big" style="font-size:40px">$2,341</div><div class="lbl">EPV por Acción</div></div>
@@ -680,9 +1066,9 @@
     <div class="present-card card"><div class="big gold" style="font-size:40px">1.81×</div><div class="lbl">Precio / EPV — Prima de Crecimiento</div></div>
   </div>
   <div class="g4">
-    <div class="card"><div class="clbl">NOPAT Normalizado</div><div class="cval gold">$7,590M</div></div>
+    <div class="card"><div class="clbl">NOPAT Normalizado</div><div class="cval gold">$7,420M</div></div>
     <div class="card"><div class="clbl">FCF Margin</div><div class="cval green">33.8%</div></div>
-    <div class="card"><div class="clbl">Revenue CAGR 3yr</div><div class="cval green">16.3%</div></div>
+    <div class="card"><div class="clbl">Revenue CAGR 3yr</div><div class="cval green">13.4%</div></div>
     <div class="card"><div class="clbl">WACC</div><div class="cval gold">9.52%</div></div>
   </div>
   <div style="text-align:center;margin-top:32px">
@@ -711,11 +1097,11 @@ const yr = ['FY20','FY21','FY22','FY23','FY24','FY25'];
 
 new Chart(document.getElementById('c1'), { type: 'bar', data: { labels: yr, datasets: [
   { label: 'Net Revenue', data: [6796,10958,17090,21365,23739,26917], backgroundColor: 'rgba(184,139,71,0.68)', borderRadius: 2 },
-  { label: 'NOPAT Ajustado', data: [2207,2007,4082,4672,6071,7590], backgroundColor: 'rgba(76,175,136,0.62)', borderRadius: 2 }
+  { label: 'NOPAT Ajustado', data: [1831,5784,8821,6086,6481,8358], backgroundColor: 'rgba(76,175,136,0.62)', borderRadius: 2 }
 ]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
 
 new Chart(document.getElementById('c2'), { type: 'line', data: { labels: yr, datasets: [
-  { label: 'Margen Operativo', data: [-9.3,22.8,29.9,27.3,31.8,32.8], borderColor: G, backgroundColor: 'rgba(184,139,71,0.07)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4, pointBackgroundColor: G },
+  { label: 'Margen Operativo', data: [-9.3,22.8,29.9,27.3,31.8,34.5], borderColor: G, backgroundColor: 'rgba(184,139,71,0.07)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4, pointBackgroundColor: G },
   { label: 'Margen Neto', data: [0.9,10.6,17.9,20.1,24.8,20.1], borderColor: GN, backgroundColor: 'rgba(76,175,136,0.05)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4, pointBackgroundColor: GN }
 ]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgp } } });
 
@@ -732,7 +1118,7 @@ new Chart(document.getElementById('c4'), { type: 'doughnut', data: {
 
 new Chart(document.getElementById('c5'), { type: 'bar', data: { labels: yr, datasets: [
   { label: 'Net Revenue', data: [6796,10958,17090,21365,23739,26917], backgroundColor: 'rgba(184,139,71,0.65)', borderRadius: 2 },
-  { label: 'Operating Income', data: [-631,2496,5102,5835,7555,8825], backgroundColor: 'rgba(76,175,136,0.58)', borderRadius: 2 },
+  { label: 'Operating Income', data: [-631,2496,5102,5835,7555,9282], backgroundColor: 'rgba(76,175,136,0.58)', borderRadius: 2 },
   { label: 'Net Income', data: [59,1165,3058,4289,5882,5404], backgroundColor: 'rgba(122,207,170,0.42)', borderRadius: 2 }
 ]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
 
@@ -748,7 +1134,7 @@ new Chart(document.getElementById('c7'), { type: 'bar', data: { labels: yr, data
 ]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
 
 new Chart(document.getElementById('c8'), { type: 'line', data: { labels: yr, datasets: [
-  { label: 'NOPAT Ajustado', data: [2207,2007,4082,4672,6071,7590], borderColor: G, backgroundColor: 'rgba(184,139,71,0.08)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: G },
+  { label: 'NOPAT Ajustado', data: [1831,5784,8821,6086,6481,8358], borderColor: G, backgroundColor: 'rgba(184,139,71,0.08)', fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: G },
   { label: 'Net Income Reportado', data: [59,1165,3058,4289,5882,5404], borderColor: GT, borderDash: [5,4], backgroundColor: 'transparent', tension: 0.3, borderWidth: 1.5, pointRadius: 3 }
 ]}, options: { responsive: true, plugins: { legend: leg }, scales: { x: dg, y: dgb } } });
 
@@ -772,6 +1158,411 @@ new Chart(document.getElementById('c12'), { type: 'radar', data: {
   labels: ['Solidez\nFinanciera','Rentabilidad','Crecimiento','Asset-Light','Capital\nAllocation','Rule of 40'],
   datasets: [{ label: 'Visa FY2025', data: [90,95,80,92,88,95], backgroundColor: 'rgba(184,139,71,0.1)', borderColor: G, borderWidth: 2, pointBackgroundColor: G, pointRadius: 4 }]
 }, options: { responsive: true, scales: { r: { min: 0, max: 100, grid: { color: 'rgba(27,38,66,0.07)' }, angleLines: { color: 'rgba(27,38,66,0.07)' }, pointLabels: { font: { size: 10 }, color: GT }, ticks: { display: false } } }, plugins: { legend: { display: false } } } });
+
+// ── RV (REPRODUCTION VALUE) ──────────────────────────────────────
+const RV_BASE_VALS = { ppe: 2024, wc: 2115, sm: 4564, intang: 15750, dta: 448 };
+const RV_DEBT = 19293;
+const EPV_SHARES_DILUTED = 32.639;
+
+function updateRV() {
+  const ppePct    = parseFloat(document.getElementById('sl-rv-ppe').value)    / 100;
+  const wcPct     = parseFloat(document.getElementById('sl-rv-wc').value)     / 100;
+  const smPct     = parseFloat(document.getElementById('sl-rv-sm').value)     / 100;
+  const intangPct = parseFloat(document.getElementById('sl-rv-intang').value) / 100;
+  const dtaPct    = parseFloat(document.getElementById('sl-rv-dta').value)    / 100;
+
+  const ppe    = Math.round(RV_BASE_VALS.ppe    * ppePct);
+  const wc     = Math.round(RV_BASE_VALS.wc     * wcPct);
+  const sm     = Math.round(RV_BASE_VALS.sm     * smPct);
+  const intang = Math.round(RV_BASE_VALS.intang * intangPct);
+  const dta    = Math.round(RV_BASE_VALS.dta    * dtaPct);
+
+  const grossAssets = ppe + wc + sm + intang + dta;
+  const rvTotal     = grossAssets - RV_DEBT;
+  const rvPerShare  = rvTotal / EPV_SHARES_DILUTED;
+
+  document.getElementById('disp-rv-ppe').textContent    = '$' + ppe.toLocaleString() + 'M';
+  document.getElementById('disp-rv-wc').textContent     = '$' + wc.toLocaleString() + 'M';
+  document.getElementById('disp-rv-sm').textContent     = '$' + sm.toLocaleString() + 'M';
+  document.getElementById('disp-rv-intang').textContent = '$' + intang.toLocaleString() + 'M';
+  document.getElementById('disp-rv-dta').textContent    = '$' + dta.toLocaleString() + 'M';
+
+  const price  = parseFloat(document.getElementById('price-input').value.replace(/,/g,'')) || 4362.70;
+  const epvPsEl = document.getElementById('bridge-epv-ps');
+  const epvPsVal = epvPsEl ? parseFloat(epvPsEl.textContent.replace(/[$,]/g,'')) || 2562 : 2562;
+  const epvTotal = epvPsVal * EPV_SHARES_DILUTED;
+  const epvRv    = rvTotal > 0 ? (epvTotal / rvTotal) : 0;
+  const priceRv  = rvPerShare > 0 ? (price / rvPerShare) : 0;
+
+  document.getElementById('rv-total').textContent      = '$' + rvTotal.toLocaleString() + 'M';
+  document.getElementById('rv-per-share').textContent  = '$' + rvPerShare.toFixed(2);
+  document.getElementById('rv-price-rv').textContent   = priceRv.toFixed(1) + 'x';
+  document.getElementById('rv-price-rv-2').textContent = priceRv.toFixed(1) + 'x';
+
+  const epvRvEl = document.getElementById('rv-epv-rv');
+  const moatEl  = document.getElementById('rv-moat-note');
+  if (epvRvEl) {
+    const badge = epvRv >= 2
+      ? '<span class="badge bg">MOAT \u2713</span>'
+      : '<span class="badge br">SIN MOAT \u2717</span>';
+    epvRvEl.innerHTML = epvRv.toFixed(2) + '\u00d7 ' + badge;
+  }
+  if (moatEl) {
+    moatEl.textContent = epvRv >= 2
+      ? 'Franquicia confirmada \u2014 EPV supera ampliamente el costo de reposicion'
+      : 'EPV < 2\u00d7 RV \u2014 revisar supuestos de moat';
+  }
+
+  const components = [
+    { label: 'PP&E Neto',           val: ppe,       color: '#b88b47' },
+    { label: 'Capital de Trabajo',  val: wc,        color: '#d4aa6a' },
+    { label: 'S&M Asset',           val: sm,        color: '#7acfaa' },
+    { label: 'Intangibles PIM',     val: intang,    color: '#2a7a56' },
+    { label: 'Deferred Tax Asset',  val: dta,       color: '#4a7a9a' },
+    { label: '(-) Deuda + Leases',  val: -RV_DEBT,  color: '#9b2335' },
+  ];
+  const maxAbs = Math.max.apply(null, components.map(function(c){ return Math.abs(c.val); }));
+  const wfEl = document.getElementById('rv-waterfall');
+  if (wfEl) {
+    var wfHtml = '';
+    components.forEach(function(c) {
+      var w = (Math.abs(c.val) / (maxAbs * 1.1) * 100).toFixed(1);
+      var sign = c.val >= 0 ? '+' : '';
+      var valColor = c.val < 0 ? '#9b2335' : '#1b2642';
+      wfHtml += '<div style="display:flex;align-items:center;gap:12px;padding:4px 0">'
+        + '<span style="font-size:11px;color:#606060;font-weight:400;width:180px;flex-shrink:0">' + c.label + '</span>'
+        + '<div style="flex:1;background:#e6e6e6;height:20px;border-radius:2px;overflow:hidden">'
+        + '<div style="height:100%;width:' + w + '%;background:' + c.color + ';border-radius:2px;transition:width .3s"></div>'
+        + '</div>'
+        + '<span style="font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;width:90px;text-align:right;color:' + valColor + '">'
+        + sign + c.val.toLocaleString() + 'M</span>'
+        + '</div>';
+    });
+    wfEl.innerHTML = wfHtml;
+  }
+  var rvTotWf = document.getElementById('rv-total-wf');
+  if (rvTotWf) rvTotWf.textContent = '$' + rvTotal.toLocaleString() + 'M';
+}
+
+function resetRV() {
+  ['sl-rv-ppe','sl-rv-wc','sl-rv-sm','sl-rv-intang','sl-rv-dta'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = 100;
+  });
+  updateRV();
+}
+
+// ── EPV (EARNINGS POWER VALUE) ──────────────────────────────────
+const EPV_BASE = { nopat: 7420, wacc: 8.61, tax: 20 };
+const EPV_BRIDGE_FIXED = { excesoCaja: 15428, ltInv: 582, deuda: -18736, leases: -557 };
+
+function updateEPV() {
+  var nopat = parseFloat(document.getElementById('sl-epv-nopat').value);
+  var wacc  = parseFloat(document.getElementById('sl-epv-wacc').value) / 100;
+  var tax   = parseFloat(document.getElementById('sl-epv-tax').value) / 100;
+
+  document.getElementById('disp-epv-nopat').textContent = '$' + nopat.toLocaleString() + 'M';
+  document.getElementById('disp-epv-wacc').textContent  = (wacc * 100).toFixed(2) + '%';
+  document.getElementById('disp-epv-tax').textContent   = (tax * 100).toFixed(1) + '%';
+
+  var epvOps = nopat / wacc;
+  var bridgeAdj = EPV_BRIDGE_FIXED.excesoCaja + EPV_BRIDGE_FIXED.ltInv + EPV_BRIDGE_FIXED.deuda + EPV_BRIDGE_FIXED.leases;
+  var epvEq  = epvOps + bridgeAdj;
+  var epvPs  = epvEq / EPV_SHARES_DILUTED;
+
+  document.getElementById('epv-ops').textContent = '$' + Math.round(epvOps).toLocaleString() + 'M';
+  document.getElementById('epv-eq').textContent  = '$' + Math.round(epvEq).toLocaleString() + 'M';
+  document.getElementById('epv-ps').textContent  = '$' + Math.round(epvPs).toLocaleString();
+
+  var bNopat = document.getElementById('bridge-nopat');
+  var bWacc  = document.getElementById('bridge-wacc');
+  var bOps   = document.getElementById('bridge-epv-ops');
+  var bEq    = document.getElementById('bridge-epv-eq');
+  var bPs    = document.getElementById('bridge-epv-ps');
+  if (bNopat) bNopat.textContent = '$' + nopat.toLocaleString() + 'M';
+  if (bWacc)  bWacc.textContent  = (wacc * 100).toFixed(2) + '%';
+  if (bOps)   bOps.textContent   = '$' + Math.round(epvOps).toLocaleString() + 'M';
+  if (bEq)    bEq.textContent    = '$' + Math.round(epvEq).toLocaleString() + 'M';
+  if (bPs)    bPs.textContent    = '$' + Math.round(epvPs).toLocaleString();
+
+  var price    = parseFloat(document.getElementById('price-input').value.replace(/,/g,'')) || 4362.70;
+  var priceEPV = epvPs > 0 ? price / epvPs : 0;
+  var pEpvEl   = document.getElementById('epv-price-epv');
+  var interpEl = document.getElementById('epv-interp');
+  if (pEpvEl) {
+    pEpvEl.textContent = priceEPV.toFixed(2) + 'x';
+    pEpvEl.style.color = priceEPV <= 1.5 ? '#2a7a56' : priceEPV <= 2.0 ? '#b88b47' : '#9b2335';
+  }
+  if (interpEl) {
+    interpEl.textContent = priceEPV <= 1
+      ? 'Precio < EPV - potencial margen de seguridad alto'
+      : priceEPV <= 1.5
+        ? 'Precio cercano a EPV - premium moderado'
+        : 'Mercado paga prima de crecimiento implicita';
+  }
+  updateRV();
+  buildEPVSensitivity(nopat, wacc);
+}
+
+function resetEPV() {
+  document.getElementById('sl-epv-nopat').value = EPV_BASE.nopat;
+  document.getElementById('sl-epv-wacc').value  = EPV_BASE.wacc;
+  document.getElementById('sl-epv-tax').value   = EPV_BASE.tax;
+  updateEPV();
+}
+
+function buildEPVSensitivity(baseNopat, baseWacc) {
+  var price      = parseFloat(document.getElementById('price-input').value.replace(/,/g,'')) || 4362.70;
+  var nopatVals  = [-20,-10,0,10,20].map(function(d){ return Math.round(baseNopat * (1 + d/100)); });
+  var waccVals   = [-2,-1,0,1,2].map(function(d){ return baseWacc + d/100; });
+  var bridgeAdj  = EPV_BRIDGE_FIXED.excesoCaja + EPV_BRIDGE_FIXED.ltInv + EPV_BRIDGE_FIXED.deuda + EPV_BRIDGE_FIXED.leases;
+
+  var thStyle = 'padding:8px 10px;background:#1b2642;font-size:9px;text-align:center;font-weight:500;color:rgba(255,255,255,0.7);';
+  var thFirstStyle = 'padding:8px 12px;background:#1b2642;color:#b88b47;font-size:9px;letter-spacing:0.12em;text-align:left;font-weight:600;';
+  var tbl = '<table style="border-collapse:collapse;font-size:11px;width:100%"><thead><tr>'
+    + '<th style="' + thFirstStyle + '">NOPAT \\ WACC</th>';
+  waccVals.forEach(function(w) {
+    tbl += '<th style="' + thStyle + '">' + (w*100).toFixed(1) + '%</th>';
+  });
+  tbl += '</tr></thead><tbody>';
+
+  nopatVals.forEach(function(n, ni) {
+    var isBaseRow = ni === 2;
+    var rowBg = isBaseRow ? 'rgba(184,139,71,0.06)' : '#ffffff';
+    tbl += '<tr style="background:' + rowBg + '">';
+    tbl += '<td style="padding:8px 12px;font-weight:' + (isBaseRow?'700':'400') + ';color:' + (isBaseRow?'#1b2642':'#1b2642') + ';font-size:11px;border-bottom:1px solid rgba(27,38,66,0.09)">$' + (n/1000).toFixed(1) + 'B</td>';
+    waccVals.forEach(function(w, wi) {
+      var isBaseCell = isBaseRow && wi === 2;
+      var epvOps = n / w;
+      var epvEq  = epvOps + bridgeAdj;
+      var epvPs  = epvEq / EPV_SHARES_DILUTED;
+      var pEpv   = epvPs > 0 ? price / epvPs : 99;
+      var bg = pEpv <= 1.5 ? 'rgba(42,122,86,.18)' : pEpv <= 2.0 ? 'rgba(184,139,71,.18)' : 'rgba(155,35,53,.1)';
+      tbl += '<td style="padding:8px 10px;text-align:center;background:' + bg + ';font-weight:' + (isBaseCell?'700':'400') + ';font-variant-numeric:tabular-nums;border-bottom:1px solid rgba(27,38,66,0.09);border-left:1px solid rgba(27,38,66,0.09)">' + pEpv.toFixed(2) + 'x</td>';
+    });
+    tbl += '</tr>';
+  });
+  tbl += '</tbody></table>';
+
+  var el = document.getElementById('epv-sensitivity');
+  if (el) el.innerHTML = tbl;
+}
+
+['sl-rv-ppe','sl-rv-wc','sl-rv-sm','sl-rv-intang','sl-rv-dta'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener('input', updateRV);
+});
+['sl-epv-nopat','sl-epv-wacc','sl-epv-tax'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener('input', updateEPV);
+});
+
+
+// ── ADJUSTMENTS (NOPAT NORMALIZATION) ───────────────────────────
+const ADJ_BASE = { life: 3, growthPct: 9.4, tax: 20 };
+const ADJ_GAAP_OI     = 8825;   // GAAP Operating Income FY2025
+const ADJ_MKT_TOTAL   = 8186;   // Total Marketing FY2025
+const ADJ_MKT_3YR_AVG = 7219;   // 3yr avg marketing (FY23-25)
+const ADJ_IMPAIRMENT  = 457;    // Impairment FY2025
+const ADJ_TRANSFORM   = 205;    // Transformation costs FY2025
+const ADJ_WACC        = 0.0861; // WACC base
+
+function calcAdj() {
+  var life       = parseInt(document.getElementById('sl-adj-life').value);
+  var growthPct  = parseFloat(document.getElementById('sl-adj-growth-pct').value) / 100;
+  var taxRate    = parseFloat(document.getElementById('sl-adj-tax').value) / 100;
+  var inclImpair = document.getElementById('chk-impairment').checked;
+  var inclTrans  = document.getElementById('chk-transform').checked;
+  var otherNR    = parseFloat(document.getElementById('inp-other-nr').value) || 0;
+
+  // S&M calculations
+  var smGrowthExp = Math.round(ADJ_MKT_TOTAL * growthPct);
+  var smAsset     = Math.round(ADJ_MKT_3YR_AVG * life / life * life); // avg * life years simplified
+  // More precise: sum of capitalizable marketing over life years, amortized
+  // S&M Asset = sum of last N years of growth marketing
+  // Simplified: avg_annual_growth_mkt * life
+  var annualGrowthMkt = Math.round(ADJ_MKT_TOTAL * growthPct);
+  smAsset = annualGrowthMkt * life;
+
+  var smNopatImpact = -Math.round(smGrowthExp * (1 - taxRate)); // reduces NOPAT
+
+  // Non-recurring addbacks
+  var impairmentVal = inclImpair ? ADJ_IMPAIRMENT : 0;
+  var transformVal  = inclTrans  ? ADJ_TRANSFORM  : 0;
+  var nrTotal       = impairmentVal + transformVal + otherNR;
+  var nrNopatImpact = Math.round(nrTotal * (1 - taxRate));
+
+  // EBIT adjusted (pre-tax): GAAP OI + non-recurring addbacks - S&M growth
+  var ebitAdj  = ADJ_GAAP_OI + nrTotal - smGrowthExp;
+  var taxExp   = Math.round(ebitAdj * taxRate);
+  var nopatFinal = ebitAdj - taxExp;
+
+  // EPV impact
+  var epvOps = nopatFinal / ADJ_WACC;
+
+  return {
+    life, growthPct, taxRate,
+    smGrowthExp, smAsset, smNopatImpact,
+    impairmentVal, transformVal, otherNR, nrTotal, nrNopatImpact,
+    ebitAdj, taxExp, nopatFinal, epvOps
+  };
+}
+
+function updateAdj() {
+  var r = calcAdj();
+
+  // Header displays
+  document.getElementById('disp-adj-life').textContent      = r.life + ' ano' + (r.life > 1 ? 's' : '');
+  document.getElementById('disp-adj-growth-pct').textContent= (r.growthPct * 100).toFixed(1) + '%';
+  document.getElementById('disp-adj-tax').textContent       = (r.taxRate * 100).toFixed(1) + '%';
+  document.getElementById('adj-tax-selected').textContent   = (r.taxRate * 100).toFixed(1) + '%';
+
+  // S&M panel
+  document.getElementById('adj-sm-growth').textContent      = '$' + r.smGrowthExp.toLocaleString() + 'M';
+  document.getElementById('adj-sm-asset-kv').textContent    = '$' + r.smAsset.toLocaleString() + 'M';
+  document.getElementById('adj-sm-nopat-impact').textContent= '-$' + Math.abs(r.smNopatImpact).toLocaleString() + 'M';
+
+  // Non-recurring panel
+  var inclImpair = document.getElementById('chk-impairment').checked;
+  var inclTrans  = document.getElementById('chk-transform').checked;
+  document.getElementById('val-impairment').textContent = inclImpair ? '+$' + r.impairmentVal + 'M' : '$0M';
+  document.getElementById('val-impairment').style.color = inclImpair ? '#2a7a56' : '#8a9098';
+  document.getElementById('val-transform').textContent  = inclTrans  ? '+$' + r.transformVal  + 'M' : '$0M';
+  document.getElementById('val-transform').style.color  = inclTrans  ? '#2a7a56' : '#8a9098';
+  document.getElementById('lbl-impairment').style.borderColor = inclImpair ? 'var(--gold-rule)' : 'var(--rule)';
+  document.getElementById('lbl-transform').style.borderColor  = inclTrans  ? 'var(--gold-rule)' : 'var(--rule)';
+  document.getElementById('adj-nr-total').textContent  = (r.nrTotal >= 0 ? '+' : '') + '$' + r.nrTotal.toLocaleString() + 'M';
+  document.getElementById('adj-nr-nopat').textContent  = (r.nrNopatImpact >= 0 ? '+' : '') + '$' + r.nrNopatImpact.toLocaleString() + 'M';
+
+  // Tax panel
+  document.getElementById('adj-ebit-adj').textContent  = '$' + r.ebitAdj.toLocaleString() + 'M';
+  document.getElementById('adj-tax-expense').textContent= '-$' + r.taxExp.toLocaleString() + 'M';
+
+  // KPI cards
+  var nopatEl = document.getElementById('adj-nopat-final');
+  var smAssetEl = document.getElementById('adj-sm-asset');
+  var epvEl = document.getElementById('adj-epv-impact');
+  if (nopatEl) nopatEl.textContent = '$' + r.nopatFinal.toLocaleString() + 'M';
+  if (smAssetEl) smAssetEl.textContent = '$' + r.smAsset.toLocaleString() + 'M';
+  if (epvEl) epvEl.textContent = '$' + Math.round(r.epvOps).toLocaleString() + 'M';
+
+  // Bridge waterfall
+  var bridgeEl = document.getElementById('adj-bridge');
+  var bridgeTotEl = document.getElementById('adj-bridge-total');
+  var steps = [
+    { label: 'GAAP Operating Income',         val: ADJ_GAAP_OI,           color: '#b88b47', base: true },
+    { label: '(+) Impairment / Impairment',    val: r.impairmentVal,       color: '#2a7a56' },
+    { label: '(+) Transformation Costs',       val: r.transformVal,        color: '#2a7a56' },
+    { label: '(+/-) Other Non-Recurring',      val: r.otherNR,             color: r.otherNR >= 0 ? '#2a7a56' : '#9b2335' },
+    { label: '(-) S&M Growth Expense',         val: -r.smGrowthExp,        color: '#9b2335' },
+    { label: 'EBIT Ajustado pre-tax',          val: r.ebitAdj,             color: '#1b2642', subtotal: true },
+    { label: '(-) Tax @ ' + (r.taxRate*100).toFixed(0) + '%', val: -r.taxExp, color: '#9b2335' },
+  ];
+  var maxAbs = Math.max.apply(null, steps.map(function(s){ return Math.abs(s.val); }));
+  if (bridgeEl) {
+    var bHtml = '';
+    steps.forEach(function(s) {
+      var w = (Math.abs(s.val) / (maxAbs * 1.05) * 100).toFixed(1);
+      var sign = s.val >= 0 ? (s.base ? '' : '+') : '';
+      var valColor = s.val < 0 ? '#9b2335' : (s.base || s.subtotal ? '#1b2642' : '#2a7a56');
+      var rowBg = s.subtotal ? 'background:rgba(27,38,66,0.03);padding:6px 0;border-top:1px solid rgba(27,38,66,0.09);border-bottom:1px solid rgba(27,38,66,0.09);' : 'padding:3px 0;';
+      bHtml += '<div style="display:flex;align-items:center;gap:12px;' + rowBg + '">'
+        + '<span style="font-size:11px;color:#606060;font-weight:' + (s.subtotal||s.base?'600':'400') + ';width:220px;flex-shrink:0">' + s.label + '</span>'
+        + '<div style="flex:1;background:#e6e6e6;height:' + (s.subtotal?'22':'16') + 'px;border-radius:2px;overflow:hidden">'
+        + '<div style="height:100%;width:' + w + '%;background:' + s.color + ';border-radius:2px;opacity:' + (s.subtotal?'1':'0.75') + '"></div>'
+        + '</div>'
+        + '<span style="font-size:12px;font-weight:' + (s.subtotal||s.base?'700':'500') + ';font-variant-numeric:tabular-nums;width:80px;text-align:right;color:' + valColor + '">'
+        + sign + s.val.toLocaleString() + 'M</span>'
+        + '</div>';
+    });
+    bridgeEl.innerHTML = bHtml;
+  }
+  if (bridgeTotEl) bridgeTotEl.textContent = '$' + r.nopatFinal.toLocaleString() + 'M';
+
+  // Detail table
+  buildAdjTable(r);
+
+  // Sync EPV tab NOPAT slider
+  var epvSlider = document.getElementById('sl-epv-nopat');
+  if (epvSlider) {
+    epvSlider.value = r.nopatFinal;
+    updateEPV();
+  }
+}
+
+function buildAdjTable(r) {
+  var tbody = document.getElementById('adj-table-body');
+  if (!tbody) return;
+  var rows = [
+    { l: 'GAAP Operating Income FY2025',         v: ADJ_GAAP_OI,      src: '10-K p.67',               type: 'base' },
+    { l: '',                                      v: null,             src: '',                         type: 'spacer' },
+    { l: 'ADICIONES — No Recurrentes',            v: null,             src: '',                         type: 'section' },
+    { l: '(+) Asset Impairment FY2025',           v: r.impairmentVal,  src: 'Decisión #6 · 10-K Note 7',type: r.impairmentVal > 0 ? 'add' : 'na' },
+    { l: '(+) Transformation / Restructuring',   v: r.transformVal,   src: 'Decisión #6 · 10-K Note 16',type: r.transformVal > 0 ? 'add' : 'na' },
+    { l: '(+/-) Other Non-Recurring',             v: r.otherNR,        src: 'Input manual CIO',         type: r.otherNR !== 0 ? (r.otherNR > 0 ? 'add' : 'sub') : 'na' },
+    { l: '',                                      v: null,             src: '',                         type: 'spacer' },
+    { l: 'DEDUCCIONES — S&M Capitalización',      v: null,             src: '',                         type: 'section' },
+    { l: '(-) S&M Growth Expense',               v: -r.smGrowthExp,   src: 'Decisión #1·#3 · ' + (r.growthPct*100).toFixed(1) + '% × $8,186M', type: 'sub' },
+    { l: '',                                      v: null,             src: '',                         type: 'spacer' },
+    { l: 'EBIT Ajustado (pre-tax)',               v: r.ebitAdj,        src: '',                         type: 'subtotal' },
+    { l: '(-) Tax Expense @ ' + (r.taxRate*100).toFixed(1) + '%', v: -r.taxExp, src: 'Decisión #5 · mediana ETR FY22-25', type: 'sub' },
+    { l: '',                                      v: null,             src: '',                         type: 'spacer' },
+    { l: 'NOPAT Ajustado DCE',                   v: r.nopatFinal,     src: '',                         type: 'total' },
+    { l: '',                                      v: null,             src: '',                         type: 'spacer' },
+    { l: 'MEMO: S&M Asset (Reproduction Value)', v: r.smAsset,        src: 'Vida útil ' + r.life + ' año' + (r.life>1?'s':''), type: 'memo' },
+    { l: 'MEMO: EPV Operaciones (÷ WACC 8.61%)', v: Math.round(r.nopatFinal / ADJ_WACC), src: '', type: 'memo' },
+  ];
+
+  tbody.innerHTML = '';
+  rows.forEach(function(row) {
+    var tr = document.createElement('tr');
+    if (row.type === 'spacer') {
+      tr.innerHTML = '<td colspan="3" style="height:5px;background:var(--cream)"></td>';
+      tbody.appendChild(tr); return;
+    }
+    if (row.type === 'section') {
+      tr.innerHTML = '<td colspan="3" style="padding:7px 18px;background:rgba(27,38,66,0.04);font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--navy);border-top:1px solid var(--rule)">' + row.l + '</td>';
+      tbody.appendChild(tr); return;
+    }
+    var isTotal    = row.type === 'total';
+    var isSubtotal = row.type === 'subtotal';
+    var isMemo     = row.type === 'memo';
+    var isBase     = row.type === 'base';
+    var isNa       = row.type === 'na';
+    var bg   = (isTotal || isSubtotal) ? 'background:rgba(27,38,66,0.03);' : '';
+    var fw   = (isTotal || isSubtotal || isBase) ? 'font-weight:700;' : 'font-weight:400;';
+    var bdr  = (isTotal || isSubtotal) ? 'border-top:1px solid var(--rule);' : '';
+    var lc   = isTotal ? 'color:var(--green);' : isMemo ? 'color:var(--gray-mid);font-style:italic;' : isNa ? 'color:var(--gray-lt);' : '';
+    var vc   = isNa ? '#d0ccc6' : isTotal ? '#2a7a56' : isSubtotal ? '#1b2642' : row.v < 0 ? '#9b2335' : row.v > 0 ? '#1b2642' : '#8a9098';
+    var vStr = row.v === null ? '' : (row.v === 0 ? '<span style="color:#8a9098">—</span>' : (row.v > 0 ? '+$' : '-$') + Math.abs(row.v).toLocaleString() + 'M');
+    if (isBase) vStr = '$' + row.v.toLocaleString() + 'M';
+    tr.innerHTML = '<td style="padding:8px 18px;' + bg + fw + lc + bdr + 'font-size:12px">' + row.l + '</td>'
+      + '<td style="text-align:right;padding:8px 18px;' + bg + fw + bdr + 'font-size:12px;font-variant-numeric:tabular-nums;color:' + vc + '">' + vStr + '</td>'
+      + '<td style="padding:8px 18px;' + bg + bdr + 'font-size:10px;color:var(--gray-mid);font-weight:300">' + row.src + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function resetAdj() {
+  document.getElementById('sl-adj-life').value       = ADJ_BASE.life;
+  document.getElementById('sl-adj-growth-pct').value = ADJ_BASE.growthPct;
+  document.getElementById('sl-adj-tax').value        = ADJ_BASE.tax;
+  document.getElementById('chk-impairment').checked  = true;
+  document.getElementById('chk-transform').checked   = true;
+  document.getElementById('inp-other-nr').value      = 0;
+  updateAdj();
+}
+
+['sl-adj-life','sl-adj-growth-pct','sl-adj-tax'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener('input', updateAdj);
+});
+['chk-impairment','chk-transform'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener('change', updateAdj);
+});
+var otherNRel = document.getElementById('inp-other-nr');
+if (otherNRel) otherNRel.addEventListener('input', updateAdj);
 
 // ── INCOME STATEMENT TABLE ────────────────────────────────────────
 const IS_ROWS = [
@@ -850,25 +1641,130 @@ if (tbody) {
     tbody.appendChild(tr);
   });
 }
+// ── BALANCE SHEET TABLE ──────────────────────────────────────────
+const BS_ROWS = [
+  { l: 'ACTIVOS CORRIENTES',           t: 'section' },
+  { l: 'Cash & Short-term Investments',t: 'normal', v: [10836,12087,11899,15076,16720,17203] },
+  { l: 'Accounts Receivable',          t: 'normal', v: [546,1020,1628,2102,2405,2566] },
+  { l: 'Prepaid & Other Current',      t: 'normal', v: [1220,1389,1618,2165,2495,2699] },
+  { l: 'Total Activos Corrientes',     t: 'subtotal', v: [12602,14496,15145,19343,21620,22468] },
+  { l: '', t: 'spacer' },
+  { l: 'ACTIVOS NO CORRIENTES',        t: 'section' },
+  { l: 'PP&E Neto',                    t: 'normal', v: [745,716,691,757,856,807] },
+  { l: 'Investments (LT)',             t: 'normal', v: [null,null,null,null,637,582] },
+  { l: 'Goodwill',                     t: 'normal', v: [2552,2561,2585,2568,2563,2534] },
+  { l: 'Other Intangibles',            t: 'normal', v: [428,403,436,450,567,636] },
+  { l: 'Operating Lease ROU Assets',   t: 'normal', v: [null,null,null,408,395,485] },
+  { l: 'Deferred Tax & Other LT',      t: 'normal', v: [5547,5465,3685,1816,1670,1752] },
+  { l: 'Total Activos No Corrientes',  t: 'subtotal', v: [9272,9145,7397,4999,6088,6796] },
+  { l: '', t: 'spacer' },
+  { l: 'TOTAL ACTIVOS',                t: 'total', v: [21874,23641,22542,24342,27708,29264] },
+  { l: '', t: 'spacer' },
+  { l: 'PASIVOS CORRIENTES',           t: 'section' },
+  { l: 'Merchant Payables',            t: 'normal', neg: true, v: [-5979,-8067,-9890,-13162,-14840,-16215] },
+  { l: 'Accounts Payable & Accrued',   t: 'normal', neg: true, v: [-2127,-2430,-2886,-3680,-4226,-4476] },
+  { l: 'Deuda CP / Current LTD',       t: 'normal', neg: true, v: [-1490,0,-1490,0,-2000,-500] },
+  { l: 'Other Current Liabilities',    t: 'normal', neg: true, v: [-476,-581,-782,-1035,-1127,-1232] },
+  { l: 'Total Pasivos Corrientes',     t: 'subtotal', neg: true, v: [-10072,-11078,-15048,-17877,-22193,-22423] },
+  { l: '', t: 'spacer' },
+  { l: 'PASIVOS NO CORRIENTES',        t: 'section' },
+  { l: 'Long-Term Debt',               t: 'normal', neg: true, v: [-5596,-5390,-4624,-12215,-8000,-17736] },
+  { l: 'Operating Lease Liabilities',  t: 'normal', neg: true, v: [null,null,null,-328,-340,-557] },
+  { l: 'Deferred Tax & Other LT',      t: 'normal', neg: true, v: [-1313,-995,-431,-666,-1195,-126] },
+  { l: 'Total Pasivos No Corrientes',  t: 'subtotal', neg: true, v: [-6909,-6385,-5055,-13209,-9535,-18419] },
+  { l: '', t: 'spacer' },
+  { l: 'TOTAL PASIVOS',                t: 'total', neg: true, v: [-16981,-17463,-20103,-27086,-31728,-34842] },
+  { l: '', t: 'spacer' },
+  { l: 'PATRIMONIO (EQUITY)',          t: 'section' },
+  { l: 'Common Stock & APIC',          t: 'normal', v: [4919,5622,5982,7283,7883,8441] },
+  { l: 'Retained Earnings (Deficit)',  t: 'normal', v: [4022,5153,7124,10231,14875,18534] },
+  { l: 'Treasury Stock',               t: 'normal', neg: true, v: [-3688,-4046,-10140,-20052,-26611,-32416] },
+  { l: 'AOCI & Other',                 t: 'normal', v: [-360,-491,-132,194,167,-137] },
+  { l: 'Total Equity',                 t: 'total', v: [4893,6178,2834,-2744,-4020,-5578] },
+];
+
+const CF_ROWS = [
+  { l: 'ACTIVIDADES OPERATIVAS (CFO)', t: 'section' },
+  { l: 'Net Income',                   t: 'normal', v: [59,1165,3058,4289,5882,5404] },
+  { l: 'D&A',                          t: 'normal', v: [458,421,451,504,591,623] },
+  { l: 'Stock-Based Compensation',     t: 'normal', v: [264,331,327,408,428,478] },
+  { l: 'Cambios en Capital de Trabajo',t: 'normal', v: [-891,783,2583,2185,1492,2940] },
+  { l: 'Goodwill Impairment',          t: 'normal', v: [1062,0,0,0,0,0] },
+  { l: 'Otros Ajustes Operativos',     t: 'normal', v: [-867,120,135,-42,-70,-36] },
+  { l: 'CFO Total',                    t: 'total', v: [85,2820,6554,7344,8323,9409] },
+  { l: 'FCF (CFO − CapEx Mant.)',      t: 'margin', v: [-201,2516,6186,6999,7894,9087] },
+  { l: '', t: 'spacer' },
+  { l: 'ACTIVIDADES DE INVERSIÓN (CFI)',t: 'section' },
+  { l: 'CapEx (Property & Equipment)', t: 'normal', neg: true, v: [-286,-304,-368,-345,-429,-322] },
+  { l: 'Acquisitions',                 t: 'normal', neg: true, v: [-19,-2,-36,-39,0,-89] },
+  { l: 'Investment Purchases / Sales', t: 'normal', v: [2942,-692,-114,1870,558,98] },
+  { l: 'CFI Total',                    t: 'total', v: [2637,-998,-518,1486,129,-313] },
+  { l: '', t: 'spacer' },
+  { l: 'ACTIVIDADES DE FINANCIAMIENTO (CFF)', t: 'section' },
+  { l: 'Emisión / Repago de Deuda',    t: 'normal', v: [2864,-200,-2100,7601,-4126,-493] },
+  { l: 'Recompra de Acciones',         t: 'normal', neg: true, v: [-1303,-163,-6621,-10377,-6509,-6440] },
+  { l: 'Dividendos Pagados',           t: 'normal', neg: true, v: [0,0,0,0,0,-1248] },
+  { l: 'Opciones / SBC Cash',          t: 'normal', v: [0,0,0,0,0,0] },
+  { l: 'Otros CFF',                    t: 'normal', v: [0,-853,1824,-133,431,-734] },
+  { l: 'CFF Total',                    t: 'total', neg: true, v: [1561,-1216,-4897,-2909,-6204,-8915] },
+  { l: '', t: 'spacer' },
+  { l: 'VARIACIÓN NETA DE CAJA',       t: 'total', v: [4283,606,1139,5921,2248,181] },
+  { l: 'Caja Final del Período',       t: 'subtotal', v: [10836,12087,11899,15076,16720,17203] },
+];
+
+function buildFinancialTable(tbodyId, rows) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    if (row.t === 'spacer') {
+      tr.innerHTML = '<td colspan="7" style="height:6px;background:var(--cream)"></td>';
+      tbody.appendChild(tr); return;
+    }
+    if (row.t === 'section') {
+      tr.innerHTML = `<td colspan="7" style="padding:8px 18px;background:rgba(27,38,66,0.04);font-size:9px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--navy);border-top:1px solid var(--rule);">${row.l}</td>`;
+      tbody.appendChild(tr); return;
+    }
+    const isTotal    = row.t === 'total';
+    const isSubtotal = row.t === 'subtotal';
+    const isMarg     = row.t === 'margin';
+    const bg    = isTotal ? 'background:rgba(27,38,66,0.03);' : '';
+    const fw    = (isTotal || isSubtotal) ? 'font-weight:700;' : 'font-weight:400;';
+    const lc    = isTotal ? 'color:var(--navy);' : isMarg ? 'color:var(--gray-mid);font-style:italic;' : 'color:var(--ink);';
+    const bdr   = (isTotal || isSubtotal) ? 'border-top:1px solid var(--rule);' : '';
+    let html = `<td style="padding:8px 18px;${bg}${fw}${lc}${bdr}font-size:${isMarg?'11':'12'}px;">${row.l}</td>`;
+    row.v.forEach((val, i) => {
+      const isFY25 = i === 5;
+      const cellStyle = `text-align:right;padding:8px ${isFY25?'18':'14'}px 8px 14px;${bg}${fw}${bdr}font-size:${isMarg?'11':'12'}px;font-variant-numeric:tabular-nums;${isFY25?'border-left:1px solid var(--rule);':''}`;
+      html += `<td style="${cellStyle}">${fmtIS(val, row.neg, row.t)}</td>`;
+    });
+    tr.innerHTML = html;
+    tbody.appendChild(tr);
+  });
+}
+
+buildFinancialTable('bs-tbody', BS_ROWS);
+buildFinancialTable('cf-tbody', CF_ROWS);
+
 // ─────────────────────────────────────────────────────────────────
 const BASE = {
-  roic: 398, growth: 2.0, exit: 20, buybacks: 6500, horizon: 5, hurdle: 12.0
+  roic: 91.5, growth: 1.5, exit: 20, buybacks: 6500, horizon: 5, hurdle: 12.0
 };
 
 // Fixed model constants (FY2025)
-const NOPAT      = 7589.6;
-const EV         = 140316.165;
+const NOPAT      = 7420.0;
+const EV         = 144459.165;
 const DIVIDENDS  = 1248;
 const INTEREST   = 1617;
-const REINV_RATE = 0.10194;
-const DE_RATIO   = 0.13958;
-const NET_BORR   = 0.06705;
-const ACTUAL_MULT= 18.488;
+const REINV_RATE = 0.104268;
+const DE_RATIO   = 0.13940;
+const NET_BORR   = 0.06476;
+const ACTUAL_MULT= 19.469;
 
 function calcIRR(roic, growth, exitMult, buybacks, horizon, hurdle) {
   const dist         = DIVIDENDS + buybacks + INTEREST;
   const distYield    = dist / EV;
-  // reinvGrowth now driven by the ROIC slider (roic is in %, e.g. 398 = 3.98x)
+  // reinvGrowth driven by ROIC slider (roic is in %, e.g. 91.5 = 91.5%)
   const reinvGrowth  = REINV_RATE * (roic / 100);
   const totalGrowth  = (growth / 100) + reinvGrowth;
   const multImpact   = (Math.pow(exitMult / ACTUAL_MULT, 1 / horizon) - 1);
@@ -973,9 +1869,98 @@ function sw(id, btn) {
 });
 updateIRR();
 
-// ── LIVE PRICE ────────────────────────────────────────────────────
-const MODEL_PRICE = 4235.00;
-const MODEL_EV    = 140316.165;
+// ── LIVE PRICE / MANUAL PRICE ─────────────────────────────────────
+const MODEL_PRICE = 4362.70;
+const MODEL_EV    = 144459.165;
+const EPV_PER_SHARE = 2562.00;
+const SHARES = 32.639;
+
+function onPriceInput(raw) {
+  const clean = raw.replace(/[^0-9.]/g, '');
+  const price = parseFloat(clean);
+  if (!price || price < 100) return;
+
+  // Recalculate EV
+  const newEV = MODEL_EV * (price / MODEL_PRICE);
+
+  // Price / EPV
+  const priceEPV = (price / EPV_PER_SHARE).toFixed(2);
+
+  // Recalculate IRR with new EV
+  const roic     = parseFloat(document.getElementById('sl-wacc').value);
+  const growth   = parseFloat(document.getElementById('sl-growth').value);
+  const exit     = parseFloat(document.getElementById('sl-exit').value);
+  const buybacks = parseFloat(document.getElementById('sl-buybacks').value);
+  const horizon  = parseFloat(document.getElementById('sl-horizon').value);
+  const hurdle   = parseFloat(document.getElementById('sl-hurdle').value);
+
+  // Recalc with adjusted EV
+  const dist = 1248 + buybacks + 1617;
+  const distYield = dist / newEV;
+  const reinvGrowth = 0.104268 * (roic / 100);
+  const totalGrowth = (growth / 100) + reinvGrowth;
+  const actualMult = newEV / 7420.0;
+  const multImpact = (Math.pow(exit / actualMult, 1 / horizon) - 1);
+  const baseReturn = distYield + totalGrowth + multImpact;
+  const levBoost = 0.13940 * (baseReturn - 0.06476);
+  const equityReturn = baseReturn + levBoost;
+  const mos = equityReturn - (hurdle / 100);
+
+  // Update header KPIs
+  const irrEl = document.getElementById('hdr-irr');
+  const mosEl = document.getElementById('hdr-mos');
+  if (irrEl) { irrEl.textContent = (equityReturn * 100).toFixed(1) + '%'; irrEl.style.color = equityReturn >= hurdle/100 ? 'var(--green)' : 'var(--red)'; }
+  if (mosEl) { mosEl.textContent = (mos >= 0 ? '+' : '') + (mos * 100).toFixed(1) + '%'; mosEl.style.color = mos >= 0 ? 'var(--green)' : 'var(--red)'; }
+
+  // Update price/EPV note in header
+  const statusEl = document.getElementById('price-status');
+  if (statusEl) statusEl.textContent = 'P/EPV ' + priceEPV + 'x';
+
+  // Update Columbia Ladder
+  const clPrice = document.getElementById('cl-price-val');
+  const clPrima = document.getElementById('cl-prima-note');
+  const clPriceEPV = document.getElementById('cl-price-epv');
+  if (clPrice) clPrice.textContent = '$' + price.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  if (clPrima) clPrima.textContent = 'Prima implícita de crecimiento: ' + priceEPV + '× EPV';
+  if (clPriceEPV) { clPriceEPV.textContent = priceEPV + '×'; clPriceEPV.style.color = price > EPV_PER_SHARE ? 'var(--red)' : 'var(--green)'; }
+
+  // Update Precio/NAV ratio
+  const navPerShare = 505.58;
+  const priceNAV = (price / navPerShare).toFixed(1);
+  const clPriceNAV = document.getElementById('cl-price-nav');
+  if (clPriceNAV) clPriceNAV.textContent = priceNAV + '×';
+
+  // Sync RV and EPV tabs with new price
+  updateRV();
+  const nopat_epv = parseFloat(document.getElementById('sl-epv-nopat').value);
+  const wacc_epv  = parseFloat(document.getElementById('sl-epv-wacc').value) / 100;
+  buildEPVSensitivity(nopat_epv, wacc_epv);
+  const epvOpsNew = nopat_epv / wacc_epv;
+  const bridgeNew = 15428 + 582 - 18736 - 557;
+  const epvEqNew  = epvOpsNew + bridgeNew;
+  const epvPsNew  = epvEqNew / 32.639;
+  const pEpvNew   = epvPsNew > 0 ? price / epvPsNew : 0;
+  const pEpvEl2 = document.getElementById('epv-price-epv');
+  if (pEpvEl2) { pEpvEl2.textContent = pEpvNew.toFixed(2) + '×'; pEpvEl2.style.color = pEpvNew <= 1.5 ? 'var(--green)' : pEpvNew <= 2.0 ? 'var(--gold)' : 'var(--red)'; }
+
+  // Update Investment Memo
+  const memoPriceEl = document.getElementById('memo-price');
+  const memoPriceEPV = document.getElementById('memo-price-epv');
+  const memoIRR = document.getElementById('memo-irr');
+  const memoMoS = document.getElementById('memo-mos');
+  const memoDistYield = document.getElementById('memo-dist-yield');
+  if (memoPriceEl) memoPriceEl.textContent = '$' + price.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  if (memoPriceEPV) { memoPriceEPV.textContent = priceEPV + '× — mercado paga prima de crecimiento'; memoPriceEPV.style.color = price > EPV_PER_SHARE ? 'var(--red)' : 'var(--green)'; }
+  if (memoIRR) { memoIRR.textContent = (equityReturn * 100).toFixed(1) + '%'; memoIRR.style.color = equityReturn >= hurdle/100 ? 'var(--green)' : 'var(--red)'; }
+  if (memoMoS) { memoMoS.textContent = (mos >= 0 ? '+' : '') + (mos * 100).toFixed(1) + '%'; memoMoS.style.color = mos >= 0 ? 'var(--green)' : 'var(--red)'; }
+  if (memoDistYield) memoDistYield.textContent = (distYield * 100).toFixed(2) + '%';
+
+  // Also update IRR tab if visible
+  const totalEl = document.getElementById('irr-total-display');
+  const irrMosEl = document.getElementById('irr-mos-display');
+  if (totalEl) { totalEl.textContent = (equityReturn * 100).toFixed(1) + '%'; totalEl.style.color = equityReturn >= hurdle/100 ? 'var(--green)' : 'var(--red)'; }
+  if (irrMosEl) { irrMosEl.textContent = (mos >= 0 ? '+' : '') + (mos * 100).toFixed(1) + '%'; irrMosEl.style.color = mos >= 0 ? 'var(--green)' : 'var(--red)'; }
+}
 
 async function fetchLivePrice() {
   try {
@@ -1039,15 +2024,15 @@ const BKNG_CONTEXT = `Eres DCE Investment Assistant, el asistente de análisis d
 
 DATOS DEL MODELO BKNG (FY2025):
 - Empresa: Booking Holdings Inc. (BKNG / NASDAQ)
-- Precio: $4,235.00 | Market Cap: $138B | EV: $140.3B
+- Precio: $4,362.70 | Market Cap: $138B | EV: $140.3B
 - Net Revenue: $26,917M | Operating Income: $8,825M (32.8% margen)
-- NOPAT Ajustado: $7,590M | FCF: $9,087M (33.8% margen)
+- NOPAT Ajustado: $7,420M | FCF: $9,087M (33.8% margen)
 - WACC: 9.52% (β=1.10, Ke=10.35%, ERP=5.50%)
 - ROIC Contable FY2025: 610% (distorsionado por equity negativo vía buybacks)
 - Marginal ROIC 3yr: 136% | ROIC Seleccionado IRR: 398%
 - Invested Capital: $1,243M (comprimido por WC negativo -$9,757M)
-- Reproduction Value/acción: $623.62
-- EPV/acción: $2,341.12 (NOPAT $7,590M ÷ WACC 9.52%)
+- Reproduction Value/acción: $505.58
+- EPV/acción: $2,562.00 (NOPAT $7,420M ÷ WACC 9.52%)
 - Precio/EPV: 1.81× (mercado paga prima de crecimiento)
 - EPV/RV: 3.75× (moat confirmado)
 - Implied IRR: 57.0% | Hurdle Rate: 12% | MoS: +45.0%
@@ -1145,6 +2130,9 @@ function quickMunger(question) {
 setTimeout(() => {
   const el = document.getElementById('memo-last-review');
   if (el) el.textContent = lastReview;
+  updateAdj();
+  updateEPV();
+  updateRV();
 }, 100);
 </script>
 <div id="review-modal" style="display:none;position:fixed;inset:0;background:rgba(27,38,66,0.6);z-index:1000;align-items:center;justify-content:center">
