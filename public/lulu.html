@@ -2423,26 +2423,14 @@ function onPriceInput(raw) {
 
 async function fetchLivePrice() {
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 100,
-        messages: [{ role: 'user', content: 'What is the current stock price of LULU (Lululemon Athletica)? Reply with ONLY a number, no text, no $ sign.' }],
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }]
-      })
-    });
+    const r = await fetch('https://finnhub.io/api/v1/quote?symbol=LULU&token=d6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg');
     const d = await r.json();
-    const txt = d.content?.find(b => b.type === 'text')?.text?.trim();
-    const price = parseFloat(txt?.replace(/[^0-9.]/g,''));
-    if (price && price > 100) {
-      document.getElementById('live-price').textContent = '$' + price.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+    const price = d.c;
+    if (price && price > 10) {
+      document.getElementById('price-input').value = price.toFixed(2);
       document.getElementById('price-status').textContent = 'live ●';
       document.getElementById('price-status').style.color = '#4aaa6a';
-      // Recalculate IRR with live price
-      const liveEV = MODEL_EV * (price / MODEL_PRICE);
-      document.getElementById('live-price-note').textContent = `Live price: $${price.toLocaleString()} · Adjusted EV: $${(liveEV/1000).toFixed(0)}B`;
+      onPriceInput(price.toFixed(2));
     }
   } catch(e) {
     document.getElementById('price-status').textContent = 'model';
