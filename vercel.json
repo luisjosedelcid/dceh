@@ -3,11 +3,11 @@
   "rewrites": [
     {
       "source": "/bkng",
-      "destination": "/public/bkng.html"
+      "destination": "/bkng.html"
     },
     {
       "source": "/lulu",
-      "destination": "/public/lulu.html"
+      "destination": "/lulu.html"
     }
   ]
 }
