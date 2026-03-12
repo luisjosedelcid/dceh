@@ -278,55 +278,44 @@ function onPriceChange(ticker, val) {
 // Initial render
 renderTable();
 
-// ═══ LIVE PRICE FETCH ═══
-const PROXY_URL = '/api/claude';
-const DASH_PWD = sessionStorage.getItem('dce_auth') || '';
+// ═══ LIVE PRICE FETCH (Finnhub) ═══
+const FH_KEY = 'd6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg';
 
 async function fetchLivePrices() {
-  const tickers = UNIVERSE.map(c => c.ticker).join(', ');
+  const note = document.getElementById('live-note');
+  if (note) note.textContent = 'Fetching live prices...';
+
   try {
-    const statusEl = document.getElementById('price-status');
-    if (statusEl) statusEl.textContent = 'fetching...';
+    const fetches = UNIVERSE.map(c =>
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${c.ticker}&token=${FH_KEY}`)
+        .then(r => r.json())
+        .then(d => ({ ticker: c.ticker, price: d.c }))
+        .catch(() => ({ ticker: c.ticker, price: null }))
+    );
+    const results = await Promise.all(fetches);
 
-    const r = await fetch(PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-dashboard-auth': DASH_PWD },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 200,
-        messages: [{ role: 'user', content: `What are the current stock prices of ${tickers}? Reply ONLY with a JSON object like {"BKNG": 4500.00, "LULU": 165.00}. No other text.` }],
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }]
-      })
-    });
-    const d = await r.json();
-    const txt = d.content?.find(b => b.type === 'text')?.text?.trim();
-    if (!txt) return;
-
-    // Extract JSON from response
-    const jsonMatch = txt.match(/\{[^}]+\}/);
-    if (!jsonMatch) return;
-    const prices = JSON.parse(jsonMatch[0]);
-
-    // Update each company's price input and recalculate
-    Object.entries(prices).forEach(([ticker, price]) => {
-      const numPrice = parseFloat(price);
-      if (!numPrice || numPrice <= 0) return;
+    let updated = 0;
+    results.forEach(({ ticker, price }) => {
+      if (!price || price <= 0) return;
       const input = document.querySelector(`input[data-ticker="${ticker}"]`);
       if (input) {
-        input.value = numPrice.toFixed(2);
-        onPriceChange(ticker, numPrice.toFixed(2));
+        input.value = price.toFixed(2);
+        onPriceChange(ticker, price.toFixed(2));
+        updated++;
       }
     });
 
-    // Show live indicator
-    const note = document.getElementById('live-note');
     if (note) {
-      note.textContent = 'Live prices · ' + new Date().toLocaleTimeString();
-      note.style.color = 'var(--green)';
+      if (updated > 0) {
+        note.textContent = 'Live prices · ' + new Date().toLocaleTimeString();
+        note.style.color = 'var(--green)';
+      } else {
+        note.textContent = 'Using model prices';
+        note.style.color = 'var(--gray-mid)';
+      }
     }
   } catch(e) {
-    console.error('Price fetch error:', e);
-    const note = document.getElementById('live-note');
+    console.error('Finnhub error:', e);
     if (note) { note.textContent = 'Using model prices'; note.style.color = 'var(--gray-mid)'; }
   }
 }
