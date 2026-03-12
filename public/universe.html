@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — Covered Universe</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:     #1b2642;
+    --navy-deep:#141d35;
+    --gold:     #b88b47;
+    --gold-lt:  #d4aa6a;
+    --gold-dim: rgba(184,139,71,0.10);
+    --gold-rule:rgba(184,139,71,0.30);
+    --cream:    #f5f1eb;
+    --card-bg:  #faf8f4;
+    --white:    #ffffff;
+    --ink:      #1b2642;
+    --gray-mid: #8a9098;
+    --gray-txt: #606060;
+    --green:    #2a7a56;
+    --red:      #9b2335;
+    --rule:     rgba(27,38,66,0.09);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--cream); color: var(--ink); font-family: 'Archivo','Helvetica Neue',sans-serif; font-size: 15px; line-height: 1.5; min-height: 100vh; }
+
+  /* HEADER */
+  header { background: var(--navy); border-bottom: 2px solid var(--gold); padding: 0 48px; display: flex; align-items: center; min-height: 64px; justify-content: space-between; }
+  .hbrand { display: flex; align-items: center; gap: 18px; }
+  .logo { font-size: 20px; font-weight: 700; color: var(--white); } .logo span { color: var(--gold); font-weight: 300; }
+  .hnav { display: flex; gap: 8px; }
+  .hnav a { font-size: 10px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; padding: 8px 16px; color: rgba(255,255,255,0.5); text-decoration: none; border: 1px solid transparent; transition: all .2s; }
+  .hnav a:hover { color: var(--gold); border-color: var(--gold-rule); }
+  .hnav a.active { color: var(--gold); border-color: var(--gold); }
+
+  /* MAIN */
+  main { max-width: 1400px; margin: 0 auto; padding: 40px 48px 60px; }
+
+  /* TITLE */
+  .page-title { font-size: 9px; font-weight: 500; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .page-title::before { content: ''; display: block; width: 16px; height: 1px; background: var(--gold); }
+  h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; color: var(--navy); margin-bottom: 6px; }
+  .page-sub { font-size: 13px; color: var(--gray-mid); font-weight: 300; margin-bottom: 32px; }
+
+  /* TABLE */
+  .universe-tbl { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--rule); font-size: 13px; }
+  .universe-tbl th { background: var(--navy); color: var(--white); font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; padding: 12px 16px; text-align: right; position: sticky; top: 0; z-index: 2; }
+  .universe-tbl th:first-child { text-align: left; width: 220px; }
+  .universe-tbl th.col-price { min-width: 120px; }
+  .universe-tbl td { padding: 14px 16px; border-bottom: 1px solid rgba(27,38,66,0.06); text-align: right; font-variant-numeric: tabular-nums; vertical-align: middle; }
+  .universe-tbl td:first-child { text-align: left; font-weight: 600; }
+  .universe-tbl tr:hover { background: rgba(184,139,71,0.04); }
+
+  .ticker { font-size: 18px; font-weight: 700; color: var(--navy); letter-spacing: -0.02em; }
+  .ticker-sub { font-size: 11px; color: var(--gray-mid); font-weight: 300; margin-top: 2px; }
+  .green { color: var(--green); } .red { color: var(--red); } .gold { color: var(--gold); }
+  .dim { color: var(--gray-mid); }
+  .badge { display: inline-block; font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; margin-left: 8px; }
+  .bg { background: rgba(42,122,86,.12); color: var(--green); }
+  .br { background: rgba(155,35,53,.1); color: var(--red); }
+  .bo { background: var(--gold-dim); color: var(--gold); }
+
+  /* PRICE INPUT */
+  .price-input {
+    width: 90px; text-align: right; font-family: 'Archivo',sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--navy); background: rgba(184,139,71,0.06); border: 1.5px solid rgba(184,139,71,0.20);
+    border-radius: 3px; padding: 5px 8px; outline: none; transition: all .2s; font-variant-numeric: tabular-nums;
+  }
+  .price-input:hover { border-color: var(--gold); background: rgba(184,139,71,0.10); }
+  .price-input:focus { border-color: var(--gold); background: var(--white); box-shadow: 0 0 0 2px rgba(184,139,71,0.15); }
+
+  /* LINK */
+  .dash-link { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); text-decoration: none; transition: color .2s; }
+  .dash-link:hover { color: var(--gold-lt); }
+
+  /* SUMMARY ROW */
+  .universe-tbl tr.summary td { background: rgba(27,38,66,0.03); font-weight: 700; border-top: 2px solid var(--gold-rule); }
+
+  /* MOAT INDICATOR */
+  .moat-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .moat-yes { background: var(--green); }
+  .moat-no { background: var(--red); }
+
+  /* FOOTER */
+  footer { background: var(--navy); padding: 16px 48px; display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.08em; }
+
+  @media (max-width: 1024px) {
+    main { padding: 24px 20px 40px; }
+    header { padding: 0 20px; }
+    .universe-tbl { font-size: 11px; }
+    .universe-tbl th, .universe-tbl td { padding: 10px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hbrand">
+    <div class="logo">DCE <span>Holdings</span></div>
+  </div>
+  <div class="hnav">
+    <a href="/">Home</a>
+    <a href="/universe" class="active">Universe</a>
+  </div>
+</header>
+
+<main>
+  <div class="page-title">DCE Holdings — Investment Office</div>
+  <h1>Covered Universe</h1>
+  <p class="page-sub">Columbia Framework valuation summary. Edit price to recalculate IRR and Margin of Safety in real time. <span id="live-note" style="font-size:11px;font-weight:500;color:var(--gray-mid)">Fetching live prices...</span></p>
+
+  <div style="overflow-x:auto;">
+    <table class="universe-tbl" id="universe-table">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Market Cap</th>
+          <th>EV</th>
+          <th class="col-price">Price</th>
+          <th>EPV / Share</th>
+          <th>Price / EPV</th>
+          <th>NOPAT Mult.</th>
+          <th>Implied IRR</th>
+          <th>MoS</th>
+          <th>Moat (EPV/RV)</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="universe-body">
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<footer>
+  <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
+  <span>Columbia Business School Framework</span>
+</footer>
+
+<script>
+// ═══ UNIVERSE DATA ═══
+// Each company has static model data + a live price that can be edited
+const UNIVERSE = [
+  {
+    ticker: 'BKNG',
+    name: 'Booking Holdings',
+    sector: 'NASDAQ · Travel Services',
+    link: '/bkng',
+    shares: 32.639,         // M
+    debt: 19293 + 557,      // Total Debt + Leases ($M)
+    cash: 17785,            // Cash + STI ($M)
+    defaultPrice: 4362.70,
+    // EPV model
+    nopatNorm: 7420,        // Normalized NOPAT ($M)
+    wacc: 0.0861,
+    excessCash: 17247,      // ($M)
+    bridgeAdj: 17247 + 0 - 19293 - 557,  // excess + ltinv - debt - leases
+    // IRR model
+    distYield: 0.0648,
+    reinvGrowth: 0.095,
+    organicGrowth: 0.015,
+    exitMult: 20,
+    horizon: 5,
+    hurdle: 0.12,
+    de: 0.1394,
+    netBorrowCost: 0.0648,
+    // Moat
+    rvPerShare: 505.58,
+    badge: 'Conditional',
+  },
+  {
+    ticker: 'LULU',
+    name: 'Lululemon Athletica',
+    sector: 'NASDAQ · Apparel Retail',
+    link: '/lulu',
+    shares: 118.552,
+    debt: 1763,             // Leases only
+    cash: 1036,
+    defaultPrice: 160.20,
+    nopatNorm: 1714,
+    wacc: 0.1061,
+    excessCash: 482,
+    bridgeAdj: 482 + 0 - 0 - 1763,
+    distYield: 0.0428,
+    reinvGrowth: 0.062,
+    organicGrowth: 0.02,
+    exitMult: 15,
+    horizon: 7,
+    hurdle: 0.12,
+    de: 0.098,
+    netBorrowCost: 0,
+    rvPerShare: 252.14,
+    badge: 'Conditional',
+  },
+];
+
+function fmt(v, dec) { return v.toLocaleString('en-US', { minimumFractionDigits: dec||0, maximumFractionDigits: dec||0 }); }
+
+function calcCompany(c, price) {
+  const mktCap = price * c.shares;
+  const ev = mktCap + c.debt - c.cash;
+  const epvOps = c.nopatNorm / c.wacc;
+  const epvEq = epvOps + c.bridgeAdj;
+  const epvPs = epvEq / c.shares;
+  const priceEpv = epvPs > 0 ? price / epvPs : 99;
+  const nopatMult = ev / c.nopatNorm;
+
+  // IRR (enterprise-first)
+  const distYield = (c.distYield * (c.defaultPrice * c.shares + c.debt - c.cash)) / ev;
+  const totalGrowth = c.reinvGrowth + c.organicGrowth;
+  const multChange = (c.exitMult / nopatMult) - 1;
+  const multAnnual = Math.pow(1 + multChange, 1/c.horizon) - 1;
+  const entReturn = distYield + totalGrowth + multAnnual;
+  const levBoost = c.de * (entReturn - c.netBorrowCost);
+  const eqReturn = entReturn + levBoost;
+  const mos = eqReturn - c.hurdle;
+
+  const epvRv = c.rvPerShare > 0 ? epvPs / c.rvPerShare : 0;
+
+  return { mktCap, ev, epvPs, priceEpv, nopatMult, eqReturn, mos, epvRv, price };
+}
+
+function renderRow(c, vals) {
+  const irrPct = (vals.eqReturn * 100).toFixed(1);
+  const mosPct = (vals.mos * 100).toFixed(1);
+  const irrClass = vals.eqReturn >= c.hurdle ? 'green' : 'red';
+  const mosClass = vals.mos >= 0 ? 'green' : 'red';
+  const mosSign = vals.mos >= 0 ? '+' : '';
+  const peClass = vals.priceEpv > 1.5 ? 'red' : vals.priceEpv > 1 ? 'gold' : 'green';
+  const moatHtml = vals.epvRv >= 1 ? '<span class="moat-dot moat-yes"></span>' + vals.epvRv.toFixed(2) + '×' : '<span class="moat-dot moat-no"></span>' + vals.epvRv.toFixed(2) + '×';
+  const badgeClass = c.badge === 'High Conviction' ? 'bg' : c.badge === 'Conditional' ? 'bo' : 'br';
+
+  return `<tr>
+    <td>
+      <div class="ticker">${c.ticker} <span class="badge ${badgeClass}">${c.badge}</span></div>
+      <div class="ticker-sub">${c.name} · ${c.sector}</div>
+    </td>
+    <td>$${fmt(vals.mktCap)}M</td>
+    <td>$${fmt(vals.ev)}M</td>
+    <td><input class="price-input" data-ticker="${c.ticker}" value="${vals.price.toFixed(2)}" onchange="onPriceChange('${c.ticker}', this.value)" onfocus="this.select()"></td>
+    <td class="gold">$${vals.epvPs.toFixed(2)}</td>
+    <td class="${peClass}">${vals.priceEpv.toFixed(2)}×</td>
+    <td>${vals.nopatMult.toFixed(1)}×</td>
+    <td class="${irrClass}" style="font-weight:700;font-size:14px">${irrPct}%</td>
+    <td class="${mosClass}" style="font-weight:700">${mosSign}${mosPct}%</td>
+    <td>${moatHtml}</td>
+    <td><a class="dash-link" href="${c.link}">Dashboard →</a></td>
+  </tr>`;
+}
+
+function renderTable() {
+  const tbody = document.getElementById('universe-body');
+  let html = '';
+  UNIVERSE.forEach(c => {
+    const priceEl = document.querySelector(`input[data-ticker="${c.ticker}"]`);
+    const price = priceEl ? parseFloat(priceEl.value) || c.defaultPrice : c.defaultPrice;
+    const vals = calcCompany(c, price);
+    html += renderRow(c, vals);
+  });
+  tbody.innerHTML = html;
+}
+
+function onPriceChange(ticker, val) {
+  const c = UNIVERSE.find(u => u.ticker === ticker);
+  if (!c) return;
+  const price = parseFloat(val) || c.defaultPrice;
+  const vals = calcCompany(c, price);
+  // Re-render just this row
+  const rows = document.getElementById('universe-body').querySelectorAll('tr');
+  const idx = UNIVERSE.findIndex(u => u.ticker === ticker);
+  if (rows[idx]) {
+    rows[idx].outerHTML = renderRow(c, vals);
+  }
+}
+
+// Initial render
+renderTable();
+
+// ═══ LIVE PRICE FETCH ═══
+const PROXY_URL = '/api/claude';
+const DASH_PWD = sessionStorage.getItem('dce_auth') || '';
+
+async function fetchLivePrices() {
+  const tickers = UNIVERSE.map(c => c.ticker).join(', ');
+  try {
+    const statusEl = document.getElementById('price-status');
+    if (statusEl) statusEl.textContent = 'fetching...';
+
+    const r = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-auth': DASH_PWD },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 200,
+        messages: [{ role: 'user', content: `What are the current stock prices of ${tickers}? Reply ONLY with a JSON object like {"BKNG": 4500.00, "LULU": 165.00}. No other text.` }],
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }]
+      })
+    });
+    const d = await r.json();
+    const txt = d.content?.find(b => b.type === 'text')?.text?.trim();
+    if (!txt) return;
+
+    // Extract JSON from response
+    const jsonMatch = txt.match(/\{[^}]+\}/);
+    if (!jsonMatch) return;
+    const prices = JSON.parse(jsonMatch[0]);
+
+    // Update each company's price input and recalculate
+    Object.entries(prices).forEach(([ticker, price]) => {
+      const numPrice = parseFloat(price);
+      if (!numPrice || numPrice <= 0) return;
+      const input = document.querySelector(`input[data-ticker="${ticker}"]`);
+      if (input) {
+        input.value = numPrice.toFixed(2);
+        onPriceChange(ticker, numPrice.toFixed(2));
+      }
+    });
+
+    // Show live indicator
+    const note = document.getElementById('live-note');
+    if (note) {
+      note.textContent = 'Live prices · ' + new Date().toLocaleTimeString();
+      note.style.color = 'var(--green)';
+    }
+  } catch(e) {
+    console.error('Price fetch error:', e);
+    const note = document.getElementById('live-note');
+    if (note) { note.textContent = 'Using model prices'; note.style.color = 'var(--gray-mid)'; }
+  }
+}
+
+fetchLivePrices();
+</script>
+</body>
+</html>
