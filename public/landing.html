@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -464,14 +464,14 @@
 <div id="gate">
   <div class="gate-logo">
     <span class="big">DCE Holdings</span>
-    <span class="sub">Investment Office — Confidencial</span>
+    <span class="sub">Investment Office — Confidential</span>
   </div>
   <div class="gate-divider"></div>
   <div class="gate-form">
-    <label>Contraseña de acceso</label>
+    <label>Access Password</label>
     <input type="password" id="pwd-input" placeholder="··········" onkeydown="if(event.key==='Enter') checkPwd()">
     <div id="gate-error"></div>
-    <button class="gate-btn" onclick="checkPwd()">Ingresar</button>
+    <button class="gate-btn" onclick="checkPwd()">Enter</button>
   </div>
 </div>
 
@@ -491,13 +491,13 @@
   </header>
 
   <div class="hero">
-    <div class="hero-eyebrow">Universo Cubierto</div>
-    <h1 class="hero-title">Análisis de <em>valor fundamental</em><br>bajo el marco Columbia</h1>
-    <p class="hero-desc">Valuación disciplinada usando Asset Value → Earnings Power Value → Growth Value. Cada empresa analizada con Thesis Breaker y Munger Digital antes de cualquier decisión de capital.</p>
+    <div class="hero-eyebrow">Covered Universe</div>
+    <h1 class="hero-title">Fundamental <em>value analysis</em><br>under the Columbia framework</h1>
+    <p class="hero-desc">Disciplined valuation using Asset Value → Earnings Power Value → Growth Value. Every company audited with Thesis Breaker and Munger Digital before any capital decision.</p>
   </div>
 
   <div class="universe">
-    <div class="section-label">Empresas — FY2025</div>
+    <div class="section-label">Companies — FY2025</div>
     <div class="cards-grid">
 
       <!-- BKNG -->
@@ -506,7 +506,7 @@
           <div>
             <div class="card-ticker">BKNG</div>
           </div>
-          <div class="card-badge badge-condicional">Condicional</div>
+          <div class="card-badge badge-condicional">Conditional</div>
         </div>
         <div class="card-name">Booking Holdings · NASDAQ · Travel Services</div>
         <div class="card-metrics">
@@ -515,8 +515,8 @@
             <div class="metric-lbl">Implied IRR</div>
           </div>
           <div>
-            <div class="metric-val gold">2.17×</div>
-            <div class="metric-lbl">Precio / EPV</div>
+            <div class="metric-val gold">1.70×</div>
+            <div class="metric-lbl">Price / EPV</div>
           </div>
           <div>
             <div class="metric-val green">+7.7pp</div>
@@ -536,8 +536,8 @@
           </div>
         </div>
         <div class="card-footer">
-          <span class="card-date">Revisado 09-Mar-2026</span>
-          <span class="card-arrow">Abrir dashboard →</span>
+          <span class="card-date">Reviewed 09-Mar-2026</span>
+          <span class="card-arrow">Open dashboard →</span>
         </div>
       </a>
 
@@ -547,7 +547,7 @@
           <div>
             <div class="card-ticker">V</div>
           </div>
-          <div class="card-badge badge-alta">Alta Convicción</div>
+          <div class="card-badge badge-alta">High Conviction</div>
         </div>
         <div class="card-name">Visa Inc. · NYSE · Payment Networks</div>
         <div class="card-metrics">
@@ -557,7 +557,7 @@
           </div>
           <div>
             <div class="metric-val gold">2.17×</div>
-            <div class="metric-lbl">Precio / EPV</div>
+            <div class="metric-lbl">Price / EPV</div>
           </div>
           <div>
             <div class="metric-val green">+3.9pp</div>
@@ -577,8 +577,8 @@
           </div>
         </div>
         <div class="card-footer">
-          <span class="card-date">Revisado Mar-2026</span>
-          <span class="card-arrow">Abrir dashboard →</span>
+          <span class="card-date">Reviewed Mar-2026</span>
+          <span class="card-arrow">Open dashboard →</span>
         </div>
       </a>
 
@@ -586,7 +586,7 @@
       <div class="card-placeholder">
         <div class="placeholder-inner">
           <div class="plus">+</div>
-          <div class="txt">Próxima empresa</div>
+          <div class="txt">Next company</div>
         </div>
       </div>
 
@@ -594,7 +594,7 @@
   </div>
 
   <footer>
-    <span class="footer-txt">DCE Holdings Investment Office — Confidencial · Solo uso interno</span>
+    <span class="footer-txt">DCE Holdings Investment Office — Confidential · Internal use only</span>
     <span class="footer-framework">Columbia Business School Framework</span>
   </footer>
 
@@ -614,7 +614,7 @@ function checkPwd() {
     }, 500);
     document.getElementById('gate-error').textContent = '';
   } else {
-    document.getElementById('gate-error').textContent = 'Contraseña incorrecta';
+    document.getElementById('gate-error').textContent = 'Incorrect password';
     document.getElementById('pwd-input').value = '';
     document.getElementById('pwd-input').focus();
   }
