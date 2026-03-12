@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — Sector Screener</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#1b2642;--gold:#b88b47;--gold-lt:#d4aa6a;--gold-dim:rgba(184,139,71,0.10);--gold-rule:rgba(184,139,71,0.30);
+    --cream:#f5f1eb;--white:#ffffff;--ink:#1b2642;--gray-mid:#8a9098;--gray-txt:#606060;
+    --green:#2a7a56;--red:#9b2335;--amber:#b8860b;--rule:rgba(27,38,66,0.09);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+  header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
+  .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
+  .hnav{display:flex;gap:8px}
+  .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
+  .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
+  .hnav a.active{color:var(--gold);border-color:var(--gold)}
+
+  main{max-width:1500px;margin:0 auto;padding:36px 48px 60px}
+  .slbl{font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+  .slbl::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
+  h1{font-size:26px;font-weight:700;letter-spacing:-0.02em;color:var(--navy);margin-bottom:4px}
+  .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:6px}
+  .meta{font-size:10px;color:var(--gray-mid);font-weight:300;margin-bottom:28px;font-style:italic}
+
+  /* SECTOR TABS */
+  .sector-tabs{display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap}
+  .sector-tab{font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:8px 18px;background:none;border:1px solid var(--rule);color:var(--gray-mid);cursor:pointer;transition:all .2s}
+  .sector-tab:hover{border-color:var(--gold-rule);color:var(--navy)}
+  .sector-tab.active{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+
+  /* TABLE STYLES */
+  .stbl{width:100%;border-collapse:collapse;background:var(--white);border:1px solid var(--rule);font-size:12px;margin-bottom:28px}
+  .stbl th{background:var(--navy);color:var(--white);font-size:8.5px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:10px 12px;text-align:right;position:sticky;top:0;z-index:2;white-space:nowrap}
+  .stbl th:first-child,.stbl th:nth-child(2){text-align:left}
+  .stbl td{padding:9px 12px;border-bottom:1px solid rgba(27,38,66,0.05);text-align:right;font-variant-numeric:tabular-nums;font-size:12px}
+  .stbl td:first-child,.stbl td:nth-child(2){text-align:left}
+  .stbl tr:hover{background:rgba(184,139,71,0.03)}
+  .stbl .ticker-cell{font-weight:700;font-size:13px;color:var(--navy);letter-spacing:-0.01em}
+
+  .green{color:var(--green)}.red{color:var(--red)}.gold{color:var(--gold)}.amber{color:var(--amber)}.dim{color:var(--gray-mid)}
+
+  /* VERDICT BADGES */
+  .verdict{display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 10px;border-radius:2px;white-space:nowrap}
+  .v-watchlist{background:rgba(184,139,71,0.15);color:var(--gold)}
+  .v-review{background:rgba(30,144,255,0.08);color:#2a6cb8}
+  .v-pass{background:rgba(27,38,66,0.06);color:var(--gray-mid)}
+
+  /* SCORE BAR */
+  .score-bar{display:inline-flex;align-items:center;gap:6px}
+  .score-fill{height:6px;border-radius:3px;min-width:4px;transition:width .3s}
+
+  .section-hdr{font-size:10px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--navy);margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--rule)}
+
+  footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
+
+  @media(max-width:1100px){main{padding:20px 16px}header{padding:0 16px}.stbl{font-size:11px}.stbl th,.stbl td{padding:7px 8px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">DCE <span>Holdings</span></div>
+  <div class="hnav">
+    <a href="/">Home</a>
+    <a href="/universe.html">Universe</a>
+    <a href="/screener.html" class="active">Screener</a>
+  </div>
+</header>
+
+<main>
+  <div class="slbl">DCE Holdings — Investment Office</div>
+  <h1>Sector Screener</h1>
+  <div class="sub">Pre-valuation pipeline. Quality + Valuation scoring with IRR estimates before full Columbia model.</div>
+  <div class="meta">Blend: 70% Absolute + 30% Relative · Hurdle: 12% · T10: 4.30% · Source: roic.ai API</div>
+
+  <div class="sector-tabs">
+    <button class="sector-tab active" onclick="showSector('car-parts',this)">Car Parts</button>
+    <button class="sector-tab" disabled style="opacity:0.4;cursor:default">+ Add Sector</button>
+  </div>
+
+  <!-- CAR PARTS -->
+  <div id="sector-car-parts">
+    <!-- SUMMARY TABLE -->
+    <div class="section-hdr">Summary — Top 10 by Market Cap</div>
+    <div style="overflow-x:auto">
+      <table class="stbl">
+        <thead><tr>
+          <th>Ticker</th><th>Company</th><th>Q (Abs)</th><th>Q (Rel)</th><th>Quality</th><th>Q Δ</th>
+          <th>V (Abs)</th><th>V (Rel)</th><th>Valuation</th><th>IRR</th><th>Mkt Cap</th><th>Verdict</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="ticker-cell">ORLY</td><td>O'Reilly Automotive</td><td>4.30</td><td>3.96</td><td class="green" style="font-weight:700">4.20</td><td class="red">-0.20</td><td>1.00</td><td>1.00</td><td style="font-weight:700">1.00</td><td class="green" style="font-weight:700">16.6%</td><td>$1,038B</td><td><span class="verdict v-watchlist">WATCHLIST</span></td></tr>
+          <tr><td class="ticker-cell">AZO</td><td>AutoZone</td><td>4.15</td><td>3.77</td><td class="green" style="font-weight:700">4.04</td><td class="red">-0.35</td><td>3.14</td><td>1.14</td><td style="font-weight:700">2.54</td><td class="dim">9.9%</td><td>$70,489M</td><td><span class="verdict v-watchlist">WATCHLIST</span></td></tr>
+          <tr><td class="ticker-cell">ALSN</td><td>Allison Transmission</td><td>4.07</td><td>3.37</td><td class="green" style="font-weight:700">3.86</td><td class="green">+0.24</td><td>4.79</td><td>3.50</td><td style="font-weight:700">4.40</td><td class="green" style="font-weight:700">12.9%</td><td>$9,404M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+          <tr><td class="ticker-cell">MOD</td><td>Modine Manufacturing</td><td>3.64</td><td>3.27</td><td style="font-weight:700">3.53</td><td class="green">+0.47</td><td>3.83</td><td>2.00</td><td style="font-weight:700">3.28</td><td class="dim">—</td><td>$4,129M</td><td><span class="verdict v-pass">PASS</span></td></tr>
+          <tr><td class="ticker-cell">ALV</td><td>Autoliv</td><td>3.69</td><td>3.08</td><td style="font-weight:700">3.51</td><td class="green">+0.44</td><td>4.86</td><td>3.93</td><td style="font-weight:700">4.58</td><td class="green" style="font-weight:700">69.0%</td><td>$7,522M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+          <tr><td class="ticker-cell">LKQ</td><td>LKQ Corp</td><td>3.25</td><td>2.48</td><td style="font-weight:700">3.02</td><td class="red">-0.58</td><td>4.64</td><td>3.21</td><td style="font-weight:700">4.21</td><td class="green" style="font-weight:700">20.4%</td><td>$9,687M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+          <tr><td class="ticker-cell">APTV</td><td>Aptiv</td><td>3.19</td><td>2.62</td><td style="font-weight:700">3.02</td><td class="red">-0.22</td><td>5.00</td><td>3.86</td><td style="font-weight:700">4.66</td><td class="green" style="font-weight:700">31.4%</td><td>$15,506M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+          <tr><td class="ticker-cell">BWA</td><td>BorgWarner</td><td>3.04</td><td>2.92</td><td style="font-weight:700">3.00</td><td class="red">-0.21</td><td>4.67</td><td>4.50</td><td style="font-weight:700">4.62</td><td class="green" style="font-weight:700">21.1%</td><td>$6,952M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+          <tr><td class="ticker-cell">GPC</td><td>Genuine Parts</td><td>3.14</td><td>2.22</td><td style="font-weight:700">2.87</td><td class="green">+0.39</td><td>3.93</td><td>2.21</td><td style="font-weight:700">3.41</td><td class="green" style="font-weight:700">17.1%</td><td>$16,254M</td><td><span class="verdict v-pass">PASS</span></td></tr>
+          <tr><td class="ticker-cell">MGA</td><td>Magna International</td><td>2.74</td><td>2.00</td><td style="font-weight:700">2.52</td><td class="red">-0.34</td><td>5.00</td><td>4.83</td><td style="font-weight:700">4.95</td><td class="green" style="font-weight:700">46.6%</td><td>$11,985M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- QUALITY METRICS -->
+    <div class="section-hdr">Quality Metrics</div>
+    <div style="overflow-x:auto">
+      <table class="stbl">
+        <thead><tr>
+          <th>Ticker</th><th>ROIC 3yr</th><th>ROIC Trend</th><th>GM CV</th><th>Op Margin</th><th>FCF Conv</th>
+          <th>Rev CAGR 5y</th><th>EPS CAGR 5y</th><th>FCF/sh CAGR</th><th>ND/EBITDA</th><th>GW+Int %TA</th><th>Capex/Rev</th><th>FCF CV</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="ticker-cell">ORLY</td><td class="green">41.4%</td><td class="green">+32.7%</td><td>0.01</td><td>19.5%</td><td>0.91x</td><td>10.5%</td><td>17.9%</td><td>19.9%</td><td>1.5x</td><td>6.2%</td><td>5.5%</td><td>0.54</td></tr>
+          <tr><td class="ticker-cell">AZO</td><td class="green">39.7%</td><td class="green">+0.6%</td><td>0.01</td><td>19.1%</td><td>1.05x</td><td>8.4%</td><td>15.0%</td><td>10.0%</td><td>2.0x</td><td>1.6%</td><td>—</td><td>0.41</td></tr>
+          <tr><td class="ticker-cell">ALSN</td><td>20.4%</td><td class="green">+65.0%</td><td>0.04</td><td class="green">30.8%</td><td>0.82x</td><td>3.6%</td><td>11.1%</td><td>6.4%</td><td>1.5x</td><td class="red">38.9%</td><td>4.9%</td><td>0.33</td></tr>
+          <tr><td class="ticker-cell">MOD</td><td>15.7%</td><td class="green">+474.2%</td><td>0.17</td><td>12.1%</td><td>0.92x</td><td>5.5%</td><td>—</td><td>—</td><td>0.7x</td><td>12.2%</td><td>—</td><td>1.01</td></tr>
+          <tr><td class="ticker-cell">ALV</td><td>12.5%</td><td class="green">+15.7%</td><td>0.09</td><td>9.4%</td><td>1.59x</td><td>4.0%</td><td>8.7%</td><td>48.9%</td><td>1.2x</td><td>17.5%</td><td>—</td><td>0.70</td></tr>
+          <tr><td class="ticker-cell">LKQ</td><td>9.8%</td><td class="green">+4.8%</td><td>0.02</td><td>9.3%</td><td>0.91x</td><td>2.8%</td><td>8.5%</td><td>3.6%</td><td>2.3x</td><td class="red">36.4%</td><td>2.2%</td><td>0.46</td></tr>
+          <tr><td class="ticker-cell">APTV</td><td>8.8%</td><td class="red">-52.1%</td><td>0.14</td><td>10.3%</td><td>1.02x</td><td>6.5%</td><td>12.6%</td><td>8.7%</td><td>2.3x</td><td>21.4%</td><td>—</td><td>0.23</td></tr>
+          <tr><td class="ticker-cell">BWA</td><td>8.4%</td><td class="red">-27.2%</td><td>0.07</td><td>9.3%</td><td>1.43x</td><td>6.7%</td><td class="red">-16.1%</td><td>5.3%</td><td>1.0x</td><td>16.8%</td><td>—</td><td>0.13</td></tr>
+          <tr><td class="ticker-cell">GPC</td><td>14.5%</td><td class="red">-5.4%</td><td>0.08</td><td>6.1%</td><td>0.75x</td><td>6.0%</td><td>8.8%</td><td>3.1%</td><td>2.1x</td><td>15.0%</td><td>2.1%</td><td>0.38</td></tr>
+          <tr><td class="ticker-cell">MGA</td><td>7.8%</td><td class="red">-49.4%</td><td>0.06</td><td>4.9%</td><td>0.57x</td><td>1.7%</td><td class="red">-8.8%</td><td class="red">-8.7%</td><td>1.0x</td><td>8.6%</td><td>5.2%</td><td>0.51</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- VALUATION METRICS -->
+    <div class="section-hdr">Valuation Metrics</div>
+    <div style="overflow-x:auto">
+      <table class="stbl">
+        <thead><tr>
+          <th>Ticker</th><th>EV/EBIT</th><th>P/E</th><th>EV/EBITDA</th><th>FCF Yield</th><th>Earn Yield</th>
+          <th>EY Spread</th><th>PEG</th><th>Base IRR</th><th>Full IRR</th><th>Mkt Cap ($M)</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="ticker-cell">ORLY</td><td>321.6x</td><td>434.8x</td><td>281.6x</td><td class="green">40.9%</td><td>31.1%</td><td class="red">-4.0%</td><td>24.35x</td><td class="green">20.3%</td><td class="green">16.6%</td><td>$1,037,676M</td></tr>
+          <tr><td class="ticker-cell">AZO</td><td>22.9x</td><td>28.2x</td><td>19.5x</td><td>5.0%</td><td>4.4%</td><td class="green">+7.6%</td><td>1.88x</td><td>14.9%</td><td class="dim">9.9%</td><td>$70,489M</td></tr>
+          <tr><td class="ticker-cell">ALSN</td><td>11.1x</td><td>12.9x</td><td>9.9x</td><td>10.8%</td><td>9.0%</td><td class="green">+4.7%</td><td>1.16x</td><td class="green">17.3%</td><td class="green">12.9%</td><td>$9,404M</td></tr>
+          <tr><td class="ticker-cell">MOD</td><td>14.2x</td><td>22.4x</td><td>11.3x</td><td>5.6%</td><td>7.1%</td><td class="green">+2.8%</td><td>—</td><td>—</td><td class="dim">—</td><td>$4,129M</td></tr>
+          <tr><td class="ticker-cell">ALV</td><td>9.5x</td><td>11.6x</td><td>6.8x</td><td class="green">15.1%</td><td>10.6%</td><td class="green">+6.3%</td><td>1.34x</td><td class="green">64.0%</td><td class="green">69.0%</td><td>$7,522M</td></tr>
+          <tr><td class="ticker-cell">LKQ</td><td>11.3x</td><td>14.0x</td><td>8.7x</td><td class="green">16.7%</td><td>8.8%</td><td class="green">+4.5%</td><td>1.66x</td><td class="green">20.3%</td><td class="green">20.4%</td><td>$9,687M</td></tr>
+          <tr><td class="ticker-cell">APTV</td><td>11.4x</td><td>8.7x</td><td>7.7x</td><td class="green">17.7%</td><td>8.8%</td><td class="green">+4.5%</td><td>0.69x</td><td class="green">26.4%</td><td class="green">31.4%</td><td>$15,506M</td></tr>
+          <tr><td class="ticker-cell">BWA</td><td>7.2x</td><td>20.6x</td><td>4.7x</td><td class="green">20.8%</td><td class="green">13.9%</td><td class="green">+9.6%</td><td>—</td><td class="green">26.1%</td><td class="green">21.1%</td><td>$6,952M</td></tr>
+          <tr><td class="ticker-cell">GPC</td><td>14.9x</td><td>18.0x</td><td>11.6x</td><td>11.6%</td><td>6.7%</td><td class="green">+2.4%</td><td>2.04x</td><td>14.8%</td><td class="green">17.1%</td><td>$16,254M</td></tr>
+          <tr><td class="ticker-cell">MGA</td><td>8.6x</td><td>11.9x</td><td>4.5x</td><td class="green">50.3%</td><td>11.6%</td><td class="green">+7.3%</td><td>—</td><td class="green">41.6%</td><td class="green">46.6%</td><td>$11,985M</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
+  <span>Sector Screener v4 · roic.ai API · 2026-03-04</span>
+</footer>
+
+<script>
+function showSector(id, btn) {
+  document.querySelectorAll('[id^="sector-"]').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.sector-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('sector-' + id).style.display = 'block';
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
