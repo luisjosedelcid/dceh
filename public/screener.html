@@ -77,7 +77,7 @@
   <div class="slbl">DCE Holdings — Investment Office</div>
   <h1>Sector Screener</h1>
   <div class="sub">Pre-valuation pipeline. Quality + Valuation scoring with IRR estimates before full Columbia model.</div>
-  <div class="meta">Blend: 70% Absolute + 30% Relative · Hurdle: 12% · T10: 4.30% · Source: roic.ai API</div>
+  <div class="meta">Blend: 70% Absolute + 30% Relative · Hurdle: 12% · T10: 4.30% · Source: roic.ai API · <span id="screener-live" style="color:var(--gray-mid)">Fetching prices...</span></div>
 
   <div class="sector-tabs">
     <button class="sector-tab active" onclick="showSector('car-parts',this)">Car Parts</button>
@@ -91,20 +91,20 @@
     <div style="overflow-x:auto">
       <table class="stbl">
         <thead><tr>
-          <th>Ticker</th><th>Company</th><th>Q (Abs)</th><th>Q (Rel)</th><th>Quality</th><th>Q Δ</th>
+          <th>Ticker</th><th>Company</th><th>Price</th><th>Q (Abs)</th><th>Q (Rel)</th><th>Quality</th><th>Q Δ</th>
           <th>V (Abs)</th><th>V (Rel)</th><th>Valuation</th><th>IRR</th><th>Mkt Cap</th><th>Verdict</th>
         </tr></thead>
         <tbody>
-          <tr><td class="ticker-cell">ORLY</td><td>O'Reilly Automotive</td><td>4.30</td><td>3.96</td><td class="green" style="font-weight:700">4.20</td><td class="red">-0.20</td><td>1.00</td><td>1.00</td><td style="font-weight:700">1.00</td><td class="green" style="font-weight:700">16.6%</td><td>$1,038B</td><td><span class="verdict v-watchlist">WATCHLIST</span></td></tr>
-          <tr><td class="ticker-cell">AZO</td><td>AutoZone</td><td>4.15</td><td>3.77</td><td class="green" style="font-weight:700">4.04</td><td class="red">-0.35</td><td>3.14</td><td>1.14</td><td style="font-weight:700">2.54</td><td class="dim">9.9%</td><td>$70,489M</td><td><span class="verdict v-watchlist">WATCHLIST</span></td></tr>
-          <tr><td class="ticker-cell">ALSN</td><td>Allison Transmission</td><td>4.07</td><td>3.37</td><td class="green" style="font-weight:700">3.86</td><td class="green">+0.24</td><td>4.79</td><td>3.50</td><td style="font-weight:700">4.40</td><td class="green" style="font-weight:700">12.9%</td><td>$9,404M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-          <tr><td class="ticker-cell">MOD</td><td>Modine Manufacturing</td><td>3.64</td><td>3.27</td><td style="font-weight:700">3.53</td><td class="green">+0.47</td><td>3.83</td><td>2.00</td><td style="font-weight:700">3.28</td><td class="dim">—</td><td>$4,129M</td><td><span class="verdict v-pass">PASS</span></td></tr>
-          <tr><td class="ticker-cell">ALV</td><td>Autoliv</td><td>3.69</td><td>3.08</td><td style="font-weight:700">3.51</td><td class="green">+0.44</td><td>4.86</td><td>3.93</td><td style="font-weight:700">4.58</td><td class="green" style="font-weight:700">69.0%</td><td>$7,522M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-          <tr><td class="ticker-cell">LKQ</td><td>LKQ Corp</td><td>3.25</td><td>2.48</td><td style="font-weight:700">3.02</td><td class="red">-0.58</td><td>4.64</td><td>3.21</td><td style="font-weight:700">4.21</td><td class="green" style="font-weight:700">20.4%</td><td>$9,687M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-          <tr><td class="ticker-cell">APTV</td><td>Aptiv</td><td>3.19</td><td>2.62</td><td style="font-weight:700">3.02</td><td class="red">-0.22</td><td>5.00</td><td>3.86</td><td style="font-weight:700">4.66</td><td class="green" style="font-weight:700">31.4%</td><td>$15,506M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-          <tr><td class="ticker-cell">BWA</td><td>BorgWarner</td><td>3.04</td><td>2.92</td><td style="font-weight:700">3.00</td><td class="red">-0.21</td><td>4.67</td><td>4.50</td><td style="font-weight:700">4.62</td><td class="green" style="font-weight:700">21.1%</td><td>$6,952M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-          <tr><td class="ticker-cell">GPC</td><td>Genuine Parts</td><td>3.14</td><td>2.22</td><td style="font-weight:700">2.87</td><td class="green">+0.39</td><td>3.93</td><td>2.21</td><td style="font-weight:700">3.41</td><td class="green" style="font-weight:700">17.1%</td><td>$16,254M</td><td><span class="verdict v-pass">PASS</span></td></tr>
-          <tr><td class="ticker-cell">MGA</td><td>Magna International</td><td>2.74</td><td>2.00</td><td style="font-weight:700">2.52</td><td class="red">-0.34</td><td>5.00</td><td>4.83</td><td style="font-weight:700">4.95</td><td class="green" style="font-weight:700">46.6%</td><td>$11,985M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+          <tr><td class="ticker-cell">ORLY</td><td>O'Reilly Automotive</td><td data-live-price="ORLY" class="gold">—</td><td>4.30</td><td>3.96</td><td class="green" style="font-weight:700">4.20</td><td class="red">-0.20</td><td>1.00</td><td>1.00</td><td style="font-weight:700">1.00</td><td class="green" style="font-weight:700">16.6%</td><td>$1,038B</td><td><span class="verdict v-watchlist">WATCHLIST</span></td></tr>
+          <tr><td class="ticker-cell">AZO</td><td>AutoZone</td><td data-live-price="AZO" class="gold">—</td><td>4.15</td><td>3.77</td><td class="green" style="font-weight:700">4.04</td><td class="red">-0.35</td><td>3.14</td><td>1.14</td><td style="font-weight:700">2.54</td><td class="dim">9.9%</td><td>$70,489M</td><td><span class="verdict v-watchlist">WATCHLIST</span></td></tr>
+          <tr><td class="ticker-cell">ALSN</td><td>Allison Transmission</td><td data-live-price="ALSN" class="gold">—</td><td>4.07</td><td>3.37</td><td class="green" style="font-weight:700">3.86</td><td class="green">+0.24</td><td>4.79</td><td>3.50</td><td style="font-weight:700">4.40</td><td class="green" style="font-weight:700">12.9%</td><td>$9,404M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+          <tr><td class="ticker-cell">MOD</td><td>Modine Manufacturing</td><td data-live-price="MOD" class="gold">—</td><td>3.64</td><td>3.27</td><td style="font-weight:700">3.53</td><td class="green">+0.47</td><td>3.83</td><td>2.00</td><td style="font-weight:700">3.28</td><td class="dim">—</td><td>$4,129M</td><td><span class="verdict v-pass">PASS</span></td></tr>
+          <tr><td class="ticker-cell">ALV</td><td>Autoliv</td><td data-live-price="ALV" class="gold">—</td><td>3.69</td><td>3.08</td><td style="font-weight:700">3.51</td><td class="green">+0.44</td><td>4.86</td><td>3.93</td><td style="font-weight:700">4.58</td><td class="green" style="font-weight:700">69.0%</td><td>$7,522M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+          <tr><td class="ticker-cell">LKQ</td><td>LKQ Corp</td><td data-live-price="LKQ" class="gold">—</td><td>3.25</td><td>2.48</td><td style="font-weight:700">3.02</td><td class="red">-0.58</td><td>4.64</td><td>3.21</td><td style="font-weight:700">4.21</td><td class="green" style="font-weight:700">20.4%</td><td>$9,687M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+          <tr><td class="ticker-cell">APTV</td><td>Aptiv</td><td data-live-price="APTV" class="gold">—</td><td>3.19</td><td>2.62</td><td style="font-weight:700">3.02</td><td class="red">-0.22</td><td>5.00</td><td>3.86</td><td style="font-weight:700">4.66</td><td class="green" style="font-weight:700">31.4%</td><td>$15,506M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+          <tr><td class="ticker-cell">BWA</td><td>BorgWarner</td><td data-live-price="BWA" class="gold">—</td><td>3.04</td><td>2.92</td><td style="font-weight:700">3.00</td><td class="red">-0.21</td><td>4.67</td><td>4.50</td><td style="font-weight:700">4.62</td><td class="green" style="font-weight:700">21.1%</td><td>$6,952M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+          <tr><td class="ticker-cell">GPC</td><td>Genuine Parts</td><td data-live-price="GPC" class="gold">—</td><td>3.14</td><td>2.22</td><td style="font-weight:700">2.87</td><td class="green">+0.39</td><td>3.93</td><td>2.21</td><td style="font-weight:700">3.41</td><td class="green" style="font-weight:700">17.1%</td><td>$16,254M</td><td><span class="verdict v-pass">PASS</span></td></tr>
+          <tr><td class="ticker-cell">MGA</td><td>Magna International</td><td data-live-price="MGA" class="gold">—</td><td>2.74</td><td>2.00</td><td style="font-weight:700">2.52</td><td class="red">-0.34</td><td>5.00</td><td>4.83</td><td style="font-weight:700">4.95</td><td class="green" style="font-weight:700">46.6%</td><td>$11,985M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -169,6 +169,42 @@ function showSector(id, btn) {
   document.getElementById('sector-' + id).style.display = 'block';
   btn.classList.add('active');
 }
+
+// ═══ LIVE PRICES (Finnhub) ═══
+const FH_KEY = 'd6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg';
+const TICKERS = ['ORLY','AZO','ALSN','MOD','ALV','LKQ','APTV','BWA','GPC','MGA'];
+
+async function fetchScreenerPrices() {
+  try {
+    const fetches = TICKERS.map(t =>
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${t}&token=${FH_KEY}`)
+        .then(r => r.json())
+        .then(d => ({ ticker: t, price: d.c }))
+        .catch(() => ({ ticker: t, price: null }))
+    );
+    const results = await Promise.all(fetches);
+
+    results.forEach(({ ticker, price }) => {
+      if (!price || price <= 0) return;
+      // Update price cells
+      document.querySelectorAll(`[data-live-price="${ticker}"]`).forEach(el => {
+        el.textContent = '$' + price.toFixed(2);
+        el.style.color = 'var(--green)';
+      });
+      // Update market cap cells (need shares outstanding from Finnhub profile)
+    });
+
+    const note = document.getElementById('screener-live');
+    if (note) {
+      note.textContent = 'Live prices · ' + new Date().toLocaleTimeString();
+      note.style.color = 'var(--green)';
+    }
+  } catch(e) {
+    console.error('Finnhub error:', e);
+  }
+}
+
+fetchScreenerPrices();
 </script>
 </body>
 </html>
