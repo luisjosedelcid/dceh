@@ -10,12 +10,8 @@
       "destination": "/public/visa.html"
     },
     {
-      "source": "/landing",
-      "destination": "/public/landing.html"
-    },
-    {
       "source": "/",
-      "destination": "/public/index.html"
+      "destination": "/public/landing.html"
     }
   ]
 }
