@@ -1,17 +1,13 @@
 {
   "framework": null,
-  "routes": [
+  "rewrites": [
     {
-      "src": "^/$",
-      "dest": "/public/landing.html"
+      "source": "/bkng",
+      "destination": "/bkng.html"
     },
     {
-      "src": "/bkng",
-      "dest": "/public/index.html"
-    },
-    {
-      "src": "/visa",
-      "dest": "/public/visa.html"
+      "source": "/visa",
+      "destination": "/visa.html"
     }
   ]
 }
