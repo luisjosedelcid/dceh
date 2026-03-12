@@ -8,6 +8,14 @@
     {
       "source": "/lulu",
       "destination": "/lulu.html"
+    },
+    {
+      "source": "/universe",
+      "destination": "/universe.html"
+    },
+    {
+      "source": "/screener",
+      "destination": "/screener.html"
     }
   ]
 }
