@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/bkng",
-      "destination": "/public/index.html"
+      "destination": "/public/bkng.html"
     },
     {
       "source": "/visa",
