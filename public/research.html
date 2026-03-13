@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — Research Pipeline</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#1b2642;--gold:#b88b47;--gold-lt:#d4aa6a;--gold-dim:rgba(184,139,71,0.10);--gold-rule:rgba(184,139,71,0.30);
+    --cream:#f5f1eb;--white:#ffffff;--ink:#1b2642;--gray-mid:#8a9098;--gray-txt:#606060;
+    --green:#2a7a56;--red:#9b2335;--amber:#b8860b;--rule:rgba(27,38,66,0.09);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+  header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
+  .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
+  .hnav{display:flex;gap:8px}
+  .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
+  .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
+  .hnav a.active{color:var(--gold);border-color:var(--gold)}
+
+  main{padding:28px 36px 60px}
+  .slbl{font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+  .slbl::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
+  h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;color:var(--navy);margin-bottom:4px}
+  .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:24px}
+
+  /* KANBAN */
+  .kanban{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;min-height:500px}
+  .col{background:rgba(27,38,66,0.03);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:0;display:flex;flex-direction:column}
+  .col-head{padding:14px 14px 10px;border-bottom:1px solid var(--rule)}
+  .col-title{font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy)}
+  .col-count{font-size:10px;color:var(--gray-mid);margin-top:2px}
+  .col-body{flex:1;padding:8px;min-height:100px;transition:background .2s}
+  .col-body.drag-over{background:rgba(184,139,71,0.08)}
+
+  /* CARDS */
+  .card{background:var(--white);border:1px solid var(--rule);padding:12px;margin-bottom:8px;cursor:grab;transition:all .2s;position:relative}
+  .card:hover{border-color:var(--gold-rule);box-shadow:0 2px 8px rgba(27,38,66,0.06)}
+  .card:active{cursor:grabbing;opacity:0.8}
+  .card-ticker{font-size:15px;font-weight:700;color:var(--navy);letter-spacing:-0.01em}
+  .card-name{font-size:10px;color:var(--gray-mid);margin-top:1px}
+  .card-scores{display:flex;gap:8px;margin-top:8px;font-size:10px}
+  .card-score{padding:2px 6px;border-radius:2px;font-weight:600;letter-spacing:0.05em}
+  .cs-q{background:rgba(42,122,86,0.08);color:var(--green)}
+  .cs-v{background:var(--gold-dim);color:var(--gold)}
+  .cs-irr{background:rgba(27,38,66,0.05);color:var(--navy)}
+  .card-note{font-size:10px;color:var(--gray-txt);margin-top:6px;line-height:1.4;font-style:italic}
+  .card-date{font-size:9px;color:var(--gray-mid);margin-top:6px;letter-spacing:0.05em}
+  .card-del{position:absolute;top:8px;right:10px;font-size:14px;color:var(--rule);cursor:pointer;line-height:1}
+  .card-del:hover{color:var(--red)}
+
+  /* ADD FORM */
+  .add-row{display:flex;gap:8px;margin-bottom:20px;align-items:center}
+  .add-inp{background:var(--white);border:1px solid var(--rule);padding:8px 12px;font-size:12px;font-family:'Archivo',sans-serif;outline:none;font-weight:600;letter-spacing:0.05em}
+  .add-inp:focus{border-color:var(--gold)}
+  .add-inp.ticker{width:80px;font-family:'Archivo',monospace}
+  .add-inp.name{width:180px}
+  .add-inp.note{flex:1}
+  .add-btn{background:var(--navy);border:1px solid var(--gold-rule);color:var(--gold);padding:8px 18px;font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+  .add-btn:hover{background:#243352;border-color:var(--gold)}
+
+  /* STATS */
+  .stats{display:flex;gap:24px;margin-bottom:20px;font-size:11px;color:var(--gray-mid)}
+  .stat-val{font-weight:700;color:var(--navy);margin-right:4px}
+
+  footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">DCE <span>Holdings</span></div>
+  <div class="hnav">
+    <a href="/">Home</a>
+    <a href="/universe.html">Universe</a>
+    <a href="/screener.html">Screener</a>
+    <a href="/portfolio.html">Portfolio</a>
+    <a href="/news.html">News</a>
+    <a href="/dataroom.html">Data Room</a>
+    <a href="/reporting.html">Reporting</a>
+    <a href="/research.html" class="active">Research</a>
+  </div>
+</header>
+
+<main>
+  <div class="slbl">DCE Holdings — Investment Office</div>
+  <h1>Research Pipeline</h1>
+  <div class="sub">Drag cards between stages. All changes saved locally. Supabase integration coming soon.</div>
+
+  <!-- ADD NEW -->
+  <div class="add-row">
+    <input class="add-inp ticker" id="add-ticker" placeholder="TICKER">
+    <input class="add-inp name" id="add-name" placeholder="Company name">
+    <input class="add-inp note" id="add-note" placeholder="Initial note (optional)">
+    <button class="add-btn" onclick="addCard()">+ Add</button>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats" id="stats"></div>
+
+  <!-- KANBAN BOARD -->
+  <div class="kanban" id="kanban"></div>
+</main>
+
+<footer>
+  <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
+  <span>Research Pipeline · localStorage (Supabase pending)</span>
+</footer>
+
+<script>
+const STORAGE_KEY = 'dce-research-pipeline';
+
+const COLUMNS = [
+  { id: 'backlog', title: 'Backlog', desc: 'On the radar' },
+  { id: 'analysis', title: 'Analysis', desc: 'Active research' },
+  { id: 'review', title: 'Review', desc: 'Model & thesis review' },
+  { id: 'decision', title: 'Decision Pending', desc: 'Awaiting CIO decision' },
+  { id: 'approved', title: 'Approved', desc: 'Thesis approved' },
+  { id: 'rejected', title: 'Rejected', desc: 'Not pursuing' },
+];
+
+let pipeline = [];
+let dragId = null;
+
+function init() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) pipeline = JSON.parse(saved);
+  } catch(e) {}
+
+  // Seed with example data if empty
+  if (pipeline.length === 0) {
+    pipeline = [
+      { id: 'd1', ticker: 'BKNG', name: 'Booking Holdings', stage: 'decision', quality: 4.2, valuation: 1.0, irr: '19.7%', note: 'Conditional — cash sanity negative', created: '2026-03-06', moved: '2026-03-09' },
+      { id: 'd2', ticker: 'LULU', name: 'Lululemon Athletica', stage: 'review', quality: 3.5, valuation: 1.3, irr: '18.8%', note: 'ROIC declining. EPV/RV < 1. Multiple expansion thesis.', created: '2026-03-12', moved: '2026-03-12' },
+      { id: 'd3', ticker: 'MSFT', name: 'Microsoft', stage: 'decision', quality: null, valuation: null, irr: null, note: 'Position in portfolio. Pending full Columbia model.', created: '2026-03-01', moved: '2026-03-01' },
+      { id: 'd4', ticker: 'ORLY', name: "O'Reilly Automotive", stage: 'analysis', quality: 4.2, valuation: 1.0, irr: '16.6%', note: 'Watchlist from Car Parts screen. Top quality.', created: '2026-03-04', moved: '2026-03-04' },
+      { id: 'd5', ticker: 'ALSN', name: 'Allison Transmission', stage: 'backlog', quality: 3.9, valuation: 4.4, irr: '12.9%', note: 'Review from screener. High valuation score.', created: '2026-03-04', moved: '2026-03-04' },
+      { id: 'd6', ticker: 'ALV', name: 'Autoliv', stage: 'backlog', quality: 3.5, valuation: 4.6, irr: '69.0%', note: 'Extremely high IRR — verify assumptions.', created: '2026-03-04', moved: '2026-03-04' },
+    ];
+    save();
+  }
+
+  render();
+}
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(pipeline)); } catch(e) {}
+}
+
+function todayISO() { return new Date().toISOString().slice(0, 10); }
+function uid() { return 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+
+// ═══ RENDER ═══
+function render() {
+  const board = document.getElementById('kanban');
+  board.innerHTML = COLUMNS.map(col => {
+    const cards = pipeline.filter(c => c.stage === col.id);
+    return `<div class="col">
+      <div class="col-head">
+        <div class="col-title">${col.title}</div>
+        <div class="col-count">${cards.length} card${cards.length !== 1 ? 's' : ''}</div>
+      </div>
+      <div class="col-body" id="col-${col.id}"
+        ondragover="event.preventDefault();this.classList.add('drag-over')"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="dropCard(event,'${col.id}');this.classList.remove('drag-over')">
+        ${cards.map(c => renderCard(c)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Stats
+  const stats = document.getElementById('stats');
+  const total = pipeline.length;
+  const approved = pipeline.filter(c => c.stage === 'approved').length;
+  const active = pipeline.filter(c => !['approved','rejected'].includes(c.stage)).length;
+  stats.innerHTML = `<span><span class="stat-val">${total}</span>total</span>
+    <span><span class="stat-val">${active}</span>in pipeline</span>
+    <span><span class="stat-val">${approved}</span>approved</span>`;
+}
+
+function renderCard(c) {
+  return `<div class="card" draggable="true" ondragstart="dragStart('${c.id}')" id="card-${c.id}">
+    <div class="card-del" onclick="deleteCard('${c.id}')" title="Remove">×</div>
+    <div class="card-ticker">${c.ticker}</div>
+    <div class="card-name">${c.name}</div>
+    <div class="card-scores">
+      ${c.quality ? `<span class="card-score cs-q">Q ${c.quality.toFixed(1)}</span>` : ''}
+      ${c.valuation ? `<span class="card-score cs-v">V ${c.valuation.toFixed(1)}</span>` : ''}
+      ${c.irr ? `<span class="card-score cs-irr">IRR ${c.irr}</span>` : ''}
+    </div>
+    ${c.note ? `<div class="card-note">${c.note}</div>` : ''}
+    <div class="card-date">Added ${c.created}${c.moved !== c.created ? ' · Moved ' + c.moved : ''}</div>
+  </div>`;
+}
+
+// ═══ DRAG & DROP ═══
+function dragStart(id) { dragId = id; }
+
+function dropCard(event, colId) {
+  event.preventDefault();
+  if (!dragId) return;
+  const card = pipeline.find(c => c.id === dragId);
+  if (card && card.stage !== colId) {
+    card.stage = colId;
+    card.moved = todayISO();
+    save();
+    render();
+  }
+  dragId = null;
+}
+
+// ═══ ADD / DELETE ═══
+function addCard() {
+  const ticker = document.getElementById('add-ticker').value.trim().toUpperCase();
+  const name = document.getElementById('add-name').value.trim();
+  const note = document.getElementById('add-note').value.trim();
+  if (!ticker) return;
+
+  pipeline.push({
+    id: uid(),
+    ticker,
+    name: name || ticker,
+    stage: 'backlog',
+    quality: null,
+    valuation: null,
+    irr: null,
+    note: note || null,
+    created: todayISO(),
+    moved: todayISO(),
+  });
+  save();
+  render();
+
+  document.getElementById('add-ticker').value = '';
+  document.getElementById('add-name').value = '';
+  document.getElementById('add-note').value = '';
+}
+
+function deleteCard(id) {
+  if (!confirm('Remove this card?')) return;
+  pipeline = pipeline.filter(c => c.id !== id);
+  save();
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
