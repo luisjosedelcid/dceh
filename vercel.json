@@ -1,25 +1,11 @@
 {
   "framework": null,
   "rewrites": [
-    {
-      "source": "/bkng",
-      "destination": "/bkng.html"
-    },
-    {
-      "source": "/lulu",
-      "destination": "/lulu.html"
-    },
-    {
-      "source": "/universe",
-      "destination": "/universe.html"
-    },
-    {
-      "source": "/screener",
-      "destination": "/screener.html"
-    },
-    {
-      "source": "/portfolio",
-      "destination": "/portfolio.html"
-    }
+    { "source": "/bkng", "destination": "/bkng.html" },
+    { "source": "/lulu", "destination": "/lulu.html" },
+    { "source": "/universe", "destination": "/universe.html" },
+    { "source": "/screener", "destination": "/screener.html" },
+    { "source": "/portfolio", "destination": "/portfolio.html" },
+    { "source": "/news", "destination": "/news.html" }
   ]
 }
