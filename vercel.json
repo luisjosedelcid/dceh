@@ -6,6 +6,8 @@
     { "source": "/universe", "destination": "/universe.html" },
     { "source": "/screener", "destination": "/screener.html" },
     { "source": "/portfolio", "destination": "/portfolio.html" },
-    { "source": "/news", "destination": "/news.html" }
+    { "source": "/news", "destination": "/news.html" },
+    { "source": "/dataroom", "destination": "/dataroom.html" },
+    { "source": "/reporting", "destination": "/reporting.html" }
   ]
 }
