@@ -478,23 +478,65 @@
 <!-- ── MAIN ── -->
 <div id="main">
 
+  <!-- WAVE DECORATIONS (brandbook) -->
+  <svg class="wave-deco" style="position:fixed;top:-60px;right:-80px;width:500px;opacity:0.04;pointer-events:none;z-index:0" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M50 350 Q150 250 100 150 Q50 50 200 20 Q350 -10 380 150 Q410 310 250 350 Q90 390 50 350Z" stroke="#b88b47" stroke-width="0.8" fill="none"/>
+    <path d="M70 330 Q160 240 120 150 Q80 60 210 35 Q340 10 365 160 Q390 300 240 340 Q100 370 70 330Z" stroke="#b88b47" stroke-width="0.6" fill="none"/>
+    <path d="M90 310 Q170 230 140 150 Q110 70 220 50 Q330 30 350 170 Q370 290 230 330 Q110 350 90 310Z" stroke="#b88b47" stroke-width="0.5" fill="none"/>
+    <path d="M110 290 Q180 220 160 150 Q140 80 230 65 Q320 50 335 180 Q350 280 220 320 Q120 330 110 290Z" stroke="#b88b47" stroke-width="0.4" fill="none"/>
+    <path d="M130 270 Q190 210 180 150 Q170 90 240 80 Q310 70 320 190 Q330 270 210 310 Q130 310 130 270Z" stroke="#b88b47" stroke-width="0.3" fill="none"/>
+  </svg>
+  <svg class="wave-deco" style="position:fixed;bottom:-80px;left:-60px;width:450px;opacity:0.035;pointer-events:none;z-index:0;transform:rotate(180deg)" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M50 350 Q150 250 100 150 Q50 50 200 20 Q350 -10 380 150 Q410 310 250 350 Q90 390 50 350Z" stroke="#b88b47" stroke-width="0.8" fill="none"/>
+    <path d="M70 330 Q160 240 120 150 Q80 60 210 35 Q340 10 365 160 Q390 300 240 340 Q100 370 70 330Z" stroke="#b88b47" stroke-width="0.6" fill="none"/>
+    <path d="M90 310 Q170 230 140 150 Q110 70 220 50 Q330 30 350 170 Q370 290 230 330 Q110 350 90 310Z" stroke="#b88b47" stroke-width="0.5" fill="none"/>
+    <path d="M110 290 Q180 220 160 150 Q140 80 230 65 Q320 50 335 180 Q350 280 220 320 Q120 330 110 290Z" stroke="#b88b47" stroke-width="0.4" fill="none"/>
+  </svg>
+
   <header>
     <div class="h-brand">
       <div class="h-logo"><strong>DCE</strong> Holdings</div>
       <div class="h-divider"></div>
       <div class="h-subtitle">
         Investment Office<br>
-        Modelo Columbia — Quality Growth
+        Columbia Model — Quality Growth
       </div>
     </div>
-    <div class="h-date" id="hdr-date"></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <a href="/news.html" style="font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(184,139,71,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='transparent'">News</a>
+      <a href="/dataroom.html" style="font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(184,139,71,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='transparent'">Data Room</a>
+      <a href="/reporting.html" style="font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(184,139,71,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='transparent'">Reporting</a>
+      <div style="width:1px;height:20px;background:rgba(184,139,71,0.2);margin:0 8px"></div>
+      <div class="h-date" id="hdr-date" style="font-size:9px;letter-spacing:0.15em;color:rgba(255,255,255,0.3)"></div>
+    </div>
   </header>
 
   <div class="hero">
-    <div class="hero-eyebrow">Covered Universe</div>
+    <div class="hero-eyebrow">Risk comes from not knowing what you're doing. — Warren Buffett</div>
     <h1 class="hero-title">Fundamental <em>value analysis</em><br>under the Columbia framework</h1>
-    <p class="hero-desc">Disciplined valuation using Asset Value → Earnings Power Value → Growth Value. Every company audited with Thesis Breaker and Munger Digital before any capital decision.</p>
+    <p class="hero-desc">Compounding wealth through disciplined capital allocation in businesses of exceptional economic quality.</p>
   </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:40px">
+      <a href="/screener.html" style="text-decoration:none;display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(184,139,71,0.15);border-top:2px solid var(--gold);padding:28px 24px;transition:all .3s;animation:fadeUp 0.5s ease 0.1s both" onmouseover="this.style.borderColor='var(--gold)';this.style.background='rgba(184,139,71,0.06)'" onmouseout="this.style.borderColor='rgba(184,139,71,0.15)';this.style.background='rgba(255,255,255,0.03)';this.style.borderTopColor='var(--gold)'">
+        <div style="font-size:9px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Sector Screener</div>
+        <div style="font-size:18px;font-weight:700;color:var(--white);letter-spacing:-0.01em;margin-bottom:6px">Find</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6;margin-bottom:16px">Screen sectors. Score quality and valuation.</div>
+        <div style="font-size:11px;color:var(--gold);font-weight:600;letter-spacing:0.1em">Open →</div>
+      </a>
+      <a href="/universe.html" style="text-decoration:none;display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(184,139,71,0.15);border-top:2px solid var(--gold);padding:28px 24px;transition:all .3s;animation:fadeUp 0.5s ease 0.2s both" onmouseover="this.style.borderColor='var(--gold)';this.style.background='rgba(184,139,71,0.06)'" onmouseout="this.style.borderColor='rgba(184,139,71,0.15)';this.style.background='rgba(255,255,255,0.03)';this.style.borderTopColor='var(--gold)'">
+        <div style="font-size:9px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Covered Universe</div>
+        <div style="font-size:18px;font-weight:700;color:var(--white);letter-spacing:-0.01em;margin-bottom:6px">Analyze</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6;margin-bottom:16px">Columbia models with live IRR and margin of safety.</div>
+        <div style="font-size:11px;color:var(--gold);font-weight:600;letter-spacing:0.1em">Open →</div>
+      </a>
+      <a href="/portfolio.html" style="text-decoration:none;display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(184,139,71,0.15);border-top:2px solid var(--gold);padding:28px 24px;transition:all .3s;animation:fadeUp 0.5s ease 0.3s both" onmouseover="this.style.borderColor='var(--gold)';this.style.background='rgba(184,139,71,0.06)'" onmouseout="this.style.borderColor='rgba(184,139,71,0.15)';this.style.background='rgba(255,255,255,0.03)';this.style.borderTopColor='var(--gold)'">
+        <div style="font-size:9px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Portfolio</div>
+        <div style="font-size:18px;font-weight:700;color:var(--white);letter-spacing:-0.01em;margin-bottom:6px">Own</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6;margin-bottom:16px">Positions, P&L, and allocation. Live prices.</div>
+        <div style="font-size:11px;color:var(--gold);font-weight:600;letter-spacing:0.1em">Open →</div>
+      </a>
+    </div>
 
   <div class="universe">
     <div class="section-label">Companies — FY2025</div>
@@ -592,11 +634,6 @@
 
     </div>
 
-    <div style="text-align:center;margin-top:32px;display:flex;gap:16px;justify-content:center">
-      <a href="/universe.html" style="font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-lt);text-decoration:none;padding:12px 28px;border:1px solid rgba(184,139,71,0.3);transition:all .2s;display:inline-block" onmouseover="this.style.borderColor='var(--gold)';this.style.background='rgba(184,139,71,0.08)'" onmouseout="this.style.borderColor='rgba(184,139,71,0.3)';this.style.background='transparent'">Covered Universe →</a>
-      <a href="/screener.html" style="font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-lt);text-decoration:none;padding:12px 28px;border:1px solid rgba(184,139,71,0.3);transition:all .2s;display:inline-block" onmouseover="this.style.borderColor='var(--gold)';this.style.background='rgba(184,139,71,0.08)'" onmouseout="this.style.borderColor='rgba(184,139,71,0.3)';this.style.background='transparent'">Sector Screener →</a>
-      <a href="/portfolio.html" style="font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-lt);text-decoration:none;padding:12px 28px;border:1px solid rgba(184,139,71,0.3);transition:all .2s;display:inline-block" onmouseover="this.style.borderColor='var(--gold)';this.style.background='rgba(184,139,71,0.08)'" onmouseout="this.style.borderColor='rgba(184,139,71,0.3)';this.style.background='transparent'">Portfolio →</a>
-    </div>
   </div>
 
   <footer>
