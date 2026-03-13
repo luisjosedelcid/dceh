@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — Data Room</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#1b2642;--gold:#b88b47;--gold-lt:#d4aa6a;--gold-dim:rgba(184,139,71,0.10);--gold-rule:rgba(184,139,71,0.30);
+    --cream:#f5f1eb;--white:#ffffff;--ink:#1b2642;--gray-mid:#8a9098;--gray-txt:#606060;
+    --green:#2a7a56;--red:#9b2335;--rule:rgba(27,38,66,0.09);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+  header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
+  .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
+  .hnav{display:flex;gap:8px}
+  .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
+  .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
+  .hnav a.active{color:var(--gold);border-color:var(--gold)}
+
+  main{max-width:1000px;margin:0 auto;padding:36px 48px 60px}
+  .slbl{font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+  .slbl::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
+  h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;color:var(--navy);margin-bottom:4px}
+  .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:32px}
+
+  /* BREADCRUMB */
+  .breadcrumb{font-size:11px;color:var(--gray-mid);margin-bottom:24px;display:flex;align-items:center;gap:6px}
+  .breadcrumb a{color:var(--gold);text-decoration:none;font-weight:500}
+  .breadcrumb a:hover{text-decoration:underline}
+  .breadcrumb .sep{color:var(--rule)}
+
+  /* FOLDER GRID */
+  .folder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:32px}
+
+  .folder{background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:28px 24px;cursor:pointer;transition:all .2s;text-decoration:none;display:block;color:var(--ink)}
+  .folder:hover{border-color:var(--gold-rule);box-shadow:0 2px 12px rgba(27,38,66,0.06)}
+  .folder-icon{font-size:28px;margin-bottom:14px}
+  .folder-name{font-size:16px;font-weight:700;letter-spacing:-0.01em;color:var(--navy);margin-bottom:4px}
+  .folder-desc{font-size:12px;color:var(--gray-mid);line-height:1.5;margin-bottom:12px}
+  .folder-meta{font-size:10px;color:var(--gray-mid);letter-spacing:0.08em;display:flex;align-items:center;gap:12px}
+  .folder-count{font-weight:600;color:var(--gold)}
+  .folder-arrow{font-size:11px;color:var(--gold);font-weight:600;letter-spacing:0.1em;margin-left:auto}
+
+  /* FILE LIST */
+  .file-list{display:none}
+  .file-item{display:flex;align-items:center;background:var(--white);border:1px solid var(--rule);padding:14px 20px;margin-bottom:6px;transition:all .2s;text-decoration:none;color:var(--ink)}
+  .file-item:hover{border-color:var(--gold-rule);background:rgba(184,139,71,0.02)}
+  .file-icon{font-size:18px;margin-right:14px;flex-shrink:0}
+  .file-info{flex:1}
+  .file-name{font-size:13px;font-weight:600;color:var(--navy)}
+  .file-detail{font-size:11px;color:var(--gray-mid);margin-top:2px}
+  .file-action{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);flex-shrink:0}
+
+  .back-btn{font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);background:none;border:1px solid var(--gold-rule);padding:8px 18px;cursor:pointer;transition:all .2s;margin-bottom:24px}
+  .back-btn:hover{background:var(--gold-dim);border-color:var(--gold)}
+
+  .empty{text-align:center;padding:40px 20px;color:var(--gray-mid);font-size:13px}
+
+  footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">DCE <span>Holdings</span></div>
+  <div class="hnav">
+    <a href="/">Home</a>
+    <a href="/universe.html">Universe</a>
+    <a href="/screener.html">Screener</a>
+    <a href="/portfolio.html">Portfolio</a>
+    <a href="/news.html">News</a>
+    <a href="/dataroom.html" class="active">Data Room</a>
+  </div>
+</header>
+
+<main>
+  <div class="slbl">DCE Holdings — Investment Office</div>
+  <h1>Data Room</h1>
+  <div class="sub">Centralized document repository. Valuation reports, filings, and internal documents.</div>
+
+  <div class="breadcrumb" id="breadcrumb">
+    <a href="#" onclick="showRoot();return false">Data Room</a>
+  </div>
+
+  <!-- ROOT: FOLDERS -->
+  <div id="root-view">
+    <div class="folder-grid">
+      <div class="folder" onclick="openFolder('strategic')">
+        <div class="folder-name">Strategic</div>
+        <div class="folder-desc">Investment theses, valuation models, Thesis Breaker & Munger Digital outputs, board memos, and capital allocation decisions.</div>
+        <div class="folder-meta">
+          <span class="folder-count" id="count-strategic">—</span> files
+          <span class="folder-arrow">Open →</span>
+        </div>
+      </div>
+      <div class="folder" onclick="openFolder('operations')">
+        <div class="folder-name">Operations</div>
+        <div class="folder-desc">Internal procedures, compliance, and day-to-day operational documentation.</div>
+        <div class="folder-meta">
+          <span class="folder-count" id="count-operations">—</span> files
+          <span class="folder-arrow">Open →</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOLDER VIEW -->
+  <div id="folder-view" style="display:none">
+    <button class="back-btn" onclick="showRoot()">← Back to folders</button>
+    <div id="folder-content"></div>
+  </div>
+</main>
+
+<footer>
+  <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
+  <span>Data Room</span>
+</footer>
+
+<script>
+// ═══ FOLDER DATA ═══
+// Links can be Google Drive, direct URLs, or dashboard pages
+const FOLDERS = {
+  strategic: {
+    name: 'Strategic',
+    files: [
+      { name: 'Investment Charter', type: 'pdf', detail: 'DCE Holdings Investment Office', url: '#', icon: '📄' },
+      { name: 'Investment Policy Statement', type: 'pdf', detail: 'DCE Holdings Investment Office', url: '#', icon: '📄' },
+      { name: 'Governance & Succession Framework', type: 'pdf', detail: 'DCE Holdings Investment Office', url: '#', icon: '📄' },
+    ]
+  },
+  operations: {
+    name: 'Operations',
+    files: [
+      { name: 'Operations Manual', type: 'pdf', detail: 'DCE Holdings', url: '#', icon: '📄' },
+    ]
+  }
+};
+
+function updateCounts() {
+  Object.keys(FOLDERS).forEach(k => {
+    const el = document.getElementById('count-' + k);
+    if (el) el.textContent = FOLDERS[k].files.length;
+  });
+}
+
+function showRoot() {
+  document.getElementById('root-view').style.display = 'block';
+  document.getElementById('folder-view').style.display = 'none';
+  document.getElementById('breadcrumb').innerHTML = '<a href="#" onclick="showRoot();return false">Data Room</a>';
+}
+
+function openFolder(key) {
+  const folder = FOLDERS[key];
+  if (!folder) return;
+
+  document.getElementById('root-view').style.display = 'none';
+  document.getElementById('folder-view').style.display = 'block';
+  document.getElementById('breadcrumb').innerHTML = `<a href="#" onclick="showRoot();return false">Data Room</a> <span class="sep">›</span> <strong>${folder.name}</strong>`;
+
+  const content = document.getElementById('folder-content');
+  if (folder.files.length === 0) {
+    content.innerHTML = '<div class="empty">No files in this folder yet.</div>';
+    return;
+  }
+
+  content.innerHTML = folder.files.map(f => {
+    const target = f.url.startsWith('http') ? ' target="_blank"' : '';
+    return `<a class="file-item" href="${f.url}"${target}>
+      <div class="file-icon">${f.icon}</div>
+      <div class="file-info">
+        <div class="file-name">${f.name}</div>
+        <div class="file-detail">${f.detail}</div>
+      </div>
+      <div class="file-action">Open →</div>
+    </a>`;
+  }).join('');
+}
+
+updateCounts();
+</script>
+</body>
+</html>
