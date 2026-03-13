@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — Reporting Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#1b2642;--gold:#b88b47;--gold-lt:#d4aa6a;--gold-dim:rgba(184,139,71,0.10);--gold-rule:rgba(184,139,71,0.30);
+    --cream:#f5f1eb;--white:#ffffff;--ink:#1b2642;--gray-mid:#8a9098;--gray-txt:#606060;
+    --green:#2a7a56;--red:#9b2335;--rule:rgba(27,38,66,0.09);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+  header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
+  .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
+  .hnav{display:flex;gap:8px}
+  .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
+  .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
+  .hnav a.active{color:var(--gold);border-color:var(--gold)}
+
+  main{max-width:1000px;margin:0 auto;padding:36px 48px 60px}
+  .slbl{font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+  .slbl::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
+  h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;color:var(--navy);margin-bottom:4px}
+  .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:32px}
+
+  /* SECTION */
+  .section{background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);margin-bottom:20px;transition:border-color .2s}
+  .section:hover{border-color:var(--gold-rule)}
+  .section-head{padding:24px 24px 12px;display:flex;justify-content:space-between;align-items:center}
+  .section-name{font-size:16px;font-weight:700;letter-spacing:-0.01em;color:var(--navy)}
+  .section-desc{padding:0 24px 20px;font-size:12px;color:var(--gray-mid);line-height:1.5}
+  .section-meta{font-size:10px;color:var(--gray-mid);letter-spacing:0.08em}
+
+  /* FILE LIST INSIDE SECTION */
+  .section-files{border-top:1px solid var(--rule);padding:0}
+  .sfile{display:flex;align-items:center;padding:12px 24px;border-bottom:1px solid rgba(27,38,66,0.04);transition:background .2s;text-decoration:none;color:var(--ink)}
+  .sfile:last-child{border-bottom:none}
+  .sfile:hover{background:rgba(184,139,71,0.03)}
+  .sfile-icon{font-size:16px;margin-right:14px;flex-shrink:0}
+  .sfile-info{flex:1}
+  .sfile-name{font-size:13px;font-weight:600;color:var(--navy)}
+  .sfile-detail{font-size:11px;color:var(--gray-mid);margin-top:1px}
+  .sfile-action{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);flex-shrink:0}
+
+  .empty-files{padding:24px;text-align:center;color:var(--gray-mid);font-size:12px;font-style:italic}
+
+  footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">DCE <span>Holdings</span></div>
+  <div class="hnav">
+    <a href="/">Home</a>
+    <a href="/universe.html">Universe</a>
+    <a href="/screener.html">Screener</a>
+    <a href="/portfolio.html">Portfolio</a>
+    <a href="/news.html">News</a>
+    <a href="/dataroom.html">Data Room</a>
+    <a href="/reporting.html" class="active">Reporting</a>
+  </div>
+</header>
+
+<main>
+  <div class="slbl">DCE Holdings — Investment Office</div>
+  <h1>Reporting Hub</h1>
+  <div class="sub">Periodic reports, committee minutes, and annual reviews.</div>
+
+  <!-- MONTHLY CLOSE -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-name">Monthly Close</div>
+      <div class="section-meta">Monthly</div>
+    </div>
+    <div class="section-desc">Portfolio performance, NAV reconciliation, and capital activity summary.</div>
+    <div class="section-files">
+      <div class="empty-files">No reports uploaded yet.</div>
+    </div>
+  </div>
+
+  <!-- INVESTMENT COMMITTEE -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-name">Investment Committee</div>
+      <div class="section-meta">Ad hoc</div>
+    </div>
+    <div class="section-desc">Meeting minutes, investment decisions, thesis reviews, and vote records.</div>
+    <div class="section-files">
+      <div class="empty-files">No reports uploaded yet.</div>
+    </div>
+  </div>
+
+  <!-- ANNUAL REPORT -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-name">Annual Report</div>
+      <div class="section-meta">Yearly</div>
+    </div>
+    <div class="section-desc">Year-end performance review, capital allocation retrospective, and forward outlook.</div>
+    <div class="section-files">
+      <div class="empty-files">No reports uploaded yet.</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
+  <span>Reporting Hub</span>
+</footer>
+
+</body>
+</html>
