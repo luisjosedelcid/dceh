@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#1b2642;--gold:#b88b47;--gold-lt:#d4aa6a;--gold-dim:rgba(184,139,71,0.10);--gold-rule:rgba(184,139,71,0.30);
+    --cream:#f5f1eb;--white:#ffffff;--ink:#1b2642;--gray-mid:#8a9098;--gray-txt:#606060;
+    --green:#2a7a56;--red:#9b2335;--rule:rgba(27,38,66,0.09);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+  header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
+  .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
+  .hnav{display:flex;gap:8px}
+  .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
+  .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
+  .hnav a.active{color:var(--gold);border-color:var(--gold)}
+
+  main{max-width:1400px;margin:0 auto;padding:36px 48px 60px}
+  .slbl{font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+  .slbl::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
+  h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;color:var(--navy);margin-bottom:4px}
+  .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:28px}
+
+  /* KPI CARDS */
+  .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+  .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+  .card{background:var(--white);border:1px solid var(--rule);padding:20px 22px;position:relative;transition:border-color .2s}
+  .card:hover{border-color:var(--gold-rule)}
+  .clbl{font-size:9px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:8px}
+  .cval{font-size:26px;font-weight:700;letter-spacing:-0.02em;line-height:1}
+  .csub{font-size:11px;color:var(--gray-mid);margin-top:5px;font-weight:300}
+  .green{color:var(--green)}.red{color:var(--red)}.gold{color:var(--gold)}
+
+  /* TABLE */
+  .ptbl{width:100%;border-collapse:collapse;background:var(--white);border:1px solid var(--rule);font-size:13px}
+  .ptbl th{background:var(--navy);color:var(--white);font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:12px 16px;text-align:right;position:sticky;top:0;z-index:2}
+  .ptbl th:first-child{text-align:left;width:200px}
+  .ptbl td{padding:12px 16px;border-bottom:1px solid rgba(27,38,66,0.06);text-align:right;font-variant-numeric:tabular-nums}
+  .ptbl td:first-child{text-align:left;font-weight:600}
+  .ptbl tr:hover{background:rgba(184,139,71,0.03)}
+  .ticker{font-size:16px;font-weight:700;color:var(--navy);letter-spacing:-0.01em}
+  .ticker-sub{font-size:11px;color:var(--gray-mid);font-weight:300;margin-top:2px}
+
+  /* ALLOCATION BAR */
+  .alloc-bar{display:flex;height:32px;border-radius:4px;overflow:hidden;margin-bottom:8px}
+  .alloc-seg{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--white);letter-spacing:0.05em;transition:width .5s}
+  .alloc-legend{display:flex;gap:20px;flex-wrap:wrap}
+  .alloc-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray-txt)}
+  .alloc-dot{width:10px;height:10px;border-radius:2px}
+
+  footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">DCE <span>Holdings</span></div>
+  <div class="hnav">
+    <a href="/">Home</a>
+    <a href="/universe.html">Universe</a>
+    <a href="/screener.html">Screener</a>
+    <a href="/portfolio.html" class="active">Portfolio</a>
+  </div>
+</header>
+
+<main>
+  <div class="slbl">DCE Holdings — Investment Office</div>
+  <h1>Live Portfolio</h1>
+  <div class="sub">Real-time P&L tracking. Prices from Finnhub. <span id="live-note" style="color:var(--gray-mid)">Fetching prices...</span></div>
+
+  <!-- KPI CARDS -->
+  <div class="g4">
+    <div class="card"><div class="clbl">Total Cost Basis</div><div class="cval gold" id="kpi-cost">—</div><div class="csub">Entry value</div></div>
+    <div class="card"><div class="clbl">Current Value</div><div class="cval" id="kpi-value">—</div><div class="csub" id="kpi-value-sub">Live market value</div></div>
+    <div class="card"><div class="clbl">Total P&L</div><div class="cval" id="kpi-pnl">—</div><div class="csub" id="kpi-pnl-pct">—</div></div>
+    <div class="card"><div class="clbl">Positions</div><div class="cval" id="kpi-positions">2</div><div class="csub">Active holdings</div></div>
+  </div>
+
+  <!-- ALLOCATION -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="clbl">Allocation by Current Value</div>
+    <div class="alloc-bar" id="alloc-bar"></div>
+    <div class="alloc-legend" id="alloc-legend"></div>
+  </div>
+
+  <!-- HOLDINGS TABLE -->
+  <div style="overflow-x:auto">
+    <table class="ptbl">
+      <thead><tr>
+        <th>Company</th>
+        <th>Shares</th>
+        <th>Avg Cost</th>
+        <th>Cost Basis</th>
+        <th>Live Price</th>
+        <th>Market Value</th>
+        <th>P&L ($)</th>
+        <th>P&L (%)</th>
+        <th>Weight</th>
+        <th>Holding Period</th>
+      </tr></thead>
+      <tbody id="portfolio-body"></tbody>
+    </table>
+  </div>
+</main>
+
+<footer>
+  <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
+  <span>Live prices via Finnhub</span>
+</footer>
+
+<script>
+const FH_KEY = 'd6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg';
+
+const HOLDINGS = [
+  {
+    ticker: 'LULU',
+    name: 'Lululemon Athletica',
+    sector: 'NASDAQ · Apparel Retail',
+    shares: 1,
+    avgCost: 167.00,
+    buyDate: '2025-09-15',
+    color: '#2a7a56',
+    link: '/lulu',
+  },
+  {
+    ticker: 'MSFT',
+    name: 'Microsoft Corp',
+    sector: 'NASDAQ · Technology',
+    shares: 1,
+    avgCost: 402.00,
+    buyDate: '2026-03-01',
+    color: '#b88b47',
+    link: null,
+  },
+];
+
+function daysBetween(d1, d2) {
+  return Math.floor((d2 - d1) / (1000 * 60 * 60 * 24));
+}
+
+function fmt(v) { return v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+function renderPortfolio(prices) {
+  const tbody = document.getElementById('portfolio-body');
+  const today = new Date();
+  let totalCost = 0, totalValue = 0;
+
+  const rows = HOLDINGS.map(h => {
+    const price = prices[h.ticker] || h.avgCost;
+    const costBasis = h.shares * h.avgCost;
+    const mktValue = h.shares * price;
+    const pnl = mktValue - costBasis;
+    const pnlPct = ((price / h.avgCost) - 1) * 100;
+    const days = daysBetween(new Date(h.buyDate), today);
+    totalCost += costBasis;
+    totalValue += mktValue;
+    return { ...h, price, costBasis, mktValue, pnl, pnlPct, days };
+  });
+
+  const totalPnl = totalValue - totalCost;
+  const totalPnlPct = ((totalValue / totalCost) - 1) * 100;
+
+  // KPI Cards
+  document.getElementById('kpi-cost').textContent = '$' + fmt(totalCost);
+  const valEl = document.getElementById('kpi-value');
+  valEl.textContent = '$' + fmt(totalValue);
+  valEl.className = 'cval ' + (totalValue >= totalCost ? 'green' : 'red');
+
+  const pnlEl = document.getElementById('kpi-pnl');
+  pnlEl.textContent = (totalPnl >= 0 ? '+' : '') + '$' + fmt(totalPnl);
+  pnlEl.className = 'cval ' + (totalPnl >= 0 ? 'green' : 'red');
+  const pnlPctEl = document.getElementById('kpi-pnl-pct');
+  pnlPctEl.textContent = (totalPnlPct >= 0 ? '+' : '') + totalPnlPct.toFixed(2) + '% total return';
+  pnlPctEl.style.color = totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Allocation bar
+  const barEl = document.getElementById('alloc-bar');
+  const legEl = document.getElementById('alloc-legend');
+  barEl.innerHTML = rows.map(r => {
+    const w = (r.mktValue / totalValue * 100).toFixed(1);
+    return `<div class="alloc-seg" style="width:${w}%;background:${r.color}">${r.ticker} ${w}%</div>`;
+  }).join('');
+  legEl.innerHTML = rows.map(r => {
+    return `<div class="alloc-legend-item"><div class="alloc-dot" style="background:${r.color}"></div>${r.ticker} · $${fmt(r.mktValue)} · ${(r.mktValue/totalValue*100).toFixed(1)}%</div>`;
+  }).join('');
+
+  // Table rows
+  tbody.innerHTML = rows.map(r => {
+    const pnlClass = r.pnl >= 0 ? 'green' : 'red';
+    const pnlSign = r.pnl >= 0 ? '+' : '';
+    const months = Math.floor(r.days / 30);
+    const holdStr = r.days < 30 ? r.days + 'd' : months + 'mo ' + (r.days % 30) + 'd';
+    const linkHtml = r.link ? ` <a href="${r.link}" style="font-size:9px;color:var(--gold);text-decoration:none;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Dashboard →</a>` : '';
+
+    return `<tr>
+      <td>
+        <div class="ticker">${r.ticker}</div>
+        <div class="ticker-sub">${r.name} · ${r.sector}${linkHtml}</div>
+      </td>
+      <td>${r.shares}</td>
+      <td>$${fmt(r.avgCost)}</td>
+      <td>$${fmt(r.costBasis)}</td>
+      <td style="font-weight:700">$${fmt(r.price)}</td>
+      <td style="font-weight:700">$${fmt(r.mktValue)}</td>
+      <td class="${pnlClass}" style="font-weight:700">${pnlSign}$${fmt(Math.abs(r.pnl))}</td>
+      <td class="${pnlClass}" style="font-weight:700">${pnlSign}${r.pnlPct.toFixed(2)}%</td>
+      <td>${(r.mktValue / totalValue * 100).toFixed(1)}%</td>
+      <td>${holdStr}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Fetch live prices
+async function fetchPrices() {
+  try {
+    const tickers = HOLDINGS.map(h => h.ticker);
+    const fetches = tickers.map(t =>
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${t}&token=${FH_KEY}`)
+        .then(r => r.json())
+        .then(d => [t, d.c])
+        .catch(() => [t, null])
+    );
+    const results = await Promise.all(fetches);
+    const prices = {};
+    results.forEach(([t, p]) => { if (p && p > 0) prices[t] = p; });
+
+    renderPortfolio(prices);
+
+    const note = document.getElementById('live-note');
+    if (Object.keys(prices).length > 0) {
+      note.textContent = 'Live · ' + new Date().toLocaleTimeString();
+      note.style.color = 'var(--green)';
+    } else {
+      note.textContent = 'Using cost basis (prices unavailable)';
+    }
+  } catch(e) {
+    console.error('Price fetch error:', e);
+    renderPortfolio({});
+  }
+}
+
+fetchPrices();
+</script>
+</body>
+</html>
