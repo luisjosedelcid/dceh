@@ -75,10 +75,11 @@
   <div class="sub">Real-time P&L tracking. Prices from Finnhub. <span id="live-note" style="color:var(--gray-mid)">Fetching prices...</span></div>
 
   <!-- KPI CARDS -->
-  <div class="g4">
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px">
     <div class="card"><div class="clbl">Total Cost Basis</div><div class="cval gold" id="kpi-cost">—</div><div class="csub">Entry value</div></div>
     <div class="card"><div class="clbl">Current Value</div><div class="cval" id="kpi-value">—</div><div class="csub" id="kpi-value-sub">Live market value</div></div>
     <div class="card"><div class="clbl">Total P&L</div><div class="cval" id="kpi-pnl">—</div><div class="csub" id="kpi-pnl-pct">—</div></div>
+    <div class="card"><div class="clbl">Portfolio IRR</div><div class="cval" id="kpi-irr">—</div><div class="csub" id="kpi-irr-sub">Annualized return</div></div>
     <div class="card"><div class="clbl">Positions</div><div class="cval" id="kpi-positions">2</div><div class="csub">Active holdings</div></div>
   </div>
 
@@ -101,6 +102,7 @@
         <th>Market Value</th>
         <th>P&L ($)</th>
         <th>P&L (%)</th>
+        <th>IRR (Ann.)</th>
         <th>Weight</th>
         <th>Holding Period</th>
       </tr></thead>
@@ -158,13 +160,27 @@ function renderPortfolio(prices) {
     const pnl = mktValue - costBasis;
     const pnlPct = ((price / h.avgCost) - 1) * 100;
     const days = daysBetween(new Date(h.buyDate), today);
+    // Annualized IRR per position: (endValue/startValue)^(365/days) - 1
+    const years = days / 365;
+    const irr = years > 0 ? (Math.pow(price / h.avgCost, 1 / years) - 1) * 100 : 0;
     totalCost += costBasis;
     totalValue += mktValue;
-    return { ...h, price, costBasis, mktValue, pnl, pnlPct, days };
+    return { ...h, price, costBasis, mktValue, pnl, pnlPct, days, irr };
   });
 
   const totalPnl = totalValue - totalCost;
   const totalPnlPct = ((totalValue / totalCost) - 1) * 100;
+
+  // Portfolio-level IRR (value-weighted annualized)
+  const totalDaysWeighted = rows.reduce((sum, r) => sum + r.days * r.costBasis, 0) / totalCost;
+  const totalYears = totalDaysWeighted / 365;
+  const portfolioIrr = totalYears > 0 ? (Math.pow(totalValue / totalCost, 1 / totalYears) - 1) * 100 : 0;
+
+  // Portfolio IRR KPI
+  const irrEl = document.getElementById('kpi-irr');
+  irrEl.textContent = (portfolioIrr >= 0 ? '+' : '') + portfolioIrr.toFixed(1) + '%';
+  irrEl.className = 'cval ' + (portfolioIrr >= 12 ? 'green' : portfolioIrr >= 0 ? 'gold' : 'red');
+  document.getElementById('kpi-irr-sub').textContent = 'vs 12% hurdle';
 
   // KPI Cards
   document.getElementById('kpi-cost').textContent = '$' + fmt(totalCost);
@@ -210,6 +226,7 @@ function renderPortfolio(prices) {
       <td style="font-weight:700">$${fmt(r.mktValue)}</td>
       <td class="${pnlClass}" style="font-weight:700">${pnlSign}$${fmt(Math.abs(r.pnl))}</td>
       <td class="${pnlClass}" style="font-weight:700">${pnlSign}${r.pnlPct.toFixed(2)}%</td>
+      <td class="${r.irr >= 12 ? 'green' : r.irr >= 0 ? 'gold' : 'red'}" style="font-weight:700">${r.irr >= 0 ? '+' : ''}${r.irr.toFixed(1)}%</td>
       <td>${(r.mktValue / totalValue * 100).toFixed(1)}%</td>
       <td>${holdStr}</td>
     </tr>`;
