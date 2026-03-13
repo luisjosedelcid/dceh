@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — News Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#1b2642;--gold:#b88b47;--gold-lt:#d4aa6a;--gold-dim:rgba(184,139,71,0.10);--gold-rule:rgba(184,139,71,0.30);
+    --cream:#f5f1eb;--white:#ffffff;--ink:#1b2642;--gray-mid:#8a9098;--gray-txt:#606060;
+    --green:#2a7a56;--red:#9b2335;--amber:#b8860b;--rule:rgba(27,38,66,0.09);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+  header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
+  .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
+  .hnav{display:flex;gap:8px}
+  .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
+  .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
+  .hnav a.active{color:var(--gold);border-color:var(--gold)}
+
+  main{max-width:900px;margin:0 auto;padding:36px 48px 60px}
+  .slbl{font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+  .slbl::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
+  h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;color:var(--navy);margin-bottom:4px}
+  .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:24px}
+
+  /* TICKER ROW */
+  .ticker-row{display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+  .chip{padding:6px 14px;border:1px solid var(--rule);font-size:12px;font-weight:700;font-family:'Archivo',monospace;letter-spacing:0.05em;cursor:pointer;transition:all .2s;background:var(--white)}
+  .chip:hover{border-color:var(--gold-rule)}
+  .chip.active{border-color:var(--gold);background:var(--gold-dim);color:var(--gold)}
+  .chip .x{margin-left:8px;color:var(--gray-mid);font-weight:400;font-size:14px}
+  .chip .x:hover{color:var(--red)}
+  .add-inp{background:var(--white);border:1px solid var(--rule);padding:6px 10px;font-size:12px;font-family:'Archivo',monospace;width:70px;outline:none;font-weight:700;letter-spacing:0.05em}
+  .add-inp:focus{border-color:var(--gold)}
+
+  /* TABS */
+  .tabs{display:flex;gap:4px;margin-bottom:20px}
+  .tab{font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:8px 18px;background:none;border:1px solid var(--rule);color:var(--gray-mid);cursor:pointer;transition:all .2s}
+  .tab:hover{border-color:var(--gold-rule);color:var(--navy)}
+  .tab.active{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+
+  /* FETCH BUTTON */
+  .fetch-btn{width:100%;padding:14px;background:var(--navy);border:1px solid var(--gold-rule);color:var(--gold);font-family:'Archivo',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-bottom:20px}
+  .fetch-btn:hover{background:#243352;border-color:var(--gold)}
+  .fetch-btn:disabled{opacity:0.5;cursor:wait}
+
+  /* STATUS */
+  .status{font-size:11px;color:var(--gray-mid);text-align:center;margin-bottom:16px;font-style:italic}
+
+  /* EVENT CARD */
+  .evt{background:var(--white);border:1px solid var(--rule);padding:16px 18px;margin-bottom:10px;transition:border-color .2s}
+  .evt:hover{border-color:var(--gold-rule)}
+  .evt-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px}
+  .evt-cat{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-mid)}
+  .evt-date{font-size:11px;color:var(--gray-mid)}
+  .mat{display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:2px 7px;border-radius:2px;margin-left:8px}
+  .mat-high{background:rgba(155,35,53,0.1);color:var(--red)}
+  .mat-medium{background:var(--gold-dim);color:var(--gold)}
+  .mat-low{background:rgba(27,38,66,0.05);color:var(--gray-mid)}
+  .evt-headline{font-size:14px;font-weight:700;color:var(--navy);line-height:1.35;margin-bottom:4px}
+  .evt-summary{font-size:13px;color:var(--gray-txt);line-height:1.55}
+  .evt-reported{font-size:10px;color:var(--gray-mid);margin-top:8px;font-style:italic}
+
+  /* MARK BUTTON */
+  .mark-btn{background:rgba(42,122,86,0.08);border:1px solid rgba(42,122,86,0.2);color:var(--green);padding:8px 16px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;font-family:'Archivo',sans-serif;transition:all .2s}
+  .mark-btn:hover{background:rgba(42,122,86,0.15);border-color:var(--green)}
+
+  .clear-btn{background:rgba(155,35,53,0.06);border:1px solid rgba(155,35,53,0.15);color:var(--red);padding:5px 12px;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;font-family:'Archivo',sans-serif}
+
+  .res-head{display:flex;justify-content:space-between;align-items:center;margin:16px 0 12px}
+  .res-title{font-size:14px;font-weight:700;color:var(--navy)}
+
+  .empty{text-align:center;padding:48px 20px;color:var(--gray-mid)}
+  .empty-icon{font-size:32px;margin-bottom:12px}
+
+  .err-box{margin-top:12px;padding:12px 16px;background:rgba(155,35,53,0.05);border:1px solid rgba(155,35,53,0.15);color:var(--red);font-size:13px}
+
+  footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
+
+  @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--rule);border-top:2px solid var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">DCE <span>Holdings</span></div>
+  <div class="hnav">
+    <a href="/">Home</a>
+    <a href="/universe.html">Universe</a>
+    <a href="/screener.html">Screener</a>
+    <a href="/portfolio.html">Portfolio</a>
+    <a href="/news.html" class="active">News</a>
+  </div>
+</header>
+
+<main>
+  <div class="slbl">DCE Holdings — Investment Office</div>
+  <h1>News Tracker</h1>
+  <div class="sub">AI-powered material news scanner. Fetches and categorizes events by ticker using web search.</div>
+
+  <!-- TICKER ROW -->
+  <div class="ticker-row" id="ticker-row"></div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" id="tab-tracker" onclick="switchView('tracker')">Tracker</button>
+    <button class="tab" id="tab-history" onclick="switchView('history')">History</button>
+  </div>
+
+  <!-- TRACKER VIEW -->
+  <div id="view-tracker">
+    <button class="fetch-btn" id="fetch-btn" onclick="fetchNews()">
+      Scan for news
+    </button>
+    <div class="status" id="status"></div>
+    <div id="error-box"></div>
+    <div id="fresh-results"></div>
+  </div>
+
+  <!-- HISTORY VIEW -->
+  <div id="view-history" style="display:none">
+    <div id="history-results"></div>
+  </div>
+</main>
+
+<footer>
+  <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
+  <span>News via Claude API + Web Search</span>
+</footer>
+
+<script>
+const PROXY = '/api/claude';
+const DASH_PWD = sessionStorage.getItem('dce_auth') || '';
+
+const CATEGORIES = {
+  earnings: { label: 'Earnings & Financials', icon: '📊' },
+  capital: { label: 'Capital Allocation', icon: '💰' },
+  management: { label: 'Management & Governance', icon: '👔' },
+  competitive: { label: 'Competitive & Moat', icon: '🏰' },
+  guidance: { label: 'Guidance & Outlook', icon: '🔭' },
+  regulatory: { label: 'Regulatory & Legal', icon: '⚖️' },
+  operational: { label: 'Operational & Strategy', icon: '⚙️' },
+};
+
+// ═══ STATE ═══
+let ledger = { tickers: {} };
+let activeTicker = '';
+let currentView = 'tracker';
+let freshNews = null;
+
+// Default tickers from covered universe + portfolio
+const DEFAULT_TICKERS = ['BKNG', 'LULU', 'MSFT'];
+
+function init() {
+  // Load ledger from localStorage
+  try {
+    const saved = localStorage.getItem('dce-news-ledger');
+    if (saved) ledger = JSON.parse(saved);
+  } catch(e) {}
+
+  // Ensure default tickers exist
+  DEFAULT_TICKERS.forEach(t => {
+    if (!ledger.tickers[t]) ledger.tickers[t] = { events: [], lastReport: null };
+  });
+
+  activeTicker = Object.keys(ledger.tickers)[0] || 'BKNG';
+  saveLedger();
+  renderTickers();
+  renderView();
+}
+
+function saveLedger() {
+  try { localStorage.setItem('dce-news-ledger', JSON.stringify(ledger)); } catch(e) {}
+}
+
+function getTicker(t) {
+  return ledger.tickers[t] || { events: [], lastReport: null };
+}
+
+// ═══ TICKER ROW ═══
+function renderTickers() {
+  const row = document.getElementById('ticker-row');
+  let html = '';
+  Object.keys(ledger.tickers).forEach(t => {
+    const cls = t === activeTicker ? 'chip active' : 'chip';
+    html += `<div class="${cls}" onclick="selectTicker('${t}')">${t}<span class="x" onclick="event.stopPropagation();removeTicker('${t}')">×</span></div>`;
+  });
+  html += `<input class="add-inp" id="add-ticker" placeholder="+ ADD" onkeydown="if(event.key==='Enter')addTicker(this.value)">`;
+  row.innerHTML = html;
+}
+
+function selectTicker(t) {
+  activeTicker = t;
+  freshNews = null;
+  document.getElementById('fresh-results').innerHTML = '';
+  document.getElementById('error-box').innerHTML = '';
+  document.getElementById('status').textContent = '';
+  renderTickers();
+  renderView();
+}
+
+function addTicker(val) {
+  const t = val.trim().toUpperCase();
+  if (!t) return;
+  if (!ledger.tickers[t]) ledger.tickers[t] = { events: [], lastReport: null };
+  activeTicker = t;
+  saveLedger();
+  freshNews = null;
+  renderTickers();
+  renderView();
+}
+
+function removeTicker(t) {
+  if (Object.keys(ledger.tickers).length <= 1) return;
+  delete ledger.tickers[t];
+  if (activeTicker === t) activeTicker = Object.keys(ledger.tickers)[0];
+  saveLedger();
+  freshNews = null;
+  renderTickers();
+  renderView();
+}
+
+// ═══ VIEW SWITCHING ═══
+function switchView(v) {
+  currentView = v;
+  document.getElementById('tab-tracker').className = v === 'tracker' ? 'tab active' : 'tab';
+  document.getElementById('tab-history').className = v === 'history' ? 'tab active' : 'tab';
+  document.getElementById('view-tracker').style.display = v === 'tracker' ? 'block' : 'none';
+  document.getElementById('view-history').style.display = v === 'history' ? 'block' : 'none';
+  renderView();
+}
+
+function renderView() {
+  if (currentView === 'history') renderHistory();
+  else renderTracker();
+}
+
+// ═══ TRACKER VIEW ═══
+function renderTracker() {
+  const el = document.getElementById('fresh-results');
+  if (!freshNews) {
+    const cur = getTicker(activeTicker);
+    el.innerHTML = `<div class="empty">
+      <div class="empty-icon">📡</div>
+      <p>Press scan to search for new events on <strong>${activeTicker}</strong>.</p>
+      <p style="font-size:11px;margin-top:6px">${cur.events.length} in ledger · Last report: ${cur.lastReport ? fmtDate(cur.lastReport) : 'Never'}</p>
+    </div>`;
+    return;
+  }
+  if (freshNews.length === 0) {
+    el.innerHTML = `<div class="empty">
+      <div class="empty-icon" style="color:var(--green)">✓</div>
+      <p>No new material events since last report.</p>
+    </div>`;
+    return;
+  }
+  let html = `<div class="res-head"><span class="res-title">${freshNews.length} New Event${freshNews.length>1?'s':''}</span><button class="mark-btn" onclick="markReported()">✓ Mark as Reported</button></div>`;
+  freshNews
+    .sort((a,b) => {const m={high:0,medium:1,low:2}; return (m[a.materiality]||1)-(m[b.materiality]||1);})
+    .forEach(item => { html += renderEventCard(item); });
+  el.innerHTML = html;
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-results');
+  const cur = getTicker(activeTicker);
+  if (cur.events.length === 0) {
+    el.innerHTML = `<div class="empty"><p>No events tracked yet for ${activeTicker}.</p></div>`;
+    return;
+  }
+  let html = `<div class="res-head"><span class="res-title">History — ${activeTicker}</span><button class="clear-btn" onclick="clearHistory()">Clear</button></div>`;
+  cur.events.slice().reverse().forEach(item => {
+    html += renderEventCard(item, true);
+  });
+  el.innerHTML = html;
+}
+
+function renderEventCard(item, showReported) {
+  const cat = CATEGORIES[item.category] || { icon: '📌', label: item.category };
+  const matCls = item.materiality === 'high' ? 'mat-high' : item.materiality === 'medium' ? 'mat-medium' : 'mat-low';
+  let html = `<div class="evt">
+    <div class="evt-top">
+      <span>${cat.icon} <span class="evt-cat">${cat.label}</span></span>
+      <span style="display:flex;align-items:center;gap:8px">
+        <span class="mat ${matCls}">${item.materiality}</span>
+        ${item.date ? `<span class="evt-date">${fmtDate(item.date)}</span>` : ''}
+      </span>
+    </div>
+    <div class="evt-headline">${item.headline}</div>
+    <div class="evt-summary">${item.summary}</div>`;
+  if (showReported && item.reportedOn) {
+    html += `<div class="evt-reported">Reported ${fmtDate(item.reportedOn)}</div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+// ═══ FETCH NEWS ═══
+async function fetchNews() {
+  const ticker = activeTicker;
+  if (!ticker) return;
+
+  const btn = document.getElementById('fetch-btn');
+  const statusEl = document.getElementById('status');
+  const errorEl = document.getElementById('error-box');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Scanning...';
+  statusEl.textContent = 'Starting search...';
+  errorEl.innerHTML = '';
+  freshNews = null;
+  document.getElementById('fresh-results').innerHTML = '';
+
+  const td = getTicker(ticker);
+  const since = td.lastReport ? 'since ' + fmtDate(td.lastReport) : 'in the last 30 days';
+  const prevCtx = td.events.length > 0
+    ? '\n\nALREADY REPORTED (skip these):\n' + td.events.map(e => '- [' + e.date + '] ' + e.headline).join('\n')
+    : '';
+
+  const prompt = `Search the web for recent material news about ${ticker} ${since}. Focus on: earnings, capital allocation, management changes, competitive dynamics, guidance changes, regulatory issues, strategic moves. Ignore daily price moves and minor analyst notes.${prevCtx}
+
+After searching, respond with ONLY a JSON array. Each object: {"headline":"...","category":"earnings|capital|management|competitive|guidance|regulatory|operational","date":"YYYY-MM-DD","summary":"2-3 sentences","materiality":"high|medium|low"}
+
+If nothing new, respond with exactly: []`;
+
+  try {
+    let convo = [{ role: 'user', content: prompt }];
+    let round = 0;
+
+    statusEl.textContent = 'Calling API with web search...';
+    let resp = await fetch(PROXY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-dashboard-auth': DASH_PWD },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: convo,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }]
+      })
+    });
+    let data = await resp.json();
+
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+
+    // Handle web search tool_use rounds
+    while (data.stop_reason === 'tool_use' && round < 8) {
+      round++;
+      statusEl.textContent = `Web search round ${round}...`;
+
+      convo.push({ role: 'assistant', content: data.content });
+
+      const toolUses = (data.content || []).filter(b => b.type === 'tool_use');
+      const toolResults = toolUses.map(tu => ({
+        type: 'tool_result', tool_use_id: tu.id,
+        content: 'Done. Now provide the final JSON array output.'
+      }));
+      convo.push({ role: 'user', content: toolResults });
+
+      resp = await fetch(PROXY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-dashboard-auth': DASH_PWD },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4000,
+          messages: convo,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }]
+        })
+      });
+      data = await resp.json();
+      if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    }
+
+    // Extract JSON from response
+    statusEl.textContent = 'Parsing results...';
+    const textBlocks = (data.content || []).filter(b => b.type === 'text');
+    const fullText = textBlocks.map(b => b.text).join('\n');
+
+    const jsonMatch = fullText.match(/\[[\s\S]*?\]/);
+    if (!jsonMatch) {
+      if (fullText.includes('[]') || fullText.trim() === '[]') {
+        freshNews = [];
+      } else {
+        throw new Error('Could not parse response. Raw: ' + fullText.substring(0, 300));
+      }
+    } else {
+      freshNews = JSON.parse(jsonMatch[0]);
+    }
+
+    statusEl.textContent = freshNews.length > 0
+      ? `Found ${freshNews.length} event${freshNews.length>1?'s':''} for ${ticker}`
+      : `No new events for ${ticker}`;
+    renderTracker();
+
+  } catch(e) {
+    errorEl.innerHTML = `<div class="err-box">${e.message}</div>`;
+    statusEl.textContent = 'Error';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Scan for news';
+  }
+}
+
+// ═══ ACTIONS ═══
+function markReported() {
+  if (!freshNews || freshNews.length === 0) return;
+  const td = getTicker(activeTicker);
+  const now = todayISO();
+  freshNews.forEach(item => {
+    item.reportedOn = now;
+    td.events.push(item);
+  });
+  td.lastReport = now;
+  ledger.tickers[activeTicker] = td;
+  saveLedger();
+  freshNews = null;
+  document.getElementById('status').textContent = 'Events marked as reported ✓';
+  renderTracker();
+}
+
+function clearHistory() {
+  if (!confirm('Clear all history for ' + activeTicker + '?')) return;
+  ledger.tickers[activeTicker] = { events: [], lastReport: null };
+  saveLedger();
+  renderHistory();
+}
+
+// ═══ HELPERS ═══
+function fmtDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// ═══ INIT ═══
+init();
+</script>
+</body>
+</html>
