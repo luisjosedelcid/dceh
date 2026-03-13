@@ -16,6 +16,10 @@
     {
       "source": "/screener",
       "destination": "/screener.html"
+    },
+    {
+      "source": "/portfolio",
+      "destination": "/portfolio.html"
     }
   ]
 }
