@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DCE Holdings — Research Pipeline</title>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --navy:#1b2642;--gold:#b88b47;--gold-lt:#d4aa6a;--gold-dim:rgba(184,139,71,0.10);--gold-rule:rgba(184,139,71,0.30);
@@ -16,65 +17,119 @@
 
   header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
   .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
-  .hnav{display:flex;gap:8px}
+  .hnav{display:flex;gap:8px;align-items:center}
   .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
   .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
   .hnav a.active{color:var(--gold);border-color:var(--gold)}
 
+  .auth-pill{display:flex;align-items:center;gap:10px;padding:6px 12px;border:1px solid var(--gold-rule);border-radius:20px;color:rgba(255,255,255,0.85);font-size:11px;letter-spacing:0.05em}
+  .auth-pill img{width:22px;height:22px;border-radius:50%;border:1px solid var(--gold-rule)}
+  .auth-pill button{background:none;border:none;color:var(--gold);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;font-family:inherit;padding:0 0 0 8px;border-left:1px solid var(--gold-rule)}
+  .auth-pill button:hover{color:var(--gold-lt)}
+
   main{padding:28px 36px 60px}
   .slbl{font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:10px}
-  .slbl::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
-  h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;color:var(--navy);margin-bottom:4px}
-  .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:24px}
+  .slbl::before{content:'';width:24px;height:1px;background:var(--gold)}
+  h1{font-size:34px;font-weight:300;letter-spacing:-0.02em;margin-bottom:6px}
+  .subtitle{color:var(--gray-txt);font-size:13px;margin-bottom:24px;max-width:760px}
+
+  .gate{max-width:520px;margin:80px auto;padding:48px 40px;background:var(--white);border:1px solid var(--rule);text-align:center}
+  .gate h2{font-size:22px;font-weight:400;margin-bottom:8px}
+  .gate p{color:var(--gray-txt);font-size:13px;margin-bottom:24px;line-height:1.6}
+  .gate .gh-btn{display:inline-flex;align-items:center;gap:10px;padding:12px 24px;background:var(--navy);color:var(--white);border:none;font-family:inherit;font-size:12px;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+  .gate .gh-btn:hover{background:#0d1428}
+  .gate .gh-btn svg{width:18px;height:18px;fill:currentColor}
+  .gate .denied{padding:14px 18px;background:#fef2f2;border:1px solid #fecaca;color:var(--red);font-size:12px;margin-bottom:20px;text-align:left}
+
+  /* ADD ROW */
+  .add-row{display:grid;grid-template-columns:120px 1fr 2fr 110px;gap:10px;margin-bottom:18px;background:var(--white);padding:10px;border:1px solid var(--rule)}
+  .add-inp{padding:10px 12px;border:1px solid var(--rule);font-family:inherit;font-size:13px;background:var(--cream);outline:none}
+  .add-inp:focus{border-color:var(--gold);background:var(--white)}
+  .add-inp.ticker{font-weight:600;letter-spacing:0.05em;text-transform:uppercase}
+  .add-btn{padding:10px;background:var(--navy);color:var(--white);border:none;font-family:inherit;font-size:11px;letter-spacing:0.15em;font-weight:500;text-transform:uppercase;cursor:pointer;transition:.2s}
+  .add-btn:hover{background:#0d1428}
+  .add-btn:disabled{opacity:.4;cursor:not-allowed}
+
+  .stats{display:flex;gap:24px;margin-bottom:18px;font-size:11px;color:var(--gray-txt);letter-spacing:0.05em}
+  .stats strong{color:var(--ink);font-weight:600;margin-right:4px}
 
   /* KANBAN */
-  .kanban{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;min-height:500px}
-  .col{background:rgba(27,38,66,0.03);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:0;display:flex;flex-direction:column}
-  .col-head{padding:14px 14px 10px;border-bottom:1px solid var(--rule)}
-  .col-title{font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy)}
-  .col-count{font-size:10px;color:var(--gray-mid);margin-top:2px}
-  .col-body{flex:1;padding:8px;min-height:100px;transition:background .2s}
-  .col-body.drag-over{background:rgba(184,139,71,0.08)}
+  .kanban{display:grid;grid-template-columns:repeat(6,minmax(220px,1fr));gap:14px}
+  .col{background:var(--white);border-top:2px solid var(--gold);min-height:300px;display:flex;flex-direction:column}
+  .col-h{padding:14px 14px 8px;border-bottom:1px solid var(--rule)}
+  .col-h .ttl{font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink);margin-bottom:2px}
+  .col-h .cnt{font-size:10px;color:var(--gray-mid);letter-spacing:0.05em}
+  .col-body{padding:10px;flex:1;display:flex;flex-direction:column;gap:8px;min-height:80px;transition:background .2s}
+  .col-body.drag-over{background:var(--gold-dim)}
 
-  /* CARDS */
-  .card{background:var(--white);border:1px solid var(--rule);padding:12px;margin-bottom:8px;cursor:grab;transition:all .2s;position:relative}
-  .card:hover{border-color:var(--gold-rule);box-shadow:0 2px 8px rgba(27,38,66,0.06)}
-  .card:active{cursor:grabbing;opacity:0.8}
-  .card-ticker{font-size:15px;font-weight:700;color:var(--navy);letter-spacing:-0.01em}
-  .card-name{font-size:10px;color:var(--gray-mid);margin-top:1px}
-  .card-scores{display:flex;gap:8px;margin-top:8px;font-size:10px}
-  .card-score{padding:2px 6px;border-radius:2px;font-weight:600;letter-spacing:0.05em}
-  .cs-q{background:rgba(42,122,86,0.08);color:var(--green)}
-  .cs-v{background:var(--gold-dim);color:var(--gold)}
-  .cs-irr{background:rgba(27,38,66,0.05);color:var(--navy)}
-  .card-note{font-size:10px;color:var(--gray-txt);margin-top:6px;line-height:1.4;font-style:italic}
-  .card-date{font-size:9px;color:var(--gray-mid);margin-top:6px;letter-spacing:0.05em}
-  .card-del{position:absolute;top:8px;right:10px;font-size:14px;color:var(--rule);cursor:pointer;line-height:1}
-  .card-del:hover{color:var(--red)}
+  /* CARD */
+  .card{background:var(--white);border:1px solid var(--rule);padding:12px;cursor:grab;transition:all .2s;position:relative}
+  .card:hover{border-color:var(--gold-rule);box-shadow:0 1px 4px rgba(27,38,66,0.06)}
+  .card.dragging{opacity:.4;cursor:grabbing}
+  .card-tk{font-size:15px;font-weight:700;letter-spacing:0.03em;color:var(--ink);margin-bottom:1px}
+  .card-nm{font-size:11px;color:var(--gray-txt);margin-bottom:8px}
+  .badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .b{font-size:9px;font-weight:600;letter-spacing:0.05em;padding:2px 6px;border-radius:2px}
+  .b.q{background:rgba(42,122,86,0.1);color:var(--green)}
+  .b.v{background:rgba(184,134,11,0.12);color:var(--amber)}
+  .b.irr{background:var(--gold-dim);color:var(--gold)}
+  .card-nt{font-size:11px;color:var(--gray-txt);line-height:1.45;margin-bottom:8px;font-style:italic}
+  .card-meta{display:flex;justify-content:space-between;align-items:center;font-size:9px;color:var(--gray-mid);letter-spacing:0.03em;border-top:1px dashed var(--rule);padding-top:6px}
+  .card-meta .comments-cnt{display:inline-flex;align-items:center;gap:3px;color:var(--gold);font-weight:500}
+  .card-x{position:absolute;top:6px;right:6px;background:none;border:none;cursor:pointer;color:var(--gray-mid);font-size:14px;padding:2px 6px;line-height:1;opacity:0;transition:.2s}
+  .card:hover .card-x{opacity:1}
+  .card-x:hover{color:var(--red)}
 
-  /* ADD FORM */
-  .add-row{display:flex;gap:8px;margin-bottom:20px;align-items:center}
-  .add-inp{background:var(--white);border:1px solid var(--rule);padding:8px 12px;font-size:12px;font-family:'Archivo',sans-serif;outline:none;font-weight:600;letter-spacing:0.05em}
-  .add-inp:focus{border-color:var(--gold)}
-  .add-inp.ticker{width:80px;font-family:'Archivo',monospace}
-  .add-inp.name{width:180px}
-  .add-inp.note{flex:1}
-  .add-btn{background:var(--navy);border:1px solid var(--gold-rule);color:var(--gold);padding:8px 18px;font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;transition:all .2s}
-  .add-btn:hover{background:#243352;border-color:var(--gold)}
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(27,38,66,0.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--white);max-width:640px;width:100%;max-height:88vh;display:flex;flex-direction:column;border-top:3px solid var(--gold)}
+  .modal-h{padding:20px 24px 16px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:flex-start}
+  .modal-h .tkr{font-size:22px;font-weight:700;letter-spacing:0.02em;margin-bottom:1px}
+  .modal-h .nm{font-size:12px;color:var(--gray-txt);margin-bottom:8px}
+  .modal-h .badges{margin-bottom:0}
+  .modal-h .close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-mid);line-height:1}
+  .modal-h .close:hover{color:var(--ink)}
 
-  /* STATS */
-  .stats{display:flex;gap:24px;margin-bottom:20px;font-size:11px;color:var(--gray-mid)}
-  .stat-val{font-weight:700;color:var(--navy);margin-right:4px}
+  .modal-section{padding:18px 24px;border-bottom:1px solid var(--rule)}
+  .modal-section:last-child{border-bottom:none}
+  .modal-section h4{font-size:10px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+  .note-edit{width:100%;padding:10px;border:1px solid var(--rule);font-family:inherit;font-size:12px;background:var(--cream);outline:none;resize:vertical;min-height:60px}
+  .note-edit:focus{border-color:var(--gold);background:var(--white)}
+  .save-note{margin-top:8px;padding:6px 12px;background:var(--navy);color:var(--white);border:none;font-family:inherit;font-size:10px;letter-spacing:0.15em;font-weight:500;text-transform:uppercase;cursor:pointer}
+  .save-note:hover{background:#0d1428}
+  .save-note.saved{background:var(--green)}
 
-  footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
+  .comments-list{display:flex;flex-direction:column;gap:14px;max-height:280px;overflow-y:auto;padding-right:4px}
+  .comment{display:flex;gap:10px;align-items:flex-start}
+  .comment img{width:28px;height:28px;border-radius:50%;flex-shrink:0;border:1px solid var(--rule)}
+  .comment-body{flex:1;background:var(--cream);padding:10px 12px;border:1px solid var(--rule);border-radius:2px}
+  .comment-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+  .comment-h .auth{font-size:11px;font-weight:600;color:var(--ink)}
+  .comment-h .when{font-size:9px;color:var(--gray-mid);letter-spacing:0.03em}
+  .comment-text{font-size:12px;color:var(--ink);line-height:1.5;white-space:pre-wrap;word-break:break-word}
+  .comment-del{background:none;border:none;color:var(--gray-mid);font-size:10px;cursor:pointer;margin-top:4px;padding:0}
+  .comment-del:hover{color:var(--red)}
+  .no-comments{font-size:11px;color:var(--gray-mid);font-style:italic;text-align:center;padding:20px 0}
+
+  .comment-form{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--rule)}
+  .comment-form textarea{flex:1;padding:10px;border:1px solid var(--rule);font-family:inherit;font-size:12px;background:var(--cream);outline:none;resize:vertical;min-height:50px;line-height:1.5}
+  .comment-form textarea:focus{border-color:var(--gold);background:var(--white)}
+  .comment-form button{padding:0 16px;background:var(--gold);color:var(--white);border:none;font-family:inherit;font-size:10px;letter-spacing:0.15em;font-weight:500;text-transform:uppercase;cursor:pointer;align-self:stretch}
+  .comment-form button:hover{background:var(--gold-lt)}
+  .comment-form button:disabled{opacity:.4;cursor:not-allowed}
+
+  footer{border-top:1px solid var(--rule);padding:24px 48px;display:flex;justify-content:space-between;font-size:10px;color:var(--gray-mid);letter-spacing:0.05em}
+
+  .loading{text-align:center;padding:60px;color:var(--gray-mid);font-size:12px;letter-spacing:0.05em}
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">DCE <span>Holdings</span></div>
-  <div class="hnav">
-    <a href="/">Home</a>
+  <nav class="hnav">
+    <a href="/index.html">Home</a>
     <a href="/universe.html">Universe</a>
     <a href="/screener.html">Screener</a>
     <a href="/portfolio.html">Portfolio</a>
@@ -82,173 +137,476 @@
     <a href="/dataroom.html">Data Room</a>
     <a href="/reporting.html">Reporting</a>
     <a href="/research.html" class="active">Research</a>
-  </div>
+    <div id="auth-area"></div>
+  </nav>
 </header>
 
-<main>
-  <div class="slbl">DCE Holdings — Investment Office</div>
-  <h1>Research Pipeline</h1>
-  <div class="sub">Drag cards between stages. All changes saved locally. Supabase integration coming soon.</div>
-
-  <!-- ADD NEW -->
-  <div class="add-row">
-    <input class="add-inp ticker" id="add-ticker" placeholder="TICKER">
-    <input class="add-inp name" id="add-name" placeholder="Company name">
-    <input class="add-inp note" id="add-note" placeholder="Initial note (optional)">
-    <button class="add-btn" onclick="addCard()">+ Add</button>
-  </div>
-
-  <!-- STATS -->
-  <div class="stats" id="stats"></div>
-
-  <!-- KANBAN BOARD -->
-  <div class="kanban" id="kanban"></div>
+<main id="main-content">
+  <div class="loading">Loading…</div>
 </main>
 
 <footer>
   <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
-  <span>Research Pipeline · localStorage (Supabase pending)</span>
+  <span>Research Pipeline · Supabase + GitHub Auth</span>
 </footer>
 
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
 <script>
-const STORAGE_KEY = 'dce-research-pipeline';
+// ============================================================
+// SUPABASE CLIENT
+// ============================================================
+const SUPABASE_URL  = 'https://mlmmcciknvydlekztqtj.supabase.co';
+const SUPABASE_KEY  = 'sb_publishable_WAITOSJUnJR_iM5YuFq2QA_S2wPZCJd';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const COLUMNS = [
-  { id: 'backlog', title: 'Backlog', desc: 'On the radar' },
-  { id: 'analysis', title: 'Analysis', desc: 'Active research' },
-  { id: 'review', title: 'Review', desc: 'Model & thesis review' },
+  { id: 'backlog',  title: 'Backlog',          desc: 'On the radar' },
+  { id: 'analysis', title: 'Analysis',         desc: 'Active research' },
+  { id: 'review',   title: 'Review',           desc: 'Model & thesis review' },
   { id: 'decision', title: 'Decision Pending', desc: 'Awaiting CIO decision' },
-  { id: 'approved', title: 'Approved', desc: 'Thesis approved' },
-  { id: 'rejected', title: 'Rejected', desc: 'Not pursuing' },
+  { id: 'approved', title: 'Approved',         desc: 'Thesis approved' },
+  { id: 'rejected', title: 'Rejected',         desc: 'Not pursuing' },
 ];
 
+let currentUser = null;
+let isAuthorized = false;
 let pipeline = [];
+let commentsByCard = {};
 let dragId = null;
+let openCardId = null;
 
-function init() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) pipeline = JSON.parse(saved);
-  } catch(e) {}
+// ============================================================
+// AUTH FLOW
+// ============================================================
+async function checkAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { renderGate(); return; }
 
-  // Seed with example data if empty
-  if (pipeline.length === 0) {
-    pipeline = [
-      { id: 'd1', ticker: 'BKNG', name: 'Booking Holdings', stage: 'decision', quality: 4.2, valuation: 1.0, irr: '19.7%', note: 'Conditional — cash sanity negative', created: '2026-03-06', moved: '2026-03-09' },
-      { id: 'd2', ticker: 'LULU', name: 'Lululemon Athletica', stage: 'review', quality: 3.5, valuation: 1.3, irr: '18.8%', note: 'ROIC declining. EPV/RV < 1. Multiple expansion thesis.', created: '2026-03-12', moved: '2026-03-12' },
-      { id: 'd3', ticker: 'MSFT', name: 'Microsoft', stage: 'decision', quality: null, valuation: null, irr: null, note: 'Position in portfolio. Pending full Columbia model.', created: '2026-03-01', moved: '2026-03-01' },
-      { id: 'd4', ticker: 'ORLY', name: "O'Reilly Automotive", stage: 'analysis', quality: 4.2, valuation: 1.0, irr: '16.6%', note: 'Watchlist from Car Parts screen. Top quality.', created: '2026-03-04', moved: '2026-03-04' },
-      { id: 'd5', ticker: 'ALSN', name: 'Allison Transmission', stage: 'backlog', quality: 3.9, valuation: 4.4, irr: '12.9%', note: 'Review from screener. High valuation score.', created: '2026-03-04', moved: '2026-03-04' },
-      { id: 'd6', ticker: 'ALV', name: 'Autoliv', stage: 'backlog', quality: 3.5, valuation: 4.6, irr: '69.0%', note: 'Extremely high IRR — verify assumptions.', created: '2026-03-04', moved: '2026-03-04' },
-    ];
-    save();
+  const meta = session.user.user_metadata || {};
+  currentUser = {
+    id:       session.user.id,
+    username: meta.user_name || meta.preferred_username,
+    name:     meta.full_name || meta.name || meta.user_name,
+    avatar:   meta.avatar_url,
+    email:    session.user.email,
+  };
+
+  // Check whitelist (RLS will return empty if not authorized,
+  // but we test explicitly to show a clean "not authorized" message)
+  const { data: whitelist, error } = await sb
+    .from('allowed_users')
+    .select('github_username')
+    .eq('github_username', currentUser.username);
+
+  if (error || !whitelist || whitelist.length === 0) {
+    isAuthorized = false;
+    renderGate(true);
+    return;
   }
 
-  render();
+  isAuthorized = true;
+  await loadPipeline();
+  renderApp();
 }
 
-function save() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(pipeline)); } catch(e) {}
-}
+function renderGate(deniedAccess = false) {
+  const main = document.getElementById('main-content');
+  const auth = document.getElementById('auth-area');
+  auth.innerHTML = '';
 
-function todayISO() { return new Date().toISOString().slice(0, 10); }
-function uid() { return 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
-
-// ═══ RENDER ═══
-function render() {
-  const board = document.getElementById('kanban');
-  board.innerHTML = COLUMNS.map(col => {
-    const cards = pipeline.filter(c => c.stage === col.id);
-    return `<div class="col">
-      <div class="col-head">
-        <div class="col-title">${col.title}</div>
-        <div class="col-count">${cards.length} card${cards.length !== 1 ? 's' : ''}</div>
-      </div>
-      <div class="col-body" id="col-${col.id}"
-        ondragover="event.preventDefault();this.classList.add('drag-over')"
-        ondragleave="this.classList.remove('drag-over')"
-        ondrop="dropCard(event,'${col.id}');this.classList.remove('drag-over')">
-        ${cards.map(c => renderCard(c)).join('')}
-      </div>
-    </div>`;
-  }).join('');
-
-  // Stats
-  const stats = document.getElementById('stats');
-  const total = pipeline.length;
-  const approved = pipeline.filter(c => c.stage === 'approved').length;
-  const active = pipeline.filter(c => !['approved','rejected'].includes(c.stage)).length;
-  stats.innerHTML = `<span><span class="stat-val">${total}</span>total</span>
-    <span><span class="stat-val">${active}</span>in pipeline</span>
-    <span><span class="stat-val">${approved}</span>approved</span>`;
-}
-
-function renderCard(c) {
-  return `<div class="card" draggable="true" ondragstart="dragStart('${c.id}')" id="card-${c.id}">
-    <div class="card-del" onclick="deleteCard('${c.id}')" title="Remove">×</div>
-    <div class="card-ticker">${c.ticker}</div>
-    <div class="card-name">${c.name}</div>
-    <div class="card-scores">
-      ${c.quality ? `<span class="card-score cs-q">Q ${c.quality.toFixed(1)}</span>` : ''}
-      ${c.valuation ? `<span class="card-score cs-v">V ${c.valuation.toFixed(1)}</span>` : ''}
-      ${c.irr ? `<span class="card-score cs-irr">IRR ${c.irr}</span>` : ''}
+  main.innerHTML = `
+    <div class="gate">
+      <div class="slbl" style="justify-content:center">DCE Holdings — Investment Office</div>
+      <h2>Research Pipeline</h2>
+      <p>Acceso restringido a usuarios autorizados de DCE Holdings.<br>Inicia sesión con tu cuenta de GitHub para continuar.</p>
+      ${deniedAccess ? `
+        <div class="denied">
+          <strong>Acceso denegado.</strong> Tu cuenta de GitHub
+          (${currentUser?.username ? '@' + currentUser.username : 'desconocida'})
+          no está autorizada. Contacta al administrador.
+        </div>
+        <button class="gh-btn" onclick="signOut()">Cerrar sesión</button>
+      ` : `
+        <button class="gh-btn" onclick="signInGitHub()">
+          <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          Iniciar sesión con GitHub
+        </button>
+      `}
     </div>
-    ${c.note ? `<div class="card-note">${c.note}</div>` : ''}
-    <div class="card-date">Added ${c.created}${c.moved !== c.created ? ' · Moved ' + c.moved : ''}</div>
-  </div>`;
+  `;
 }
 
-// ═══ DRAG & DROP ═══
-function dragStart(id) { dragId = id; }
-
-function dropCard(event, colId) {
-  event.preventDefault();
-  if (!dragId) return;
-  const card = pipeline.find(c => c.id === dragId);
-  if (card && card.stage !== colId) {
-    card.stage = colId;
-    card.moved = todayISO();
-    save();
-    render();
-  }
-  dragId = null;
-}
-
-// ═══ ADD / DELETE ═══
-function addCard() {
-  const ticker = document.getElementById('add-ticker').value.trim().toUpperCase();
-  const name = document.getElementById('add-name').value.trim();
-  const note = document.getElementById('add-note').value.trim();
-  if (!ticker) return;
-
-  pipeline.push({
-    id: uid(),
-    ticker,
-    name: name || ticker,
-    stage: 'backlog',
-    quality: null,
-    valuation: null,
-    irr: null,
-    note: note || null,
-    created: todayISO(),
-    moved: todayISO(),
+async function signInGitHub() {
+  await sb.auth.signInWithOAuth({
+    provider: 'github',
+    options: {
+      redirectTo: window.location.origin + '/research.html',
+      scopes: 'read:user user:email'
+    }
   });
-  save();
-  render();
+}
 
+async function signOut() {
+  await sb.auth.signOut();
+  window.location.reload();
+}
+
+// ============================================================
+// DATA LOADING
+// ============================================================
+async function loadPipeline() {
+  const { data: cards, error: cErr } = await sb
+    .from('pipeline_cards')
+    .select('*')
+    .order('moved_at', { ascending: false });
+
+  if (cErr) { console.error('Cards load error:', cErr); pipeline = []; return; }
+  pipeline = cards || [];
+
+  // Bulk load all comments
+  const { data: comments, error: comErr } = await sb
+    .from('comments')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  if (comErr) { console.error('Comments load error:', comErr); commentsByCard = {}; return; }
+
+  commentsByCard = {};
+  (comments || []).forEach(c => {
+    if (!commentsByCard[c.card_id]) commentsByCard[c.card_id] = [];
+    commentsByCard[c.card_id].push(c);
+  });
+}
+
+// ============================================================
+// MAIN APP RENDER
+// ============================================================
+function renderApp() {
+  // Auth pill in header
+  const auth = document.getElementById('auth-area');
+  auth.innerHTML = `
+    <div class="auth-pill">
+      ${currentUser.avatar ? `<img src="${esc(currentUser.avatar)}" alt="">` : ''}
+      <span>${esc(currentUser.username)}</span>
+      <button onclick="signOut()">Salir</button>
+    </div>
+  `;
+
+  // Main content
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <div class="slbl">DCE Holdings — Investment Office</div>
+    <h1>Research Pipeline</h1>
+    <p class="subtitle">Drag cards between stages. Click a card to view notes and comments. Sync vía Supabase — multi-usuario en tiempo real.</p>
+
+    <div class="add-row">
+      <input class="add-inp ticker" id="add-ticker" placeholder="TICKER" maxlength="8">
+      <input class="add-inp name" id="add-name" placeholder="Company name">
+      <input class="add-inp note" id="add-note" placeholder="Initial note (optional)">
+      <button class="add-btn" onclick="addCard()">+ Add</button>
+    </div>
+
+    <div class="stats" id="stats"></div>
+    <div class="kanban" id="kanban"></div>
+  `;
+
+  renderBoard();
+}
+
+function renderBoard() {
+  // Stats
+  const total = pipeline.length;
+  const inPipe = pipeline.filter(c => !['approved','rejected'].includes(c.stage)).length;
+  const approved = pipeline.filter(c => c.stage === 'approved').length;
+  document.getElementById('stats').innerHTML =
+    `<span><strong>${total}</strong>total</span>
+     <span><strong>${inPipe}</strong>in pipeline</span>
+     <span><strong>${approved}</strong>approved</span>`;
+
+  // Columns
+  const k = document.getElementById('kanban');
+  k.innerHTML = COLUMNS.map(col => {
+    const cards = pipeline.filter(c => c.stage === col.id);
+    return `
+      <div class="col">
+        <div class="col-h">
+          <div class="ttl">${col.title}</div>
+          <div class="cnt">${cards.length} card${cards.length === 1 ? '' : 's'}</div>
+        </div>
+        <div class="col-body" data-stage="${col.id}"
+             ondragover="dragOver(event)"
+             ondragleave="dragLeave(event)"
+             ondrop="drop(event,'${col.id}')">
+          ${cards.map(cardHTML).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function cardHTML(c) {
+  const cmtCount = (commentsByCard[c.id] || []).length;
+  const badges = [];
+  if (c.quality != null)   badges.push(`<span class="b q">Q ${c.quality}</span>`);
+  if (c.valuation != null) badges.push(`<span class="b v">V ${c.valuation}</span>`);
+  if (c.irr)               badges.push(`<span class="b irr">IRR ${esc(c.irr)}</span>`);
+
+  return `
+    <div class="card" draggable="true" data-id="${c.id}"
+         ondragstart="dragStart(event,'${c.id}')"
+         ondragend="dragEnd(event)"
+         onclick="openModal('${c.id}')">
+      <button class="card-x" onclick="event.stopPropagation();deleteCard('${c.id}')" title="Delete">×</button>
+      <div class="card-tk">${esc(c.ticker)}</div>
+      <div class="card-nm">${esc(c.name)}</div>
+      ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
+      ${c.note ? `<div class="card-nt">${esc(c.note)}</div>` : ''}
+      <div class="card-meta">
+        <span>Added ${fmtDate(c.created_at)}${c.moved_at && c.moved_at.slice(0,10) !== c.created_at.slice(0,10) ? ' · Moved ' + fmtDate(c.moved_at) : ''}</span>
+        ${cmtCount > 0 ? `<span class="comments-cnt">💬 ${cmtCount}</span>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// CARD CRUD
+// ============================================================
+async function addCard() {
+  const tk = document.getElementById('add-ticker').value.trim().toUpperCase();
+  const nm = document.getElementById('add-name').value.trim();
+  const nt = document.getElementById('add-note').value.trim();
+  if (!tk || !nm) { alert('Ticker y nombre requeridos'); return; }
+
+  const { data, error } = await sb.from('pipeline_cards').insert({
+    ticker: tk, name: nm, stage: 'backlog',
+    note: nt || null,
+    created_by: currentUser.username,
+    updated_by: currentUser.username,
+  }).select().single();
+
+  if (error) { alert('Error: ' + error.message); return; }
+
+  pipeline.unshift(data);
   document.getElementById('add-ticker').value = '';
   document.getElementById('add-name').value = '';
   document.getElementById('add-note').value = '';
+  renderBoard();
 }
 
-function deleteCard(id) {
-  if (!confirm('Remove this card?')) return;
-  pipeline = pipeline.filter(c => c.id !== id);
-  save();
-  render();
+async function deleteCard(id) {
+  const c = pipeline.find(x => x.id === id);
+  if (!c) return;
+  if (!confirm(`¿Eliminar ${c.ticker} del pipeline?`)) return;
+
+  const { error } = await sb.from('pipeline_cards').delete().eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
+
+  pipeline = pipeline.filter(x => x.id !== id);
+  delete commentsByCard[id];
+  renderBoard();
 }
 
-init();
+async function moveCard(id, newStage) {
+  const c = pipeline.find(x => x.id === id);
+  if (!c || c.stage === newStage) return;
+
+  const moved_at = new Date().toISOString();
+  const { error } = await sb.from('pipeline_cards')
+    .update({ stage: newStage, moved_at, updated_by: currentUser.username })
+    .eq('id', id);
+
+  if (error) { alert('Error: ' + error.message); return; }
+  c.stage = newStage;
+  c.moved_at = moved_at;
+  renderBoard();
+}
+
+// ============================================================
+// DRAG & DROP
+// ============================================================
+function dragStart(e, id) {
+  dragId = id;
+  e.currentTarget.classList.add('dragging');
+}
+function dragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.col-body.drag-over').forEach(el => el.classList.remove('drag-over'));
+}
+function dragOver(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+function dragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function drop(e, stage) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (dragId) moveCard(dragId, stage);
+  dragId = null;
+}
+
+// ============================================================
+// MODAL — Card detail + comments
+// ============================================================
+function openModal(id) {
+  openCardId = id;
+  renderModal();
+  document.getElementById('modal-bg').classList.add('show');
+}
+function closeModal() {
+  openCardId = null;
+  document.getElementById('modal-bg').classList.remove('show');
+}
+
+function renderModal() {
+  const c = pipeline.find(x => x.id === openCardId);
+  if (!c) { closeModal(); return; }
+  const comments = commentsByCard[c.id] || [];
+
+  const badges = [];
+  if (c.quality != null)   badges.push(`<span class="b q">Q ${c.quality}</span>`);
+  if (c.valuation != null) badges.push(`<span class="b v">V ${c.valuation}</span>`);
+  if (c.irr)               badges.push(`<span class="b irr">IRR ${esc(c.irr)}</span>`);
+
+  document.getElementById('modal').innerHTML = `
+    <div class="modal-h">
+      <div>
+        <div class="tkr">${esc(c.ticker)}</div>
+        <div class="nm">${esc(c.name)} · <span style="color:var(--gold);text-transform:uppercase;letter-spacing:0.1em;font-size:10px;font-weight:600">${stageLabel(c.stage)}</span></div>
+        ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
+      </div>
+      <button class="close" onclick="closeModal()">×</button>
+    </div>
+
+    <div class="modal-section">
+      <h4>Note</h4>
+      <textarea class="note-edit" id="note-edit">${esc(c.note || '')}</textarea>
+      <button class="save-note" id="save-note-btn" onclick="saveNote()">Guardar nota</button>
+    </div>
+
+    <div class="modal-section">
+      <h4>Comments (${comments.length})</h4>
+      <div class="comments-list" id="comments-list">
+        ${comments.length === 0
+          ? `<div class="no-comments">Sin comentarios todavía. Sé el primero.</div>`
+          : comments.map(commentHTML).join('')}
+      </div>
+      <div class="comment-form">
+        <textarea id="new-comment" placeholder="Escribe un comentario…"></textarea>
+        <button onclick="addComment()">Enviar</button>
+      </div>
+    </div>
+  `;
+}
+
+function commentHTML(c) {
+  const canDelete = c.author_username === currentUser.username;
+  return `
+    <div class="comment">
+      ${c.author_avatar ? `<img src="${esc(c.author_avatar)}" alt="">` : `<div style="width:28px;height:28px;border-radius:50%;background:var(--gold-dim)"></div>`}
+      <div class="comment-body">
+        <div class="comment-h">
+          <span class="auth">${esc(c.author_name || c.author_username)}</span>
+          <span class="when">${fmtDateTime(c.created_at)}</span>
+        </div>
+        <div class="comment-text">${esc(c.body)}</div>
+        ${canDelete ? `<button class="comment-del" onclick="deleteComment('${c.id}')">Eliminar</button>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+async function saveNote() {
+  const newNote = document.getElementById('note-edit').value.trim();
+  const c = pipeline.find(x => x.id === openCardId);
+  if (!c) return;
+
+  const { error } = await sb.from('pipeline_cards')
+    .update({ note: newNote || null, updated_by: currentUser.username })
+    .eq('id', c.id);
+
+  if (error) { alert('Error: ' + error.message); return; }
+  c.note = newNote || null;
+
+  const btn = document.getElementById('save-note-btn');
+  btn.textContent = '✓ Guardado';
+  btn.classList.add('saved');
+  setTimeout(() => { btn.textContent = 'Guardar nota'; btn.classList.remove('saved'); }, 1500);
+
+  renderBoard();
+}
+
+async function addComment() {
+  const ta = document.getElementById('new-comment');
+  const body = ta.value.trim();
+  if (!body) return;
+
+  const { data, error } = await sb.from('comments').insert({
+    card_id: openCardId,
+    author_username: currentUser.username,
+    author_name: currentUser.name,
+    author_avatar: currentUser.avatar,
+    body,
+  }).select().single();
+
+  if (error) { alert('Error: ' + error.message); return; }
+
+  if (!commentsByCard[openCardId]) commentsByCard[openCardId] = [];
+  commentsByCard[openCardId].push(data);
+  ta.value = '';
+  renderModal();
+  renderBoard();
+}
+
+async function deleteComment(id) {
+  if (!confirm('¿Eliminar este comentario?')) return;
+
+  const { error } = await sb.from('comments').delete().eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
+
+  commentsByCard[openCardId] = (commentsByCard[openCardId] || []).filter(c => c.id !== id);
+  renderModal();
+  renderBoard();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[m]));
+}
+function fmtDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toISOString().slice(0, 10);
+}
+function fmtDateTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-CA') + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+function stageLabel(id) {
+  return (COLUMNS.find(c => c.id === id) || {}).title || id;
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+checkAuth();
+
+// Listen to auth state changes (e.g. after OAuth callback)
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+    checkAuth();
+  }
+});
 </script>
 </body>
 </html>
