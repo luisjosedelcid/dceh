@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
         url: `${SUPABASE_URL}/storage/v1/object/public/reports/${folder}/${encodeURIComponent(o.name)}`,
       }));
 
-    res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+    res.setHeader('Cache-Control', 'no-store');
     res.status(200).json({ files });
   } catch (e) {
     res.status(500).json({ error: 'Fetch failed', detail: String(e).slice(0, 200) });
