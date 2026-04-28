@@ -2482,45 +2482,27 @@ function onPriceInput(raw) {
   if (irrMosEl) { irrMosEl.textContent = (mos >= 0 ? '+' : '') + (mos * 100).toFixed(1) + '%'; irrMosEl.style.color = mos >= 0 ? 'var(--green)' : 'var(--red)'; }
 }
 
-} // end renderAll
 
-
-} // end renderAll
-
-async function fetchLivePrice() {
-  try {
-    const r = await fetch('https://finnhub.io/api/v1/quote?symbol=' + D.company.finnhubSymbol + '&token=d6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg');
-    const d = await r.json();
-    const price = d.c; // current price
-    if (price && price > 100) {
-      document.getElementById('price-input').value = price.toFixed(2);
-      document.getElementById('price-status').textContent = 'live ●';
-      document.getElementById('price-status').style.color = '#4aaa6a';
-      onPriceInput(price.toFixed(2));
-    }
-  } catch(e) {
-    document.getElementById('price-status').textContent = 'model';
-  }
-}
-fetchLivePrice();
-
-// Load data on page load
-loadData();
+// Global aliases for onclick handlers
+window.sw = sw;
+window.recalcRV = typeof recalcRV !== "undefined" ? recalcRV : function(){};
+window.resetRVTable = typeof resetRVTable !== "undefined" ? resetRVTable : function(){};
 
 // ── LAST REVIEW DATE ──────────────────────────────────────────────
-let lastReview = localStorage.getItem(''' + D.company.ticker + '_last_review'') || '06-Mar-2026';
+let lastReview = localStorage.getItem(D.company.ticker + '_last_review') || D.company.lastReview || '';
 document.getElementById('last-review-display').textContent = lastReview;
 document.getElementById('review-date-input').value = lastReview;
 
 function saveReviewDate() {
   lastReview = document.getElementById('review-date-input').value;
-  localStorage.setItem(''' + D.company.ticker + '_last_review'', lastReview);
+  localStorage.setItem(D.company.ticker + '_last_review', lastReview);
   document.getElementById('last-review-display').textContent = lastReview;
   document.getElementById('review-modal').style.display = 'none';
 }
+window.saveReviewDate = saveReviewDate;
 
 // ── CIO NOTES ─────────────────────────────────────────────────────
-const notesKey = ''' + D.company.ticker + '_cio_notes'';
+const notesKey = D.company.ticker + '_cio_notes';
 const savedNotes = localStorage.getItem(notesKey) || '';
 document.getElementById('cio-notes-area').value = savedNotes;
 document.getElementById('cio-notes-area').addEventListener('input', function() {
@@ -2614,6 +2596,30 @@ setTimeout(() => {
   updateEPV();
   updateRV();
 }, 100);
+
+} // end renderAll
+
+async function fetchLivePrice() {
+  if (!D) return;
+  try {
+    const r = await fetch('https://finnhub.io/api/v1/quote?symbol=' + D.company.finnhubSymbol + '&token=d6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg');
+    const d = await r.json();
+    const price = d.c;
+    if (price && price > 0) {
+      document.getElementById('price-input').value = price.toFixed(2);
+      document.getElementById('price-status').textContent = 'live ●';
+      document.getElementById('price-status').style.color = '#4aaa6a';
+      if (typeof onPriceInput === 'function') onPriceInput(price.toFixed(2));
+    }
+  } catch(e) {
+    var ps = document.getElementById('price-status');
+    if (ps) ps.textContent = 'model';
+  }
+}
+
+// Boot sequence
+loadData().then(function() { fetchLivePrice(); });
+
 </script>
 <div id="review-modal" style="display:none;position:fixed;inset:0;background:rgba(27,38,66,0.6);z-index:1000;align-items:center;justify-content:center">
   <div style="background:var(--white);padding:32px;width:360px;border-top:3px solid var(--gold)">
