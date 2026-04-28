@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "last_updated": "2026-04-28",
+  "notes": "Edit this file to add or update earnings events. timezone is for display only. status: 'upcoming' or 'reported'. timing: 'BMO' (before market open), 'AMC' (after market close), or 'TBD'. ir_url: link to investor relations. Date format: YYYY-MM-DD.",
+  "events": [
+    {
+      "id": "bkng-2026-q1",
+      "ticker": "BKNG",
+      "company": "Booking Holdings",
+      "quarter": "Q1 2026",
+      "date": "2026-04-28",
+      "time": "16:00",
+      "timezone": "ET",
+      "timing": "AMC",
+      "call_time": "16:30 ET",
+      "ir_url": "https://ir.bookingholdings.com",
+      "status": "upcoming",
+      "watchlist": true
+    },
+    {
+      "id": "sap-2026-q2",
+      "ticker": "SAP",
+      "company": "SAP SE",
+      "quarter": "Q2 2026",
+      "date": "2026-07-23",
+      "time": "22:05",
+      "timezone": "CEST",
+      "timing": "AMC",
+      "call_time": "23:00 CEST",
+      "ir_url": "https://www.sap.com/investors/en/financial-documents-and-events/events.html",
+      "status": "upcoming",
+      "watchlist": true
+    },
+    {
+      "id": "sap-2026-q3",
+      "ticker": "SAP",
+      "company": "SAP SE",
+      "quarter": "Q3 2026",
+      "date": "2026-10-21",
+      "time": "22:05",
+      "timezone": "CET",
+      "timing": "AMC",
+      "call_time": "23:00 CET",
+      "ir_url": "https://www.sap.com/investors/en/financial-documents-and-events/events.html",
+      "status": "upcoming",
+      "watchlist": true
+    },
+    {
+      "id": "bkng-2025-q4",
+      "ticker": "BKNG",
+      "company": "Booking Holdings",
+      "quarter": "Q4 2025",
+      "date": "2026-02-17",
+      "time": "16:00",
+      "timezone": "ET",
+      "timing": "AMC",
+      "call_time": "16:30 ET",
+      "ir_url": "https://ir.bookingholdings.com",
+      "status": "reported",
+      "watchlist": true
+    },
+    {
+      "id": "sap-2026-q1",
+      "ticker": "SAP",
+      "company": "SAP SE",
+      "quarter": "Q1 2026",
+      "date": "2026-04-23",
+      "time": "22:05",
+      "timezone": "CEST",
+      "timing": "AMC",
+      "call_time": "23:00 CEST",
+      "ir_url": "https://www.sap.com/investors/en/financial-documents-and-events/events.html",
+      "status": "reported",
+      "watchlist": true
+    }
+  ]
+}

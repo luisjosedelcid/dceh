@@ -456,6 +456,120 @@
   .company-card:nth-child(2) { animation-delay: 0.2s; }
   .company-card:nth-child(3) { animation-delay: 0.3s; }
   .card-placeholder           { animation: fadeUp 0.5s ease 0.3s both; }
+
+  /* EARNINGS WIDGET (home, discreet) */
+  .earnings-widget {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(184,139,71,0.18);
+    border-left: 3px solid var(--gold);
+    margin-bottom: 32px;
+    overflow: hidden;
+    animation: fadeUp 0.5s ease 0.4s both;
+  }
+  .ew-label {
+    padding: 14px 22px;
+    border-right: 1px solid rgba(184,139,71,0.15);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 200px;
+  }
+  .ew-eyebrow {
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .ew-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--white);
+    letter-spacing: -0.01em;
+  }
+  .ew-list {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 4px;
+    overflow-x: auto;
+  }
+  .ew-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-right: 1px solid rgba(255,255,255,0.04);
+    flex-shrink: 0;
+  }
+  .ew-item:last-child { border-right: none; }
+  .ew-date {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--white);
+    font-family: 'Archivo', monospace;
+    line-height: 1;
+  }
+  .ew-mo {
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .ew-info { display: flex; flex-direction: column; gap: 2px; }
+  .ew-tk {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Archivo', monospace;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+  }
+  .ew-meta {
+    font-size: 10px;
+    color: rgba(255,255,255,0.45);
+  }
+  .ew-cta {
+    padding: 14px 22px;
+    border-left: 1px solid rgba(184,139,71,0.15);
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    transition: background .2s;
+    white-space: nowrap;
+  }
+  .ew-cta:hover { background: rgba(184,139,71,0.08); }
+  .ew-cta-text {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .ew-empty {
+    flex: 1;
+    padding: 14px 22px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    font-style: italic;
+    display: flex;
+    align-items: center;
+  }
+  .ew-today {
+    background: rgba(184,139,71,0.08);
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    margin-left: 6px;
+  }
 </style>
 </head>
 <body>
@@ -507,6 +621,7 @@
       <a href="/news.html" style="font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(184,139,71,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='transparent'">News</a>
       <a href="/reporting.html" style="font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(184,139,71,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='transparent'">Reporting</a>
       <a href="/dataroom.html" style="font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(184,139,71,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='transparent'">Data Room</a>
+      <a href="/calendar.html" style="font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(184,139,71,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='transparent'">Calendar</a>
       <div style="width:1px;height:20px;background:rgba(184,139,71,0.2);margin:0 8px"></div>
       <div class="h-date" id="hdr-date" style="font-size:9px;letter-spacing:0.15em;color:rgba(255,255,255,0.3)"></div>
     </div>
@@ -536,6 +651,18 @@
         <div style="font-size:18px;font-weight:700;color:var(--white);letter-spacing:-0.01em;margin-bottom:6px">Own</div>
         <div style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6;margin-bottom:16px">Positions, P&L, and allocation. Live prices.</div>
         <div style="font-size:11px;color:var(--gold);font-weight:600;letter-spacing:0.1em">Open →</div>
+      </a>
+    </div>
+
+    <!-- EARNINGS WIDGET -->
+    <div class="earnings-widget" id="earnings-widget" style="display:none">
+      <div class="ew-label">
+        <div class="ew-eyebrow">Upcoming Earnings</div>
+        <div class="ew-title" id="ew-window-label">Next 30 days</div>
+      </div>
+      <div class="ew-list" id="ew-list"></div>
+      <a href="/calendar.html" class="ew-cta">
+        <span class="ew-cta-text">Calendar →</span>
       </a>
     </div>
 
@@ -686,6 +813,61 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => document.getElementById('pwd-input').focus(), 100);
   }
 });
+</script>
+<script>
+  // Earnings widget: load earnings.json, show next 30 days (max 3 entries)
+  (async function loadEarningsWidget() {
+    try {
+      const res = await fetch('/data/earnings.json', { cache: 'no-store' });
+      const data = await res.json();
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const cutoff = new Date(today.getTime() + 30 * 86400000);
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+      const upcoming = data.events
+        .filter(e => e.status === 'upcoming')
+        .map(e => {
+          const [y,m,d] = e.date.split('-').map(Number);
+          return { ...e, _dt: new Date(y, m-1, d) };
+        })
+        .filter(e => e._dt >= today && e._dt <= cutoff)
+        .sort((a,b) => a._dt - b._dt)
+        .slice(0, 3);
+
+      const widget = document.getElementById('earnings-widget');
+      const list = document.getElementById('ew-list');
+
+      if (upcoming.length === 0) {
+        // Hide widget entirely if nothing in next 30 days
+        widget.style.display = 'none';
+        return;
+      }
+
+      list.innerHTML = upcoming.map(e => {
+        const dDays = Math.round((e._dt - today) / 86400000);
+        const todayBadge = dDays === 0 ? '<span class="ew-today">Today</span>' : '';
+        const meta = dDays === 0 ? `${e.timing} · ${e.quarter}` :
+                     dDays === 1 ? `Tomorrow · ${e.timing}` :
+                     `In ${dDays}d · ${e.timing}`;
+        return `<div class="ew-item">
+          <div style="text-align:center;display:flex;flex-direction:column;align-items:center">
+            <div class="ew-date">${e._dt.getDate()}</div>
+            <div class="ew-mo">${months[e._dt.getMonth()]}</div>
+          </div>
+          <div class="ew-info">
+            <div class="ew-tk">${e.ticker}${todayBadge}</div>
+            <div class="ew-meta">${meta}</div>
+          </div>
+        </div>`;
+      }).join('');
+
+      widget.style.display = 'flex';
+    } catch (err) {
+      // Silently fail — widget just stays hidden
+      console.warn('Earnings widget load failed:', err);
+    }
+  })();
 </script>
 <script src="/search.js" defer></script>
 </body>

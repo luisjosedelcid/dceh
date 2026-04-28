@@ -17,6 +17,7 @@
     { type: 'page', title: 'Data Room',            desc: 'Reference filings and source data',  url: '/dataroom.html',    keywords: 'data room filings 10-K 10-Q sources documents' },
     { type: 'page', title: 'Reporting Hub',        desc: 'Monthly close, committee, annual',   url: '/reporting.html',   keywords: 'reporting reports monthly close committee annual hub' },
     { type: 'page', title: 'Research Pipeline',    desc: 'Kanban of ideas in progress',        url: '/research.html',    keywords: 'research pipeline kanban ideas backlog supabase' },
+    { type: 'page', title: 'Calendar',              desc: 'Earnings dates for covered companies',url: '/calendar.html',    keywords: 'calendar earnings dates schedule events upcoming reports' },
   ];
 
   // Built-in tickers — extend as we add company JSONs
@@ -150,19 +151,55 @@
     return STATIC_PAGES.map(p => ({ ...p, meta: 'Page' }));
   }
 
+  async function fetchEarnings() {
+    const out = [];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    try {
+      const r = await fetch('/data/earnings.json', { cache: 'no-store' });
+      if (!r.ok) return out;
+      const data = await r.json();
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      for (const e of (data.events || [])) {
+        const [y,m,d] = e.date.split('-').map(Number);
+        const dt = new Date(y, m-1, d);
+        const dDays = Math.round((dt - today) / 86400000);
+        const fmt = `${months[m-1]} ${d}, ${y}`;
+        let when;
+        if (e.status === 'reported') when = `Reported · ${fmt}`;
+        else if (dDays === 0) when = `Today · ${e.timing}`;
+        else if (dDays === 1) when = `Tomorrow · ${e.timing}`;
+        else if (dDays > 0) when = `In ${dDays}d · ${fmt}`;
+        else when = `${Math.abs(dDays)}d ago · ${fmt}`;
+
+        out.push({
+          type: 'event',
+          title: `${e.ticker} — ${e.quarter} earnings`,
+          desc: `${e.company} · ${when}`,
+          url: '/calendar.html',
+          keywords: `${e.ticker} ${e.company} earnings ${e.quarter} ${e.timing} call results report`,
+          meta: e.status === 'upcoming' ? (dDays >= 0 && dDays <= 7 ? 'Soon' : 'Upcoming') : 'Reported',
+        });
+      }
+    } catch {}
+    return out;
+  }
+
   async function buildIndex() {
     if (INDEX) return INDEX;
     if (indexPromise) return indexPromise;
     indexPromise = (async () => {
-      const [companies, supDocs] = await Promise.all([
+      const [companies, supDocs, earnings] = await Promise.all([
         fetchCompanies(),
         fetchSupabaseDocs(),
+        fetchEarnings(),
       ]);
       INDEX = [
         ...buildStaticPagesIndex(),
         ...companies,
         ...buildStaticDocsIndex(),
         ...supDocs,
+        ...earnings,
       ];
       return INDEX;
     })();
@@ -223,10 +260,11 @@
   // ──────────────────────────────────────────────────────────
   let overlay, input, resultsEl, footerEl, currentResults = [], activeIdx = 0;
 
-  const ICONS = { page: '◧', company: '◆', doc: '▤' };
+  const ICONS = { page: '◧', company: '◆', doc: '▤', event: '▸' };
   const GROUPS = [
     { type: 'page',    label: 'Pages' },
     { type: 'company', label: 'Companies' },
+    { type: 'event',   label: 'Earnings' },
     { type: 'doc',     label: 'Documents' },
   ];
 

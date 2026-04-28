@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — Earnings Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#1b2642;--gold:#b88b47;--gold-lt:#d4aa6a;--gold-dim:rgba(184,139,71,0.10);--gold-rule:rgba(184,139,71,0.30);
+    --cream:#f5f1eb;--white:#ffffff;--ink:#1b2642;--gray-mid:#8a9098;--gray-txt:#606060;
+    --green:#2a7a56;--red:#9b2335;--amber:#b8860b;--rule:rgba(27,38,66,0.09);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+  header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
+  .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
+  .hnav{display:flex;gap:8px;flex-wrap:wrap}
+  .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
+  .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
+  .hnav a.active{color:var(--gold);border-color:var(--gold)}
+
+  main{max-width:980px;margin:0 auto;padding:36px 48px 60px}
+  .slbl{font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+  .slbl::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
+  h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;color:var(--navy);margin-bottom:4px}
+  .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:24px}
+
+  /* SUMMARY KPIS */
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+  .kpi{background:var(--white);border:1px solid var(--rule);padding:14px 16px}
+  .kpi-lbl{font-size:9px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:6px}
+  .kpi-val{font-size:22px;font-weight:700;color:var(--navy);font-family:'Archivo',monospace}
+  .kpi-val.gold{color:var(--gold)}
+  .kpi-sub{font-size:10px;color:var(--gray-mid);margin-top:2px}
+
+  /* FILTERS */
+  .filters{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+  .filter{font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:8px 16px;background:var(--white);border:1px solid var(--rule);color:var(--gray-mid);cursor:pointer;transition:all .2s}
+  .filter:hover{border-color:var(--gold-rule);color:var(--navy)}
+  .filter.active{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+
+  /* EVENT LIST */
+  .group-hdr{font-size:10px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin:24px 0 10px;display:flex;align-items:center;gap:10px}
+  .group-hdr::before{content:'';display:block;width:14px;height:1px;background:var(--gold)}
+  .group-hdr .count{color:var(--gray-mid);font-weight:400;letter-spacing:0.1em}
+
+  .evt{background:var(--white);border:1px solid var(--rule);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:8px;display:grid;grid-template-columns:90px 1fr auto auto;gap:18px;align-items:center;transition:border-color .2s}
+  .evt:hover{border-color:var(--gold-rule);border-left-color:var(--gold)}
+  .evt.reported{border-left-color:var(--rule);opacity:0.75}
+  .evt.reported:hover{opacity:1}
+  .evt.today{border-left-color:var(--red);background:rgba(155,35,53,0.02)}
+
+  .evt-date{display:flex;flex-direction:column;align-items:flex-start}
+  .evt-date-day{font-size:22px;font-weight:700;color:var(--navy);font-family:'Archivo',monospace;line-height:1}
+  .evt-date-mo{font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-top:2px}
+  .evt-date-yr{font-size:9px;color:var(--gray-mid);margin-top:2px}
+
+  .evt-body{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .evt-tk{font-size:11px;font-weight:700;font-family:'Archivo',monospace;letter-spacing:0.05em;color:var(--gold)}
+  .evt-co{font-size:14px;font-weight:600;color:var(--navy)}
+  .evt-meta{font-size:11px;color:var(--gray-mid)}
+
+  .evt-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:2px}
+  .tag-bmo{background:rgba(42,122,86,0.1);color:var(--green)}
+  .tag-amc{background:rgba(184,139,71,0.12);color:var(--gold)}
+  .tag-tbd{background:rgba(27,38,66,0.05);color:var(--gray-mid)}
+  .tag-watch{background:var(--gold-dim);color:var(--gold)}
+  .tag-today{background:rgba(155,35,53,0.12);color:var(--red)}
+  .tag-reported{background:rgba(27,38,66,0.05);color:var(--gray-mid)}
+  .tag-soon{background:rgba(184,134,11,0.12);color:var(--amber)}
+
+  .evt-actions{display:flex;gap:6px}
+  .evt-link{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:7px 12px;border:1px solid var(--rule);color:var(--gray-mid);text-decoration:none;transition:all .2s;white-space:nowrap}
+  .evt-link:hover{border-color:var(--gold);color:var(--gold)}
+
+  /* EMPTY STATE */
+  .empty{text-align:center;padding:48px 20px;color:var(--gray-mid)}
+  .empty-icon{font-size:32px;margin-bottom:12px;color:var(--gold-rule)}
+
+  .info-bar{background:rgba(184,139,71,0.06);border:1px solid var(--gold-rule);padding:12px 16px;font-size:11px;color:var(--gray-txt);margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
+  .info-bar code{background:var(--cream);padding:2px 6px;font-size:11px;color:var(--navy)}
+
+  footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
+  footer a{color:rgba(255,255,255,0.5);text-decoration:none}
+
+  @media (max-width:720px){
+    .kpi-row{grid-template-columns:repeat(2,1fr)}
+    .evt{grid-template-columns:80px 1fr;gap:14px}
+    .evt-tags,.evt-actions{grid-column:1/-1;justify-content:flex-start;margin-top:6px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">DCE <span>Holdings</span></div>
+  <nav class="hnav">
+    <a href="/">Home</a>
+    <a href="/universe.html">Universe</a>
+    <a href="/screener.html">Find</a>
+    <a href="/portfolio.html">Portfolio</a>
+    <a href="/news.html">News</a>
+    <a href="/dataroom.html">Data Room</a>
+    <a href="/reporting.html">Reporting</a>
+    <a href="/calendar.html" class="active">Calendar</a>
+  </nav>
+</header>
+
+<main>
+  <div class="slbl">DCE Holdings — Investment Office</div>
+  <h1>Earnings Calendar</h1>
+  <div class="sub">Quarterly results dates for covered companies. Watchlist-aware, with links to investor relations.</div>
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-lbl">Total Events</div><div class="kpi-val" id="kpi-total">—</div><div class="kpi-sub">All scheduled and reported</div></div>
+    <div class="kpi"><div class="kpi-lbl">Upcoming</div><div class="kpi-val gold" id="kpi-upcoming">—</div><div class="kpi-sub">Next 90 days</div></div>
+    <div class="kpi"><div class="kpi-lbl">This Week</div><div class="kpi-val" id="kpi-week">—</div><div class="kpi-sub">Within 7 days</div></div>
+    <div class="kpi"><div class="kpi-lbl">Companies</div><div class="kpi-val" id="kpi-co">—</div><div class="kpi-sub">In watchlist</div></div>
+  </div>
+
+  <!-- INFO BAR -->
+  <div class="info-bar">
+    <span>Source: <code>/data/earnings.json</code> · edit the file in the repo to add or update events.</span>
+    <span id="last-updated" style="color:var(--gray-mid)"></span>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters" id="filters">
+    <button class="filter active" data-filter="upcoming">Upcoming</button>
+    <button class="filter" data-filter="reported">Reported</button>
+    <button class="filter" data-filter="all">All</button>
+    <span style="border-left:1px solid var(--rule);margin:0 6px"></span>
+    <button class="filter active" data-tk="ALL">All Companies</button>
+    <button class="filter" data-tk="BKNG">BKNG</button>
+    <button class="filter" data-tk="SAP">SAP</button>
+  </div>
+
+  <!-- EVENTS -->
+  <div id="events"></div>
+
+</main>
+
+<footer>
+  <div>© 2026 DCE Holdings · Investment Office</div>
+  <div>Earnings dates sourced from issuer IR pages.</div>
+</footer>
+
+<script>
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let DATA = null;
+  let filters = { status: 'upcoming', ticker: 'ALL' };
+
+  function fmtDate(iso) {
+    const [y,m,d] = iso.split('-').map(Number);
+    return { day: d, mo: MONTHS[m-1], yr: y, full: new Date(y, m-1, d) };
+  }
+  function daysBetween(a, b) {
+    const ms = b.getTime() - a.getTime();
+    return Math.round(ms / 86400000);
+  }
+  function todayLocal() {
+    const t = new Date();
+    return new Date(t.getFullYear(), t.getMonth(), t.getDate());
+  }
+
+  async function load() {
+    const res = await fetch('/data/earnings.json', { cache: 'no-store' });
+    DATA = await res.json();
+    document.getElementById('last-updated').textContent = 'Last updated: ' + DATA.last_updated;
+    renderKPIs();
+    render();
+  }
+
+  function renderKPIs() {
+    const today = todayLocal();
+    const events = DATA.events;
+    const upcoming = events.filter(e => e.status === 'upcoming');
+    const week = upcoming.filter(e => {
+      const d = daysBetween(today, fmtDate(e.date).full);
+      return d >= 0 && d <= 7;
+    });
+    const next90 = upcoming.filter(e => {
+      const d = daysBetween(today, fmtDate(e.date).full);
+      return d >= 0 && d <= 90;
+    });
+    const cos = new Set(events.map(e => e.ticker));
+    document.getElementById('kpi-total').textContent = events.length;
+    document.getElementById('kpi-upcoming').textContent = next90.length;
+    document.getElementById('kpi-week').textContent = week.length;
+    document.getElementById('kpi-co').textContent = cos.size;
+  }
+
+  function render() {
+    const today = todayLocal();
+    let events = DATA.events.slice();
+
+    // Filter by status
+    if (filters.status !== 'all') {
+      events = events.filter(e => e.status === filters.status);
+    }
+    // Filter by ticker
+    if (filters.ticker !== 'ALL') {
+      events = events.filter(e => e.ticker === filters.ticker);
+    }
+    // Sort: upcoming ascending by date, reported descending by date
+    events.sort((a,b) => {
+      if (a.status === 'reported' && b.status === 'reported') return b.date.localeCompare(a.date);
+      return a.date.localeCompare(b.date);
+    });
+
+    const container = document.getElementById('events');
+    if (!events.length) {
+      container.innerHTML = '<div class="empty"><div class="empty-icon">◷</div><div>No events match the current filters.</div></div>';
+      return;
+    }
+
+    // Group by month
+    const groups = {};
+    events.forEach(e => {
+      const f = fmtDate(e.date);
+      const key = f.yr + '-' + String(f.full.getMonth()+1).padStart(2,'0');
+      const label = MONTHS[f.full.getMonth()] + ' ' + f.yr;
+      if (!groups[key]) groups[key] = { label, items: [] };
+      groups[key].items.push(e);
+    });
+    const sortedKeys = Object.keys(groups).sort((a,b) => filters.status === 'reported' ? b.localeCompare(a) : a.localeCompare(b));
+
+    let html = '';
+    for (const key of sortedKeys) {
+      const g = groups[key];
+      html += `<div class="group-hdr">${g.label} <span class="count">· ${g.items.length}</span></div>`;
+      for (const e of g.items) {
+        const f = fmtDate(e.date);
+        const dDays = daysBetween(today, f.full);
+        const isToday = dDays === 0;
+        const isPast = dDays < 0;
+        const isReported = e.status === 'reported';
+        const cls = isToday ? 'evt today' : (isReported ? 'evt reported' : 'evt');
+
+        const timingTag = e.timing === 'BMO' ? '<span class="tag tag-bmo">BMO</span>'
+                       : e.timing === 'AMC' ? '<span class="tag tag-amc">AMC</span>'
+                       : '<span class="tag tag-tbd">TBD</span>';
+
+        let statusTag = '';
+        if (isToday) statusTag = '<span class="tag tag-today">Today</span>';
+        else if (isReported) statusTag = '<span class="tag tag-reported">Reported</span>';
+        else if (dDays > 0 && dDays <= 7) statusTag = `<span class="tag tag-soon">${dDays}d</span>`;
+        else if (dDays > 7) statusTag = `<span class="tag tag-watch">${dDays}d</span>`;
+
+        const callTime = e.call_time ? ` · Call ${e.call_time}` : '';
+
+        html += `<div class="${cls}">
+          <div class="evt-date">
+            <div class="evt-date-day">${f.day}</div>
+            <div class="evt-date-mo">${f.mo}</div>
+            <div class="evt-date-yr">${f.yr}</div>
+          </div>
+          <div class="evt-body">
+            <div class="evt-tk">${e.ticker}</div>
+            <div class="evt-co">${e.company} — ${e.quarter}</div>
+            <div class="evt-meta">${e.time} ${e.timezone}${callTime}</div>
+          </div>
+          <div class="evt-tags">${timingTag}${statusTag}</div>
+          <div class="evt-actions">
+            <a class="evt-link" href="${e.ir_url}" target="_blank" rel="noopener">IR ↗</a>
+          </div>
+        </div>`;
+      }
+    }
+    container.innerHTML = html;
+  }
+
+  // Filter clicks
+  document.getElementById('filters').addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button');
+    if (!btn) return;
+    if (btn.dataset.filter) {
+      document.querySelectorAll('#filters [data-filter]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filters.status = btn.dataset.filter;
+    } else if (btn.dataset.tk) {
+      document.querySelectorAll('#filters [data-tk]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filters.ticker = btn.dataset.tk;
+    }
+    render();
+  });
+
+  load().catch(err => {
+    document.getElementById('events').innerHTML = '<div class="empty"><div class="empty-icon">⚠</div><div>Could not load earnings data.</div></div>';
+    console.error(err);
+  });
+</script>
+<script src="/search.js" defer></script>
+</body>
+</html>
