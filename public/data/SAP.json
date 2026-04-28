@@ -1,279 +1,365 @@
 {
+  "_schema": {
+    "version": "2.0",
+    "framework": "Columbia Business School — Asset Value → EPV → Growth Value",
+    "lastUpdated": "2026-04-28",
+    "author": "DCE Holdings — CIO Office"
+  },
+
   "company": {
     "ticker": "SAP",
     "name": "SAP SE",
-    "fullName": "SAP SE",
-    "exchange": "NASDAQ",
-    "sector": "Consumer Discretionary",
-    "industry": "Information Technology / Software - Application",
-    "period": "LTM",
-    "lastReview": "27-Mar-2026",
-    "defaultPrice": 151.0,
+    "exchange": "NYSE / XETRA",
+    "sector": "Information Technology",
+    "industry": "Software — Application (Enterprise / ERP)",
+    "currency": "EUR",
+    "fiscalYearEnd": "December",
+    "thesisDate": "2026-03-27",
+    "modelVersion": "v1.0",
+    "description": "Líder global en software empresarial. Plataforma ERP con switching costs altísimos, transición cloud avanzada (57% mix FY25), creciente exposición a AI. Moat estructural por integración profunda en procesos de negocio del cliente."
+  },
+
+  "marketData": {
+    "price": 151.00,
+    "priceDate": "2026-03-27",
+    "sharesDiluted": 1175,
+    "marketCap": 177425,
+    "netDebt": -1700,
+    "enterpriseValue": 175725,
     "finnhubSymbol": "SAP"
   },
-  "years": [
-    "FY2020",
-    "FY2021",
-    "FY2022",
-    "FY2023",
-    "FY2024",
-    "FY2025"
-  ],
+
+  "verdict": {
+    "rating": "HOLD",
+    "ratingColor": "amber",
+    "irr": 4.62,
+    "hurdle": 12.0,
+    "moS": -7.38,
+    "epvRv": 2.19,
+    "moatConfirmed": true,
+    "summary": "Franquicia confirmada (EPV/RV 2.19×) pero precio €151 cotiza a 2.06× EPV — sin margen de seguridad. IRR implícito 4.6% queda −740pb por debajo del hurdle de 12%. Moat real, valoración exigente."
+  },
+
   "overview": {
-    "marketCap": "$177.4B",
-    "marketCapSub": "1175.00M diluted shares",
-    "enterpriseValue": "$0M",
-    "evSub": "MktCap + Debt + Leases − Cash",
-    "normalizedNopat": "$6.5B",
-    "nopatSub": "Rev $36.8B × 0.0% norm. margin × (1−30.0%)",
-    "fcf": "$7.9B",
-    "fcfSub": "FCF Margin 21.6%",
-    "impliedIrr": "4.6%",
-    "hurdle": "12.0%",
-    "mos": "-7.4%",
-    "roic3yr": "37.1%",
-    "roicSub": "vs. WACC 9.0% · Spread +28.1%",
-    "roicLabel": "ROIC Selected",
-    "wacc": "9.00%",
-    "waccSub": "β 1.00 · Ke 8.2% · ERP 5.5%"
+    "thesisOneLine": "SAP es una franquicia genuina con moat estructural en ERP — el problema no es la calidad sino el precio: el mercado descuenta optimismo elevado sobre la transición cloud + AI.",
+    "keyDrivers": [
+      "Cloud revenue mix 57% en FY25 — transición pasada el inflection point",
+      "ROIC 24.8% — spread de +16.9pp sobre WACC (7.91%)",
+      "Switching costs extremos en clientes ERP (multi-año, multi-país)",
+      "FCF Margin 21.6% — generación de caja consistente",
+      "R&D intensity 17.3% — sostiene posición competitiva en AI"
+    ],
+    "keyRisks": [
+      "Valoración exigente — precio a 2.06× EPV, sin margen de seguridad",
+      "Marginal ROIC negativo en últimos 3 años — capital reinvertido NO genera retornos",
+      "Competencia AI/cloud (Microsoft, Salesforce, Oracle, hyperscalers nativos)",
+      "Ejecución de transición cloud sigue consumiendo capital sin payoff visible",
+      "Reestructuración FY24 (€3B AI transformation) — riesgo de que se repita"
+    ],
+    "moatSources": [
+      "Switching costs prohibitivos — ERP integrado en core processes del cliente",
+      "Network effects en ecosistema (consultoras, partners, certificaciones)",
+      "Escala en R&D (€6.4B/año) que competidores pequeños no pueden igualar",
+      "Base instalada en 92% de Fortune 2000 — penetración extrema",
+      "Marca y trust en compliance regulatorio (SOX, GDPR, fiscal multi-país)"
+    ]
   },
+
   "modelInputs": {
-    "valuation": {
-      "normalizedNopat": "$6.5B",
-      "revenueBase": "$36.8B",
-      "normalizedOpMargin": "0.0%",
-      "taxRate": "30.0%",
-      "wacc": "9.00%",
-      "dilutedShares": "1175.000"
-    },
-    "irrAssumptions": {
-      "selectedRoic": "37.1%",
-      "organicGrowth": "2.0%",
-      "reinvestmentGrowth": "1.5%",
-      "exitMultiple": "25× EV/NOPAT",
-      "sustainableBuybacks": "$1.5B/yr",
-      "investmentHorizon": "5 years"
-    },
-    "capitalAdjustments": {
-      "smCapitalization": "4yr useful life",
-      "rdCapitalization": "See model",
-      "sbcTreatment": "Case A — already in OpEx",
-      "normalizationWindow": "FY2022–FY2025",
-      "itemsNormalized": "See NOPAT sheet",
-      "goodwillInRV": "0%"
-    }
+    "wacc": 7.91,
+    "taxRate": 30.0,
+    "perpetuityGrowth": 0.0,
+    "exitMultiple": 25.0,
+    "horizonYears": 5,
+    "operatingCashBuffer": 2.0,
+    "dtaRecognition": 70,
+    "smAssetUsefulLife": 4,
+    "rdAssetUsefulLife": 5,
+    "goodwillTreatment": "0% — reconstruir intangibles componente por componente",
+    "leaseTreatment": "IFRS 16 — ya en balance desde 2019"
   },
+
   "epv": {
     "base": {
-      "nopat": 6468,
-      "wacc": 9.0,
-      "tax": 30.0
-    },
-    "bridge": {
+      "revenue": 36800,
+      "normalizedOpMargin": 24.5,
+      "operatingIncome": 9016,
+      "tax": 2705,
+      "nopat": 6311,
+      "nopatNormalized": 6468,
+      "wacc": 7.91,
+      "epvOperations": 81755,
       "excessCash": 9032,
-      "ltInv": 3750,
-      "debt": -8068,
-      "leases": 0
+      "debt": 8068,
+      "epvEquity": 85981,
+      "epvPerShare": 73.18
     },
-    "shares": 1175.0,
-    "waccComponents": {
-      "riskFreeRate": "2.7%",
-      "beta": "1.00",
-      "erp": "5.5%",
-      "keCAPM": "8.2%",
-      "kdPreTax": "3.5%",
-      "kdPostTax": "2.5%",
-      "equityWeight": "95.7%",
-      "debtWeight": "4.3%"
+    "bridge": [
+      { "label": "NOPAT Normalizado", "value": 6468, "type": "input", "note": "Op Margin 24.5% × Revenue €36.8B − tax 30%" },
+      { "label": "÷ WACC (7.91%)", "value": 81755, "type": "calc", "note": "EPV de operaciones (zero-growth)" },
+      { "label": "+ Excess Cash", "value": 9032, "type": "add", "note": "Cash + STI − 2% Rev buffer" },
+      { "label": "+ Non-Operating Assets", "value": 3750, "type": "add", "note": "LT investments €7.5B × 50% haircut (DP10)" },
+      { "label": "− Total Debt", "value": -8068, "type": "subtract" },
+      { "label": "− Minority Interest", "value": -488, "type": "subtract" },
+      { "label": "= EPV Equity", "value": 85981, "type": "result" },
+      { "label": "÷ Acciones Diluidas (1,175M)", "value": 73, "type": "perShare" }
+    ],
+    "sensitivity": {
+      "axes": {
+        "x": { "label": "WACC", "values": [6.91, 7.41, 7.91, 8.41, 8.91] },
+        "y": { "label": "NOPAT Δ%", "values": [-10, -5, 0, 5, 10] }
+      },
+      "matrix": [
+        [75.28, 79.26, 83.24, 87.22, 91.21],
+        [70.44, 74.16, 77.87, 81.58, 85.30],
+        [66.22, 69.70, 73.18, 76.65, 80.13],
+        [62.49, 65.77, 69.04, 72.31, 75.58],
+        [59.19, 62.28, 65.37, 68.46, 71.54]
+      ]
     },
-    "normalizedEBIT": 9240,
-    "daAddback": 1311,
-    "taxFactor": 0.7
+    "decisionPoints": [
+      { "decision": "Margin Normalization", "choice": "24.5% (median 6yr)", "rationale": "Margen operativo limpio mediano FY20-FY25 (post-normalización Other Exp €3,029M FY24 por restructuring AI). FY25 reportado 28.6% es outlier al alza." },
+      { "decision": "Tax Rate", "choice": "30% (German corporate)", "rationale": "Tasa estatutaria alemana. Tasa efectiva 5yr ~29-32%, conservador." },
+      { "decision": "WACC", "choice": "7.91%", "rationale": "Rf 2.66% (Bund 10Y) + ERP 5.5% × β 1.0 + Kd post-tax 2.45% blended. Defensiva por liderazgo software." },
+      { "decision": "Maintenance CapEx", "choice": "= D&A (€1,311M)", "rationale": "Default zero-growth: maintenance CapEx iguala D&A. Modelo asset-light." },
+      { "decision": "Non-Operating Assets", "choice": "€3,750M (50% haircut)", "rationale": "LT investments €7.5B × 50% por iliquidez de equity stakes (Sapphire Ventures et al.)." }
+    ]
   },
+
   "irr": {
-    "base": {
-      "roic": 37.1,
-      "growth": 2.0,
-      "exit": 25,
-      "buybacks": 1500,
-      "horizon": 5,
-      "hurdle": 12.0
-    },
-    "nopat": 6468.1,
-    "ev": 0,
-    "dividends": 2635,
-    "interest": 1323,
-    "reinvRate": 0.039455,
-    "deRatio": 0.04547,
-    "netBorrCost": 0.11479,
-    "actualMult": 27.168,
-    "modelPrice": 151.0,
-    "modelEV": 0,
-    "epvPerShare": 73.18,
-    "shares": 1175.0,
-    "detail": {
-      "marketCap": "$177.4B",
-      "totalDebt": "$8.1B",
-      "leases": "$0M",
-      "cashSTI": "−$9.8B",
-      "evTotal": "$0M",
-      "nopatMult": "27.2×",
-      "dividendsPaid": "$2.6B",
-      "interestExpense": "$1.3B",
-      "growthCapex": "$0M",
-      "smGrowthExpense": "$0M",
-      "totalReinvestment": "$255M",
-      "reinvestmentRate": "3.9%",
-      "payoutRate": "84.4%",
-      "cashSanity": {
-        "nopat": "$6.5B",
-        "reinvestment": "−$255M",
-        "distributions": "−$5.5B",
-        "net": "+$755M",
-        "netPct": "11.7%",
-        "isPositive": true
-      }
-    }
+    "horizon": 5,
+    "currentPrice": 151.00,
+    "exitYear": 2030,
+    "exitNopat": 7635,
+    "exitMultiple": 25.0,
+    "exitEV": 190878,
+    "exitNetDebt": -1700,
+    "exitEquity": 192578,
+    "exitShares": 1135,
+    "exitPricePerShare": 170,
+    "buybackContribution": 0.85,
+    "fcfYieldContribution": 3.11,
+    "growthContribution": 3.46,
+    "totalIRR": 4.62,
+    "decomposition": [
+      { "component": "Distribution Yield (Div + Buyback + Int)", "contribution": 3.11, "color": "navy" },
+      { "component": "Crecimiento (Reinv + Orgánico)", "contribution": 3.46, "color": "green" },
+      { "component": "Multiple Contraction (27.2× → 25×)", "contribution": -1.65, "color": "gold" },
+      { "component": "Net Borrowing Cost Adj", "contribution": -0.30, "color": "navy" }
+    ],
+    "moS": -7.38,
+    "moSNote": "IRR Equity 4.62% − Hurdle 12% = −738pb"
   },
-  "charts": {
-    "revenueNopat": {
-      "revenue": [
-        27338,
-        26953,
-        29519,
-        31207,
-        34176,
-        36800
-      ],
-      "nopat": [
-        12527,
-        12105,
-        11015,
-        9268,
-        8396,
-        7527
-      ]
-    },
-    "margins": {
-      "opMargin": [
-        24.2,
-        23.4,
-        20.0,
-        18.6,
-        13.6,
-        26.7
-      ],
-      "netMargin": [
-        18.4,
-        33.4,
-        5.7,
-        10.1,
-        10.4,
-        21.8
-      ]
-    },
-    "cashflows": {
-      "cfo": [
-        7195,
-        6223,
-        5646,
-        6332,
-        5220,
-        8647
-      ],
-      "fcf": [
-        6379,
-        5522,
-        4772,
-        5547,
-        4423,
-        7937
-      ],
-      "buybacks": [
-        -1492,
-        0,
-        -1500,
-        -949,
-        -2106,
-        -1861
+
+  "roic": {
+    "currentInvestedCapital": 30375,
+    "currentNopat": 7527,
+    "roicCurrent": 24.78,
+    "roic3yrAvg": 29.31,
+    "roic5yrAvg": 70.47,
+    "marginalRoic": -78.76,
+    "marginalRoicNote": "ALERTA: Marginal ROIC negativo — capital reinvertido recientemente NO genera retornos incrementales. Crecimiento orgánico carga el peso del retorno.",
+    "spreadVsWacc": 16.87,
+    "history": [
+      { "year": 2020, "ic": 4123, "nopat": 12527, "roic": 303.84 },
+      { "year": 2021, "ic": 8243, "nopat": 12105, "roic": 146.85 },
+      { "year": 2022, "ic": 18198, "nopat": 11015, "roic": 60.53 },
+      { "year": 2023, "ic": 26922, "nopat": 9268, "roic": 34.43 },
+      { "year": 2024, "ic": 29272, "nopat": 8396, "roic": 28.68 },
+      { "year": 2025, "ic": 30375, "nopat": 7527, "roic": 24.78 }
+    ],
+    "icBreakdown": [
+      { "label": "Working Capital Operating", "value": -4715, "note": "Capital de trabajo negativo (deferred revenue)" },
+      { "label": "PP&E neto", "value": 4495 },
+      { "label": "Other LT Operating Assets", "value": 4661 },
+      { "label": "S&M Asset (capitalized, 4yr)", "value": 13187, "note": "Costo de adquisición clientes amortizado" },
+      { "label": "R&D Asset (capitalized, 5yr)", "value": 12747, "note": "Tecnología/IP capitalizada" },
+      { "label": "Total Invested Capital", "value": 30375, "type": "total" }
+    ]
+  },
+
+  "rv": {
+    "totalRv": 39321,
+    "rvPerShare": 33.47,
+    "priceRv": 4.51,
+    "epvRv": 2.19,
+    "moatTest": "FRANQUICIA CONFIRMADA — EPV €73 vs RV €33 → ratio 2.19× (moat genuino)",
+    "categories": [
+      {
+        "name": "Activos Tangibles",
+        "items": [
+          { "label": "Cash & Cash Equivalents", "bookValue": 8217, "rvAdjustment": 100, "rvValue": 8217, "note": "Liquid at par" },
+          { "label": "Short-Term Investments", "bookValue": 1551, "rvAdjustment": 100, "rvValue": 1551, "note": "Mark-to-market" },
+          { "label": "Trade & Other Receivables", "bookValue": 7270, "rvAdjustment": 95, "rvValue": 6907, "note": "5% provisión enterprise receivables" },
+          { "label": "Prepaid & Other CA", "bookValue": 3210, "rvAdjustment": 80, "rvValue": 2568, "note": "20% haircut por recuperación parcial" },
+          { "label": "PP&E neto", "bookValue": 4495, "rvAdjustment": 110, "rvValue": 4945, "note": "Costo de reposición > book (real estate, data centers)" }
+        ]
+      },
+      {
+        "name": "Activos Intangibles Reproducibles",
+        "items": [
+          { "label": "Customer Relationships (S&M Cap)", "bookValue": 0, "rvAdjustment": null, "rvValue": 13187, "note": "S&M asset capitalizado (4yr) = costo de adquisición de base de clientes" },
+          { "label": "Technology / IP (R&D Cap)", "bookValue": 0, "rvAdjustment": null, "rvValue": 12747, "note": "R&D asset capitalizado (5yr) = costo de réplica tecnológica" },
+          { "label": "Brand / Brand Equity", "bookValue": 0, "rvAdjustment": null, "rvValue": 5000, "note": "Estimado: ~€500M/año × 10 años de vida efectiva" },
+          { "label": "Goodwill (Book)", "bookValue": 29002, "rvAdjustment": 0, "rvValue": 0, "note": "0% — componentes reconstruidos individualmente; evita doble conteo" },
+          { "label": "Other Intangibles (Book)", "bookValue": 2281, "rvAdjustment": 50, "rvValue": 1141, "note": "50% — recuperación parcial de intangibles amortizados" }
+        ]
+      },
+      {
+        "name": "Otros / DTA",
+        "items": [
+          { "label": "Deferred Tax Assets", "bookValue": 2162, "rvAdjustment": 70, "rvValue": 1513, "note": "70% — consistentemente rentable (DP14)" },
+          { "label": "Long-Term Investments", "bookValue": 7484, "rvAdjustment": 50, "rvValue": 3742, "note": "50% — equity stakes privadas (Sapphire)" },
+          { "label": "Other Non-Current Assets (ROU)", "bookValue": 4661, "rvAdjustment": 70, "rvValue": 3263, "note": "70% — ROU assets, depósitos" }
+        ]
+      },
+      {
+        "name": "Pasivos Operativos",
+        "items": [
+          { "label": "Total Current Liabilities", "bookValue": -17243, "rvAdjustment": 100, "rvValue": -17243, "note": "Contractual — face value" },
+          { "label": "Long-Term Debt", "bookValue": -6018, "rvAdjustment": 100, "rvValue": -6018, "note": "Contractual" },
+          { "label": "Other Non-Current Liabilities", "bookValue": -1709, "rvAdjustment": 100, "rvValue": -1709, "note": "Contractual" },
+          { "label": "Minority Interest", "bookValue": -488, "rvAdjustment": 100, "rvValue": -488, "note": "At book value" }
+        ]
+      }
+    ],
+    "decisions": [
+      { "label": "Goodwill", "choice": "0% — reconstruir desde cero", "rationale": "Columbia puro: componentes individuales reconstruidos (S&M, R&D, brand) — evita doble conteo." },
+      { "label": "Brand Estimado", "choice": "€5,000M", "rationale": "~€500M/año brand investment × 10 años vida efectiva." },
+      { "label": "DTA Recognition", "choice": "70% del book", "rationale": "SAP consistentemente rentable; baja probabilidad de no utilización." },
+      { "label": "LT Investments", "choice": "50% haircut", "rationale": "Equity stakes en privadas (Sapphire Ventures) — iliquidez justifica descuento." },
+      { "label": "PP&E", "choice": "110% del book", "rationale": "Costo de reposición de real estate y data centers > book." }
+    ]
+  },
+
+  "financials": {
+    "incomeStatement": {
+      "headers": ["FY20", "FY21", "FY22", "FY23", "FY24", "FY25"],
+      "rows": [
+        { "label": "Revenue", "values": [27338, 26953, 29519, 31207, 34176, 36800], "type": "header" },
+        { "label": "Cost of Revenue", "values": [-7886, -7219, -8038, -8674, -9243, -9655], "type": "expense" },
+        { "label": "Gross Profit", "values": [19452, 19734, 21481, 22533, 24933, 27145], "type": "subtotal" },
+        { "label": "R&D", "values": [-4454, -5270, -6080, -6324, -6514, -6366], "type": "expense" },
+        { "label": "S&M", "values": [-7106, -6856, -7946, -8828, -9090, -8580], "type": "expense" },
+        { "label": "G&A", "values": [-1356, -1187, -1289, -1364, -1435, -1470], "type": "expense" },
+        { "label": "Other Operating Expenses, net", "values": [87, -113, -252, -218, -3229, -899], "type": "expense" },
+        { "label": "Operating Income", "values": [6623, 6308, 5914, 5799, 4665, 9830], "type": "subtotal" },
+        { "label": "Operating Margin", "values": [24.2, 23.4, 20.0, 18.6, 13.6, 26.7], "type": "ratio", "format": "pct" },
+        { "label": "Interest Expense (net)", "values": [-355, -945, -2200, -1313, -1031, -1323], "type": "expense" },
+        { "label": "Other Income, net", "values": [710, 5320, -590, 399, 1528, 2489], "type": "addback" },
+        { "label": "Pretax Income", "values": [6978, 10683, 3124, 4885, 5162, 10996], "type": "subtotal" },
+        { "label": "Tax", "values": [-1938, -1682, -1446, -1741, -1614, -2991], "type": "expense" },
+        { "label": "Net Income", "values": [5040, 9001, 1678, 3144, 3548, 8005], "type": "result" }
       ]
     },
     "balanceSheet": {
-      "totalAssets": [
-        58476,
-        71169,
-        72160,
-        68335,
-        74122,
-        70332
-      ],
-      "totalLiabilities": [
-        58476,
-        71169,
-        72160,
-        68335,
-        74122,
-        70332
-      ],
-      "equity": [
-        29924,
-        41523,
-        42852,
-        43406,
-        45808,
-        45221
+      "headers": ["FY20", "FY21", "FY22", "FY23", "FY24", "FY25"],
+      "rows": [
+        { "label": "Cash & STI", "values": [6946, 11656, 9862, 11281, 11238, 9768], "type": "asset" },
+        { "label": "Receivables", "values": [6803, 6755, 6236, 6969, 7737, 7270], "type": "asset" },
+        { "label": "Other Current Assets", "values": [1336, 1045, 2472, 2321, 2426, 3210], "type": "asset" },
+        { "label": "PP&E (net)", "values": [5042, 4977, 4934, 4276, 4493, 4495], "type": "asset" },
+        { "label": "Goodwill", "values": [27560, 31090, 33106, 29088, 31147, 29002], "type": "asset" },
+        { "label": "Intangibles (net)", "values": [3784, 3966, 3835, 2505, 2706, 2281], "type": "asset" },
+        { "label": "LT Investments", "values": [3512, 6275, 5626, 5502, 7350, 7484], "type": "asset" },
+        { "label": "Other LT Assets", "values": [3494, 4817, 6089, 9643, 7025, 6823], "type": "asset" },
+        { "label": "Total Assets", "values": [58476, 71169, 72160, 68335, 74122, 70332], "type": "subtotal" },
+        { "label": "Current Liabilities", "values": [-12868, -16136, -17452, -14642, -19079, -17243], "type": "liability" },
+        { "label": "LT Debt", "values": [-11860, -9245, -6960, -6026, -5300, -6018], "type": "liability" },
+        { "label": "Lease Liabilities", "values": [-1740, -1736, -1791, -1327, -1420, 0], "type": "liability" },
+        { "label": "Other LT Liabilities", "values": [-2059, -2511, -3075, -4905, -2426, -1709], "type": "liability" },
+        { "label": "Total Liabilities", "values": [-28552, -29646, -29308, -24929, -28314, -25114], "type": "subtotal" },
+        { "label": "Equity (Stockholders)", "values": [29924, 41523, 42852, 43406, 45808, 45221], "type": "result" }
       ]
     },
-    "roic": {
-      "roicPct": [],
-      "waccLine": [
-        9.0,
-        9.0,
-        9.0,
-        9.0,
-        9.0,
-        9.0
-      ],
-      "waccLabel": "WACC (9.00%)"
-    },
-    "cfoComponents": {
-      "cfo": [],
-      "cfi": [
-        -2987,
-        -3063,
-        667,
-        906,
-        -667,
-        -1330
-      ],
-      "cff": [
-        -3997,
-        -56,
-        -6337,
-        -7734,
-        -3401,
-        -7849
-      ]
-    },
-    "healthRadar": {
-      "labels": [
-        "Financial\\nStrength",
-        "Profitability",
-        "Growth",
-        "Asset-Light",
-        "Capital\\nAllocation",
-        "Rule of 40"
-      ],
-      "data": [
-        85,
-        85,
-        70,
-        80,
-        80,
-        80
+    "cashFlow": {
+      "headers": ["FY20", "FY21", "FY22", "FY23", "FY24", "FY25"],
+      "rows": [
+        { "label": "Net Income", "values": [5283, 6823, 2284, 5964, 3124, 7038], "type": "header" },
+        { "label": "D&A", "values": [1831, 1537, 1569, 1373, 1280, 1259], "type": "addback" },
+        { "label": "SBC", "values": [1084, 1335, 1431, 2220, 0, 0], "type": "addback" },
+        { "label": "Δ Working Capital", "values": [659, 213, -143, -17, 593, -853], "type": "wc" },
+        { "label": "Other Non-Cash", "values": [-3600, -5367, -873, -4949, 223, 1203], "type": "wc" },
+        { "label": "Operating Cash Flow", "values": [7195, 6223, 5646, 6332, 5220, 8647], "type": "subtotal" },
+        { "label": "CapEx", "values": [-816, -701, -874, -785, -797, -710], "type": "capex" },
+        { "label": "Free Cash Flow", "values": [6379, 5522, 4772, 5547, 4423, 7937], "type": "result" },
+        { "label": "FCF Margin", "values": [23.3, 20.5, 16.2, 17.8, 12.9, 21.6], "type": "ratio", "format": "pct" },
+        { "label": "Buybacks", "values": [-1492, 0, -1500, -949, -2106, -1861], "type": "capital" },
+        { "label": "Dividends", "values": [-1864, -2182, -2865, -2395, -2565, -2635], "type": "capital" },
+        { "label": "Acquisitions", "values": [-459, -1104, -390, -1160, -1003, -558], "type": "capital" }
       ]
     }
   },
-  "aiContext": "You are DCE Investment Assistant for SAP. Key data: Price $151.00, EV $0M, NOPAT $6.5B, WACC 9.0%, ROIC 37.1%, EPV/Share $73.18, Implied IRR 4.6%, MoS -7.4%. Respond in English. Be direct and technical.",
-  "driveLinks": {}
+
+  "healthCheck": {
+    "items": [
+      { "metric": "Debt / EBITDA", "current": "0.7×", "threshold": "<3.0×", "status": "green", "note": "Apalancamiento conservador" },
+      { "metric": "Net Debt / EBITDA", "current": "−0.1×", "threshold": "<2.0×", "status": "green", "note": "Posición casi net cash" },
+      { "metric": "Interest Coverage", "current": "7.4×", "threshold": ">5.0×", "status": "green", "note": "Cobertura sólida" },
+      { "metric": "ROIC vs WACC Spread", "current": "+16.9pp", "threshold": ">5pp", "status": "green", "note": "Spread alto — moat real" },
+      { "metric": "EPV / RV (Moat Test)", "current": "2.19×", "threshold": ">1.0×", "status": "green", "note": "Franquicia confirmada" },
+      { "metric": "Marginal ROIC (3yr)", "current": "−28.7%", "threshold": ">WACC", "status": "red", "note": "ALERTA: capital reciente NO genera retornos incrementales" },
+      { "metric": "Operating Margin", "current": "26.7% (FY25)", "threshold": ">20%", "status": "green", "note": "Rentabilidad fuerte; volátil por restructuring FY24" },
+      { "metric": "FCF Margin", "current": "21.6%", "threshold": ">15%", "status": "green", "note": "Generación de caja excepcional" },
+      { "metric": "Cloud Revenue %", "current": "57.1%", "threshold": ">50%", "status": "green", "note": "Transición cloud bien encaminada" },
+      { "metric": "Rule of 40", "current": "34.4%", "threshold": ">40%", "status": "amber", "note": "Crecimiento + margen — borderline" },
+      { "metric": "R&D / Revenue", "current": "17.3%", "threshold": ">10%", "status": "green", "note": "Inversión sostenida en producto / AI" },
+      { "metric": "Margin of Safety (vs Hurdle)", "current": "−7.4pp", "threshold": ">0pp", "status": "red", "note": "ALERTA: precio no ofrece margen de seguridad" }
+    ]
+  },
+
+  "cioDecisions": [
+    { "id": 1, "category": "S&M Capitalization", "decision": "S&M Proxy", "value": "Selling & Marketing (reportado)", "rationale": "SAP reporta S&M como línea separada en P&L." },
+    { "id": 2, "category": "R&D Capitalization", "decision": "R&D Capitalization", "value": "Sí — capitalizar", "rationale": "SAP reporta R&D separadamente (~€6.4B FY25)." },
+    { "id": 3, "category": "Useful Life", "decision": "S&M Useful Life", "value": "4 años", "rationale": "Enterprise SaaS, contratos multi-año." },
+    { "id": 4, "category": "Useful Life", "decision": "R&D Useful Life", "value": "5 años", "rationale": "Plataforma ERP, ciclos de producto largos." },
+    { "id": 5, "category": "Adjusted Earnings", "decision": "SBC Treatment", "value": "Ya en OpEx", "rationale": "SBC embebido en COGS, R&D, S&M, G&A — no requiere add-back separado." },
+    { "id": 6, "category": "Normalization", "decision": "Ventana Normalización", "value": "FY20-FY25 (6 años)", "rationale": "Cubre transición cloud completa." },
+    { "id": 7, "category": "Normalization", "decision": "Items Normalizados", "value": "Other Exp FY24: ajuste +€3,029M", "rationale": "AI transformation restructuring — one-time, debe limpiarse." },
+    { "id": 8, "category": "Tax", "decision": "Tax Rate Normalizado", "value": "30%", "rationale": "Tasa corporativa alemana; promedio efectivo 5yr ~29-32%." },
+    { "id": 9, "category": "Lease", "decision": "Lease Treatment", "value": "IFRS 16 on balance", "rationale": "Ya en balance desde 2019 — sin ajuste necesario." },
+    { "id": 10, "category": "Non-Op Assets", "decision": "Non-Operating Assets", "value": "€3,750M", "rationale": "LT investments €7.5B × 50% haircut por iliquidez (Sapphire Ventures)." },
+    { "id": 11, "category": "WACC", "decision": "WACC Inputs", "value": "Rf 2.66%, β 1.0, ERP 5.5%, Kd 3.5%", "rationale": "German Bund 10Y, defensiva por liderazgo software, EUR corporate spread." },
+    { "id": 12, "category": "RV", "decision": "Goodwill Adj", "value": "0%", "rationale": "Componentes reconstruidos individualmente — evita doble conteo." },
+    { "id": 13, "category": "RV", "decision": "Intangibles Adj", "value": "Reconstruir desde cero", "rationale": "Per-component reproduction cost (S&M cap, R&D cap, brand)." },
+    { "id": 14, "category": "RV", "decision": "DTA Adj", "value": "70%", "rationale": "SAP consistentemente rentable; alta probabilidad de utilización." },
+    { "id": 15, "category": "IRR", "decision": "Exit Multiple", "value": "25× NOPAT", "rationale": "Premium enterprise software — comparable a peers cloud-native maduros." },
+    { "id": 16, "category": "IRR", "decision": "Adverse Shock", "value": "No", "rationale": "Sin evento binario pendiente identificado." },
+    { "id": 17, "category": "IRR", "decision": "Crecimiento Orgánico", "value": "2%", "rationale": "Tailwinds AI/cloud + pricing power; conservador vs guidance." }
+  ],
+
+  "investmentMemo": {
+    "title": "SAP SE — Investment Memo",
+    "thesis": "SAP es una franquicia genuina con moat estructural por switching costs en ERP. La transición cloud está pasada el inflection point (57% mix FY25), y la plataforma sostiene un ROIC del 24.8% con spread de +16.9pp sobre WACC. Sin embargo, la valoración actual (€151) cotiza a 2.06× EPV (€73) y deja un IRR implícito de apenas 4.6%, por debajo del hurdle de 12% en −740pb. El test correcto no es si SAP es buena empresa — lo es — sino si el precio paga por esa calidad. Hoy no.",
+    "valuation": "EPV/Acción €73 — Precio €151 implica que el mercado descuenta optimismo elevado: crecimiento cloud sostenido + monetización AI. La sensibilidad muestra que incluso con WACC −1pp y NOPAT +10%, el EPV alcanza €91, todavía 40% por debajo del precio. La franquicia es real (EPV/RV 2.19×), pero el upside está descontado.",
+    "catalysts": [
+      "Aceleración de monetización AI (Joule, BTP, AI agents)",
+      "Expansión de margen post-restructuring FY24",
+      "Continuación del programa de buybacks",
+      "Posibles M&A acretivas (cash netto positivo)"
+    ],
+    "risks": [
+      "Marginal ROIC negativo en últimos 3 años — capital no genera retornos incrementales",
+      "Competencia cloud (Microsoft Dynamics, Salesforce, Oracle Fusion, hyperscalers)",
+      "Riesgo de re-rating si cloud crecimiento desacelera",
+      "Reestructuración recurrente — €3B FY24 podría no ser última",
+      "Regulación EU sobre AI y datos enterprise"
+    ],
+    "decision": "HOLD — vigilar precio, no añadir a posición actual",
+    "monitoringTriggers": [
+      "Marginal ROIC sostenido <0% por 4 trimestres más → SELL",
+      "Cloud revenue mix decreciente o crecimiento <8% → SELL",
+      "Precio <€110 (EPV €73 × 1.5 prima) → considerar BUY",
+      "Margen operativo limpio sostenido <22% → revisar tesis"
+    ]
+  },
+
+  "aiContext": "SAP SE analysis under Columbia Business School framework. Currency: EUR. Key data: Price €151, Market Cap €177.4B, EV €175.7B, NOPAT Normalizado €6,468M, WACC 7.91%, ROIC 24.78% (FY25, 3yr avg 29.3%), Marginal ROIC NEGATIVE (−78.8% FY25; −28.7% over 4yr accumulated growth capex), EPV/Share €73.18, RV/Share €33.47, EPV/RV 2.19× (moat confirmed), Implied IRR Equity 4.62%, MoS −7.38pp vs 12% hurdle. Cloud revenue 57% mix FY25. Key adjustments: Other Exp FY24 +€3,029M restructuring normalization, S&M capitalization (4yr life), R&D capitalization (5yr life), tax 30%, German Bund Rf 2.66%, β 1.0. Capital allocation: dividends €2,635M + buybacks €1,861M FY25, net cash position. Key risks: marginal ROIC negative, valoración exigente, cloud competition, restructuring recurrence. Respond in technical Spanish, direct, numerical, EUR units.",
+
+  "driveLinks": {
+    "valuationReport": "",
+    "thesisBreaker": "",
+    "mungerDigital": "",
+    "excelModel": ""
+  }
 }
