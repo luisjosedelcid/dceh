@@ -2,6 +2,7 @@
 // Header: x-admin-token: <token>
 
 const { verifyAdminToken } = require('./_admin-auth');
+const { sbInsert } = require('./_supabase');
 
 module.exports = async (req, res) => {
   if (req.method !== 'DELETE' && req.method !== 'POST') {
@@ -17,11 +18,12 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const token = req.headers['x-admin-token'];
-  if (!verifyAdminToken(token, ADMIN_TOKEN_SECRET)) {
+  const auth = verifyAdminToken(req.headers['x-admin-token'], ADMIN_TOKEN_SECRET);
+  if (!auth) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
+  const actor = auth.email || 'unknown';
 
   const folder = (req.query.folder || '').toString();
   if (!['monthly', 'committee', 'annual'].includes(folder)) {
@@ -52,6 +54,14 @@ module.exports = async (req, res) => {
       res.status(502).json({ error: 'Delete failed', detail: txt.slice(0, 200) });
       return;
     }
+
+    // Audit (best-effort, non-blocking)
+    sbInsert('report_audit', {
+      actor_email: actor,
+      action: 'delete',
+      folder,
+      filename,
+    }).catch(() => {});
 
     res.status(200).json({ ok: true });
   } catch (e) {

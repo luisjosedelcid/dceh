@@ -88,6 +88,49 @@
   .modal .err{font-size:11px;color:var(--red);margin-bottom:10px;min-height:14px}
 
   footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
+
+  /* TABS */
+  .tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin-bottom:20px}
+  .tab{font-family:inherit;font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--gray-mid);cursor:pointer;padding:12px 18px}
+  .tab:hover{color:var(--navy)}
+  .tab.active{color:var(--navy);border-bottom-color:var(--gold)}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+
+  /* AUDIT LOG */
+  .audit-controls{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .audit-controls select{font-family:inherit;font-size:11px;padding:6px 10px;border:1px solid var(--rule);background:var(--white);color:var(--navy)}
+  .audit-table{background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);overflow:hidden}
+  .audit-row{display:grid;grid-template-columns:140px 90px 200px 1fr 80px;gap:12px;padding:10px 16px;font-size:12px;border-bottom:1px solid rgba(27,38,66,0.04);align-items:center}
+  .audit-row:last-child{border-bottom:none}
+  .audit-row.head{background:var(--navy);color:var(--white);font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase}
+  .audit-row.head a{color:var(--white)}
+  .audit-ts{color:var(--gray-mid);font-size:11px;font-variant-numeric:tabular-nums}
+  .audit-action{display:inline-block;padding:2px 8px;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;border:1px solid var(--rule)}
+  .audit-action.upload{color:#2a7a56;border-color:rgba(42,122,86,0.3);background:rgba(42,122,86,0.05)}
+  .audit-action.delete{color:var(--red);border-color:rgba(155,35,53,0.3);background:rgba(155,35,53,0.05)}
+  .audit-action.archive{color:var(--gold);border-color:var(--gold-rule);background:var(--gold-dim)}
+  .audit-action.login{color:var(--navy);border-color:var(--rule);background:transparent}
+  .audit-actor{font-weight:500;color:var(--navy)}
+  .audit-detail{color:var(--gray-mid);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .audit-folder{font-size:10px;color:var(--gray-mid);letter-spacing:0.08em;text-transform:uppercase;text-align:right}
+  @media (max-width:720px){
+    .audit-row{grid-template-columns:1fr;gap:4px;padding:12px}
+    .audit-row.head{display:none}
+    .audit-folder{text-align:left}
+  }
+
+  /* HISTORY MODAL */
+  .history-modal{max-width:560px}
+  .history-list{margin-top:14px;max-height:50vh;overflow:auto}
+  .history-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--rule);font-size:12px}
+  .history-item:last-child{border-bottom:none}
+  .history-item.current{background:var(--gold-dim);border-left:3px solid var(--gold);padding-left:9px}
+  .history-item-meta{color:var(--gray-mid);font-size:10px;letter-spacing:0.08em;text-transform:uppercase}
+  .history-item-link{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);text-decoration:none;border:1px solid transparent;padding:4px 8px}
+  .history-item-link:hover{border-color:var(--gold-rule)}
+  .sfile-history{font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-mid);background:transparent;border:1px solid var(--rule);cursor:pointer;padding:6px 10px;margin-left:8px;font-family:inherit;flex-shrink:0}
+  .sfile-history:hover{color:var(--navy);border-color:var(--navy)}
 </style>
 <link rel="stylesheet" href="/responsive.css"></head>
 <body>
@@ -121,6 +164,15 @@
       <button class="btn ghost" id="btn-admin" type="button">Admin login</button>
     </div>
   </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" data-tab="reports" type="button">Reports</button>
+    <button class="tab" data-tab="activity" type="button" id="tab-activity">Activity log</button>
+  </div>
+
+  <!-- TAB: REPORTS -->
+  <div class="tab-panel active" data-panel="reports">
 
   <!-- MONTHLY CLOSE -->
   <div class="section">
@@ -179,18 +231,57 @@
     </div>
   </div>
 
+  </div><!-- /tab-panel reports -->
+
+  <!-- TAB: ACTIVITY -->
+  <div class="tab-panel" data-panel="activity">
+    <div class="audit-controls">
+      <span style="font-size:11px;color:var(--gray-mid);letter-spacing:0.08em;text-transform:uppercase">Filter</span>
+      <select id="audit-folder-filter">
+        <option value="">All folders</option>
+        <option value="monthly">Monthly Close</option>
+        <option value="committee">Investment Committee</option>
+        <option value="annual">Annual Report</option>
+      </select>
+      <button class="btn ghost" type="button" id="btn-audit-refresh" style="margin-left:auto">Refresh</button>
+    </div>
+    <div class="audit-table" id="audit-table">
+      <div class="audit-row head">
+        <div>Timestamp</div>
+        <div>Action</div>
+        <div>Actor</div>
+        <div>File</div>
+        <div class="audit-folder">Folder</div>
+      </div>
+      <div id="audit-body"><div class="loading-files">Sign in as admin to view activity</div></div>
+    </div>
+  </div>
+
 </main>
 
 <!-- LOGIN MODAL -->
 <div class="modal-bg" id="login-modal">
   <div class="modal">
     <h2>Admin login</h2>
-    <p>Enter the admin password to upload or delete reports.</p>
-    <input type="password" id="admin-pw" placeholder="Admin password" autocomplete="current-password">
+    <p>Enter your email and password to upload or delete reports.</p>
+    <input type="email" id="admin-email" placeholder="Email" autocomplete="username" value="luis@dceholdings.com">
+    <input type="password" id="admin-pw" placeholder="Password" autocomplete="current-password">
     <div class="err" id="login-err"></div>
     <div class="modal-actions">
       <button class="btn ghost" type="button" id="btn-cancel">Cancel</button>
       <button class="btn" type="button" id="btn-submit">Sign in</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY MODAL -->
+<div class="modal-bg" id="history-modal">
+  <div class="modal history-modal">
+    <h2 id="history-title">Version history</h2>
+    <p id="history-sub" style="font-size:11px">Loading…</p>
+    <div class="history-list" id="history-list"></div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn ghost" type="button" id="btn-history-close">Close</button>
     </div>
   </div>
 </div>
@@ -203,6 +294,7 @@
 <script>
 const TOKEN_KEY = 'dce_admin_token';
 const TOKEN_EXP_KEY = 'dce_admin_exp';
+const USER_KEY = 'dce_admin_user';
 const FOLDERS = ['monthly', 'committee', 'annual'];
 
 function isAdmin() {
@@ -212,9 +304,20 @@ function isAdmin() {
   if (exp < Math.floor(Date.now() / 1000)) {
     sessionStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(TOKEN_EXP_KEY);
+    sessionStorage.removeItem(USER_KEY);
     return false;
   }
   return true;
+}
+function currentUser() {
+  try { return JSON.parse(sessionStorage.getItem(USER_KEY) || 'null'); } catch { return null; }
+}
+function fmtTs(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('en-US', { month:'short', day:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  } catch { return iso; }
 }
 
 function fmtSize(bytes) {
@@ -239,8 +342,10 @@ function refreshAdminUI() {
   const label = document.getElementById('admin-label');
   const btn = document.getElementById('btn-admin');
   if (admin) {
+    const u = currentUser();
+    const who = u && u.displayName ? u.displayName : (u && u.email) || 'Admin';
     bar.classList.add('is-admin');
-    label.innerHTML = '<strong>Admin mode</strong> · upload &amp; delete enabled';
+    label.innerHTML = `<strong>${escapeHtml(who)}</strong> · admin mode · upload &amp; delete enabled`;
     btn.textContent = 'Sign out';
     btn.classList.remove('ghost');
     btn.classList.add('danger');
@@ -276,6 +381,7 @@ async function loadFolder(folder) {
             <div class="sfile-detail">${detail}</div>
           </div>
           <a class="sfile-action" href="${f.url}" target="_blank" rel="noopener">Open →</a>
+          <button class="sfile-history" data-folder="${folder}" data-filename="${escapeHtml(f.name)}" type="button" title="Version history">History</button>
           <button class="sfile-delete" data-folder="${folder}" data-filename="${escapeHtml(f.name)}" type="button">Delete</button>
         </div>
       `;
@@ -314,23 +420,28 @@ document.getElementById('btn-cancel').addEventListener('click', () => modal.clas
 modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('show'); });
 pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-submit').click(); });
 
+const emailInput = document.getElementById('admin-email');
+emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') pwInput.focus(); });
+
 document.getElementById('btn-submit').addEventListener('click', async () => {
   const pw = pwInput.value;
+  const email = emailInput.value.trim();
   if (!pw) { errEl.textContent = 'Password required'; return; }
   errEl.textContent = 'Signing in…';
   try {
     const r = await fetch('/api/admin-login', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ password: pw }),
+      body: JSON.stringify({ email, password: pw }),
     });
     const data = await r.json();
     if (!r.ok) {
-      errEl.textContent = data.error || 'Invalid password';
+      errEl.textContent = data.error || 'Invalid email or password';
       return;
     }
     sessionStorage.setItem(TOKEN_KEY, data.token);
     sessionStorage.setItem(TOKEN_EXP_KEY, String(data.expiresAt));
+    if (data.user) sessionStorage.setItem(USER_KEY, JSON.stringify(data.user));
     modal.classList.remove('show');
     refreshAdminUI();
   } catch (e) {
@@ -398,6 +509,119 @@ document.addEventListener('click', async e => {
     btn.textContent = 'Delete';
     alert('Delete failed: ' + (err.message || err));
   }
+});
+
+// ── TABS ─────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.querySelector(`.tab-panel[data-panel="${t.dataset.tab}"]`).classList.add('active');
+    if (t.dataset.tab === 'activity') loadAudit();
+  });
+});
+
+// ── AUDIT LOG ────────────────────────────────────────────
+const auditBody = document.getElementById('audit-body');
+const auditFolderFilter = document.getElementById('audit-folder-filter');
+document.getElementById('btn-audit-refresh').addEventListener('click', () => loadAudit());
+auditFolderFilter.addEventListener('change', () => loadAudit());
+
+async function loadAudit() {
+  if (!isAdmin()) {
+    auditBody.innerHTML = '<div class="loading-files">Sign in as admin to view activity</div>';
+    return;
+  }
+  auditBody.innerHTML = '<div class="loading-files">Loading…</div>';
+  try {
+    const folder = auditFolderFilter.value;
+    const qs = new URLSearchParams({ limit: '200' });
+    if (folder) qs.set('folder', folder);
+    const token = sessionStorage.getItem(TOKEN_KEY);
+    const r = await fetch(`/api/list-audit?${qs}`, { headers: { 'x-admin-token': token } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    const entries = data.entries || [];
+    if (entries.length === 0) {
+      auditBody.innerHTML = '<div class="empty-files">No activity yet</div>';
+      return;
+    }
+    auditBody.innerHTML = entries.map(e => {
+      const folderLbl = e.folder ? e.folder.charAt(0).toUpperCase() + e.folder.slice(1) : '—';
+      const fileLbl = e.filename || (e.action === 'login' ? '(session)' : '—');
+      const detailLbl = e.detail ? ` — ${escapeHtml(e.detail)}` : '';
+      return `
+        <div class="audit-row">
+          <div class="audit-ts">${escapeHtml(fmtTs(e.ts))}</div>
+          <div><span class="audit-action ${escapeHtml(e.action)}">${escapeHtml(e.action)}</span></div>
+          <div class="audit-actor">${escapeHtml(e.actor_email)}</div>
+          <div class="audit-detail">${escapeHtml(fileLbl)}${detailLbl}</div>
+          <div class="audit-folder">${escapeHtml(folderLbl)}</div>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    auditBody.innerHTML = `<div class="empty-files">Error: ${escapeHtml(String(e.message || e))}</div>`;
+  }
+}
+
+// ── HISTORY MODAL ────────────────────────────────────────
+const historyModal = document.getElementById('history-modal');
+document.getElementById('btn-history-close').addEventListener('click', () => historyModal.classList.remove('show'));
+historyModal.addEventListener('click', e => { if (e.target === historyModal) historyModal.classList.remove('show'); });
+
+document.addEventListener('click', async e => {
+  const btn = e.target.closest('.sfile-history');
+  if (!btn) return;
+  if (!isAdmin()) { alert('Sign in as admin to view history.'); return; }
+  const folder = btn.dataset.folder;
+  const filename = btn.dataset.filename;
+  document.getElementById('history-title').textContent = filename;
+  document.getElementById('history-sub').textContent = 'Loading…';
+  document.getElementById('history-list').innerHTML = '';
+  historyModal.classList.add('show');
+  try {
+    const token = sessionStorage.getItem(TOKEN_KEY);
+    const r = await fetch(`/api/list-versions?folder=${folder}&filename=${encodeURIComponent(filename)}`, {
+      headers: { 'x-admin-token': token },
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    const versions = data.versions || [];
+    document.getElementById('history-sub').textContent =
+      versions.length === 0 ? 'No previous versions — only the current copy exists.' : `${versions.length} previous version${versions.length === 1 ? '' : 's'}`;
+    const html = [];
+    html.push(`
+      <div class="history-item current">
+        <div>
+          <div style="font-weight:600;color:var(--navy)">Current</div>
+          <div class="history-item-meta">Latest version</div>
+        </div>
+        <a class="history-item-link" href="${data.currentUrl}" target="_blank" rel="noopener">Open</a>
+      </div>
+    `);
+    versions.forEach(v => {
+      const sizeMb = v.sizeBytes ? (v.sizeBytes / 1024 / 1024).toFixed(2) + ' MB' : '—';
+      html.push(`
+        <div class="history-item">
+          <div>
+            <div>${escapeHtml(fmtTs(new Date(v.ts).toISOString()))}</div>
+            <div class="history-item-meta">${escapeHtml(sizeMb)}</div>
+          </div>
+          <a class="history-item-link" href="${v.url}" target="_blank" rel="noopener">Open</a>
+        </div>
+      `);
+    });
+    document.getElementById('history-list').innerHTML = html.join('');
+  } catch (err) {
+    document.getElementById('history-sub').textContent = 'Error: ' + (err.message || err);
+  }
+});
+
+// ── SIGN OUT clears user ─────────────────────────────────
+document.getElementById('btn-admin').addEventListener('click', () => {
+  if (isAdmin()) sessionStorage.removeItem(USER_KEY);
 });
 
 // INIT
