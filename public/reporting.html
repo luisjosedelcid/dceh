@@ -16,7 +16,7 @@
 
   header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
   .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
-  .hnav{display:flex;gap:8px}
+  .hnav{display:flex;gap:8px;align-items:center}
   .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
   .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
   .hnav a.active{color:var(--gold);border-color:var(--gold)}
@@ -25,7 +25,22 @@
   .slbl{font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:10px}
   .slbl::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
   h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;color:var(--navy);margin-bottom:4px}
-  .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:32px}
+  .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:24px}
+
+  /* ADMIN BAR */
+  .admin-bar{display:flex;align-items:center;justify-content:space-between;background:var(--white);border:1px solid var(--rule);padding:12px 20px;margin-bottom:20px;font-size:12px}
+  .admin-bar.is-admin{border-color:var(--gold);border-left:3px solid var(--gold)}
+  .admin-status{color:var(--gray-mid);display:flex;align-items:center;gap:10px}
+  .admin-dot{width:8px;height:8px;border-radius:50%;background:var(--gray-mid)}
+  .is-admin .admin-dot{background:var(--gold)}
+  .is-admin .admin-status strong{color:var(--navy)}
+  .btn{font-family:inherit;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:8px 14px;border:1px solid var(--navy);background:var(--navy);color:var(--white);cursor:pointer;transition:all .15s}
+  .btn:hover{background:var(--gold);border-color:var(--gold)}
+  .btn.ghost{background:transparent;color:var(--navy)}
+  .btn.ghost:hover{background:var(--navy);color:var(--white)}
+  .btn.danger{background:transparent;color:var(--red);border-color:var(--red)}
+  .btn.danger:hover{background:var(--red);color:var(--white)}
+  .btn:disabled{opacity:0.5;cursor:not-allowed}
 
   /* SECTION */
   .section{background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);margin-bottom:20px;transition:border-color .2s}
@@ -40,13 +55,37 @@
   .sfile{display:flex;align-items:center;padding:12px 24px;border-bottom:1px solid rgba(27,38,66,0.04);transition:background .2s;text-decoration:none;color:var(--ink)}
   .sfile:last-child{border-bottom:none}
   .sfile:hover{background:rgba(184,139,71,0.03)}
-  .sfile-icon{font-size:16px;margin-right:14px;flex-shrink:0}
-  .sfile-info{flex:1}
-  .sfile-name{font-size:13px;font-weight:600;color:var(--navy)}
+  .sfile-icon{font-size:16px;margin-right:14px;flex-shrink:0;color:var(--gold)}
+  .sfile-info{flex:1;min-width:0}
+  .sfile-name{font-size:13px;font-weight:600;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .sfile-detail{font-size:11px;color:var(--gray-mid);margin-top:1px}
-  .sfile-action{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);flex-shrink:0}
+  .sfile-action{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);flex-shrink:0;text-decoration:none;padding:6px 10px;border:1px solid transparent}
+  .sfile-action:hover{border-color:var(--gold-rule)}
+  .sfile-delete{font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--red);background:transparent;border:1px solid rgba(155,35,53,0.3);cursor:pointer;padding:6px 10px;margin-left:8px;font-family:inherit;flex-shrink:0}
+  .sfile-delete:hover{background:var(--red);color:var(--white);border-color:var(--red)}
 
   .empty-files{padding:24px;text-align:center;color:var(--gray-mid);font-size:12px;font-style:italic}
+  .loading-files{padding:24px;text-align:center;color:var(--gray-mid);font-size:11px;letter-spacing:0.1em;text-transform:uppercase}
+
+  /* UPLOAD ZONE */
+  .upload-zone{border-top:1px dashed var(--gold-rule);padding:14px 24px;background:rgba(184,139,71,0.02);display:none}
+  .is-admin-mode .upload-zone{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .upload-zone label{font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);cursor:pointer;padding:8px 14px;border:1px dashed var(--gold);transition:all .15s}
+  .upload-zone label:hover{background:var(--gold);color:var(--white);border-style:solid}
+  .upload-zone input[type=file]{display:none}
+  .upload-zone .upload-hint{font-size:10px;color:var(--gray-mid);font-style:italic}
+  .upload-zone .upload-progress{font-size:11px;color:var(--navy);font-weight:600;margin-left:auto}
+
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(27,38,66,0.6);display:none;align-items:center;justify-content:center;z-index:100}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--white);border-top:3px solid var(--gold);padding:32px;width:90%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+  .modal h2{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:6px}
+  .modal p{font-size:12px;color:var(--gray-mid);margin-bottom:18px}
+  .modal input{width:100%;padding:10px 12px;border:1px solid var(--rule);font-family:inherit;font-size:13px;margin-bottom:14px;background:var(--cream)}
+  .modal input:focus{outline:none;border-color:var(--gold)}
+  .modal .modal-actions{display:flex;gap:8px;justify-content:flex-end}
+  .modal .err{font-size:11px;color:var(--red);margin-bottom:10px;min-height:14px}
 
   footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
 </style>
@@ -66,10 +105,21 @@
   </div>
 </header>
 
-<main>
+<main id="main-root">
   <div class="slbl">DCE Holdings — Investment Office</div>
   <h1>Reporting Hub</h1>
   <div class="sub">Periodic reports, committee minutes, and annual reviews.</div>
+
+  <!-- ADMIN BAR -->
+  <div class="admin-bar" id="admin-bar">
+    <div class="admin-status">
+      <span class="admin-dot"></span>
+      <span id="admin-label">Read-only mode</span>
+    </div>
+    <div>
+      <button class="btn ghost" id="btn-admin" type="button">Admin login</button>
+    </div>
+  </div>
 
   <!-- MONTHLY CLOSE -->
   <div class="section">
@@ -78,15 +128,15 @@
       <div class="section-meta">Monthly</div>
     </div>
     <div class="section-desc">Portfolio performance, NAV reconciliation, and capital activity summary.</div>
-    <div class="section-files">
-      <a href="/docs/DCE_Monthly_Close_2026-03.pdf" target="_blank" class="sfile">
-        <div class="sfile-icon">📄</div>
-        <div class="sfile-info">
-          <div class="sfile-name">Monthly Close · Marzo 2026</div>
-          <div class="sfile-detail">PDF · 1 posición activa (MSFT) · P&amp;L −$31.83 (−7.92%)</div>
-        </div>
-        <div class="sfile-action">Open →</div>
-      </a>
+    <div class="section-files" data-folder="monthly">
+      <div class="loading-files">Loading…</div>
+    </div>
+    <div class="upload-zone">
+      <label>+ Upload PDF
+        <input type="file" accept="application/pdf" data-folder="monthly">
+      </label>
+      <span class="upload-hint">PDF · max 25 MB · filename = display name</span>
+      <span class="upload-progress" data-progress="monthly"></span>
     </div>
   </div>
 
@@ -97,8 +147,15 @@
       <div class="section-meta">Ad hoc</div>
     </div>
     <div class="section-desc">Meeting minutes, investment decisions, thesis reviews, and vote records.</div>
-    <div class="section-files">
-      <div class="empty-files">No reports uploaded yet.</div>
+    <div class="section-files" data-folder="committee">
+      <div class="loading-files">Loading…</div>
+    </div>
+    <div class="upload-zone">
+      <label>+ Upload PDF
+        <input type="file" accept="application/pdf" data-folder="committee">
+      </label>
+      <span class="upload-hint">PDF · max 25 MB · filename = display name</span>
+      <span class="upload-progress" data-progress="committee"></span>
     </div>
   </div>
 
@@ -109,17 +166,242 @@
       <div class="section-meta">Yearly</div>
     </div>
     <div class="section-desc">Year-end performance review, capital allocation retrospective, and forward outlook.</div>
-    <div class="section-files">
-      <div class="empty-files">No reports uploaded yet.</div>
+    <div class="section-files" data-folder="annual">
+      <div class="loading-files">Loading…</div>
+    </div>
+    <div class="upload-zone">
+      <label>+ Upload PDF
+        <input type="file" accept="application/pdf" data-folder="annual">
+      </label>
+      <span class="upload-hint">PDF · max 25 MB · filename = display name</span>
+      <span class="upload-progress" data-progress="annual"></span>
     </div>
   </div>
 
 </main>
+
+<!-- LOGIN MODAL -->
+<div class="modal-bg" id="login-modal">
+  <div class="modal">
+    <h2>Admin login</h2>
+    <p>Enter the admin password to upload or delete reports.</p>
+    <input type="password" id="admin-pw" placeholder="Admin password" autocomplete="current-password">
+    <div class="err" id="login-err"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" type="button" id="btn-cancel">Cancel</button>
+      <button class="btn" type="button" id="btn-submit">Sign in</button>
+    </div>
+  </div>
+</div>
 
 <footer>
   <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
   <span>Reporting Hub</span>
 </footer>
 
+<script>
+const TOKEN_KEY = 'dce_admin_token';
+const TOKEN_EXP_KEY = 'dce_admin_exp';
+const FOLDERS = ['monthly', 'committee', 'annual'];
+
+function isAdmin() {
+  const tok = sessionStorage.getItem(TOKEN_KEY);
+  const exp = parseInt(sessionStorage.getItem(TOKEN_EXP_KEY) || '0', 10);
+  if (!tok || !exp) return false;
+  if (exp < Math.floor(Date.now() / 1000)) {
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_EXP_KEY);
+    return false;
+  }
+  return true;
+}
+
+function fmtSize(bytes) {
+  if (!bytes) return '—';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: '2-digit' });
+  } catch { return ''; }
+}
+
+function refreshAdminUI() {
+  const admin = isAdmin();
+  document.body.classList.toggle('is-admin-mode', admin);
+  const bar = document.getElementById('admin-bar');
+  const label = document.getElementById('admin-label');
+  const btn = document.getElementById('btn-admin');
+  if (admin) {
+    bar.classList.add('is-admin');
+    label.innerHTML = '<strong>Admin mode</strong> · upload &amp; delete enabled';
+    btn.textContent = 'Sign out';
+    btn.classList.remove('ghost');
+    btn.classList.add('danger');
+  } else {
+    bar.classList.remove('is-admin');
+    label.textContent = 'Read-only mode';
+    btn.textContent = 'Admin login';
+    btn.classList.add('ghost');
+    btn.classList.remove('danger');
+  }
+}
+
+async function loadFolder(folder) {
+  const container = document.querySelector(`.section-files[data-folder="${folder}"]`);
+  container.innerHTML = '<div class="loading-files">Loading…</div>';
+  try {
+    const r = await fetch(`/api/list-reports?folder=${folder}`);
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    const files = data.files || [];
+    if (files.length === 0) {
+      container.innerHTML = '<div class="empty-files">No reports uploaded yet.</div>';
+      return;
+    }
+    container.innerHTML = files.map(f => {
+      const displayName = f.name.replace(/\.pdf$/i, '').replace(/_/g, ' ');
+      const detail = `PDF · ${fmtSize(f.size)}${f.updated_at ? ' · ' + fmtDate(f.updated_at) : ''}`;
+      return `
+        <div class="sfile">
+          <div class="sfile-icon">▤</div>
+          <div class="sfile-info">
+            <div class="sfile-name">${escapeHtml(displayName)}</div>
+            <div class="sfile-detail">${detail}</div>
+          </div>
+          <a class="sfile-action" href="${f.url}" target="_blank" rel="noopener">Open →</a>
+          <button class="sfile-delete" data-folder="${folder}" data-filename="${escapeHtml(f.name)}" type="button">Delete</button>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = `<div class="empty-files">Error loading reports: ${escapeHtml(String(e.message || e))}</div>`;
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function loadAll() {
+  await Promise.all(FOLDERS.map(loadFolder));
+}
+
+// LOGIN FLOW
+const modal = document.getElementById('login-modal');
+const pwInput = document.getElementById('admin-pw');
+const errEl = document.getElementById('login-err');
+
+document.getElementById('btn-admin').addEventListener('click', () => {
+  if (isAdmin()) {
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_EXP_KEY);
+    refreshAdminUI();
+    return;
+  }
+  errEl.textContent = '';
+  pwInput.value = '';
+  modal.classList.add('show');
+  setTimeout(() => pwInput.focus(), 50);
+});
+document.getElementById('btn-cancel').addEventListener('click', () => modal.classList.remove('show'));
+modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('show'); });
+pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-submit').click(); });
+
+document.getElementById('btn-submit').addEventListener('click', async () => {
+  const pw = pwInput.value;
+  if (!pw) { errEl.textContent = 'Password required'; return; }
+  errEl.textContent = 'Signing in…';
+  try {
+    const r = await fetch('/api/admin-login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pw }),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      errEl.textContent = data.error || 'Invalid password';
+      return;
+    }
+    sessionStorage.setItem(TOKEN_KEY, data.token);
+    sessionStorage.setItem(TOKEN_EXP_KEY, String(data.expiresAt));
+    modal.classList.remove('show');
+    refreshAdminUI();
+  } catch (e) {
+    errEl.textContent = 'Network error';
+  }
+});
+
+// UPLOAD HANDLERS
+FOLDERS.forEach(folder => {
+  const input = document.querySelector(`input[type=file][data-folder="${folder}"]`);
+  input.addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!isAdmin()) { alert('Sign in as admin first.'); return; }
+    if (file.size > 26214400) { alert('File too large (max 25 MB).'); input.value = ''; return; }
+    if (!file.name.toLowerCase().endsWith('.pdf')) { alert('PDF files only.'); input.value = ''; return; }
+
+    const progressEl = document.querySelector(`[data-progress="${folder}"]`);
+    progressEl.textContent = `Uploading ${file.name}…`;
+    try {
+      const token = sessionStorage.getItem(TOKEN_KEY);
+      const url = `/api/upload-report?folder=${folder}&filename=${encodeURIComponent(file.name)}`;
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/pdf',
+          'x-admin-token': token,
+        },
+        body: file,
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Upload failed');
+      progressEl.textContent = '✓ Uploaded';
+      setTimeout(() => { progressEl.textContent = ''; }, 2500);
+      input.value = '';
+      loadFolder(folder);
+    } catch (err) {
+      progressEl.textContent = '';
+      alert('Upload failed: ' + (err.message || err));
+    }
+  });
+});
+
+// DELETE HANDLER (event delegation)
+document.addEventListener('click', async e => {
+  const btn = e.target.closest('.sfile-delete');
+  if (!btn) return;
+  const folder = btn.dataset.folder;
+  const filename = btn.dataset.filename;
+  if (!confirm(`Delete "${filename}"?\n\nThis cannot be undone.`)) return;
+  if (!isAdmin()) { alert('Sign in as admin first.'); return; }
+  btn.disabled = true;
+  btn.textContent = 'Deleting…';
+  try {
+    const token = sessionStorage.getItem(TOKEN_KEY);
+    const r = await fetch(`/api/delete-report?folder=${folder}&filename=${encodeURIComponent(filename)}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-token': token },
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Delete failed');
+    loadFolder(folder);
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Delete';
+    alert('Delete failed: ' + (err.message || err));
+  }
+});
+
+// INIT
+refreshAdminUI();
+loadAll();
+</script>
 </body>
 </html>
