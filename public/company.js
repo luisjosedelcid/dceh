@@ -49,11 +49,22 @@ function destroyChart(id) {
 
 /* ── init ─────────────────────────────────────────────────── */
 async function initDashboard() {
+  // Resolve ticker from (1) ?ticker=XXX query param, (2) URL path /xxx, (3) default BKNG
+  // Vercel rewrites strip the destination query string from location.search,
+  // so we also parse window.location.pathname (e.g. '/sap' -> 'SAP').
   const params = new URLSearchParams(window.location.search);
-  const ticker = (params.get('ticker') || 'BKNG').toUpperCase();
+  let ticker = params.get('ticker');
+  if (!ticker) {
+    const path = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+    // path could be 'sap', 'bkng', 'company.html', etc.
+    if (path && path !== 'company.html' && path !== 'company' && !path.includes('/')) {
+      ticker = path;
+    }
+  }
+  ticker = (ticker || 'BKNG').toUpperCase();
 
   try {
-    const res = await fetch(`companies/${ticker.toLowerCase()}.json`);
+    const res = await fetch(`/companies/${ticker.toLowerCase()}.json`);
     if (!res.ok) throw new Error(`No data file for ${ticker}`);
     D = await res.json();
     window.D = D;  // expose to inline scripts in company.html
