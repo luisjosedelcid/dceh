@@ -1,0 +1,217 @@
+/* ============================================================
+   DCE Holdings — Responsive Overrides (MVP)
+   Loaded after each page's inline <style> so these rules win.
+   Targets: mobile (≤720px) and tablet (721–1024px).
+   ============================================================ */
+
+/* ─────────────────────────────────────────────────────
+   GLOBAL — applies everywhere
+   ───────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  /* HEADER: shrink padding, allow wrap */
+  header {
+    padding: 14px 18px !important;
+    min-height: auto !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+  header .logo,
+  header .h-logo {
+    font-size: 16px !important;
+  }
+  /* Hide subtitle / divider in header on mobile to save space */
+  header .h-divider,
+  header .h-subtitle,
+  header .h-date {
+    display: none !important;
+  }
+
+  /* NAV: wrap to multiple rows, smaller chips */
+  .hnav {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+  .hnav a {
+    font-size: 9px !important;
+    padding: 6px 10px !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  /* MAIN: reduce padding */
+  main {
+    padding: 24px 18px 40px !important;
+  }
+
+  /* H1 / titles: scale down */
+  h1 {
+    font-size: 22px !important;
+    line-height: 1.2 !important;
+  }
+  .sub, .page-sub {
+    font-size: 12px !important;
+  }
+
+  /* TABLES: enable horizontal scroll */
+  table {
+    min-width: max-content;
+  }
+  /* Wrap any direct table parent in horizontal scroll */
+  main > table,
+  .table-wrap,
+  .universe-tbl,
+  .fin-tbl {
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+
+  /* GENERIC: any div that uses inline grid 3-5 cols → single col */
+  /* This catches the home nav cards and any KPI rows */
+  div[style*="grid-template-columns:repeat(3"],
+  div[style*="grid-template-columns: repeat(3"],
+  div[style*="grid-template-columns:repeat(4"],
+  div[style*="grid-template-columns: repeat(4"],
+  div[style*="grid-template-columns:repeat(5"],
+  div[style*="grid-template-columns: repeat(5"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* FOOTER: stack */
+  footer {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+    padding: 16px 18px !important;
+    text-align: left !important;
+  }
+
+  /* CMD+K MODAL: ensure usable on small screens */
+  .dce-search-overlay { padding: 0 !important; }
+  .dce-search-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+  .dce-search-trigger kbd { display: none !important; }
+}
+
+/* ─────────────────────────────────────────────────────
+   HOME-SPECIFIC: hero + cards
+   ───────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .hero {
+    padding: 32px 18px 24px !important;
+  }
+  .hero-eyebrow {
+    font-size: 8px !important;
+    letter-spacing: 0.18em !important;
+  }
+  .hero-title {
+    font-size: 28px !important;
+    line-height: 1.15 !important;
+  }
+  .hero-desc {
+    font-size: 13px !important;
+  }
+
+  /* Universe section on home */
+  .universe {
+    padding: 24px 18px 40px !important;
+  }
+  .cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .company-card {
+    padding: 18px !important;
+  }
+  .card-metrics {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Hide the date/divider in the home header inline navbar */
+  header > div[style*="display:flex"] > div[style*="width:1px"] {
+    display: none !important;
+  }
+  header > div[style*="display:flex"] {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    justify-content: flex-end !important;
+  }
+
+  /* Earnings widget: stack vertical */
+  .earnings-widget {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .ew-label {
+    border-right: none !important;
+    border-bottom: 1px solid rgba(184,139,71,0.15) !important;
+    min-width: 0 !important;
+    padding: 12px 16px !important;
+  }
+  .ew-list {
+    padding: 8px 8px !important;
+  }
+  .ew-cta {
+    border-left: none !important;
+    border-top: 1px solid rgba(184,139,71,0.15) !important;
+    justify-content: center !important;
+    padding: 12px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────
+   PORTFOLIO: KPI cards
+   ───────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  /* portfolio.html uses an inline grid 5-col for KPIs — already covered above,
+     but the gap stays tight here */
+  div[style*="grid-template-columns:repeat(5,1fr)"] {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────
+   CALENDAR: refine its own breakpoint
+   ───────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .calendar-page .kpi-row,
+  main .kpi-row {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────
+   TABLET (721–1024)
+   ───────────────────────────────────────────────────── */
+@media (min-width: 721px) and (max-width: 1024px) {
+  header {
+    padding: 12px 28px !important;
+  }
+  main {
+    padding: 28px 28px 48px !important;
+  }
+  .hero {
+    padding: 48px 28px 36px !important;
+  }
+  .hero-title {
+    font-size: 38px !important;
+  }
+  /* Inline 5-col KPI → 3-col on tablet */
+  div[style*="grid-template-columns:repeat(5,1fr)"] {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  .hnav a {
+    font-size: 9px !important;
+    padding: 7px 12px !important;
+  }
+}
