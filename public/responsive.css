@@ -89,17 +89,21 @@
     text-align: left !important;
   }
 
-  /* CMD+K MODAL: ensure usable on small screens */
-  .dce-search-overlay { padding: 0 !important; }
-  .dce-search-modal {
+  /* CMD+K MODAL: full-width takeover on small screens */
+  .dce-search-overlay {
+    padding-top: 0 !important;
+    align-items: stretch !important;
+  }
+  .dce-search-panel {
     width: 100% !important;
     max-width: 100% !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    height: 100vh !important;
     max-height: 100vh !important;
+    height: 100vh !important;
+    border-top: none !important;
   }
+  .dce-search-input { font-size: 16px !important; } /* prevents iOS zoom */
   .dce-search-trigger kbd { display: none !important; }
+  .dce-search-trigger { padding: 6px 10px !important; }
 }
 
 /* ─────────────────────────────────────────────────────
