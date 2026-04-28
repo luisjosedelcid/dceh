@@ -2029,9 +2029,9 @@
     ]
   },
   "documents": {
-    "valuationReportUrl": "https://drive.google.com/file/d/1x7B4NwSyTsnOHAo7-LLTiljn-A2WFC3M/view?usp=drivesdk",
-    "thesisBreakerUrl": "https://drive.google.com/file/d/1ddDYvwEHXiTpupSZvYnQeic1uwJeBDtg/view?usp=drivesdk",
-    "mungerDigitalUrl": null
+    "valuationReportUrl": "/docs/DCE_SAP_Valuation_Report.pdf",
+    "thesisBreakerUrl": "/docs/DCE_SAP_Thesis_Breaker.pdf",
+    "mungerDigitalUrl": "/docs/DCE_SAP_Munger_Digital.pdf"
   },
   "thesisSummary": {
     "verdict": "OVERVALUED",

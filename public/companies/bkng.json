@@ -7,7 +7,6 @@
   "valuationDate": "06-Mar-2026",
   "currency": "USD",
   "currencySymbol": "$",
-
   "overview": {
     "marketCap": 142408,
     "ev": 144459,
@@ -15,14 +14,14 @@
     "debt": 19293,
     "leases": 557,
     "cash": 17785,
-    "stockPrice": 4362.70,
+    "stockPrice": 4362.7,
     "nopatNorm": 7420,
     "fcfLatest": 9087,
     "revenue": 26917,
     "operMargin": 0.345,
     "netMargin": 0.201,
     "fcfMargin": 0.338,
-    "taxRate": 0.20,
+    "taxRate": 0.2,
     "wacc": 0.0861,
     "roic3yr": 0.915,
     "roicLatest": 0.999,
@@ -36,166 +35,1318 @@
     "ebitda": 11056,
     "netIncome": 5404
   },
-
   "financials": {
-    "years": ["FY2020","FY2021","FY2022","FY2023","FY2024","FY2025"],
-    "revenue":      [6796, 10958, 17090, 21365, 23739, 26917],
-    "operIncome":   [-631, 2496, 5102, 5835, 7555, 8825],
-    "netIncome":    [59, 1165, 3058, 4289, 5882, 5404],
-    "ebitda":       [null, null, null, null, null, 11056],
-    "fcf":          [-201, 2516, 6186, 6999, 7894, 9087],
-    "cfo":          [85, 2820, 6554, 7344, 8323, 9409],
-    "buybacks":     [1303, 163, 6621, 10377, 6509, 6440],
-    "dividends":    [0, 0, 0, 0, 0, 1248],
-    "totalAssets":  [21874, 23641, 22542, 24342, 27708, 29264],
-    "totalDebt":    [7086, 5390, 6114, 12215, 10000, 17736],
-    "cashSti":      [10836, 12087, 11899, 15076, 16720, 17785],
-    "equity":       [4893, 6178, 2834, -2744, -4020, -5578],
-    "nopatAdjusted": [1831, 5784, 8821, 6086, 6481, 8358],
-    "operMarginPct": [-9.3, 22.8, 29.9, 27.3, 31.8, 32.8],
-    "netMarginPct":  [0.9, 10.6, 17.9, 20.1, 24.8, 20.1],
+    "years": [
+      "FY2020",
+      "FY2021",
+      "FY2022",
+      "FY2023",
+      "FY2024",
+      "FY2025"
+    ],
+    "revenue": [
+      6796,
+      10958,
+      17090,
+      21365,
+      23739,
+      26917
+    ],
+    "operIncome": [
+      -631,
+      2496,
+      5102,
+      5835,
+      7555,
+      8825
+    ],
+    "netIncome": [
+      59,
+      1165,
+      3058,
+      4289,
+      5882,
+      5404
+    ],
+    "ebitda": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      11056
+    ],
+    "fcf": [
+      -201,
+      2516,
+      6186,
+      6999,
+      7894,
+      9087
+    ],
+    "cfo": [
+      85,
+      2820,
+      6554,
+      7344,
+      8323,
+      9409
+    ],
+    "buybacks": [
+      1303,
+      163,
+      6621,
+      10377,
+      6509,
+      6440
+    ],
+    "dividends": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1248
+    ],
+    "totalAssets": [
+      21874,
+      23641,
+      22542,
+      24342,
+      27708,
+      29264
+    ],
+    "totalDebt": [
+      7086,
+      5390,
+      6114,
+      12215,
+      10000,
+      17736
+    ],
+    "cashSti": [
+      10836,
+      12087,
+      11899,
+      15076,
+      16720,
+      17785
+    ],
+    "equity": [
+      4893,
+      6178,
+      2834,
+      -2744,
+      -4020,
+      -5578
+    ],
+    "nopatAdjusted": [
+      1831,
+      5784,
+      8821,
+      6086,
+      6481,
+      8358
+    ],
+    "operMarginPct": [
+      -9.3,
+      22.8,
+      29.9,
+      27.3,
+      31.8,
+      32.8
+    ],
+    "netMarginPct": [
+      0.9,
+      10.6,
+      17.9,
+      20.1,
+      24.8,
+      20.1
+    ],
     "isRows": [
-      {"l": "REVENUES", "t": "section"},
-      {"l": "Merchant Revenues", "t": "normal", "v": [2117, 3696, 7193, 10936, 14142, 17755]},
-      {"l": "Agency Revenues", "t": "normal", "v": [4314, 6663, 9003, 9414, 8524, 7968]},
-      {"l": "Advertising & Other", "t": "normal", "v": [365, 599, 894, 1015, 1073, 1194]},
-      {"l": "Net Revenues", "t": "subtotal", "v": [6796, 10958, 17090, 21365, 23739, 26917]},
-      {"l": "", "t": "spacer"},
-      {"l": "OPERATING EXPENSES", "t": "section"},
-      {"l": "Marketing Expenses", "t": "normal", "v": [-2179, -3801, -5993, -6773, -7278, -8186], "neg": true},
-      {"l": "Sales and Other Expenses", "t": "normal", "v": [-755, -881, -1986, -2744, -3120, -3453], "neg": true},
-      {"l": "Personnel (incl. SBC)", "t": "normal", "v": [-1944, -2314, -2465, -3294, -3354, -3403], "neg": true},
-      {"l": "General and Administrative", "t": "normal", "v": [-581, -620, -766, -1555, -1036, -857], "neg": true},
-      {"l": "Information Technology", "t": "normal", "v": [-299, -412, -526, -655, -771, -908], "neg": true},
-      {"l": "D&A", "t": "normal", "v": [-458, -421, -451, -504, -591, -623], "neg": true},
-      {"l": "Restructuring / Impairment / Other", "t": "normal", "v": [-1211, -13, 199, -5, -34, -662], "neg": true},
-      {"l": "Total OpEx", "t": "subtotal", "v": [-7427, -8462, -11988, -15530, -16184, -18092], "neg": true},
-      {"l": "", "t": "spacer"},
-      {"l": "Operating Income", "t": "total", "v": [-631, 2496, 5102, 5835, 7555, 8825]},
-      {"l": "Operating Margin", "t": "margin", "v": [-9.3, 22.8, 29.9, 27.3, 31.8, 32.8]},
-      {"l": "", "t": "spacer"},
-      {"l": "NON-OPERATING", "t": "section"},
-      {"l": "Interest Expense", "t": "normal", "v": [-356, -334, -391, -897, -1295, -1617], "neg": true},
-      {"l": "Interest & Dividend Income", "t": "normal", "v": [0, 0, 219, 1020, 1114, 921]},
-      {"l": "Other Income (Expense), Net", "t": "normal", "v": [1554, -697, -1007, -477, -82, -1297]},
-      {"l": "EBT", "t": "subtotal", "v": [567, 1465, 3923, 5481, 7292, 6832]},
-      {"l": "Income Tax Expense", "t": "normal", "v": [-508, -300, -865, -1192, -1410, -1428], "neg": true},
-      {"l": "Effective ETR", "t": "margin", "v": [89.6, 20.5, 22.1, 21.7, 19.3, 20.9]},
-      {"l": "", "t": "spacer"},
-      {"l": "Net Income (GAAP)", "t": "total", "v": [59, 1165, 3058, 4289, 5882, 5404]},
-      {"l": "Net Margin", "t": "margin", "v": [0.9, 10.6, 17.9, 20.1, 24.8, 20.1]},
-      {"l": "", "t": "spacer"},
-      {"l": "DCE ADJUSTMENTS", "t": "section"},
-      {"l": "(+) Impairment + Transformation", "t": "normal", "v": [null, null, null, null, null, 662]},
-      {"l": "(−) S&M Growth Expense", "t": "normal", "v": [null, null, null, null, null, -774], "neg": true},
-      {"l": "Adjusted NOPAT DCE", "t": "total", "v": [2207, 2007, 4082, 4672, 6071, 7590]},
-      {"l": "NOPAT Margin", "t": "margin", "v": [32.5, 18.3, 23.9, 21.9, 25.6, 28.2]}
+      {
+        "l": "REVENUES",
+        "t": "section"
+      },
+      {
+        "l": "Merchant Revenues",
+        "t": "normal",
+        "v": [
+          2117,
+          3696,
+          7193,
+          10936,
+          14142,
+          17755
+        ]
+      },
+      {
+        "l": "Agency Revenues",
+        "t": "normal",
+        "v": [
+          4314,
+          6663,
+          9003,
+          9414,
+          8524,
+          7968
+        ]
+      },
+      {
+        "l": "Advertising & Other",
+        "t": "normal",
+        "v": [
+          365,
+          599,
+          894,
+          1015,
+          1073,
+          1194
+        ]
+      },
+      {
+        "l": "Net Revenues",
+        "t": "subtotal",
+        "v": [
+          6796,
+          10958,
+          17090,
+          21365,
+          23739,
+          26917
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "OPERATING EXPENSES",
+        "t": "section"
+      },
+      {
+        "l": "Marketing Expenses",
+        "t": "normal",
+        "v": [
+          -2179,
+          -3801,
+          -5993,
+          -6773,
+          -7278,
+          -8186
+        ],
+        "neg": true
+      },
+      {
+        "l": "Sales and Other Expenses",
+        "t": "normal",
+        "v": [
+          -755,
+          -881,
+          -1986,
+          -2744,
+          -3120,
+          -3453
+        ],
+        "neg": true
+      },
+      {
+        "l": "Personnel (incl. SBC)",
+        "t": "normal",
+        "v": [
+          -1944,
+          -2314,
+          -2465,
+          -3294,
+          -3354,
+          -3403
+        ],
+        "neg": true
+      },
+      {
+        "l": "General and Administrative",
+        "t": "normal",
+        "v": [
+          -581,
+          -620,
+          -766,
+          -1555,
+          -1036,
+          -857
+        ],
+        "neg": true
+      },
+      {
+        "l": "Information Technology",
+        "t": "normal",
+        "v": [
+          -299,
+          -412,
+          -526,
+          -655,
+          -771,
+          -908
+        ],
+        "neg": true
+      },
+      {
+        "l": "D&A",
+        "t": "normal",
+        "v": [
+          -458,
+          -421,
+          -451,
+          -504,
+          -591,
+          -623
+        ],
+        "neg": true
+      },
+      {
+        "l": "Restructuring / Impairment / Other",
+        "t": "normal",
+        "v": [
+          -1211,
+          -13,
+          199,
+          -5,
+          -34,
+          -662
+        ],
+        "neg": true
+      },
+      {
+        "l": "Total OpEx",
+        "t": "subtotal",
+        "v": [
+          -7427,
+          -8462,
+          -11988,
+          -15530,
+          -16184,
+          -18092
+        ],
+        "neg": true
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "Operating Income",
+        "t": "total",
+        "v": [
+          -631,
+          2496,
+          5102,
+          5835,
+          7555,
+          8825
+        ]
+      },
+      {
+        "l": "Operating Margin",
+        "t": "margin",
+        "v": [
+          -9.3,
+          22.8,
+          29.9,
+          27.3,
+          31.8,
+          32.8
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "NON-OPERATING",
+        "t": "section"
+      },
+      {
+        "l": "Interest Expense",
+        "t": "normal",
+        "v": [
+          -356,
+          -334,
+          -391,
+          -897,
+          -1295,
+          -1617
+        ],
+        "neg": true
+      },
+      {
+        "l": "Interest & Dividend Income",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          219,
+          1020,
+          1114,
+          921
+        ]
+      },
+      {
+        "l": "Other Income (Expense), Net",
+        "t": "normal",
+        "v": [
+          1554,
+          -697,
+          -1007,
+          -477,
+          -82,
+          -1297
+        ]
+      },
+      {
+        "l": "EBT",
+        "t": "subtotal",
+        "v": [
+          567,
+          1465,
+          3923,
+          5481,
+          7292,
+          6832
+        ]
+      },
+      {
+        "l": "Income Tax Expense",
+        "t": "normal",
+        "v": [
+          -508,
+          -300,
+          -865,
+          -1192,
+          -1410,
+          -1428
+        ],
+        "neg": true
+      },
+      {
+        "l": "Effective ETR",
+        "t": "margin",
+        "v": [
+          89.6,
+          20.5,
+          22.1,
+          21.7,
+          19.3,
+          20.9
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "Net Income (GAAP)",
+        "t": "total",
+        "v": [
+          59,
+          1165,
+          3058,
+          4289,
+          5882,
+          5404
+        ]
+      },
+      {
+        "l": "Net Margin",
+        "t": "margin",
+        "v": [
+          0.9,
+          10.6,
+          17.9,
+          20.1,
+          24.8,
+          20.1
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "DCE ADJUSTMENTS",
+        "t": "section"
+      },
+      {
+        "l": "(+) Impairment + Transformation",
+        "t": "normal",
+        "v": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          662
+        ]
+      },
+      {
+        "l": "(−) S&M Growth Expense",
+        "t": "normal",
+        "v": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          -774
+        ],
+        "neg": true
+      },
+      {
+        "l": "Adjusted NOPAT DCE",
+        "t": "total",
+        "v": [
+          2207,
+          2007,
+          4082,
+          4672,
+          6071,
+          7590
+        ]
+      },
+      {
+        "l": "NOPAT Margin",
+        "t": "margin",
+        "v": [
+          32.5,
+          18.3,
+          23.9,
+          21.9,
+          25.6,
+          28.2
+        ]
+      }
     ],
     "bsRows": [
-      {"l": "CURRENT ASSETS", "t": "section"},
-      {"l": "Cash & Short-term Investments", "t": "normal", "v": [10836, 12087, 11899, 15076, 16720, 17203]},
-      {"l": "Accounts Receivable", "t": "normal", "v": [546, 1020, 1628, 2102, 2405, 2566]},
-      {"l": "Prepaid & Other Current", "t": "normal", "v": [1220, 1389, 1618, 2165, 2495, 2699]},
-      {"l": "Total Current Assets", "t": "subtotal", "v": [12602, 14496, 15145, 19343, 21620, 22468]},
-      {"l": "", "t": "spacer"},
-      {"l": "NON-CURRENT ASSETS", "t": "section"},
-      {"l": "PP&E Net", "t": "normal", "v": [745, 716, 691, 757, 856, 807]},
-      {"l": "Investments (LT)", "t": "normal", "v": [null, null, null, null, 637, 582]},
-      {"l": "Goodwill", "t": "normal", "v": [2552, 2561, 2585, 2568, 2563, 2534]},
-      {"l": "Other Intangibles", "t": "normal", "v": [428, 403, 436, 450, 567, 636]},
-      {"l": "Operating Lease ROU Assets", "t": "normal", "v": [null, null, null, 408, 395, 485]},
-      {"l": "Deferred Tax & Other LT", "t": "normal", "v": [5547, 5465, 3685, 1816, 1670, 1752]},
-      {"l": "Total Non-Current Assets", "t": "subtotal", "v": [9272, 9145, 7397, 4999, 6088, 6796]},
-      {"l": "", "t": "spacer"},
-      {"l": "TOTAL ASSETS", "t": "total", "v": [21874, 23641, 22542, 24342, 27708, 29264]},
-      {"l": "", "t": "spacer"},
-      {"l": "CURRENT LIABILITIES", "t": "section"},
-      {"l": "Merchant Payables", "t": "normal", "neg": true, "v": [-5979, -8067, -9890, -13162, -14840, -16215]},
-      {"l": "Accounts Payable & Accrued", "t": "normal", "neg": true, "v": [-2127, -2430, -2886, -3680, -4226, -4476]},
-      {"l": "ST Debt / Current LTD", "t": "normal", "neg": true, "v": [-1490, 0, -1490, 0, -2000, -500]},
-      {"l": "Other Current Liabilities", "t": "normal", "neg": true, "v": [-476, -581, -782, -1035, -1127, -1232]},
-      {"l": "Total Current Liabilities", "t": "subtotal", "neg": true, "v": [-10072, -11078, -15048, -17877, -22193, -22423]},
-      {"l": "", "t": "spacer"},
-      {"l": "NON-CURRENT LIABILITIES", "t": "section"},
-      {"l": "Long-Term Debt", "t": "normal", "neg": true, "v": [-5596, -5390, -4624, -12215, -8000, -17736]},
-      {"l": "Operating Lease Liabilities", "t": "normal", "neg": true, "v": [null, null, null, -328, -340, -557]},
-      {"l": "Deferred Tax & Other LT", "t": "normal", "neg": true, "v": [-1313, -995, -431, -666, -1195, -126]},
-      {"l": "Total Non-Current Liabilities", "t": "subtotal", "neg": true, "v": [-6909, -6385, -5055, -13209, -9535, -18419]},
-      {"l": "", "t": "spacer"},
-      {"l": "TOTAL LIABILITIES", "t": "total", "neg": true, "v": [-16981, -17463, -20103, -27086, -31728, -34842]},
-      {"l": "", "t": "spacer"},
-      {"l": "EQUITY", "t": "section"},
-      {"l": "Common Stock & APIC", "t": "normal", "v": [4919, 5622, 5982, 7283, 7883, 8441]},
-      {"l": "Retained Earnings (Deficit)", "t": "normal", "v": [4022, 5153, 7124, 10231, 14875, 18534]},
-      {"l": "Treasury Stock", "t": "normal", "neg": true, "v": [-3688, -4046, -10140, -20052, -26611, -32416]},
-      {"l": "AOCI & Other", "t": "normal", "v": [-360, -491, -132, 194, 167, -137]},
-      {"l": "Total Equity", "t": "total", "v": [4893, 6178, 2834, -2744, -4020, -5578]}
+      {
+        "l": "CURRENT ASSETS",
+        "t": "section"
+      },
+      {
+        "l": "Cash & Short-term Investments",
+        "t": "normal",
+        "v": [
+          10836,
+          12087,
+          11899,
+          15076,
+          16720,
+          17203
+        ]
+      },
+      {
+        "l": "Accounts Receivable",
+        "t": "normal",
+        "v": [
+          546,
+          1020,
+          1628,
+          2102,
+          2405,
+          2566
+        ]
+      },
+      {
+        "l": "Prepaid & Other Current",
+        "t": "normal",
+        "v": [
+          1220,
+          1389,
+          1618,
+          2165,
+          2495,
+          2699
+        ]
+      },
+      {
+        "l": "Total Current Assets",
+        "t": "subtotal",
+        "v": [
+          12602,
+          14496,
+          15145,
+          19343,
+          21620,
+          22468
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "NON-CURRENT ASSETS",
+        "t": "section"
+      },
+      {
+        "l": "PP&E Net",
+        "t": "normal",
+        "v": [
+          745,
+          716,
+          691,
+          757,
+          856,
+          807
+        ]
+      },
+      {
+        "l": "Investments (LT)",
+        "t": "normal",
+        "v": [
+          null,
+          null,
+          null,
+          null,
+          637,
+          582
+        ]
+      },
+      {
+        "l": "Goodwill",
+        "t": "normal",
+        "v": [
+          2552,
+          2561,
+          2585,
+          2568,
+          2563,
+          2534
+        ]
+      },
+      {
+        "l": "Other Intangibles",
+        "t": "normal",
+        "v": [
+          428,
+          403,
+          436,
+          450,
+          567,
+          636
+        ]
+      },
+      {
+        "l": "Operating Lease ROU Assets",
+        "t": "normal",
+        "v": [
+          null,
+          null,
+          null,
+          408,
+          395,
+          485
+        ]
+      },
+      {
+        "l": "Deferred Tax & Other LT",
+        "t": "normal",
+        "v": [
+          5547,
+          5465,
+          3685,
+          1816,
+          1670,
+          1752
+        ]
+      },
+      {
+        "l": "Total Non-Current Assets",
+        "t": "subtotal",
+        "v": [
+          9272,
+          9145,
+          7397,
+          4999,
+          6088,
+          6796
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "TOTAL ASSETS",
+        "t": "total",
+        "v": [
+          21874,
+          23641,
+          22542,
+          24342,
+          27708,
+          29264
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "CURRENT LIABILITIES",
+        "t": "section"
+      },
+      {
+        "l": "Merchant Payables",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -5979,
+          -8067,
+          -9890,
+          -13162,
+          -14840,
+          -16215
+        ]
+      },
+      {
+        "l": "Accounts Payable & Accrued",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -2127,
+          -2430,
+          -2886,
+          -3680,
+          -4226,
+          -4476
+        ]
+      },
+      {
+        "l": "ST Debt / Current LTD",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -1490,
+          0,
+          -1490,
+          0,
+          -2000,
+          -500
+        ]
+      },
+      {
+        "l": "Other Current Liabilities",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -476,
+          -581,
+          -782,
+          -1035,
+          -1127,
+          -1232
+        ]
+      },
+      {
+        "l": "Total Current Liabilities",
+        "t": "subtotal",
+        "neg": true,
+        "v": [
+          -10072,
+          -11078,
+          -15048,
+          -17877,
+          -22193,
+          -22423
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "NON-CURRENT LIABILITIES",
+        "t": "section"
+      },
+      {
+        "l": "Long-Term Debt",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -5596,
+          -5390,
+          -4624,
+          -12215,
+          -8000,
+          -17736
+        ]
+      },
+      {
+        "l": "Operating Lease Liabilities",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          null,
+          null,
+          null,
+          -328,
+          -340,
+          -557
+        ]
+      },
+      {
+        "l": "Deferred Tax & Other LT",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -1313,
+          -995,
+          -431,
+          -666,
+          -1195,
+          -126
+        ]
+      },
+      {
+        "l": "Total Non-Current Liabilities",
+        "t": "subtotal",
+        "neg": true,
+        "v": [
+          -6909,
+          -6385,
+          -5055,
+          -13209,
+          -9535,
+          -18419
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "TOTAL LIABILITIES",
+        "t": "total",
+        "neg": true,
+        "v": [
+          -16981,
+          -17463,
+          -20103,
+          -27086,
+          -31728,
+          -34842
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "EQUITY",
+        "t": "section"
+      },
+      {
+        "l": "Common Stock & APIC",
+        "t": "normal",
+        "v": [
+          4919,
+          5622,
+          5982,
+          7283,
+          7883,
+          8441
+        ]
+      },
+      {
+        "l": "Retained Earnings (Deficit)",
+        "t": "normal",
+        "v": [
+          4022,
+          5153,
+          7124,
+          10231,
+          14875,
+          18534
+        ]
+      },
+      {
+        "l": "Treasury Stock",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -3688,
+          -4046,
+          -10140,
+          -20052,
+          -26611,
+          -32416
+        ]
+      },
+      {
+        "l": "AOCI & Other",
+        "t": "normal",
+        "v": [
+          -360,
+          -491,
+          -132,
+          194,
+          167,
+          -137
+        ]
+      },
+      {
+        "l": "Total Equity",
+        "t": "total",
+        "v": [
+          4893,
+          6178,
+          2834,
+          -2744,
+          -4020,
+          -5578
+        ]
+      }
     ],
     "cfRows": [
-      {"l": "OPERATING ACTIVITIES (CFO)", "t": "section"},
-      {"l": "Net Income", "t": "normal", "v": [59, 1165, 3058, 4289, 5882, 5404]},
-      {"l": "D&A", "t": "normal", "v": [458, 421, 451, 504, 591, 623]},
-      {"l": "Stock-Based Compensation", "t": "normal", "v": [264, 331, 327, 408, 428, 478]},
-      {"l": "Changes in Working Capital", "t": "normal", "v": [-891, 783, 2583, 2185, 1492, 2940]},
-      {"l": "Goodwill Impairment", "t": "normal", "v": [1062, 0, 0, 0, 0, 0]},
-      {"l": "Other Operating Adjustments", "t": "normal", "v": [-867, 120, 135, -42, -70, -36]},
-      {"l": "CFO Total", "t": "total", "v": [85, 2820, 6554, 7344, 8323, 9409]},
-      {"l": "FCF (CFO − CapEx)", "t": "margin", "v": [-201, 2516, 6186, 6999, 7894, 9087]},
-      {"l": "", "t": "spacer"},
-      {"l": "INVESTING ACTIVITIES (CFI)", "t": "section"},
-      {"l": "CapEx (Property & Equipment)", "t": "normal", "neg": true, "v": [-286, -304, -368, -345, -429, -322]},
-      {"l": "Acquisitions", "t": "normal", "neg": true, "v": [-19, -2, -36, -39, 0, -89]},
-      {"l": "Investment Purchases / Sales", "t": "normal", "v": [2942, -692, -114, 1870, 558, 98]},
-      {"l": "CFI Total", "t": "total", "v": [2637, -998, -518, 1486, 129, -313]},
-      {"l": "", "t": "spacer"},
-      {"l": "FINANCING ACTIVITIES (CFF)", "t": "section"},
-      {"l": "Debt Issuance / Repayment", "t": "normal", "v": [2864, -200, -2100, 7601, -4126, -493]},
-      {"l": "Share Repurchases", "t": "normal", "neg": true, "v": [-1303, -163, -6621, -10377, -6509, -6440]},
-      {"l": "Dividends Paid", "t": "normal", "neg": true, "v": [0, 0, 0, 0, 0, -1248]},
-      {"l": "Other CFF", "t": "normal", "v": [0, -853, 1824, -133, 431, -734]},
-      {"l": "CFF Total", "t": "total", "neg": true, "v": [1561, -1216, -4897, -2909, -6204, -8915]},
-      {"l": "", "t": "spacer"},
-      {"l": "NET CHANGE IN CASH", "t": "total", "v": [4283, 606, 1139, 5921, 2248, 181]},
-      {"l": "Ending Cash", "t": "subtotal", "v": [10836, 12087, 11899, 15076, 16720, 17203]}
+      {
+        "l": "OPERATING ACTIVITIES (CFO)",
+        "t": "section"
+      },
+      {
+        "l": "Net Income",
+        "t": "normal",
+        "v": [
+          59,
+          1165,
+          3058,
+          4289,
+          5882,
+          5404
+        ]
+      },
+      {
+        "l": "D&A",
+        "t": "normal",
+        "v": [
+          458,
+          421,
+          451,
+          504,
+          591,
+          623
+        ]
+      },
+      {
+        "l": "Stock-Based Compensation",
+        "t": "normal",
+        "v": [
+          264,
+          331,
+          327,
+          408,
+          428,
+          478
+        ]
+      },
+      {
+        "l": "Changes in Working Capital",
+        "t": "normal",
+        "v": [
+          -891,
+          783,
+          2583,
+          2185,
+          1492,
+          2940
+        ]
+      },
+      {
+        "l": "Goodwill Impairment",
+        "t": "normal",
+        "v": [
+          1062,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "Other Operating Adjustments",
+        "t": "normal",
+        "v": [
+          -867,
+          120,
+          135,
+          -42,
+          -70,
+          -36
+        ]
+      },
+      {
+        "l": "CFO Total",
+        "t": "total",
+        "v": [
+          85,
+          2820,
+          6554,
+          7344,
+          8323,
+          9409
+        ]
+      },
+      {
+        "l": "FCF (CFO − CapEx)",
+        "t": "margin",
+        "v": [
+          -201,
+          2516,
+          6186,
+          6999,
+          7894,
+          9087
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "INVESTING ACTIVITIES (CFI)",
+        "t": "section"
+      },
+      {
+        "l": "CapEx (Property & Equipment)",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -286,
+          -304,
+          -368,
+          -345,
+          -429,
+          -322
+        ]
+      },
+      {
+        "l": "Acquisitions",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -19,
+          -2,
+          -36,
+          -39,
+          0,
+          -89
+        ]
+      },
+      {
+        "l": "Investment Purchases / Sales",
+        "t": "normal",
+        "v": [
+          2942,
+          -692,
+          -114,
+          1870,
+          558,
+          98
+        ]
+      },
+      {
+        "l": "CFI Total",
+        "t": "total",
+        "v": [
+          2637,
+          -998,
+          -518,
+          1486,
+          129,
+          -313
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "FINANCING ACTIVITIES (CFF)",
+        "t": "section"
+      },
+      {
+        "l": "Debt Issuance / Repayment",
+        "t": "normal",
+        "v": [
+          2864,
+          -200,
+          -2100,
+          7601,
+          -4126,
+          -493
+        ]
+      },
+      {
+        "l": "Share Repurchases",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -1303,
+          -163,
+          -6621,
+          -10377,
+          -6509,
+          -6440
+        ]
+      },
+      {
+        "l": "Dividends Paid",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          -1248
+        ]
+      },
+      {
+        "l": "Other CFF",
+        "t": "normal",
+        "v": [
+          0,
+          -853,
+          1824,
+          -133,
+          431,
+          -734
+        ]
+      },
+      {
+        "l": "CFF Total",
+        "t": "total",
+        "neg": true,
+        "v": [
+          1561,
+          -1216,
+          -4897,
+          -2909,
+          -6204,
+          -8915
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "NET CHANGE IN CASH",
+        "t": "total",
+        "v": [
+          4283,
+          606,
+          1139,
+          5921,
+          2248,
+          181
+        ]
+      },
+      {
+        "l": "Ending Cash",
+        "t": "subtotal",
+        "v": [
+          10836,
+          12087,
+          11899,
+          15076,
+          16720,
+          17203
+        ]
+      }
     ]
   },
-
   "rv": {
     "tangibleAssets": [
-      {"label": "Cash & Equivalents", "bookValue": 17203, "adjustable": true, "defaultAdj": 100, "reproValue": 17203, "method": "100% — Liquid asset"},
-      {"label": "Short-Term Investments", "bookValue": 582, "adjustable": true, "defaultAdj": 100, "reproValue": 582, "method": "100% — Marketable securities"},
-      {"label": "Accounts Receivable, Net", "bookValue": 3820, "adjustable": true, "defaultAdj": 97, "reproValue": 3705, "method": "97% — Agency/merchant receivables, low default risk"},
-      {"label": "Prepaid Expenses", "bookValue": 611, "adjustable": true, "defaultAdj": 90, "reproValue": 550, "method": "90% — Mostly recoverable"},
-      {"label": "Other Current Assets", "bookValue": 48, "adjustable": true, "defaultAdj": 80, "reproValue": 38, "method": "80% — Mixed current items"},
-      {"label": "PP&E, Net", "bookValue": 807, "adjustable": true, "defaultAdj": 85, "reproValue": 686, "method": "85% — Tech infrastructure, leasehold improvements"}
+      {
+        "label": "Cash & Equivalents",
+        "bookValue": 17203,
+        "adjustable": true,
+        "defaultAdj": 100,
+        "reproValue": 17203,
+        "method": "100% — Liquid asset"
+      },
+      {
+        "label": "Short-Term Investments",
+        "bookValue": 582,
+        "adjustable": true,
+        "defaultAdj": 100,
+        "reproValue": 582,
+        "method": "100% — Marketable securities"
+      },
+      {
+        "label": "Accounts Receivable, Net",
+        "bookValue": 3820,
+        "adjustable": true,
+        "defaultAdj": 97,
+        "reproValue": 3705,
+        "method": "97% — Agency/merchant receivables, low default risk"
+      },
+      {
+        "label": "Prepaid Expenses",
+        "bookValue": 611,
+        "adjustable": true,
+        "defaultAdj": 90,
+        "reproValue": 550,
+        "method": "90% — Mostly recoverable"
+      },
+      {
+        "label": "Other Current Assets",
+        "bookValue": 48,
+        "adjustable": true,
+        "defaultAdj": 80,
+        "reproValue": 38,
+        "method": "80% — Mixed current items"
+      },
+      {
+        "label": "PP&E, Net",
+        "bookValue": 807,
+        "adjustable": true,
+        "defaultAdj": 85,
+        "reproValue": 686,
+        "method": "85% — Tech infrastructure, leasehold improvements"
+      }
     ],
     "intangibleAssets": [
-      {"label": "S&M Asset (Unamortized Marketing)", "bookValue": 15296, "adjustable": true, "defaultAdj": 100, "reproValue": 15296, "method": "100% — Capitalized marketing (3yr amort, DP3)", "dataKey": "sm"},
-      {"label": "Goodwill (accounting)", "bookValue": 2669, "adjustable": true, "defaultAdj": 0, "reproValue": 0, "method": "0% — ALWAYS 0 in RV (DP12). Components reconstructed individually", "dataKey": "gw"},
-      {"label": "Brand / Trademarks", "bookValue": null, "adjustable": true, "defaultAdj": 4500, "reproValue": 4500, "method": "~$640M avg annual mktg × 7yr × 100% brand recognition. Booking.com is global #1 OTA", "estimated": true, "dataKey": "brand"},
-      {"label": "Supplier Network (28M+ listings)", "bookValue": null, "adjustable": true, "defaultAdj": 3000, "reproValue": 3000, "method": "CAC proxy: $100-150 per listing × 28M = $3-4B. Conservative est.", "estimated": true, "dataKey": "network"},
-      {"label": "Technology Platform", "bookValue": null, "adjustable": true, "defaultAdj": 2000, "reproValue": 2000, "method": "IT spend ~$770M/yr × 3yr = $2.3B, discounted for replication efficiency", "estimated": true, "dataKey": "tech"},
-      {"label": "Customer Data / Behavioral Intelligence", "bookValue": null, "adjustable": true, "defaultAdj": 1500, "reproValue": 1500, "method": "Billions of searches, bookings. Irreplaceable dataset. Conservative est.", "estimated": true, "dataKey": "custdata"},
-      {"label": "Other Intangible Assets (Book)", "bookValue": 918, "adjustable": true, "defaultAdj": 50, "reproValue": 459, "method": "50% — Amortized book intangibles, partially captured by brand/tech", "dataKey": "oia"}
+      {
+        "label": "S&M Asset (Unamortized Marketing)",
+        "bookValue": 15296,
+        "adjustable": true,
+        "defaultAdj": 100,
+        "reproValue": 15296,
+        "method": "100% — Capitalized marketing (3yr amort, DP3)",
+        "dataKey": "sm"
+      },
+      {
+        "label": "Goodwill (accounting)",
+        "bookValue": 2669,
+        "adjustable": true,
+        "defaultAdj": 0,
+        "reproValue": 0,
+        "method": "0% — ALWAYS 0 in RV (DP12). Components reconstructed individually",
+        "dataKey": "gw"
+      },
+      {
+        "label": "Brand / Trademarks",
+        "bookValue": null,
+        "adjustable": true,
+        "defaultAdj": 4500,
+        "reproValue": 4500,
+        "method": "~$640M avg annual mktg × 7yr × 100% brand recognition. Booking.com is global #1 OTA",
+        "estimated": true,
+        "dataKey": "brand"
+      },
+      {
+        "label": "Supplier Network (28M+ listings)",
+        "bookValue": null,
+        "adjustable": true,
+        "defaultAdj": 3000,
+        "reproValue": 3000,
+        "method": "CAC proxy: $100-150 per listing × 28M = $3-4B. Conservative est.",
+        "estimated": true,
+        "dataKey": "network"
+      },
+      {
+        "label": "Technology Platform",
+        "bookValue": null,
+        "adjustable": true,
+        "defaultAdj": 2000,
+        "reproValue": 2000,
+        "method": "IT spend ~$770M/yr × 3yr = $2.3B, discounted for replication efficiency",
+        "estimated": true,
+        "dataKey": "tech"
+      },
+      {
+        "label": "Customer Data / Behavioral Intelligence",
+        "bookValue": null,
+        "adjustable": true,
+        "defaultAdj": 1500,
+        "reproValue": 1500,
+        "method": "Billions of searches, bookings. Irreplaceable dataset. Conservative est.",
+        "estimated": true,
+        "dataKey": "custdata"
+      },
+      {
+        "label": "Other Intangible Assets (Book)",
+        "bookValue": 918,
+        "adjustable": true,
+        "defaultAdj": 50,
+        "reproValue": 459,
+        "method": "50% — Amortized book intangibles, partially captured by brand/tech",
+        "dataKey": "oia"
+      }
     ],
     "otherAssets": [
-      {"label": "Deferred Tax Assets", "bookValue": 0, "adjustable": true, "defaultAdj": 70, "reproValue": 0, "method": "70% — DP14. Zero book DTA in FY2025", "dataKey": "dta"},
-      {"label": "Long-Term Investments", "bookValue": 0, "adjustable": true, "defaultAdj": 50, "reproValue": 0, "method": "50% — Non-marketable equity (zero in FY2025)", "dataKey": "lti"},
-      {"label": "Other Non-Current Assets", "bookValue": 2606, "adjustable": true, "defaultAdj": 70, "reproValue": 1824, "method": "70% — ROU assets, deferred charges, misc.", "dataKey": "onca"}
+      {
+        "label": "Deferred Tax Assets",
+        "bookValue": 0,
+        "adjustable": true,
+        "defaultAdj": 70,
+        "reproValue": 0,
+        "method": "70% — DP14. Zero book DTA in FY2025",
+        "dataKey": "dta"
+      },
+      {
+        "label": "Long-Term Investments",
+        "bookValue": 0,
+        "adjustable": true,
+        "defaultAdj": 50,
+        "reproValue": 0,
+        "method": "50% — Non-marketable equity (zero in FY2025)",
+        "dataKey": "lti"
+      },
+      {
+        "label": "Other Non-Current Assets",
+        "bookValue": 2606,
+        "adjustable": true,
+        "defaultAdj": 70,
+        "reproValue": 1824,
+        "method": "70% — ROU assets, deferred charges, misc.",
+        "dataKey": "onca"
+      }
     ],
     "liabilities": [
-      {"label": "Total Current Liabilities", "value": 16698, "method": "100% — Contractual"},
-      {"label": "Long-Term Debt", "value": 16856, "method": "100% — Contractual"},
-      {"label": "Lease Liabilities", "value": 557, "method": "100% — ASC 842"},
-      {"label": "Deferred Tax Liabilities", "value": 17, "method": "100% — Tax obligations"},
-      {"label": "Other Non-Current Liabilities", "value": 714, "method": "100% — Contractual"}
+      {
+        "label": "Total Current Liabilities",
+        "value": 16698,
+        "method": "100% — Contractual"
+      },
+      {
+        "label": "Long-Term Debt",
+        "value": 16856,
+        "method": "100% — Contractual"
+      },
+      {
+        "label": "Lease Liabilities",
+        "value": 557,
+        "method": "100% — ASC 842"
+      },
+      {
+        "label": "Deferred Tax Liabilities",
+        "value": 17,
+        "method": "100% — Tax obligations"
+      },
+      {
+        "label": "Other Non-Current Liabilities",
+        "value": 714,
+        "method": "100% — Contractual"
+      }
     ],
     "totalLiabilities": 34842,
     "totalRvEquity": 16502,
     "rvPerShare": 505.58,
     "note": "Reproduction Value does not capture time-to-build — replicating Booking Holdings would take 10+ years. The brand, supplier network, and behavioral data are virtually irreplicable. This is a conservative estimate."
   },
-
   "epv": {
     "nopatBase": 7420,
     "waccBase": 8.61,
@@ -213,25 +1364,80 @@
     "da": 768,
     "maintCapex": 768,
     "bridgeRows": [
-      {"k": "Normalized EBIT", "v": "$9,333M"},
-      {"k": "× (1 − Tax Rate 20.5%)", "v": "× 0.795", "dim": true},
-      {"k": "Normalized NOPAT", "v": "$7,420M", "id": "bridge-nopat"},
-      {"k": "(+) D&A (non-cash add-back)", "v": "+$768M"},
-      {"k": "(−) Maintenance CapEx (= D&A)", "v": "−$768M", "dim": true},
-      {"k": "÷ WACC", "v": "8.61%", "id": "bridge-wacc"},
-      {"k": "EPV Operations", "v": "$86,224M", "id": "bridge-epv-ops", "bold": true, "gold": true},
-      {"k": "(+) Excess Cash (Cash+STI − 2% Rev buffer)", "v": "+$17,247M", "green": true},
-      {"k": "(+) Non-Operating Assets (LT Inv)", "v": "$0M", "dim": true},
-      {"k": "(−) Total Debt", "v": "−$19,293M", "red": true},
-      {"k": "(−) Lease Liabilities", "v": "−$557M", "red": true},
-      {"k": "EPV Equity", "v": "$83,621M", "id": "bridge-epv-eq", "bold": true, "gold": true},
-      {"k": "EPV / Share", "v": "$2,562", "id": "bridge-epv-ps", "bold": true, "gold": true}
+      {
+        "k": "Normalized EBIT",
+        "v": "$9,333M"
+      },
+      {
+        "k": "× (1 − Tax Rate 20.5%)",
+        "v": "× 0.795",
+        "dim": true
+      },
+      {
+        "k": "Normalized NOPAT",
+        "v": "$7,420M",
+        "id": "bridge-nopat"
+      },
+      {
+        "k": "(+) D&A (non-cash add-back)",
+        "v": "+$768M"
+      },
+      {
+        "k": "(−) Maintenance CapEx (= D&A)",
+        "v": "−$768M",
+        "dim": true
+      },
+      {
+        "k": "÷ WACC",
+        "v": "8.61%",
+        "id": "bridge-wacc"
+      },
+      {
+        "k": "EPV Operations",
+        "v": "$86,224M",
+        "id": "bridge-epv-ops",
+        "bold": true,
+        "gold": true
+      },
+      {
+        "k": "(+) Excess Cash (Cash+STI − 2% Rev buffer)",
+        "v": "+$17,247M",
+        "green": true
+      },
+      {
+        "k": "(+) Non-Operating Assets (LT Inv)",
+        "v": "$0M",
+        "dim": true
+      },
+      {
+        "k": "(−) Total Debt",
+        "v": "−$19,293M",
+        "red": true
+      },
+      {
+        "k": "(−) Lease Liabilities",
+        "v": "−$557M",
+        "red": true
+      },
+      {
+        "k": "EPV Equity",
+        "v": "$83,621M",
+        "id": "bridge-epv-eq",
+        "bold": true,
+        "gold": true
+      },
+      {
+        "k": "EPV / Share",
+        "v": "$2,562",
+        "id": "bridge-epv-ps",
+        "bold": true,
+        "gold": true
+      }
     ]
   },
-
   "wacc": {
     "rf": 0.0415,
-    "beta": 1.20,
+    "beta": 1.2,
     "erp": 0.0423,
     "ke": 0.0923,
     "kdPreTax": 0.051,
@@ -240,55 +1446,290 @@
     "weightEquity": 0.88,
     "waccFinal": 0.0861
   },
-
   "roic": {
     "investedCapital": [
-      {"label": "PP&E", "value": 807},
-      {"label": "Operating WC", "value": -9757},
-      {"label": "Other LT Assets", "value": 2310},
-      {"label": "S&M Asset", "value": 7883},
-      {"label": "Negative Equity (memo)", "value": -5578}
+      {
+        "label": "PP&E",
+        "value": 807
+      },
+      {
+        "label": "Operating WC",
+        "value": -9757
+      },
+      {
+        "label": "Other LT Assets",
+        "value": 2310
+      },
+      {
+        "label": "S&M Asset",
+        "value": 7883
+      },
+      {
+        "label": "Negative Equity (memo)",
+        "value": -5578
+      }
     ],
     "roicLatest": 99.9,
     "roic3yr": 91.5,
     "roicFY23": 78.3,
     "roicFY24": 96.5,
     "roicFY25": 99.9,
-    "roicHistory": [null, null, null, 78.3, 96.5, 99.9],
+    "roicHistory": [
+      null,
+      null,
+      null,
+      78.3,
+      96.5,
+      99.9
+    ],
     "marginalRoic": 1.135,
     "roicFY22": null,
     "growthCapex2y": 1370,
     "growthCapex3y": 2295,
-    "icHistory": [-222, -792, -3149, 7773, 6716, 8370],
-    "nopatHistory": [1831, 5784, 8821, 6086, 6481, 8358],
+    "icHistory": [
+      -222,
+      -792,
+      -3149,
+      7773,
+      6716,
+      8370
+    ],
+    "nopatHistory": [
+      1831,
+      5784,
+      8821,
+      6086,
+      6481,
+      8358
+    ],
     "icRows": [
-      {"l": "INVESTED CAPITAL BUILD-UP", "t": "section"},
-      {"l": "Working Capital Operating", "t": "normal", "neg": true, "v": [-1297, -2264, -4602, -7018, -9575, -10339]},
-      {"l": "(+) PP&E, Net", "t": "normal", "v": [1285, 1318, 1314, 1489, 1391, 807]},
-      {"l": "(+) Other LT Operating Assets (net)", "t": "normal", "v": [-210, 154, 139, 940, 1109, 2606]},
-      {"l": "(+) S&M Asset (Unamortized)", "t": "normal", "v": [0, 0, 0, 12362, 13791, 15296]},
-      {"l": "(+) R&D Asset — N/A", "t": "normal", "v": [0, 0, 0, 0, 0, 0]},
-      {"l": "", "t": "spacer"},
-      {"l": "Invested Capital", "t": "total", "v": [-222, -792, -3149, 7773, 6716, 8370]},
-      {"l": "", "t": "spacer"},
-      {"l": "ROIC (Accounting)", "t": "section"},
-      {"l": "Adjusted NOPAT", "t": "normal", "v": [1831, 5784, 8821, 6086, 6481, 8358]},
-      {"l": "Invested Capital", "t": "normal", "v": [-222, -792, -3149, 7773, 6716, 8370]},
-      {"l": "ROIC (NOPAT / IC)", "t": "margin", "v": [null, null, null, 78.3, 96.5, 99.9]},
-      {"l": "Spread vs WACC (8.61%)", "t": "margin", "v": [null, null, null, 69.7, 87.9, 91.3]},
-      {"l": "", "t": "spacer"},
-      {"l": "MARGINAL ROIC (YoY Deltas)", "t": "section"},
-      {"l": "Δ NOPAT", "t": "normal", "v": [null, 3954, 3036, -2735, 395, 1877]},
-      {"l": "Δ Invested Capital", "t": "normal", "v": [null, -570, -2357, 10922, -1057, 1654]},
-      {"l": "Marginal ROIC (Δ NOPAT / Δ IC)", "t": "margin", "v": [null, null, null, null, null, 113.5]},
-      {"l": "", "t": "spacer"},
-      {"l": "MARGINAL ROIC — ACC. GROWTH CAPEX", "t": "section"},
-      {"l": "Acc. S&M Growth Expense (2yr)", "t": "normal", "v": [null, null, null, null, null, 1370]},
-      {"l": "Acc. S&M Growth Expense (3yr)", "t": "normal", "v": [null, null, null, null, null, 2295]},
-      {"l": "Acc. S&M Growth Expense (4yr)", "t": "normal", "v": [null, null, null, null, null, 8288]}
+      {
+        "l": "INVESTED CAPITAL BUILD-UP",
+        "t": "section"
+      },
+      {
+        "l": "Working Capital Operating",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -1297,
+          -2264,
+          -4602,
+          -7018,
+          -9575,
+          -10339
+        ]
+      },
+      {
+        "l": "(+) PP&E, Net",
+        "t": "normal",
+        "v": [
+          1285,
+          1318,
+          1314,
+          1489,
+          1391,
+          807
+        ]
+      },
+      {
+        "l": "(+) Other LT Operating Assets (net)",
+        "t": "normal",
+        "v": [
+          -210,
+          154,
+          139,
+          940,
+          1109,
+          2606
+        ]
+      },
+      {
+        "l": "(+) S&M Asset (Unamortized)",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          0,
+          12362,
+          13791,
+          15296
+        ]
+      },
+      {
+        "l": "(+) R&D Asset — N/A",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "Invested Capital",
+        "t": "total",
+        "v": [
+          -222,
+          -792,
+          -3149,
+          7773,
+          6716,
+          8370
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "ROIC (Accounting)",
+        "t": "section"
+      },
+      {
+        "l": "Adjusted NOPAT",
+        "t": "normal",
+        "v": [
+          1831,
+          5784,
+          8821,
+          6086,
+          6481,
+          8358
+        ]
+      },
+      {
+        "l": "Invested Capital",
+        "t": "normal",
+        "v": [
+          -222,
+          -792,
+          -3149,
+          7773,
+          6716,
+          8370
+        ]
+      },
+      {
+        "l": "ROIC (NOPAT / IC)",
+        "t": "margin",
+        "v": [
+          null,
+          null,
+          null,
+          78.3,
+          96.5,
+          99.9
+        ]
+      },
+      {
+        "l": "Spread vs WACC (8.61%)",
+        "t": "margin",
+        "v": [
+          null,
+          null,
+          null,
+          69.7,
+          87.9,
+          91.3
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "MARGINAL ROIC (YoY Deltas)",
+        "t": "section"
+      },
+      {
+        "l": "Δ NOPAT",
+        "t": "normal",
+        "v": [
+          null,
+          3954,
+          3036,
+          -2735,
+          395,
+          1877
+        ]
+      },
+      {
+        "l": "Δ Invested Capital",
+        "t": "normal",
+        "v": [
+          null,
+          -570,
+          -2357,
+          10922,
+          -1057,
+          1654
+        ]
+      },
+      {
+        "l": "Marginal ROIC (Δ NOPAT / Δ IC)",
+        "t": "margin",
+        "v": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          113.5
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "MARGINAL ROIC — ACC. GROWTH CAPEX",
+        "t": "section"
+      },
+      {
+        "l": "Acc. S&M Growth Expense (2yr)",
+        "t": "normal",
+        "v": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          1370
+        ]
+      },
+      {
+        "l": "Acc. S&M Growth Expense (3yr)",
+        "t": "normal",
+        "v": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          2295
+        ]
+      },
+      {
+        "l": "Acc. S&M Growth Expense (4yr)",
+        "t": "normal",
+        "v": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          8288
+        ]
+      }
     ]
   },
-
   "irr": {
     "selectedRoic": 91.5,
     "organicGrowth": 1.5,
@@ -305,59 +1746,271 @@
     "ev": 144459.165,
     "nopat": 7420,
     "reinvRate": 10.4268,
-    "deRatio": 13.940,
+    "deRatio": 13.94,
     "actualMult": 19.469,
     "impliedIrr": 19.7,
     "mos": 7.7,
     "totalGrowth": 11.0
   },
-
   "healthCheck": {
     "passCount": 17,
     "failCount": 1,
     "monitorCount": 1,
     "metrics": [
-      {"category": "Financial Strength", "label": "Debt / Equity", "value": "N/A", "threshold": "<2.0×", "status": "monitor", "rationale": "Negative equity from aggressive buybacks"},
-      {"category": "Financial Strength", "label": "Coverage Ratio", "value": "5.46×", "threshold": ">3.0×", "status": "pass", "rationale": ""},
-      {"category": "Financial Strength", "label": "Current Ratio", "value": "1.33×", "threshold": ">1.0×", "status": "pass", "rationale": ""},
-      {"category": "Financial Strength", "label": "Net Debt / EBITDA", "value": "0.22×", "threshold": "<3.0×", "status": "pass", "rationale": ""},
-      {"category": "Financial Strength", "label": "Debt / Total Assets", "value": "64.0%", "threshold": "<60%", "status": "fail", "rationale": ""},
-      {"category": "Profitability", "label": "Operating Margin", "value": "34.5%", "threshold": ">20%", "status": "pass", "rationale": ""},
-      {"category": "Profitability", "label": "Net Margin", "value": "20.1%", "threshold": ">15%", "status": "pass", "rationale": ""},
-      {"category": "Profitability", "label": "FCF Margin", "value": "33.8%", "threshold": ">15%", "status": "pass", "rationale": ""},
-      {"category": "Profitability", "label": "ROIC − WACC Spread", "value": "+600%", "threshold": ">0%", "status": "pass", "rationale": ""},
-      {"category": "Growth", "label": "Revenue CAGR 3yr (FY22-25)", "value": "13.4%", "threshold": ">5%", "status": "pass", "rationale": ""},
-      {"category": "Growth", "label": "FCF CAGR 3yr (FY22-25)", "value": "13.7%", "threshold": ">5%", "status": "pass", "rationale": ""},
-      {"category": "Growth", "label": "EBITDA Growth YoY", "value": "16.0%", "threshold": ">5%", "status": "pass", "rationale": ""},
-      {"category": "BKNG / OTA Specific", "label": "SBC % Revenue", "value": "2.3%", "threshold": "<5%", "status": "pass", "rationale": ""},
-      {"category": "BKNG / OTA Specific", "label": "CapEx % Revenue", "value": "1.2%", "threshold": "<5%", "status": "pass", "rationale": ""},
-      {"category": "BKNG / OTA Specific", "label": "Marketing % Revenue", "value": "30.4%", "threshold": "<35%", "status": "pass", "rationale": ""},
-      {"category": "BKNG / OTA Specific", "label": "Buyback Yield", "value": "4.7%", "threshold": ">3%", "status": "pass", "rationale": ""},
-      {"category": "BKNG / OTA Specific", "label": "Revenue / Employee ($K)", "value": "$1,108K", "threshold": ">$500K", "status": "pass", "rationale": ""},
-      {"category": "BKNG / OTA Specific", "label": "Rule of 40", "value": "47.9%", "threshold": ">40%", "status": "pass", "rationale": "Rev growth 13.4% + FCF margin 33.8%"}
+      {
+        "category": "Financial Strength",
+        "label": "Debt / Equity",
+        "value": "N/A",
+        "threshold": "<2.0×",
+        "status": "monitor",
+        "rationale": "Negative equity from aggressive buybacks"
+      },
+      {
+        "category": "Financial Strength",
+        "label": "Coverage Ratio",
+        "value": "5.46×",
+        "threshold": ">3.0×",
+        "status": "pass",
+        "rationale": ""
+      },
+      {
+        "category": "Financial Strength",
+        "label": "Current Ratio",
+        "value": "1.33×",
+        "threshold": ">1.0×",
+        "status": "pass",
+        "rationale": ""
+      },
+      {
+        "category": "Financial Strength",
+        "label": "Net Debt / EBITDA",
+        "value": "0.22×",
+        "threshold": "<3.0×",
+        "status": "pass",
+        "rationale": ""
+      },
+      {
+        "category": "Financial Strength",
+        "label": "Debt / Total Assets",
+        "value": "64.0%",
+        "threshold": "<60%",
+        "status": "fail",
+        "rationale": ""
+      },
+      {
+        "category": "Profitability",
+        "label": "Operating Margin",
+        "value": "34.5%",
+        "threshold": ">20%",
+        "status": "pass",
+        "rationale": ""
+      },
+      {
+        "category": "Profitability",
+        "label": "Net Margin",
+        "value": "20.1%",
+        "threshold": ">15%",
+        "status": "pass",
+        "rationale": ""
+      },
+      {
+        "category": "Profitability",
+        "label": "FCF Margin",
+        "value": "33.8%",
+        "threshold": ">15%",
+        "status": "pass",
+        "rationale": ""
+      },
+      {
+        "category": "Profitability",
+        "label": "ROIC − WACC Spread",
+        "value": "+600%",
+        "threshold": ">0%",
+        "status": "pass",
+        "rationale": ""
+      },
+      {
+        "category": "Growth",
+        "label": "Revenue CAGR 3yr (FY22-25)",
+        "value": "13.4%",
+        "threshold": ">5%",
+        "status": "pass",
+        "rationale": ""
+      },
+      {
+        "category": "Growth",
+        "label": "FCF CAGR 3yr (FY22-25)",
+        "value": "13.7%",
+        "threshold": ">5%",
+        "status": "pass",
+        "rationale": ""
+      },
+      {
+        "category": "Growth",
+        "label": "EBITDA Growth YoY",
+        "value": "16.0%",
+        "threshold": ">5%",
+        "status": "pass",
+        "rationale": ""
+      },
+      {
+        "category": "BKNG / OTA Specific",
+        "label": "SBC % Revenue",
+        "value": "2.3%",
+        "threshold": "<5%",
+        "status": "pass",
+        "rationale": ""
+      },
+      {
+        "category": "BKNG / OTA Specific",
+        "label": "CapEx % Revenue",
+        "value": "1.2%",
+        "threshold": "<5%",
+        "status": "pass",
+        "rationale": ""
+      },
+      {
+        "category": "BKNG / OTA Specific",
+        "label": "Marketing % Revenue",
+        "value": "30.4%",
+        "threshold": "<35%",
+        "status": "pass",
+        "rationale": ""
+      },
+      {
+        "category": "BKNG / OTA Specific",
+        "label": "Buyback Yield",
+        "value": "4.7%",
+        "threshold": ">3%",
+        "status": "pass",
+        "rationale": ""
+      },
+      {
+        "category": "BKNG / OTA Specific",
+        "label": "Revenue / Employee ($K)",
+        "value": "$1,108K",
+        "threshold": ">$500K",
+        "status": "pass",
+        "rationale": ""
+      },
+      {
+        "category": "BKNG / OTA Specific",
+        "label": "Rule of 40",
+        "value": "47.9%",
+        "threshold": ">40%",
+        "status": "pass",
+        "rationale": "Rev growth 13.4% + FCF margin 33.8%"
+      }
     ],
-    "radarLabels": ["Financial\\nStrength", "Profitability", "Growth", "Asset-Light", "Capital\\nAllocation", "Rule of 40"],
-    "radarScores": [90, 95, 80, 92, 88, 95]
+    "radarLabels": [
+      "Financial\\nStrength",
+      "Profitability",
+      "Growth",
+      "Asset-Light",
+      "Capital\\nAllocation",
+      "Rule of 40"
+    ],
+    "radarScores": [
+      90,
+      95,
+      80,
+      92,
+      88,
+      95
+    ]
   },
-
   "cioDecisions": [
-    {"id": "DP1", "decision": "S&M Proxy", "value": "Marketing Expenses", "rationale": "Marketing Expenses — direct 10-K line item, performance + brand marketing."},
-    {"id": "DP2", "decision": "R&D Capitalization", "value": "N/A", "rationale": "BKNG does not report separate R&D in 10-K."},
-    {"id": "DP3", "decision": "S&M Useful Life", "value": "3 years", "rationale": "Performance marketing with moderate organic retention."},
-    {"id": "DP4", "decision": "SBC Treatment", "value": "Already in OpEx", "rationale": "SBC already in Personnel (OpEx). No additional NOPAT adjustment per DP5."},
-    {"id": "DP5", "decision": "Normalized Tax Rate", "value": "20%", "rationale": "20% — Median ETR FY2022-FY2025 ≈ 20.5%."},
-    {"id": "DP6", "decision": "Normalization FY2025", "value": "$662M excluded", "rationale": "Excludes Impairment $457M + Transformation $205M = $662M total non-recurring."},
-    {"id": "DP7", "decision": "Leases — ASC 842", "value": "As-is", "rationale": "Already on balance sheet. $557M lease liabilities — as-is treatment."},
-    {"id": "DP8", "decision": "Non-Op Assets", "value": "$17,247M excess cash", "rationale": "Excess Cash = Cash+STI ($17,785M) − 2% Revenue buffer ($538M) = $17,247M. LT Inv: $0."},
-    {"id": "DP9", "decision": "Hurdle Rate", "value": "12%", "rationale": "12% — Above DCE standard due to elevated beta (1.20) and cyclical OTA model."},
-    {"id": "DP10", "decision": "Sustainable Buybacks", "value": "$6,500M/yr", "rationale": "$6,500M/yr — normalized FY2022-FY2025, excluding FY2023 outlier ($10,377M)."},
-    {"id": "DP11", "decision": "WACC", "value": "8.61%", "rationale": "8.61% — Rf 4.15%, β 1.20, ERP 4.23% (Damodaran Jan 2026), Kd 5.1% post-tax 4.05%."},
-    {"id": "DP12", "decision": "Selected ROIC (IRR)", "value": "91.5%", "rationale": "3yr avg ROIC = 91.5% as reinvestment growth input. FY23: 78.3%, FY24: 96.5%, FY25: 99.9%."},
-    {"id": "DP13", "decision": "Goodwill in RV", "value": "0%", "rationale": "Rebuild each component individually (Brand, Tech, Customers)."},
-    {"id": "DP14", "decision": "DTA", "value": "70%", "rationale": "70% — consistently profitable company, multi-jurisdictional complexity."},
-    {"id": "DP15", "decision": "Exit Multiple", "value": "20× EV/NOPAT", "rationale": "Mean reversion; quality capital-light duopoly."}
+    {
+      "id": "DP1",
+      "decision": "S&M Proxy",
+      "value": "Marketing Expenses",
+      "rationale": "Marketing Expenses — direct 10-K line item, performance + brand marketing."
+    },
+    {
+      "id": "DP2",
+      "decision": "R&D Capitalization",
+      "value": "N/A",
+      "rationale": "BKNG does not report separate R&D in 10-K."
+    },
+    {
+      "id": "DP3",
+      "decision": "S&M Useful Life",
+      "value": "3 years",
+      "rationale": "Performance marketing with moderate organic retention."
+    },
+    {
+      "id": "DP4",
+      "decision": "SBC Treatment",
+      "value": "Already in OpEx",
+      "rationale": "SBC already in Personnel (OpEx). No additional NOPAT adjustment per DP5."
+    },
+    {
+      "id": "DP5",
+      "decision": "Normalized Tax Rate",
+      "value": "20%",
+      "rationale": "20% — Median ETR FY2022-FY2025 ≈ 20.5%."
+    },
+    {
+      "id": "DP6",
+      "decision": "Normalization FY2025",
+      "value": "$662M excluded",
+      "rationale": "Excludes Impairment $457M + Transformation $205M = $662M total non-recurring."
+    },
+    {
+      "id": "DP7",
+      "decision": "Leases — ASC 842",
+      "value": "As-is",
+      "rationale": "Already on balance sheet. $557M lease liabilities — as-is treatment."
+    },
+    {
+      "id": "DP8",
+      "decision": "Non-Op Assets",
+      "value": "$17,247M excess cash",
+      "rationale": "Excess Cash = Cash+STI ($17,785M) − 2% Revenue buffer ($538M) = $17,247M. LT Inv: $0."
+    },
+    {
+      "id": "DP9",
+      "decision": "Hurdle Rate",
+      "value": "12%",
+      "rationale": "12% — Above DCE standard due to elevated beta (1.20) and cyclical OTA model."
+    },
+    {
+      "id": "DP10",
+      "decision": "Sustainable Buybacks",
+      "value": "$6,500M/yr",
+      "rationale": "$6,500M/yr — normalized FY2022-FY2025, excluding FY2023 outlier ($10,377M)."
+    },
+    {
+      "id": "DP11",
+      "decision": "WACC",
+      "value": "8.61%",
+      "rationale": "8.61% — Rf 4.15%, β 1.20, ERP 4.23% (Damodaran Jan 2026), Kd 5.1% post-tax 4.05%."
+    },
+    {
+      "id": "DP12",
+      "decision": "Selected ROIC (IRR)",
+      "value": "91.5%",
+      "rationale": "3yr avg ROIC = 91.5% as reinvestment growth input. FY23: 78.3%, FY24: 96.5%, FY25: 99.9%."
+    },
+    {
+      "id": "DP13",
+      "decision": "Goodwill in RV",
+      "value": "0%",
+      "rationale": "Rebuild each component individually (Brand, Tech, Customers)."
+    },
+    {
+      "id": "DP14",
+      "decision": "DTA",
+      "value": "70%",
+      "rationale": "70% — consistently profitable company, multi-jurisdictional complexity."
+    },
+    {
+      "id": "DP15",
+      "decision": "Exit Multiple",
+      "value": "20× EV/NOPAT",
+      "rationale": "Mean reversion; quality capital-light duopoly."
+    }
   ],
-
   "adj": {
     "gaapOI": 8825,
     "mktTotal": 8186,
@@ -371,28 +2024,32 @@
     "smAsset": 4564,
     "nrTotal": 662,
     "nopatFinal": 7420,
-    "etrHistory": [89.6, 20.5, 22.1, 21.7, 19.3, 20.9],
+    "etrHistory": [
+      89.6,
+      20.5,
+      22.1,
+      21.7,
+      19.3,
+      20.9
+    ],
     "rdTotal": null,
     "rdLife": null,
     "rdGrowthExp": null,
     "rdAsset": null,
     "normalizationAdj": null
   },
-
   "documents": {
     "valuationReportUrl": "https://drive.google.com/file/d/1JPh6IsQGBGXd92TV-Vr8xc0tyAoI8G0Q/view?usp=sharing",
-    "thesisBreakerUrl": "https://drive.google.com/file/d/1ZSMPZ5mayaPiWXs1KOyNqxyO37_ZKuh4/view?usp=sharing",
-    "mungerDigitalUrl": "https://drive.google.com/file/d/1-PlXAaTs6oUodwuuPbnwp6BgxU3pXuFu/view?usp=sharing"
+    "thesisBreakerUrl": "/docs/DCE_BKNG_Thesis_Breaker.pdf",
+    "mungerDigitalUrl": "/docs/DCE_BKNG_Munger_Digital.pdf"
   },
-
   "thesisSummary": {
     "verdict": "WATCHLIST",
     "epvRvRatio": 5.07,
-    "priceEpvRatio": 1.70,
+    "priceEpvRatio": 1.7,
     "impliedIrr": 19.7,
     "marginOfSafety": 7.7,
     "narrative": "BKNG OTAs benefit from network effects and asset-light model. Price currently at ~1.7× EPV — market pricing in growth. Implied IRR of 19.7% exceeds 12% hurdle by +7.7% MoS. Key risk: Google/metasearch dependency and negative equity from aggressive buybacks."
   },
-
   "finnhubSymbol": "BKNG"
 }
