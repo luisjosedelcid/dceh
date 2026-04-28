@@ -387,8 +387,26 @@
   });
 
   function injectTrigger() {
-    // Find the navbar (.hnav) and append a search trigger if not already there
-    const nav = document.querySelector('.hnav');
+    // Try .hnav first (most pages), then fallback to home page header structure
+    let nav = document.querySelector('.hnav');
+    let isHomeFallback = false;
+
+    if (!nav) {
+      // Home (index.html): find the link container inside <header> that holds the nav links
+      const header = document.querySelector('header');
+      if (header) {
+        // The links container is the div that contains anchors to /research.html, /news.html, etc.
+        const candidates = header.querySelectorAll('div');
+        for (const div of candidates) {
+          if (div.querySelector('a[href="/reporting.html"]') || div.querySelector('a[href="/research.html"]')) {
+            nav = div;
+            isHomeFallback = true;
+            break;
+          }
+        }
+      }
+    }
+
     if (!nav || nav.querySelector('.dce-search-trigger')) return;
     const isMac = navigator.platform.toLowerCase().includes('mac');
     const btn = document.createElement('button');
@@ -396,7 +414,18 @@
     btn.className = 'dce-search-trigger';
     btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg> Search <kbd>${isMac ? '⌘' : 'Ctrl'}K</kbd>`;
     btn.addEventListener('click', open);
-    nav.appendChild(btn);
+
+    if (isHomeFallback) {
+      // Insert before the divider (the small | separator before the date) to fit the home layout
+      const divider = nav.querySelector('div[style*="width:1px"]');
+      if (divider) {
+        nav.insertBefore(btn, divider);
+      } else {
+        nav.appendChild(btn);
+      }
+    } else {
+      nav.appendChild(btn);
+    }
   }
 
   if (document.readyState === 'loading') {
