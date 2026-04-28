@@ -1,0 +1,279 @@
+{
+  "company": {
+    "ticker": "SAP",
+    "name": "SAP SE",
+    "fullName": "SAP SE",
+    "exchange": "NASDAQ",
+    "sector": "Consumer Discretionary",
+    "industry": "Information Technology / Software - Application",
+    "period": "LTM",
+    "lastReview": "27-Mar-2026",
+    "defaultPrice": 151.0,
+    "finnhubSymbol": "SAP"
+  },
+  "years": [
+    "FY2020",
+    "FY2021",
+    "FY2022",
+    "FY2023",
+    "FY2024",
+    "FY2025"
+  ],
+  "overview": {
+    "marketCap": "$177.4B",
+    "marketCapSub": "1175.00M diluted shares",
+    "enterpriseValue": "$0M",
+    "evSub": "MktCap + Debt + Leases − Cash",
+    "normalizedNopat": "$6.5B",
+    "nopatSub": "Rev $36.8B × 0.0% norm. margin × (1−30.0%)",
+    "fcf": "$7.9B",
+    "fcfSub": "FCF Margin 21.6%",
+    "impliedIrr": "4.6%",
+    "hurdle": "12.0%",
+    "mos": "-7.4%",
+    "roic3yr": "37.1%",
+    "roicSub": "vs. WACC 9.0% · Spread +28.1%",
+    "roicLabel": "ROIC Selected",
+    "wacc": "9.00%",
+    "waccSub": "β 1.00 · Ke 8.2% · ERP 5.5%"
+  },
+  "modelInputs": {
+    "valuation": {
+      "normalizedNopat": "$6.5B",
+      "revenueBase": "$36.8B",
+      "normalizedOpMargin": "0.0%",
+      "taxRate": "30.0%",
+      "wacc": "9.00%",
+      "dilutedShares": "1175.000"
+    },
+    "irrAssumptions": {
+      "selectedRoic": "37.1%",
+      "organicGrowth": "2.0%",
+      "reinvestmentGrowth": "1.5%",
+      "exitMultiple": "25× EV/NOPAT",
+      "sustainableBuybacks": "$1.5B/yr",
+      "investmentHorizon": "5 years"
+    },
+    "capitalAdjustments": {
+      "smCapitalization": "4yr useful life",
+      "rdCapitalization": "See model",
+      "sbcTreatment": "Case A — already in OpEx",
+      "normalizationWindow": "FY2022–FY2025",
+      "itemsNormalized": "See NOPAT sheet",
+      "goodwillInRV": "0%"
+    }
+  },
+  "epv": {
+    "base": {
+      "nopat": 6468,
+      "wacc": 9.0,
+      "tax": 30.0
+    },
+    "bridge": {
+      "excessCash": 9032,
+      "ltInv": 3750,
+      "debt": -8068,
+      "leases": 0
+    },
+    "shares": 1175.0,
+    "waccComponents": {
+      "riskFreeRate": "2.7%",
+      "beta": "1.00",
+      "erp": "5.5%",
+      "keCAPM": "8.2%",
+      "kdPreTax": "3.5%",
+      "kdPostTax": "2.5%",
+      "equityWeight": "95.7%",
+      "debtWeight": "4.3%"
+    },
+    "normalizedEBIT": 9240,
+    "daAddback": 1311,
+    "taxFactor": 0.7
+  },
+  "irr": {
+    "base": {
+      "roic": 37.1,
+      "growth": 2.0,
+      "exit": 25,
+      "buybacks": 1500,
+      "horizon": 5,
+      "hurdle": 12.0
+    },
+    "nopat": 6468.1,
+    "ev": 0,
+    "dividends": 2635,
+    "interest": 1323,
+    "reinvRate": 0.039455,
+    "deRatio": 0.04547,
+    "netBorrCost": 0.11479,
+    "actualMult": 27.168,
+    "modelPrice": 151.0,
+    "modelEV": 0,
+    "epvPerShare": 73.18,
+    "shares": 1175.0,
+    "detail": {
+      "marketCap": "$177.4B",
+      "totalDebt": "$8.1B",
+      "leases": "$0M",
+      "cashSTI": "−$9.8B",
+      "evTotal": "$0M",
+      "nopatMult": "27.2×",
+      "dividendsPaid": "$2.6B",
+      "interestExpense": "$1.3B",
+      "growthCapex": "$0M",
+      "smGrowthExpense": "$0M",
+      "totalReinvestment": "$255M",
+      "reinvestmentRate": "3.9%",
+      "payoutRate": "84.4%",
+      "cashSanity": {
+        "nopat": "$6.5B",
+        "reinvestment": "−$255M",
+        "distributions": "−$5.5B",
+        "net": "+$755M",
+        "netPct": "11.7%",
+        "isPositive": true
+      }
+    }
+  },
+  "charts": {
+    "revenueNopat": {
+      "revenue": [
+        27338,
+        26953,
+        29519,
+        31207,
+        34176,
+        36800
+      ],
+      "nopat": [
+        12527,
+        12105,
+        11015,
+        9268,
+        8396,
+        7527
+      ]
+    },
+    "margins": {
+      "opMargin": [
+        24.2,
+        23.4,
+        20.0,
+        18.6,
+        13.6,
+        26.7
+      ],
+      "netMargin": [
+        18.4,
+        33.4,
+        5.7,
+        10.1,
+        10.4,
+        21.8
+      ]
+    },
+    "cashflows": {
+      "cfo": [
+        7195,
+        6223,
+        5646,
+        6332,
+        5220,
+        8647
+      ],
+      "fcf": [
+        6379,
+        5522,
+        4772,
+        5547,
+        4423,
+        7937
+      ],
+      "buybacks": [
+        -1492,
+        0,
+        -1500,
+        -949,
+        -2106,
+        -1861
+      ]
+    },
+    "balanceSheet": {
+      "totalAssets": [
+        58476,
+        71169,
+        72160,
+        68335,
+        74122,
+        70332
+      ],
+      "totalLiabilities": [
+        58476,
+        71169,
+        72160,
+        68335,
+        74122,
+        70332
+      ],
+      "equity": [
+        29924,
+        41523,
+        42852,
+        43406,
+        45808,
+        45221
+      ]
+    },
+    "roic": {
+      "roicPct": [],
+      "waccLine": [
+        9.0,
+        9.0,
+        9.0,
+        9.0,
+        9.0,
+        9.0
+      ],
+      "waccLabel": "WACC (9.00%)"
+    },
+    "cfoComponents": {
+      "cfo": [],
+      "cfi": [
+        -2987,
+        -3063,
+        667,
+        906,
+        -667,
+        -1330
+      ],
+      "cff": [
+        -3997,
+        -56,
+        -6337,
+        -7734,
+        -3401,
+        -7849
+      ]
+    },
+    "healthRadar": {
+      "labels": [
+        "Financial\\nStrength",
+        "Profitability",
+        "Growth",
+        "Asset-Light",
+        "Capital\\nAllocation",
+        "Rule of 40"
+      ],
+      "data": [
+        85,
+        85,
+        70,
+        80,
+        80,
+        80
+      ]
+    }
+  },
+  "aiContext": "You are DCE Investment Assistant for SAP. Key data: Price $151.00, EV $0M, NOPAT $6.5B, WACC 9.0%, ROIC 37.1%, EPV/Share $73.18, Implied IRR 4.6%, MoS -7.4%. Respond in English. Be direct and technical.",
+  "driveLinks": {}
+}
