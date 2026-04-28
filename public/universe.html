@@ -148,6 +148,8 @@ const UNIVERSE = [
     name: 'Booking Holdings',
     sector: 'NASDAQ · Travel Services',
     link: '/bkng',
+    currency: '$',
+    finnhubSymbol: 'BKNG',
     shares: 32.639,         // M
     debt: 19293 + 557,      // Total Debt + Leases ($M)
     cash: 17785,            // Cash + STI ($M)
@@ -171,32 +173,35 @@ const UNIVERSE = [
     badge: 'Conditional',
   },
   {
-    ticker: 'LULU',
-    name: 'Lululemon Athletica',
-    sector: 'NASDAQ · Apparel Retail',
-    link: '/lulu',
-    shares: 118.552,
-    debt: 1763,             // Leases only
-    cash: 1036,
-    defaultPrice: 160.20,
-    nopatNorm: 1714,
-    wacc: 0.1061,
-    excessCash: 482,
-    bridgeAdj: 482 + 0 - 0 - 1763,
-    distYield: 0.0428,
-    reinvGrowth: 0.062,
-    organicGrowth: 0.02,
-    exitMult: 15,
-    horizon: 7,
+    ticker: 'SAP',
+    name: 'SAP SE',
+    sector: 'NYSE ADR / XETRA · Enterprise Software',
+    link: '/sap',
+    currency: '€',
+    finnhubSymbol: null,    // XETRA not on Finnhub free tier
+    shares: 1175,           // M diluted (€ model uses M)
+    debt: 7800 + 1500,      // Debt + Leases (€M, approx)
+    cash: 7800,             // Cash + STI (€M, approx)
+    defaultPrice: 151.00,
+    nopatNorm: 6468,        // Normalized NOPAT (€M)
+    wacc: 0.0791,
+    excessCash: 6100,       // (€M, approx)
+    bridgeAdj: 6100 + 0 - 7800 - 1500,
+    distYield: 0.013,
+    reinvGrowth: 0.020,
+    organicGrowth: 0.020,
+    exitMult: 25,
+    horizon: 5,
     hurdle: 0.12,
-    de: 0.098,
-    netBorrowCost: 0,
-    rvPerShare: 252.14,
-    badge: 'Conditional',
+    de: 0.05,
+    netBorrowCost: 0.03,
+    rvPerShare: 33.47,
+    badge: 'Pass',
   },
 ];
 
 function fmt(v, dec) { return v.toLocaleString('en-US', { minimumFractionDigits: dec||0, maximumFractionDigits: dec||0 }); }
+function sym(c) { return c.currency || '$'; }
 
 function calcCompany(c, price) {
   const mktCap = price * c.shares;
@@ -237,10 +242,10 @@ function renderRow(c, vals) {
       <div class="ticker">${c.ticker} <span class="badge ${badgeClass}">${c.badge}</span></div>
       <div class="ticker-sub">${c.name} · ${c.sector}</div>
     </td>
-    <td>$${fmt(vals.mktCap)}M</td>
-    <td>$${fmt(vals.ev)}M</td>
+    <td>${sym(c)}${fmt(vals.mktCap)}M</td>
+    <td>${sym(c)}${fmt(vals.ev)}M</td>
     <td><input class="price-input" data-ticker="${c.ticker}" value="${vals.price.toFixed(2)}" onchange="onPriceChange('${c.ticker}', this.value)" onfocus="this.select()"></td>
-    <td class="gold">$${vals.epvPs.toFixed(2)}</td>
+    <td class="gold">${sym(c)}${vals.epvPs.toFixed(2)}</td>
     <td class="${peClass}">${vals.priceEpv.toFixed(2)}×</td>
     <td>${vals.nopatMult.toFixed(1)}×</td>
     <td class="${irrClass}" style="font-weight:700;font-size:14px">${irrPct}%</td>
@@ -286,8 +291,8 @@ async function fetchLivePrices() {
   if (note) note.textContent = 'Fetching live prices...';
 
   try {
-    const fetches = UNIVERSE.map(c =>
-      fetch(`https://finnhub.io/api/v1/quote?symbol=${c.ticker}&token=${FH_KEY}`)
+    const fetches = UNIVERSE.filter(c => c.finnhubSymbol).map(c =>
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${c.finnhubSymbol}&token=${FH_KEY}`)
         .then(r => r.json())
         .then(d => ({ ticker: c.ticker, price: d.c }))
         .catch(() => ({ ticker: c.ticker, price: null }))

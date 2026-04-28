@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — Columbia Model</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap');
+  :root {
+    --navy:      #1b2642;
+    --navy-deep: #1b2642;
+    --navy-mid:  #223060;
+    --gold:      #b88b47;
+    --gold-lt:   #d4aa6a;
+    --gold-dim:  rgba(184,139,71,0.10);
+    --gold-rule: rgba(184,139,71,0.30);
+    --white:     #ffffff;
+    --cream:     #f5f1eb;
+    --card-bg:   #faf8f4;
+    --gray-lt:   #e6e6e6;
+    --gray-mid:  #8a9098;
+    --gray-txt:  #606060;
+    --ink:       #1b2642;
+    --green:     #2a7a56;
+    --red:       #9b2335;
+    --rule:      rgba(27,38,66,0.09);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--cream); color: var(--ink); font-family: 'Archivo','Helvetica Neue',Helvetica,sans-serif; font-size: 15px; line-height: 1.5; min-height: 100vh; }
+
+  .wave-deco { position: fixed; pointer-events: none; z-index: 0; opacity: 0.07; }
+  .wave-deco.tr { top: -40px; right: -60px; width: 480px; }
+  .wave-deco.bl { bottom: -60px; left: -40px; width: 420px; transform: rotate(180deg); }
+
+  /* HEADER */
+  header { position: relative; z-index: 10; background: var(--navy); border-bottom: 2px solid var(--gold); padding: 0 48px; display: flex; align-items: stretch; min-height: 70px; }
+  .hbrand { display: flex; align-items: center; gap: 18px; padding: 16px 28px 16px 0; border-right: 1px solid rgba(255,255,255,0.1); margin-right: 28px; }
+  .logo { font-size: 20px; font-weight: 700; color: var(--white); line-height: 1; }
+  .logo span { color: var(--gold); font-weight: 300; }
+  .hsubject { display: flex; flex-direction: column; justify-content: center; }
+  .hsubject .lbl { font-size: 9px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); margin-bottom: 3px; }
+  .hsubject .ttl { font-size: 15px; font-weight: 600; color: var(--white); letter-spacing: 0; word-spacing: 0.05em; }
+  .hright { margin-left: auto; display: flex; align-items: center; gap: 28px; }
+  .hkpi { text-align: right; }
+  .hkpi .val { font-size: 20px; font-weight: 700; color: var(--gold); letter-spacing: -0.02em; line-height: 1; }
+  .hkpi .sub { font-size: 9px; color: rgba(255,255,255,0.5); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 3px; }
+  .hkpi + .hkpi { border-left: 1px solid rgba(255,255,255,0.1); padding-left: 28px; }
+
+  /* NAV */
+  nav { position: relative; z-index: 10; background: var(--white); border-bottom: 1px solid var(--rule); padding: 0 48px; display: flex; overflow-x: auto; }
+  nav::-webkit-scrollbar { display: none; }
+  nav button { font-family: 'Archivo',sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; padding: 13px 20px; border: none; background: none; cursor: pointer; color: var(--gray-mid); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; transition: color .2s, border-color .2s; }
+  nav button:hover { color: var(--navy); }
+  nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* MAIN */
+  main { position: relative; z-index: 5; padding: 34px 48px 48px; max-width: 1600px; margin: 0 auto; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* SECTION LABEL */
+  .slbl { font-size: 9px; font-weight: 500; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; padding-bottom: 10px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; gap: 10px; }
+  .slbl::before { content: ''; display: block; width: 16px; height: 1px; background: var(--gold); }
+
+  /* GRIDS */
+  .g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+  .g3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 20px; }
+  .g2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; margin-bottom: 20px; }
+
+  /* CARDS */
+  .card { background: var(--white); border: 1px solid var(--rule); padding: 20px 22px; position: relative; overflow: hidden; transition: border-color .2s, box-shadow .2s; }
+  .card:hover { border-color: var(--gold-rule); box-shadow: 0 2px 12px rgba(27,38,66,0.06); }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: transparent; transition: background .2s; }
+  .card:hover::before { background: var(--gold); }
+  .card.accent { background: var(--white); border-color: var(--rule); }
+  .clbl { font-size: 9px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gray-mid); margin-bottom: 10px; }
+  .cval { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; color: var(--ink); }
+  .cval.gold { color: var(--gold); }
+  .cval.green { color: var(--green); }
+  .cval.red   { color: var(--red); }
+  .csub { font-size: 11px; color: var(--gray-mid); margin-top: 6px; font-weight: 300; }
+  .chart-card { background: var(--white); border: 1px solid var(--rule); padding: 20px 22px; }
+  .chart-card canvas { max-height: 250px; }
+
+  /* BADGE */
+  .badge { display: inline-block; font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; margin-left: 6px; }
+  .bg { background: rgba(42,122,86,.12); color: var(--green); }
+  .br { background: rgba(155,35,53,.1); color: var(--red); }
+  .bo { background: var(--gold-dim); color: var(--gold); }
+
+  /* KV */
+  .kv .row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--rule); font-size: 13px; }
+  .kv .row:last-child { border-bottom: none; }
+  .kv .k { color: var(--gray-mid); font-weight: 300; }
+  .kv .v { font-weight: 600; font-size: 12px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .kv .v.gold  { color: var(--gold); }
+  .kv .v.green { color: var(--green); }
+  .kv .v.red   { color: var(--red); }
+
+  /* LADDER */
+  .ladder { background: var(--white); border: 1px solid var(--rule); padding: 40px 56px; margin-bottom: 20px; display: flex; align-items: flex-end; gap: 0; min-height: 300px; }
+  .lcol { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+  .lcol + .lcol::before { content: '→'; position: absolute; left: -16px; top: 50%; color: var(--gold); font-size: 18px; opacity: 0.6; }
+  .lbar { width: 88%; max-width: 130px; border-radius: 2px 2px 0 0; }
+  .lbar.nav  { background: var(--gray-lt); border: 1px solid #d0ccc6; }
+  .lbar.epv  { background: var(--gold); }
+  .lbar.mkt  { background: var(--navy); }
+  .lval { font-size: 22px; font-weight: 700; text-align: center; margin-top: 8px; color: var(--ink); }
+  .llbl { font-size: 11px; color: var(--gray-mid); text-align: center; margin-top: 4px; }
+  .lnote { font-size: 10px; color: var(--gray-mid); text-align: center; margin-top: 3px; font-style: italic; }
+
+  /* HEALTH TABLE */
+  .ht { width: 100%; border-collapse: collapse; }
+  .ht th { font-size: 9px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--gold-rule); background: var(--white); }
+  .ht td { padding: 8px 14px; border-bottom: 1px solid var(--rule); font-size: 13px; color: var(--ink); background: var(--white); }
+  .ht tr:last-child td { border-bottom: none; }
+  .ht tr:hover td { background: rgba(184,139,71,0.04); }
+  .ht .cat td { background: rgba(27,38,66,0.04) !important; color: var(--navy) !important; font-size: 9px !important; font-weight: 600 !important; letter-spacing: 0.2em !important; text-transform: uppercase; padding: 6px 14px !important; }
+  .pass    { color: var(--green); font-weight: 700; font-size: 11px; }
+  .fail    { color: var(--red);   font-weight: 700; font-size: 11px; }
+  .monitor { color: var(--gold);  font-weight: 700; font-size: 11px; }
+  .mono { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 12px; }
+  .dim  { color: var(--gray-mid); font-size: 11px; font-weight: 300; }
+
+  /* IRR BARS */
+  .irrwrap { background: var(--white); border: 1px solid var(--rule); padding: 26px 30px; margin-bottom: 20px; }
+  .irow { display: flex; align-items: center; gap: 14px; margin-bottom: 11px; }
+  .ilbl { font-size: 12px; color: var(--gray-txt); font-weight: 400; width: 210px; flex-shrink: 0; }
+  .itrack { flex: 1; height: 5px; background: var(--gray-lt); border-radius: 1px; overflow: hidden; }
+  .ifill  { height: 100%; border-radius: 1px; transition: width .3s; }
+  .ipct { width: 55px; text-align: right; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .itotal { display: flex; align-items: center; gap: 14px; padding-top: 13px; border-top: 1px solid var(--gold-rule); margin-top: 4px; }
+
+  /* AUDIT */
+  .arow { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 13px; }
+  .anum { color: var(--gold); font-weight: 700; font-size: 10px; width: 30px; flex-shrink: 0; padding-top: 2px; }
+  .atitle { font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+  .adesc { color: var(--gray-txt); font-weight: 300; font-size: 12px; }
+
+  /* FOOTER */
+  footer { position: relative; z-index: 10; background: var(--navy); border-top: 2px solid var(--gold); padding: 13px 48px; display: flex; justify-content: space-between; align-items: center; }
+  footer .fl { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+  footer .fr { font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 300; }
+
+  /* SLIDERS */
+  .inp-group { display: flex; flex-direction: column; gap: 6px; }
+  .inp-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
+  .inp-label { font-size: 11px; font-weight: 500; color: var(--ink); letter-spacing: 0.02em; }
+  .inp-val-display { font-size: 16px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .slider { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; background: var(--gray-lt); border-radius: 2px; outline: none; cursor: pointer; }
+  .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--navy); border: 2px solid var(--gold); cursor: pointer; transition: transform .15s; }
+  .slider::-webkit-slider-thumb:hover { transform: scale(1.2); background: var(--gold); }
+  .slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--navy); border: 2px solid var(--gold); cursor: pointer; }
+  .inp-range-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--gray-mid); font-weight: 300; margin-top: 2px; }
+  .inp-formula { font-size: 10px; color: var(--gray-mid); font-style: italic; font-weight: 300; margin-top: 2px; }
+
+  /* FINANCIALS TABLES */
+  .tbl-wrap { overflow-x: auto; margin-bottom: 20px; }
+  .fin-tbl { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .fin-tbl thead tr { background: var(--navy); color: var(--white); }
+  .fin-tbl thead th { padding: 8px 10px; font-size: 9px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; text-align: right; white-space: nowrap; }
+  .fin-tbl thead th:first-child { text-align: left; min-width: 200px; }
+  .fin-tbl tbody tr:hover td { background: rgba(184,139,71,0.04); }
+  .fin-tbl .spacer-row td { height: 6px; background: transparent; border: none; }
+  .fin-tbl .sec-row td { font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--navy); background: rgba(27,38,66,0.05); padding: 5px 10px; }
+  .fin-tbl .tot-row td { font-weight: 700; border-top: 1px solid var(--gold-rule); border-bottom: 1px solid var(--gold-rule); background: rgba(184,139,71,0.06); }
+  .fin-tbl .sub-row td { font-weight: 600; border-top: 1px solid var(--rule); background: rgba(27,38,66,0.02); }
+  .fin-tbl .mrg-row td { font-weight: 600; color: var(--gray-txt); background: rgba(27,38,66,0.02); font-style: italic; }
+  .fin-tbl .norm-row td { }
+  .fin-tbl td, .fin-tbl th { border-bottom: 1px solid var(--rule); padding: 7px 10px; }
+  .row-lbl { text-align: left !important; font-weight: 400; color: var(--ink); }
+  .num-cell { text-align: right; }
+  .fw { font-weight: 700; }
+  .green { color: var(--green); }
+  .red   { color: var(--red); }
+  .gold  { color: var(--gold); }
+
+  /* SENSITIVITY TABLE */
+  .sens-tbl th.row-lbl { background: rgba(27,38,66,0.05); font-size:10px; font-weight:600; min-width:80px; }
+
+  /* MEMO */
+  .memo-section { margin-bottom: 28px; }
+  .memo-section h3 { font-size: 9px; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); border-bottom: 1px solid var(--rule); padding-bottom: 8px; margin-bottom: 14px; }
+  .memo-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--rule); font-size: 13px; }
+  .memo-row .mk { color: var(--gray-mid); font-weight: 300; }
+  .memo-row .mv { font-weight: 600; color: var(--ink); }
+
+  /* RV TABLE */
+  .rv-tbl th:last-child, .rv-tbl td:last-child { text-align: left; max-width: 260px; font-size: 10px; }
+
+  /* DOC TILE */
+  .doc-tile { background: var(--white); border: 1px solid var(--rule); border-top: 2px solid var(--gold); padding: 28px 30px; display: flex; flex-direction: column; gap: 12px; }
+  .doc-tile .dt-title { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--navy); }
+  .doc-tile .dt-desc { font-size: 13px; color: var(--gray-txt); font-weight: 300; line-height: 1.6; }
+  .doc-tile a { display: inline-block; margin-top: 8px; padding: 10px 22px; background: var(--navy); color: var(--white); font-size: 10px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; text-decoration: none; transition: background .2s; }
+  .doc-tile a:hover { background: var(--gold); }
+  .doc-tile .coming-soon { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; color: var(--gray-mid); border: 1px solid var(--gray-lt); padding: 10px 22px; display: inline-block; margin-top: 8px; }
+
+  @media print {
+    nav, header .hright, .inp-group { display: none !important; }
+    .tab-content { display: block !important; }
+    body { background: white; }
+    .wave-deco { display: none; }
+  }
+
+  @media (max-width: 900px) {
+    header { padding: 0 16px; flex-wrap: wrap; }
+    main   { padding: 20px 16px 32px; }
+    nav    { padding: 0 16px; }
+    .g4, .g3 { grid-template-columns: repeat(2,1fr); }
+    .g2 { grid-template-columns: 1fr; }
+    .hright { gap: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- WAVE DECORATIONS -->
+<svg class="wave-deco tr" viewBox="0 0 500 380" fill="none">
+  <path d="M500,0 Q340,110 190,72 Q40,34 0,190" stroke="#b88b47" stroke-width="1"/>
+  <path d="M500,22 Q352,122 202,84 Q52,46 12,202" stroke="#b88b47" stroke-width="1"/>
+  <path d="M500,44 Q364,134 214,96 Q64,58 24,214" stroke="#b88b47" stroke-width="1"/>
+  <path d="M500,66 Q376,146 226,108 Q76,70 36,226" stroke="#b88b47" stroke-width="1"/>
+  <path d="M500,88 Q388,158 238,120 Q88,82 48,238" stroke="#b88b47" stroke-width="1"/>
+  <path d="M500,110 Q400,170 250,132 Q100,94 60,250" stroke="#b88b47" stroke-width="1"/>
+  <path d="M500,132 Q412,182 262,144 Q112,106 72,262" stroke="#b88b47" stroke-width="1"/>
+  <path d="M500,154 Q424,194 274,156 Q124,118 84,274" stroke="#b88b47" stroke-width="1"/>
+  <path d="M500,176 Q436,206 286,168 Q136,130 96,286" stroke="#b88b47" stroke-width="1"/>
+  <path d="M500,198 Q448,218 298,180 Q148,142 108,298" stroke="#b88b47" stroke-width="1"/>
+</svg>
+<svg class="wave-deco bl" viewBox="0 0 500 380" fill="none">
+  <path d="M0,380 Q160,270 310,308 Q460,346 500,190" stroke="#b88b47" stroke-width="1"/>
+  <path d="M0,358 Q148,258 298,296 Q448,334 488,178" stroke="#b88b47" stroke-width="1"/>
+  <path d="M0,336 Q136,246 286,284 Q436,322 476,166" stroke="#b88b47" stroke-width="1"/>
+  <path d="M0,314 Q124,234 274,272 Q424,310 464,154" stroke="#b88b47" stroke-width="1"/>
+  <path d="M0,292 Q112,222 262,260 Q412,298 452,142" stroke="#b88b47" stroke-width="1"/>
+  <path d="M0,270 Q100,210 250,248 Q400,286 440,130" stroke="#b88b47" stroke-width="1"/>
+  <path d="M0,248 Q88,198 238,236 Q388,274 428,118" stroke="#b88b47" stroke-width="1"/>
+</svg>
+
+<!-- HEADER -->
+<header>
+  <div class="hbrand">
+    <div class="logo"><strong>DCE</strong> <span>Holdings</span></div>
+    <div style="width:1px;height:26px;background:var(--gold-rule)"></div>
+    <div class="hsubject">
+      <div class="lbl">Investment Office — Columbia Model</div>
+      <div class="ttl" id="hdr-company">Loading…</div>
+    </div>
+  </div>
+  <div class="hright">
+    <div class="hkpi" style="min-width:140px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <input id="price-input" type="text" value=""
+          style="background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.25);color:var(--gold-lt);font-family:Archivo,sans-serif;font-size:18px;font-weight:700;width:110px;text-align:right;outline:none;padding:2px 4px"
+          oninput="onPriceInput(this.value)"
+          onfocus="this.select()"
+          placeholder="Price">
+      </div>
+      <div class="sub">Market price</div>
+    </div>
+    <div class="hkpi"><div class="val" id="hdr-irr">—</div><div class="sub">Implied IRR</div></div>
+    <div class="hkpi"><div class="val gold" id="hdr-epv-ps">—</div><div class="sub">EPV / Share</div></div>
+    <div class="hkpi"><div class="val" id="hdr-mos">—</div><div class="sub">Margin of Safety</div></div>
+    <div class="hkpi"><div class="val" id="hdr-price-epv">—</div><div class="sub">Price / EPV</div></div>
+    <div class="hkpi" style="border-left:1px solid rgba(255,255,255,0.1);padding-left:20px">
+      <div style="font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Last Review</div>
+      <div style="font-size:11px;color:var(--gold-lt)" id="last-review-display">—</div>
+    </div>
+  </div>
+</header>
+
+<!-- NAV (built dynamically by company.js) -->
+<nav id="main-nav"></nav>
+
+<main>
+
+<!-- ══════════════════════════════════════════════════════════
+     1. OVERVIEW
+     ══════════════════════════════════════════════════════════ -->
+<div id="tab-overview" class="tab-content active">
+  <div class="slbl">Executive Summary</div>
+  <div class="g4">
+    <div class="card accent">
+      <div class="clbl">Market Cap</div>
+      <div class="cval gold" id="ov-mktcap">—</div>
+      <div class="csub" id="ov-mktcap-sub">—</div>
+    </div>
+    <div class="card">
+      <div class="clbl">Enterprise Value</div>
+      <div class="cval" id="ov-ev">—</div>
+      <div class="csub">MktCap + Debt + Leases − Cash</div>
+    </div>
+    <div class="card">
+      <div class="clbl">Normalized NOPAT</div>
+      <div class="cval" id="ov-nopat">—</div>
+      <div class="csub" id="ov-nopat-sub">—</div>
+    </div>
+    <div class="card">
+      <div class="clbl">FCF (Latest FY)</div>
+      <div class="cval" id="ov-fcf">—</div>
+      <div class="csub" id="ov-fcf-sub">—</div>
+    </div>
+  </div>
+  <div class="g3">
+    <div class="card accent">
+      <div class="clbl">Implied IRR (Equity)</div>
+      <div id="ov-irr">—</div>
+      <div class="csub" id="ov-hurdle-sub">—&nbsp;<span id="ov-mos"></span></div>
+    </div>
+    <div class="card accent">
+      <div class="clbl">ROIC 3yr Avg</div>
+      <div class="cval green" id="ov-roic3yr">—</div>
+      <div class="csub" id="ov-roic-sub">—</div>
+    </div>
+    <div class="card accent">
+      <div class="clbl">WACC</div>
+      <div class="cval gold" id="ov-wacc">—</div>
+      <div class="csub" id="ov-wacc-sub">—</div>
+    </div>
+  </div>
+
+  <div class="slbl" style="margin-top:8px">Key Model Inputs — Single Source of Truth</div>
+  <div class="g3" style="margin-bottom:20px">
+    <div class="card">
+      <div class="clbl">Valuation Inputs</div>
+      <div class="kv">
+        <div class="row"><span class="k">Normalized NOPAT</span><span class="v gold" id="ov-inputs-nopat">—</span></div>
+        <div class="row"><span class="k">Revenue Base</span><span class="v" id="ov-inputs-revenue">—</span></div>
+        <div class="row"><span class="k">Normalized Op Margin</span><span class="v" id="ov-inputs-margin">—</span></div>
+        <div class="row"><span class="k">Tax Rate (Normalized)</span><span class="v" id="ov-inputs-tax">—</span></div>
+        <div class="row"><span class="k">WACC</span><span class="v gold" id="ov-inputs-wacc">—</span></div>
+        <div class="row"><span class="k">Diluted Shares (M)</span><span class="v" id="ov-inputs-shares">—</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">IRR Assumptions</div>
+      <div class="kv">
+        <div class="row"><span class="k">Selected ROIC (reinv. growth)</span><span class="v gold" id="ov-irr-roic">—</span></div>
+        <div class="row"><span class="k">Organic Growth (DP17)</span><span class="v" id="ov-irr-organic">—</span></div>
+        <div class="row"><span class="k">Reinvestment Growth</span><span class="v" id="ov-irr-reinvg">—</span></div>
+        <div class="row"><span class="k">Exit Multiple (DP15)</span><span class="v" id="ov-irr-exit">—</span></div>
+        <div class="row"><span class="k">Sustainable Buybacks / Divs</span><span class="v" id="ov-irr-buybacks">—</span></div>
+        <div class="row"><span class="k">Investment Horizon</span><span class="v" id="ov-irr-horizon">—</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">Capital &amp; Adjustments</div>
+      <div class="kv">
+        <div class="row"><span class="k">S&amp;M Capitalization</span><span class="v" id="ov-cap-sm">—</span></div>
+        <div class="row"><span class="k">R&amp;D Capitalization</span><span class="v" id="ov-cap-rd">—</span></div>
+        <div class="row"><span class="k">SBC Treatment</span><span class="v" id="ov-cap-sbc">—</span></div>
+        <div class="row"><span class="k">Normalization Window</span><span class="v" id="ov-cap-window">—</span></div>
+        <div class="row"><span class="k">Items Normalized</span><span class="v" id="ov-cap-norm">—</span></div>
+        <div class="row"><span class="k">Goodwill in RV (DP12)</span><span class="v red" id="ov-cap-gw">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="chart-card"><div class="clbl">Revenue &amp; NOPAT (DCE Adj)</div><canvas id="c1"></canvas></div>
+    <div class="chart-card"><div class="clbl">Operating &amp; Net Margins (%)</div><canvas id="c2"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="chart-card"><div class="clbl">CFO vs FCF vs Buybacks</div><canvas id="c3"></canvas></div>
+    <div class="chart-card"><div class="clbl">Capital Deployment (Latest FY)</div><canvas id="c4"></canvas></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     2. FINANCIALS
+     ══════════════════════════════════════════════════════════ -->
+<div id="tab-financials" class="tab-content">
+  <div class="slbl">Income Statement</div>
+  <div class="tbl-wrap" id="tbl-is"></div>
+
+  <div class="slbl" style="margin-top:20px">Balance Sheet</div>
+  <div class="tbl-wrap" id="tbl-bs"></div>
+
+  <div class="slbl" style="margin-top:20px">Cash Flow Statement</div>
+  <div class="tbl-wrap" id="tbl-cf"></div>
+
+  <div class="g2" style="margin-top:24px">
+    <div class="chart-card"><div class="clbl">Revenue &amp; Operating Income</div><canvas id="c-rev"></canvas></div>
+    <div class="chart-card"><div class="clbl">Net Income / FCF / NOPAT</div><canvas id="c-nopat"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="chart-card"><div class="clbl">Margins (%)</div><canvas id="c-margins"></canvas></div>
+    <div class="chart-card"><div class="clbl">CFO / FCF / CapEx</div><canvas id="c-cfo"></canvas></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     3. ADJUSTMENTS
+     ══════════════════════════════════════════════════════════ -->
+<div id="tab-adj" class="tab-content">
+  <div class="slbl">NOPAT Construction &amp; DCE Adjustments</div>
+  <div class="g3" style="margin-bottom:24px">
+    <div class="card">
+      <div class="clbl">S&amp;M Capitalization Parameters</div>
+      <div class="kv">
+        <div class="row"><span class="k">GAAP Operating Income</span><span class="v gold" id="adj-gaap-oi">—</span></div>
+        <div class="row"><span class="k">S&amp;M Total Expense</span><span class="v" id="adj-sm-total">—</span></div>
+        <div class="row"><span class="k">S&amp;M 3yr Average</span><span class="v" id="adj-sm-avg">—</span></div>
+        <div class="row"><span class="k">S&amp;M Useful Life</span><span class="v" id="adj-sm-life">—</span></div>
+        <div class="row"><span class="k">S&amp;M Growth Expense</span><span class="v" id="adj-sm-growth">—</span></div>
+        <div class="row"><span class="k">S&amp;M Asset (Unamortized)</span><span class="v gold" id="adj-sm-asset">—</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">R&amp;D Capitalization</div>
+      <div class="kv">
+        <div class="row"><span class="k">R&amp;D Capitalization Status</span><span class="v gold" id="adj-rd-status">—</span></div>
+        <div class="row"><span class="k">R&amp;D Useful Life</span><span class="v" id="adj-rd-life">—</span></div>
+        <div class="row"><span class="k">R&amp;D Growth Expense</span><span class="v" id="adj-rd-growth">—</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">Normalization &amp; Final NOPAT</div>
+      <div class="kv">
+        <div class="row"><span class="k">Non-Recurring Items</span><span class="v" id="adj-nr-total">—</span></div>
+        <div class="row"><span class="k">Normalized Tax Rate</span><span class="v" id="adj-tax-rate">—</span></div>
+        <div class="row"><span class="k">NOPAT Final (EPV Input)</span><span class="v gold" id="adj-nopat-final">—</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="slbl">NOPAT Build-up Table</div>
+  <div class="tbl-wrap" id="adj-nopat-table"></div>
+  <div class="g2" style="margin-top:20px">
+    <div class="chart-card"><div class="clbl">Effective Tax Rate History (%)</div><canvas id="c-etr"></canvas></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     4. REPRODUCTION VALUE
+     ══════════════════════════════════════════════════════════ -->
+<div id="tab-rv" class="tab-content">
+  <div class="slbl">Reproduction Value — Estimated Cost to Replicate Assets From Scratch</div>
+
+  <div class="slbl" style="margin-top:4px;border:none">Tangible Assets</div>
+  <div class="tbl-wrap" id="rv-tangible"></div>
+
+  <div class="slbl" style="margin-top:12px;border:none">Intangible Assets (Reconstructed)</div>
+  <div class="tbl-wrap" id="rv-intangible"></div>
+
+  <div class="slbl" style="margin-top:12px;border:none">Other Assets</div>
+  <div class="tbl-wrap" id="rv-other"></div>
+
+  <div class="slbl" style="margin-top:12px;border:none">Liabilities (100% at Par)</div>
+  <div class="tbl-wrap" id="rv-liabilities"></div>
+
+  <!-- Totals summary -->
+  <div class="g3" style="margin-top:20px">
+    <div class="card">
+      <div class="clbl">Asset Summary</div>
+      <div class="kv">
+        <div class="row"><span class="k">Tangible Assets</span><span class="v" id="rv-total-tang">—</span></div>
+        <div class="row"><span class="k">Intangible Assets</span><span class="v" id="rv-total-intan">—</span></div>
+        <div class="row"><span class="k">Other Assets</span><span class="v" id="rv-total-other">—</span></div>
+        <div class="row"><span class="k">Total Reproduction Assets</span><span class="v gold fw" id="rv-total-assets">—</span></div>
+        <div class="row"><span class="k">Total Liabilities</span><span class="v red" id="rv-total-liab">—</span></div>
+      </div>
+    </div>
+    <div class="card accent">
+      <div class="clbl">Equity Value</div>
+      <div class="cval gold" id="rv-equity">—</div>
+      <div class="csub">Reproduction Value Equity</div>
+      <div style="margin-top:14px">
+        <div class="clbl">RV per Share</div>
+        <div class="cval" id="rv-per-share">—</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">Moat Test — EPV / RV</div>
+      <div class="cval gold" id="rv-moat-ratio">—</div>
+      <div class="csub" id="rv-moat-label">EPV / RV ratio</div>
+      <div style="margin-top:16px;font-size:12px;color:var(--gray-txt);font-style:italic;line-height:1.5" id="rv-note"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     5. EPV
+     ══════════════════════════════════════════════════════════ -->
+<div id="tab-epv" class="tab-content">
+  <div class="slbl">Earnings Power Value — No-Growth, Steady-State Valuation</div>
+  <div class="g2">
+    <!-- Sliders -->
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="clbl">EPV Calculators — Adjust Sliders</div>
+        <div style="display:grid;gap:20px;margin-top:6px">
+          <div class="inp-group">
+            <div class="inp-header">
+              <span class="inp-label">Normalized NOPAT</span>
+              <span class="inp-val-display" id="sl-nopat-val">—</span>
+            </div>
+            <input id="sl-nopat" class="slider" type="range" oninput="onEPVSlider('nopat',this.value);document.getElementById('sl-nopat-val').textContent=window.sym?.()+window.fmt?.(this.value)+'M'||this.value">
+          </div>
+          <div class="inp-group">
+            <div class="inp-header">
+              <span class="inp-label">WACC (%)</span>
+              <span class="inp-val-display" id="sl-wacc-val">—</span>
+            </div>
+            <input id="sl-wacc" class="slider" type="range" step="0.1" oninput="onEPVSlider('wacc',this.value);document.getElementById('sl-wacc-val').textContent=parseFloat(this.value).toFixed(1)+'%'">
+          </div>
+          <div class="inp-group">
+            <div class="inp-header">
+              <span class="inp-label">Tax Rate (%)</span>
+              <span class="inp-val-display" id="sl-tax-val">—</span>
+            </div>
+            <input id="sl-tax" class="slider" type="range" step="1" oninput="onEPVSlider('tax',this.value);document.getElementById('sl-tax-val').textContent=parseFloat(this.value).toFixed(0)+'%'">
+          </div>
+        </div>
+      </div>
+      <!-- Outputs -->
+      <div class="g3" style="margin-bottom:0">
+        <div class="card accent">
+          <div class="clbl">EPV Operations</div>
+          <div class="cval gold" id="epv-ops">—</div>
+        </div>
+        <div class="card accent">
+          <div class="clbl">EPV Equity</div>
+          <div class="cval gold" id="epv-equity">—</div>
+        </div>
+        <div class="card accent">
+          <div class="clbl">EPV / Share</div>
+          <div class="cval gold" id="epv-ps">—</div>
+          <div class="csub" id="epv-price-ratio">—</div>
+        </div>
+      </div>
+    </div>
+    <!-- Bridge -->
+    <div class="card">
+      <div class="clbl">EPV Bridge — Step by Step</div>
+      <div id="epv-bridge" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- Sensitivity Heatmap -->
+  <div class="slbl" style="margin-top:20px">EPV Sensitivity — NOPAT × WACC Heatmap</div>
+  <div class="tbl-wrap" id="epv-sensitivity"></div>
+
+  <!-- WACC build -->
+  <div class="slbl" style="margin-top:20px">WACC Components</div>
+  <div class="g3">
+    <div class="card">
+      <div class="clbl">Equity Cost (Ke)</div>
+      <div class="kv">
+        <div class="row"><span class="k">Risk-Free Rate (Rf)</span><span class="v" id="wacc-rf">—</span></div>
+        <div class="row"><span class="k">Beta (β)</span><span class="v" id="wacc-beta">—</span></div>
+        <div class="row"><span class="k">Equity Risk Premium (ERP)</span><span class="v" id="wacc-erp">—</span></div>
+        <div class="row"><span class="k">Ke = Rf + β × ERP</span><span class="v gold" id="wacc-ke">—</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">Debt Cost (Kd)</div>
+      <div class="kv">
+        <div class="row"><span class="k">Kd Pre-Tax</span><span class="v" id="wacc-kd-pre">—</span></div>
+        <div class="row"><span class="k">Kd Post-Tax</span><span class="v" id="wacc-kd-post">—</span></div>
+        <div class="row"><span class="k">D / (D+E)</span><span class="v" id="wacc-wd">—</span></div>
+        <div class="row"><span class="k">E / (D+E)</span><span class="v" id="wacc-we">—</span></div>
+      </div>
+    </div>
+    <div class="card accent">
+      <div class="clbl">WACC Final</div>
+      <div class="cval gold" id="wacc-final">—</div>
+      <div class="csub">Ke × We + Kd × Wd</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     6. ROIC & CAPITAL
+     ══════════════════════════════════════════════════════════ -->
+<div id="tab-roic" class="tab-content">
+  <div class="slbl">Return on Invested Capital &amp; Capital Build-up</div>
+  <div class="g4" style="margin-bottom:20px">
+    <div class="card accent">
+      <div class="clbl">ROIC (Latest FY)</div>
+      <div class="cval green" id="roic-latest">—</div>
+    </div>
+    <div class="card accent">
+      <div class="clbl">ROIC 3yr Avg (IRR Input)</div>
+      <div class="cval green" id="roic-3yr">—</div>
+    </div>
+    <div class="card accent">
+      <div class="clbl">ROIC − WACC Spread</div>
+      <div class="cval green" id="roic-spread">—</div>
+    </div>
+    <div class="card accent">
+      <div class="clbl">Marginal ROIC (1yr)</div>
+      <div class="cval" id="roic-marginal">—</div>
+    </div>
+  </div>
+
+  <div class="slbl">Invested Capital Components (Latest FY)</div>
+  <div class="g4" id="roic-ic-cards" style="margin-bottom:20px"></div>
+
+  <div class="slbl">ROIC &amp; IC History Table</div>
+  <div class="tbl-wrap" id="tbl-roic"></div>
+
+  <div class="g2" style="margin-top:20px">
+    <div class="chart-card"><div class="clbl">ROIC vs WACC (%)</div><canvas id="c-roic"></canvas></div>
+    <div class="chart-card"><div class="clbl">Invested Capital vs NOPAT</div><canvas id="c-ic"></canvas></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     7. IMPLIED IRR
+     ══════════════════════════════════════════════════════════ -->
+<div id="tab-irr" class="tab-content">
+  <div class="slbl">Implied Equity IRR — Return Decomposition</div>
+  <div class="g2">
+    <!-- Sliders -->
+    <div class="card">
+      <div class="clbl">IRR Calculators</div>
+      <div style="display:grid;gap:18px;margin-top:8px">
+        <div class="inp-group">
+          <div class="inp-header">
+            <span class="inp-label">Selected ROIC (Reinvestment)</span>
+            <span class="inp-val-display" id="sl-irr-roic-val">—</span>
+          </div>
+          <input id="sl-irr-roic" class="slider" type="range" oninput="onIRRSlider('selectedRoic',this.value);document.getElementById('sl-irr-roic-val').textContent=parseFloat(this.value).toFixed(1)+'%'">
+        </div>
+        <div class="inp-group">
+          <div class="inp-header">
+            <span class="inp-label">Organic Growth Rate</span>
+            <span class="inp-val-display" id="sl-irr-organic-val">—</span>
+          </div>
+          <input id="sl-irr-organic" class="slider" type="range" oninput="onIRRSlider('organicGrowth',this.value);document.getElementById('sl-irr-organic-val').textContent=parseFloat(this.value).toFixed(1)+'%'">
+        </div>
+        <div class="inp-group">
+          <div class="inp-header">
+            <span class="inp-label">Exit Multiple (EV/NOPAT)</span>
+            <span class="inp-val-display" id="sl-irr-exit-val">—</span>
+          </div>
+          <input id="sl-irr-exit" class="slider" type="range" oninput="onIRRSlider('exitMultiple',this.value);document.getElementById('sl-irr-exit-val').textContent=parseFloat(this.value).toFixed(0)+'×'">
+        </div>
+        <div class="inp-group">
+          <div class="inp-header">
+            <span class="inp-label">Sustainable Buybacks / yr</span>
+            <span class="inp-val-display" id="sl-irr-buybacks-val">—</span>
+          </div>
+          <input id="sl-irr-buybacks" class="slider" type="range" oninput="onIRRSlider('buybacks',this.value);document.getElementById('sl-irr-buybacks-val').textContent=(window.sym?.()||'$')+window.fmt?.(this.value)+'M'||this.value">
+        </div>
+        <div class="inp-group">
+          <div class="inp-header">
+            <span class="inp-label">Investment Horizon (years)</span>
+            <span class="inp-val-display" id="sl-irr-horizon-val">—</span>
+          </div>
+          <input id="sl-irr-horizon" class="slider" type="range" oninput="onIRRSlider('horizon',this.value);document.getElementById('sl-irr-horizon-val').textContent=parseFloat(this.value).toFixed(0)+' yr'">
+        </div>
+      </div>
+    </div>
+    <!-- Decomposition bars -->
+    <div>
+      <div class="irrwrap">
+        <div class="irow">
+          <div class="ilbl">Distribution Yield (Div+Buyback+Int / EV)</div>
+          <div class="itrack"><div class="ifill" id="irr-bar-dist-yield" style="width:0%"></div></div>
+          <div class="ipct" id="irr-dist-yield">—</div>
+        </div>
+        <div class="irow">
+          <div class="ilbl">Reinvestment Growth (ReinvRate × ROIC)</div>
+          <div class="itrack"><div class="ifill" id="irr-bar-reinv-growth" style="width:0%"></div></div>
+          <div class="ipct" id="irr-reinv-growth">—</div>
+        </div>
+        <div class="irow">
+          <div class="ilbl">Organic Growth</div>
+          <div class="itrack"><div class="ifill" id="irr-bar-organic" style="width:0%"></div></div>
+          <div class="ipct" id="irr-organic">—</div>
+        </div>
+        <div class="irow">
+          <div class="ilbl">Multiple Expansion / Compression (ann.)</div>
+          <div class="itrack"><div class="ifill" id="irr-bar-mult-impact" style="width:0%"></div></div>
+          <div class="ipct" id="irr-mult-impact">—</div>
+        </div>
+        <div class="itotal">
+          <div class="ilbl" style="font-weight:700;color:var(--ink)">Total Equity Return (IRR)</div>
+          <div style="flex:1"></div>
+          <div style="text-align:right">
+            <div id="irr-total">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card accent">
+          <div class="clbl">Hurdle Rate</div>
+          <div class="cval gold" id="irr-hurdle">—</div>
+        </div>
+        <div class="card accent">
+          <div class="clbl">Margin of Safety</div>
+          <div class="cval" id="irr-mos">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     8. HEALTH CHECK
+     ══════════════════════════════════════════════════════════ -->
+<div id="tab-health" class="tab-content">
+  <div class="slbl">Health Check — Quality &amp; Financial Fitness Scorecard</div>
+  <div class="g3" style="margin-bottom:20px">
+    <div class="card accent">
+      <div class="clbl">Pass</div>
+      <div class="cval green" id="hc-pass">—</div>
+    </div>
+    <div class="card accent">
+      <div class="clbl">Monitor</div>
+      <div class="cval gold" id="hc-monitor">—</div>
+    </div>
+    <div class="card accent">
+      <div class="clbl">Fail</div>
+      <div class="cval red" id="hc-fail">—</div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div>
+      <table class="ht">
+        <thead>
+          <tr>
+            <th style="min-width:190px">Metric</th>
+            <th>Value</th>
+            <th>Threshold</th>
+            <th>Status</th>
+            <th>Rationale</th>
+          </tr>
+        </thead>
+        <tbody id="hc-table-body"></tbody>
+      </table>
+    </div>
+    <div class="chart-card">
+      <div class="clbl">Quality Radar</div>
+      <canvas id="c-radar" style="max-height:320px"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     9. CIO DECISIONS
+     ══════════════════════════════════════════════════════════ -->
+<div id="tab-audit" class="tab-content">
+  <div class="slbl">CIO Decision Points — Model Assumptions Audit Trail</div>
+  <div class="card" style="max-width:900px">
+    <div id="audit-list"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     10. INVESTMENT MEMO
+     ══════════════════════════════════════════════════════════ -->
+<div id="tab-memo" class="tab-content">
+  <div class="slbl">Investment Memo — Columbia Synthesis</div>
+  <div class="g2" style="margin-bottom:20px">
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="clbl">Verdict</div>
+        <div style="font-size:28px;font-weight:700;letter-spacing:-0.02em" id="memo-verdict">—</div>
+      </div>
+      <div class="card">
+        <div class="clbl">Thesis Narrative</div>
+        <div style="font-size:14px;line-height:1.7;color:var(--gray-txt);margin-top:4px" id="memo-narrative">—</div>
+      </div>
+    </div>
+    <div>
+      <div class="memo-section">
+        <h3>Summary Metrics</h3>
+        <div id="memo-table"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Columbia Ladder -->
+  <div class="slbl">Columbia Valuation Ladder</div>
+  <div class="ladder" id="columbia-ladder"></div>
+
+  <!-- Document Links -->
+  <div class="slbl" style="margin-top:12px">Research Documents</div>
+  <div class="g3" id="doc-tiles-container">
+    <!-- Injected by renderDocTiles() -->
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <div class="fl">DCE Holdings — Investment Office</div>
+  <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
+</footer>
+
+<script src="company.js"></script>
+<script>
+/* ── Post-load: init WACC display after data is ready ── */
+document.addEventListener('DOMContentLoaded', () => {
+  // Patch: after initDashboard runs, populate WACC fields on EPV tab
+  const origRenderEPV = window.renderEPV;
+  window.renderEPV = function() {
+    if (origRenderEPV) origRenderEPV();
+    populateWACC();
+  };
+
+  // Patch: after renderMemo, build doc tiles
+  const origRenderMemo = window.renderMemo;
+  window.renderMemo = function() {
+    if (origRenderMemo) origRenderMemo();
+    renderDocTiles();
+  };
+});
+
+function populateWACC() {
+  if (!window.D || !window.D.wacc) return;
+  const w = window.D.wacc;
+  const pct = v => v != null ? `${(v*100).toFixed(2)}%` : '—';
+  const setV = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  setV('wacc-rf',      pct(w.rf));
+  setV('wacc-beta',    w.beta != null ? w.beta.toFixed(2) : '—');
+  setV('wacc-erp',     pct(w.erp));
+  setV('wacc-ke',      pct(w.ke));
+  setV('wacc-kd-pre',  pct(w.kdPreTax));
+  setV('wacc-kd-post', pct(w.kdAfterTax));
+  setV('wacc-wd',      w.weightDebt   != null ? `${(w.weightDebt*100).toFixed(2)}%`   : '—');
+  setV('wacc-we',      w.weightEquity != null ? `${(w.weightEquity*100).toFixed(2)}%` : '—');
+  setV('wacc-final',   pct(w.waccFinal));
+  // init slider display values now that D is loaded
+  const epv = window.D.epv;
+  const nd = document.getElementById('sl-nopat-val');
+  if (nd) nd.textContent = `${window.sym()}${window.fmt(epv.nopatBase)}M`;
+  const wd = document.getElementById('sl-wacc-val');
+  if (wd) wd.textContent = `${epv.waccBase.toFixed(1)}%`;
+  const td = document.getElementById('sl-tax-val');
+  if (td) td.textContent = `${epv.taxBase}%`;
+}
+
+function renderDocTiles() {
+  if (!window.D) return;
+  const docs = window.D.documents;
+  const tiles = [
+    { label: 'Valuation Report', desc: 'Columbia framework quantitative model — full equity valuation memo with EPV, RV, IRR analysis and investment thesis.', url: docs.valuationReportUrl, accent: 'var(--gold)' },
+    { label: 'Thesis Breaker', desc: 'Stress test of the investment thesis — quantitative challenges to the bull case. Adversarial scenario analysis.', url: docs.thesisBreakerUrl, accent: 'var(--red)' },
+    { label: 'Munger Digital', desc: 'Behavioral and narrative investment evaluation inspired by Charlie Munger — mental models, incentives, and latticework.', url: docs.mungerDigitalUrl, accent: '#6b4fa0' },
+  ];
+  const el = document.getElementById('doc-tiles-container');
+  if (!el) return;
+  el.innerHTML = tiles.map(t => `
+    <div class="doc-tile" style="border-top-color:${t.accent}">
+      <div class="dt-title">${t.label}</div>
+      <div class="dt-desc">${t.desc}</div>
+      ${t.url
+        ? `<a href="${t.url}" target="_blank" style="background:${t.accent}">Open Document ↗</a>`
+        : `<span class="coming-soon">Coming Soon</span>`}
+    </div>
+  `).join('');
+}
+
+// Expose sym and fmt to inline oninput handlers
+window.sym = function() { return window.D ? window.D.currencySymbol : '$'; };
+window.fmt = function(n) { return n == null ? '—' : Number(n).toLocaleString('en-US', {maximumFractionDigits:0}); };
+</script>
+</body>
+</html>
