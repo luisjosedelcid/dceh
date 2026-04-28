@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DCE Holdings — Sector Screener</title>
+<title>DCE Holdings — Find</title>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -28,7 +28,17 @@
   .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:6px}
   .meta{font-size:10px;color:var(--gray-mid);font-weight:300;margin-bottom:28px;font-style:italic}
 
-  /* SECTOR TABS */
+  /* MODE TABS (Sector Screener / Superinvestors) */
+  .mode-tabs{display:flex;gap:0;margin-bottom:28px;border-bottom:1px solid var(--rule)}
+  .mode-tab{font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;padding:14px 28px;background:none;border:none;border-bottom:2px solid transparent;color:var(--gray-mid);cursor:pointer;transition:all .2s;margin-bottom:-1px}
+  .mode-tab:hover{color:var(--navy)}
+  .mode-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+  .mode-tab .count{display:inline-block;font-size:9px;background:var(--gold-dim);color:var(--gold);padding:2px 7px;border-radius:10px;margin-left:8px;letter-spacing:0.1em;font-weight:700}
+
+  .mode-pane{display:none}
+  .mode-pane.active{display:block}
+
+  /* SECTOR TABS (within Sector Screener) */
   .sector-tabs{display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap}
   .sector-tab{font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:8px 18px;background:none;border:1px solid var(--rule);color:var(--gray-mid);cursor:pointer;transition:all .2s}
   .sector-tab:hover{border-color:var(--gold-rule);color:var(--navy)}
@@ -42,6 +52,8 @@
   .stbl td:first-child,.stbl td:nth-child(2){text-align:left}
   .stbl tr:hover{background:rgba(184,139,71,0.03)}
   .stbl .ticker-cell{font-weight:700;font-size:13px;color:var(--navy);letter-spacing:-0.01em}
+  .stbl .ticker-cell a{color:inherit;text-decoration:none;border-bottom:1px dotted rgba(184,139,71,0.5)}
+  .stbl .ticker-cell a:hover{color:var(--gold)}
 
   .green{color:var(--green)}.red{color:var(--red)}.gold{color:var(--gold)}.amber{color:var(--amber)}.dim{color:var(--gray-mid)}
 
@@ -50,16 +62,42 @@
   .v-watchlist{background:rgba(184,139,71,0.15);color:var(--gold)}
   .v-review{background:rgba(30,144,255,0.08);color:#2a6cb8}
   .v-pass{background:rgba(27,38,66,0.06);color:var(--gray-mid)}
-
-  /* SCORE BAR */
-  .score-bar{display:inline-flex;align-items:center;gap:6px}
-  .score-fill{height:6px;border-radius:3px;min-width:4px;transition:width .3s}
+  .v-new{background:rgba(42,122,86,0.12);color:var(--green)}
+  .v-add{background:rgba(42,122,86,0.08);color:var(--green)}
+  .v-trim{background:rgba(184,134,11,0.12);color:var(--amber)}
+  .v-exit{background:rgba(155,35,53,0.10);color:var(--red)}
 
   .section-hdr{font-size:10px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--navy);margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--rule)}
 
+  /* SUPERINVESTORS — fund chips */
+  .fund-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+  .fund-chip{font-size:10px;font-weight:500;letter-spacing:0.06em;padding:6px 11px;background:var(--white);border:1px solid var(--rule);color:var(--gray-txt);border-radius:2px;cursor:pointer;transition:all .15s;user-select:none}
+  .fund-chip:hover{border-color:var(--gold-rule);color:var(--navy)}
+  .fund-chip.active{background:var(--navy);color:var(--white);border-color:var(--navy)}
+  .fund-chip.error{border-color:rgba(155,35,53,0.4);color:var(--red);opacity:0.7}
+
+  /* SUPERINVESTORS — sub-controls */
+  .sup-controls{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:18px;padding:14px 16px;background:var(--white);border:1px solid var(--rule)}
+  .sup-controls label{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-mid);font-weight:600}
+  .sup-controls select,.sup-controls input{font-family:'Archivo',sans-serif;font-size:12px;padding:6px 10px;border:1px solid var(--rule);background:var(--cream);color:var(--ink);outline:none}
+  .sup-controls select:focus,.sup-controls input:focus{border-color:var(--gold)}
+  .sup-controls button{font-family:'Archivo',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;padding:7px 16px;background:var(--navy);color:var(--white);border:1px solid var(--navy);cursor:pointer;transition:all .15s}
+  .sup-controls button:hover{background:var(--gold);border-color:var(--gold)}
+  .sup-controls button:disabled{opacity:0.5;cursor:wait}
+
+  .sup-status{font-size:11px;color:var(--gray-mid);font-style:italic;margin-bottom:14px;min-height:16px}
+  .sup-status.error{color:var(--red);font-style:normal}
+  .sup-status.success{color:var(--green);font-style:normal}
+
+  /* SUPERINVESTORS — fund overlap heatmap row */
+  .overlap-cell{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:600}
+  .overlap-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block}
+  .conviction-pill{display:inline-block;font-weight:700;font-size:11px;padding:3px 9px;border-radius:10px;background:var(--gold-dim);color:var(--gold);min-width:32px;text-align:center}
+  .conviction-pill.hi{background:rgba(42,122,86,0.15);color:var(--green)}
+
   footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
 
-  @media(max-width:1100px){main{padding:20px 16px}header{padding:0 16px}.stbl{font-size:11px}.stbl th,.stbl td{padding:7px 8px}}
+  @media(max-width:1100px){main{padding:20px 16px}header{padding:0 16px}.stbl{font-size:11px}.stbl th,.stbl td{padding:7px 8px}.mode-tab{padding:12px 16px;font-size:10px}}
 </style>
 </head>
 <body>
@@ -69,100 +107,162 @@
   <div class="hnav">
     <a href="/">Home</a>
     <a href="/universe.html">Universe</a>
-    <a href="/screener.html" class="active">Screener</a>
+    <a href="/screener.html" class="active">Find</a>
+    <a href="/portfolio.html">Portfolio</a>
   </div>
 </header>
 
 <main>
   <div class="slbl">DCE Holdings — Investment Office</div>
-  <h1>Sector Screener</h1>
-  <div class="sub">Pre-valuation pipeline. Quality + Valuation scoring with IRR estimates before full Columbia model.</div>
-  <div class="meta">Blend: 70% Absolute + 30% Relative · Hurdle: 12% · T10: 4.30% · Source: roic.ai API · <span id="screener-live" style="color:var(--gray-mid)">Fetching prices...</span></div>
+  <h1>Find</h1>
+  <div class="sub">Idea generation pipeline. Sector quality screening + smart-money tracking, before the full Columbia model.</div>
 
-  <div class="sector-tabs">
-    <button class="sector-tab active" onclick="showSector('car-parts',this)">Car Parts</button>
-    <button class="sector-tab" disabled style="opacity:0.4;cursor:default">+ Add Sector</button>
+  <!-- ═══ MODE TABS ═══ -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="sectors" onclick="showMode('sectors',this)">Sector Screener</button>
+    <button class="mode-tab" data-mode="superinvestors" onclick="showMode('superinvestors',this)">Superinvestors <span class="count">10</span></button>
   </div>
 
-  <!-- CAR PARTS -->
-  <div id="sector-car-parts">
-    <!-- SUMMARY TABLE -->
-    <div class="section-hdr">Summary — Top 10 by Market Cap</div>
-    <div style="overflow-x:auto">
-      <table class="stbl">
-        <thead><tr>
-          <th>Ticker</th><th>Company</th><th>Price</th><th>Q (Abs)</th><th>Q (Rel)</th><th>Quality</th><th>Q Δ</th>
-          <th>V (Abs)</th><th>V (Rel)</th><th>Valuation</th><th>IRR</th><th>Mkt Cap</th><th>Verdict</th>
-        </tr></thead>
-        <tbody>
-          <tr><td class="ticker-cell">ORLY</td><td>O'Reilly Automotive</td><td data-live-price="ORLY" class="gold">—</td><td>4.30</td><td>3.96</td><td class="green" style="font-weight:700">4.20</td><td class="red">-0.20</td><td>1.00</td><td>1.00</td><td style="font-weight:700">1.00</td><td class="green" style="font-weight:700">16.6%</td><td>$1,038B</td><td><span class="verdict v-watchlist">WATCHLIST</span></td></tr>
-          <tr><td class="ticker-cell">AZO</td><td>AutoZone</td><td data-live-price="AZO" class="gold">—</td><td>4.15</td><td>3.77</td><td class="green" style="font-weight:700">4.04</td><td class="red">-0.35</td><td>3.14</td><td>1.14</td><td style="font-weight:700">2.54</td><td class="dim">9.9%</td><td>$70,489M</td><td><span class="verdict v-watchlist">WATCHLIST</span></td></tr>
-          <tr><td class="ticker-cell">ALSN</td><td>Allison Transmission</td><td data-live-price="ALSN" class="gold">—</td><td>4.07</td><td>3.37</td><td class="green" style="font-weight:700">3.86</td><td class="green">+0.24</td><td>4.79</td><td>3.50</td><td style="font-weight:700">4.40</td><td class="green" style="font-weight:700">12.9%</td><td>$9,404M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-          <tr><td class="ticker-cell">MOD</td><td>Modine Manufacturing</td><td data-live-price="MOD" class="gold">—</td><td>3.64</td><td>3.27</td><td style="font-weight:700">3.53</td><td class="green">+0.47</td><td>3.83</td><td>2.00</td><td style="font-weight:700">3.28</td><td class="dim">—</td><td>$4,129M</td><td><span class="verdict v-pass">PASS</span></td></tr>
-          <tr><td class="ticker-cell">ALV</td><td>Autoliv</td><td data-live-price="ALV" class="gold">—</td><td>3.69</td><td>3.08</td><td style="font-weight:700">3.51</td><td class="green">+0.44</td><td>4.86</td><td>3.93</td><td style="font-weight:700">4.58</td><td class="green" style="font-weight:700">69.0%</td><td>$7,522M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-          <tr><td class="ticker-cell">LKQ</td><td>LKQ Corp</td><td data-live-price="LKQ" class="gold">—</td><td>3.25</td><td>2.48</td><td style="font-weight:700">3.02</td><td class="red">-0.58</td><td>4.64</td><td>3.21</td><td style="font-weight:700">4.21</td><td class="green" style="font-weight:700">20.4%</td><td>$9,687M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-          <tr><td class="ticker-cell">APTV</td><td>Aptiv</td><td data-live-price="APTV" class="gold">—</td><td>3.19</td><td>2.62</td><td style="font-weight:700">3.02</td><td class="red">-0.22</td><td>5.00</td><td>3.86</td><td style="font-weight:700">4.66</td><td class="green" style="font-weight:700">31.4%</td><td>$15,506M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-          <tr><td class="ticker-cell">BWA</td><td>BorgWarner</td><td data-live-price="BWA" class="gold">—</td><td>3.04</td><td>2.92</td><td style="font-weight:700">3.00</td><td class="red">-0.21</td><td>4.67</td><td>4.50</td><td style="font-weight:700">4.62</td><td class="green" style="font-weight:700">21.1%</td><td>$6,952M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-          <tr><td class="ticker-cell">GPC</td><td>Genuine Parts</td><td data-live-price="GPC" class="gold">—</td><td>3.14</td><td>2.22</td><td style="font-weight:700">2.87</td><td class="green">+0.39</td><td>3.93</td><td>2.21</td><td style="font-weight:700">3.41</td><td class="green" style="font-weight:700">17.1%</td><td>$16,254M</td><td><span class="verdict v-pass">PASS</span></td></tr>
-          <tr><td class="ticker-cell">MGA</td><td>Magna International</td><td data-live-price="MGA" class="gold">—</td><td>2.74</td><td>2.00</td><td style="font-weight:700">2.52</td><td class="red">-0.34</td><td>5.00</td><td>4.83</td><td style="font-weight:700">4.95</td><td class="green" style="font-weight:700">46.6%</td><td>$11,985M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-        </tbody>
-      </table>
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- MODE 1: SECTOR SCREENER (existing content)                    -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="mode-pane active" id="mode-sectors">
+    <div class="meta">Blend: 70% Absolute + 30% Relative · Hurdle: 12% · T10: 4.30% · Source: roic.ai API · <span id="screener-live" style="color:var(--gray-mid)">Fetching prices...</span></div>
+
+    <div class="sector-tabs">
+      <button class="sector-tab active" onclick="showSector('car-parts',this)">Car Parts</button>
+      <button class="sector-tab" disabled style="opacity:0.4;cursor:default">+ Add Sector</button>
     </div>
 
-    <!-- QUALITY METRICS -->
-    <div class="section-hdr">Quality Metrics</div>
-    <div style="overflow-x:auto">
-      <table class="stbl">
-        <thead><tr>
-          <th>Ticker</th><th>ROIC 3yr</th><th>ROIC Trend</th><th>GM CV</th><th>Op Margin</th><th>FCF Conv</th>
-          <th>Rev CAGR 5y</th><th>EPS CAGR 5y</th><th>FCF/sh CAGR</th><th>ND/EBITDA</th><th>GW+Int %TA</th><th>Capex/Rev</th><th>FCF CV</th>
-        </tr></thead>
-        <tbody>
-          <tr><td class="ticker-cell">ORLY</td><td class="green">41.4%</td><td class="green">+32.7%</td><td>0.01</td><td>19.5%</td><td>0.91x</td><td>10.5%</td><td>17.9%</td><td>19.9%</td><td>1.5x</td><td>6.2%</td><td>5.5%</td><td>0.54</td></tr>
-          <tr><td class="ticker-cell">AZO</td><td class="green">39.7%</td><td class="green">+0.6%</td><td>0.01</td><td>19.1%</td><td>1.05x</td><td>8.4%</td><td>15.0%</td><td>10.0%</td><td>2.0x</td><td>1.6%</td><td>—</td><td>0.41</td></tr>
-          <tr><td class="ticker-cell">ALSN</td><td>20.4%</td><td class="green">+65.0%</td><td>0.04</td><td class="green">30.8%</td><td>0.82x</td><td>3.6%</td><td>11.1%</td><td>6.4%</td><td>1.5x</td><td class="red">38.9%</td><td>4.9%</td><td>0.33</td></tr>
-          <tr><td class="ticker-cell">MOD</td><td>15.7%</td><td class="green">+474.2%</td><td>0.17</td><td>12.1%</td><td>0.92x</td><td>5.5%</td><td>—</td><td>—</td><td>0.7x</td><td>12.2%</td><td>—</td><td>1.01</td></tr>
-          <tr><td class="ticker-cell">ALV</td><td>12.5%</td><td class="green">+15.7%</td><td>0.09</td><td>9.4%</td><td>1.59x</td><td>4.0%</td><td>8.7%</td><td>48.9%</td><td>1.2x</td><td>17.5%</td><td>—</td><td>0.70</td></tr>
-          <tr><td class="ticker-cell">LKQ</td><td>9.8%</td><td class="green">+4.8%</td><td>0.02</td><td>9.3%</td><td>0.91x</td><td>2.8%</td><td>8.5%</td><td>3.6%</td><td>2.3x</td><td class="red">36.4%</td><td>2.2%</td><td>0.46</td></tr>
-          <tr><td class="ticker-cell">APTV</td><td>8.8%</td><td class="red">-52.1%</td><td>0.14</td><td>10.3%</td><td>1.02x</td><td>6.5%</td><td>12.6%</td><td>8.7%</td><td>2.3x</td><td>21.4%</td><td>—</td><td>0.23</td></tr>
-          <tr><td class="ticker-cell">BWA</td><td>8.4%</td><td class="red">-27.2%</td><td>0.07</td><td>9.3%</td><td>1.43x</td><td>6.7%</td><td class="red">-16.1%</td><td>5.3%</td><td>1.0x</td><td>16.8%</td><td>—</td><td>0.13</td></tr>
-          <tr><td class="ticker-cell">GPC</td><td>14.5%</td><td class="red">-5.4%</td><td>0.08</td><td>6.1%</td><td>0.75x</td><td>6.0%</td><td>8.8%</td><td>3.1%</td><td>2.1x</td><td>15.0%</td><td>2.1%</td><td>0.38</td></tr>
-          <tr><td class="ticker-cell">MGA</td><td>7.8%</td><td class="red">-49.4%</td><td>0.06</td><td>4.9%</td><td>0.57x</td><td>1.7%</td><td class="red">-8.8%</td><td class="red">-8.7%</td><td>1.0x</td><td>8.6%</td><td>5.2%</td><td>0.51</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <!-- CAR PARTS -->
+    <div id="sector-car-parts">
+      <!-- SUMMARY TABLE -->
+      <div class="section-hdr">Summary — Top 10 by Market Cap</div>
+      <div style="overflow-x:auto">
+        <table class="stbl">
+          <thead><tr>
+            <th>Ticker</th><th>Company</th><th>Price</th><th>Q (Abs)</th><th>Q (Rel)</th><th>Quality</th><th>Q Δ</th>
+            <th>V (Abs)</th><th>V (Rel)</th><th>Valuation</th><th>IRR</th><th>Mkt Cap</th><th>Verdict</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="ticker-cell">ORLY</td><td>O'Reilly Automotive</td><td data-live-price="ORLY" class="gold">—</td><td>4.30</td><td>3.96</td><td class="green" style="font-weight:700">4.20</td><td class="red">-0.20</td><td>1.00</td><td>1.00</td><td style="font-weight:700">1.00</td><td class="green" style="font-weight:700">16.6%</td><td>$1,038B</td><td><span class="verdict v-watchlist">WATCHLIST</span></td></tr>
+            <tr><td class="ticker-cell">AZO</td><td>AutoZone</td><td data-live-price="AZO" class="gold">—</td><td>4.15</td><td>3.77</td><td class="green" style="font-weight:700">4.04</td><td class="red">-0.35</td><td>3.14</td><td>1.14</td><td style="font-weight:700">2.54</td><td class="dim">9.9%</td><td>$70,489M</td><td><span class="verdict v-watchlist">WATCHLIST</span></td></tr>
+            <tr><td class="ticker-cell">ALSN</td><td>Allison Transmission</td><td data-live-price="ALSN" class="gold">—</td><td>4.07</td><td>3.37</td><td class="green" style="font-weight:700">3.86</td><td class="green">+0.24</td><td>4.79</td><td>3.50</td><td style="font-weight:700">4.40</td><td class="green" style="font-weight:700">12.9%</td><td>$9,404M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+            <tr><td class="ticker-cell">MOD</td><td>Modine Manufacturing</td><td data-live-price="MOD" class="gold">—</td><td>3.64</td><td>3.27</td><td style="font-weight:700">3.53</td><td class="green">+0.47</td><td>3.83</td><td>2.00</td><td style="font-weight:700">3.28</td><td class="dim">—</td><td>$4,129M</td><td><span class="verdict v-pass">PASS</span></td></tr>
+            <tr><td class="ticker-cell">ALV</td><td>Autoliv</td><td data-live-price="ALV" class="gold">—</td><td>3.69</td><td>3.08</td><td style="font-weight:700">3.51</td><td class="green">+0.44</td><td>4.86</td><td>3.93</td><td style="font-weight:700">4.58</td><td class="green" style="font-weight:700">69.0%</td><td>$7,522M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+            <tr><td class="ticker-cell">LKQ</td><td>LKQ Corp</td><td data-live-price="LKQ" class="gold">—</td><td>3.25</td><td>2.48</td><td style="font-weight:700">3.02</td><td class="red">-0.58</td><td>4.64</td><td>3.21</td><td style="font-weight:700">4.21</td><td class="green" style="font-weight:700">20.4%</td><td>$9,687M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+            <tr><td class="ticker-cell">APTV</td><td>Aptiv</td><td data-live-price="APTV" class="gold">—</td><td>3.19</td><td>2.62</td><td style="font-weight:700">3.02</td><td class="red">-0.22</td><td>5.00</td><td>3.86</td><td style="font-weight:700">4.66</td><td class="green" style="font-weight:700">31.4%</td><td>$15,506M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+            <tr><td class="ticker-cell">BWA</td><td>BorgWarner</td><td data-live-price="BWA" class="gold">—</td><td>3.04</td><td>2.92</td><td style="font-weight:700">3.00</td><td class="red">-0.21</td><td>4.67</td><td>4.50</td><td style="font-weight:700">4.62</td><td class="green" style="font-weight:700">21.1%</td><td>$6,952M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+            <tr><td class="ticker-cell">GPC</td><td>Genuine Parts</td><td data-live-price="GPC" class="gold">—</td><td>3.14</td><td>2.22</td><td style="font-weight:700">2.87</td><td class="green">+0.39</td><td>3.93</td><td>2.21</td><td style="font-weight:700">3.41</td><td class="green" style="font-weight:700">17.1%</td><td>$16,254M</td><td><span class="verdict v-pass">PASS</span></td></tr>
+            <tr><td class="ticker-cell">MGA</td><td>Magna International</td><td data-live-price="MGA" class="gold">—</td><td>2.74</td><td>2.00</td><td style="font-weight:700">2.52</td><td class="red">-0.34</td><td>5.00</td><td>4.83</td><td style="font-weight:700">4.95</td><td class="green" style="font-weight:700">46.6%</td><td>$11,985M</td><td><span class="verdict v-review">REVIEW</span></td></tr>
+          </tbody>
+        </table>
+      </div>
 
-    <!-- VALUATION METRICS -->
-    <div class="section-hdr">Valuation Metrics</div>
-    <div style="overflow-x:auto">
-      <table class="stbl">
-        <thead><tr>
-          <th>Ticker</th><th>EV/EBIT</th><th>P/E</th><th>EV/EBITDA</th><th>FCF Yield</th><th>Earn Yield</th>
-          <th>EY Spread</th><th>PEG</th><th>Base IRR</th><th>Full IRR</th><th>Mkt Cap ($M)</th>
-        </tr></thead>
-        <tbody>
-          <tr><td class="ticker-cell">ORLY</td><td>321.6x</td><td>434.8x</td><td>281.6x</td><td class="green">40.9%</td><td>31.1%</td><td class="red">-4.0%</td><td>24.35x</td><td class="green">20.3%</td><td class="green">16.6%</td><td>$1,037,676M</td></tr>
-          <tr><td class="ticker-cell">AZO</td><td>22.9x</td><td>28.2x</td><td>19.5x</td><td>5.0%</td><td>4.4%</td><td class="green">+7.6%</td><td>1.88x</td><td>14.9%</td><td class="dim">9.9%</td><td>$70,489M</td></tr>
-          <tr><td class="ticker-cell">ALSN</td><td>11.1x</td><td>12.9x</td><td>9.9x</td><td>10.8%</td><td>9.0%</td><td class="green">+4.7%</td><td>1.16x</td><td class="green">17.3%</td><td class="green">12.9%</td><td>$9,404M</td></tr>
-          <tr><td class="ticker-cell">MOD</td><td>14.2x</td><td>22.4x</td><td>11.3x</td><td>5.6%</td><td>7.1%</td><td class="green">+2.8%</td><td>—</td><td>—</td><td class="dim">—</td><td>$4,129M</td></tr>
-          <tr><td class="ticker-cell">ALV</td><td>9.5x</td><td>11.6x</td><td>6.8x</td><td class="green">15.1%</td><td>10.6%</td><td class="green">+6.3%</td><td>1.34x</td><td class="green">64.0%</td><td class="green">69.0%</td><td>$7,522M</td></tr>
-          <tr><td class="ticker-cell">LKQ</td><td>11.3x</td><td>14.0x</td><td>8.7x</td><td class="green">16.7%</td><td>8.8%</td><td class="green">+4.5%</td><td>1.66x</td><td class="green">20.3%</td><td class="green">20.4%</td><td>$9,687M</td></tr>
-          <tr><td class="ticker-cell">APTV</td><td>11.4x</td><td>8.7x</td><td>7.7x</td><td class="green">17.7%</td><td>8.8%</td><td class="green">+4.5%</td><td>0.69x</td><td class="green">26.4%</td><td class="green">31.4%</td><td>$15,506M</td></tr>
-          <tr><td class="ticker-cell">BWA</td><td>7.2x</td><td>20.6x</td><td>4.7x</td><td class="green">20.8%</td><td class="green">13.9%</td><td class="green">+9.6%</td><td>—</td><td class="green">26.1%</td><td class="green">21.1%</td><td>$6,952M</td></tr>
-          <tr><td class="ticker-cell">GPC</td><td>14.9x</td><td>18.0x</td><td>11.6x</td><td>11.6%</td><td>6.7%</td><td class="green">+2.4%</td><td>2.04x</td><td>14.8%</td><td class="green">17.1%</td><td>$16,254M</td></tr>
-          <tr><td class="ticker-cell">MGA</td><td>8.6x</td><td>11.9x</td><td>4.5x</td><td class="green">50.3%</td><td>11.6%</td><td class="green">+7.3%</td><td>—</td><td class="green">41.6%</td><td class="green">46.6%</td><td>$11,985M</td></tr>
-        </tbody>
-      </table>
+      <!-- QUALITY METRICS -->
+      <div class="section-hdr">Quality Metrics</div>
+      <div style="overflow-x:auto">
+        <table class="stbl">
+          <thead><tr>
+            <th>Ticker</th><th>ROIC 3yr</th><th>ROIC Trend</th><th>GM CV</th><th>Op Margin</th><th>FCF Conv</th>
+            <th>Rev CAGR 5y</th><th>EPS CAGR 5y</th><th>FCF/sh CAGR</th><th>ND/EBITDA</th><th>GW+Int %TA</th><th>Capex/Rev</th><th>FCF CV</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="ticker-cell">ORLY</td><td class="green">41.4%</td><td class="green">+32.7%</td><td>0.01</td><td>19.5%</td><td>0.91x</td><td>10.5%</td><td>17.9%</td><td>19.9%</td><td>1.5x</td><td>6.2%</td><td>5.5%</td><td>0.54</td></tr>
+            <tr><td class="ticker-cell">AZO</td><td class="green">39.7%</td><td class="green">+0.6%</td><td>0.01</td><td>19.1%</td><td>1.05x</td><td>8.4%</td><td>15.0%</td><td>10.0%</td><td>2.0x</td><td>1.6%</td><td>—</td><td>0.41</td></tr>
+            <tr><td class="ticker-cell">ALSN</td><td>20.4%</td><td class="green">+65.0%</td><td>0.04</td><td class="green">30.8%</td><td>0.82x</td><td>3.6%</td><td>11.1%</td><td>6.4%</td><td>1.5x</td><td class="red">38.9%</td><td>4.9%</td><td>0.33</td></tr>
+            <tr><td class="ticker-cell">MOD</td><td>15.7%</td><td class="green">+474.2%</td><td>0.17</td><td>12.1%</td><td>0.92x</td><td>5.5%</td><td>—</td><td>—</td><td>0.7x</td><td>12.2%</td><td>—</td><td>1.01</td></tr>
+            <tr><td class="ticker-cell">ALV</td><td>12.5%</td><td class="green">+15.7%</td><td>0.09</td><td>9.4%</td><td>1.59x</td><td>4.0%</td><td>8.7%</td><td>48.9%</td><td>1.2x</td><td>17.5%</td><td>—</td><td>0.70</td></tr>
+            <tr><td class="ticker-cell">LKQ</td><td>9.8%</td><td class="green">+4.8%</td><td>0.02</td><td>9.3%</td><td>0.91x</td><td>2.8%</td><td>8.5%</td><td>3.6%</td><td>2.3x</td><td class="red">36.4%</td><td>2.2%</td><td>0.46</td></tr>
+            <tr><td class="ticker-cell">APTV</td><td>8.8%</td><td class="red">-52.1%</td><td>0.14</td><td>10.3%</td><td>1.02x</td><td>6.5%</td><td>12.6%</td><td>8.7%</td><td>2.3x</td><td>21.4%</td><td>—</td><td>0.23</td></tr>
+            <tr><td class="ticker-cell">BWA</td><td>8.4%</td><td class="red">-27.2%</td><td>0.07</td><td>9.3%</td><td>1.43x</td><td>6.7%</td><td class="red">-16.1%</td><td>5.3%</td><td>1.0x</td><td>16.8%</td><td>—</td><td>0.13</td></tr>
+            <tr><td class="ticker-cell">GPC</td><td>14.5%</td><td class="red">-5.4%</td><td>0.08</td><td>6.1%</td><td>0.75x</td><td>6.0%</td><td>8.8%</td><td>3.1%</td><td>2.1x</td><td>15.0%</td><td>2.1%</td><td>0.38</td></tr>
+            <tr><td class="ticker-cell">MGA</td><td>7.8%</td><td class="red">-49.4%</td><td>0.06</td><td>4.9%</td><td>0.57x</td><td>1.7%</td><td class="red">-8.8%</td><td class="red">-8.7%</td><td>1.0x</td><td>8.6%</td><td>5.2%</td><td>0.51</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- VALUATION METRICS -->
+      <div class="section-hdr">Valuation Metrics</div>
+      <div style="overflow-x:auto">
+        <table class="stbl">
+          <thead><tr>
+            <th>Ticker</th><th>EV/EBIT</th><th>P/E</th><th>EV/EBITDA</th><th>FCF Yield</th><th>Earn Yield</th>
+            <th>EY Spread</th><th>PEG</th><th>Base IRR</th><th>Full IRR</th><th>Mkt Cap ($M)</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="ticker-cell">ORLY</td><td>321.6x</td><td>434.8x</td><td>281.6x</td><td class="green">40.9%</td><td>31.1%</td><td class="red">-4.0%</td><td>24.35x</td><td class="green">20.3%</td><td class="green">16.6%</td><td>$1,037,676M</td></tr>
+            <tr><td class="ticker-cell">AZO</td><td>22.9x</td><td>28.2x</td><td>19.5x</td><td>5.0%</td><td>4.4%</td><td class="green">+7.6%</td><td>1.88x</td><td>14.9%</td><td class="dim">9.9%</td><td>$70,489M</td></tr>
+            <tr><td class="ticker-cell">ALSN</td><td>11.1x</td><td>12.9x</td><td>9.9x</td><td>10.8%</td><td>9.0%</td><td class="green">+4.7%</td><td>1.16x</td><td class="green">17.3%</td><td class="green">12.9%</td><td>$9,404M</td></tr>
+            <tr><td class="ticker-cell">MOD</td><td>14.2x</td><td>22.4x</td><td>11.3x</td><td>5.6%</td><td>7.1%</td><td class="green">+2.8%</td><td>—</td><td>—</td><td class="dim">—</td><td>$4,129M</td></tr>
+            <tr><td class="ticker-cell">ALV</td><td>9.5x</td><td>11.6x</td><td>6.8x</td><td class="green">15.1%</td><td>10.6%</td><td class="green">+6.3%</td><td>1.34x</td><td class="green">64.0%</td><td class="green">69.0%</td><td>$7,522M</td></tr>
+            <tr><td class="ticker-cell">LKQ</td><td>11.3x</td><td>14.0x</td><td>8.7x</td><td class="green">16.7%</td><td>8.8%</td><td class="green">+4.5%</td><td>1.66x</td><td class="green">20.3%</td><td class="green">20.4%</td><td>$9,687M</td></tr>
+            <tr><td class="ticker-cell">APTV</td><td>11.4x</td><td>8.7x</td><td>7.7x</td><td class="green">17.7%</td><td>8.8%</td><td class="green">+4.5%</td><td>0.69x</td><td class="green">26.4%</td><td class="green">31.4%</td><td>$15,506M</td></tr>
+            <tr><td class="ticker-cell">BWA</td><td>7.2x</td><td>20.6x</td><td>4.7x</td><td class="green">20.8%</td><td class="green">13.9%</td><td class="green">+9.6%</td><td>—</td><td class="green">26.1%</td><td class="green">21.1%</td><td>$6,952M</td></tr>
+            <tr><td class="ticker-cell">GPC</td><td>14.9x</td><td>18.0x</td><td>11.6x</td><td>11.6%</td><td>6.7%</td><td class="green">+2.4%</td><td>2.04x</td><td>14.8%</td><td class="green">17.1%</td><td>$16,254M</td></tr>
+            <tr><td class="ticker-cell">MGA</td><td>8.6x</td><td>11.9x</td><td>4.5x</td><td class="green">50.3%</td><td>11.6%</td><td class="green">+7.3%</td><td>—</td><td class="green">41.6%</td><td class="green">46.6%</td><td>$11,985M</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- MODE 2: SUPERINVESTORS                                        -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="mode-pane" id="mode-superinvestors">
+    <div class="meta">DCE Quality-Value Panel · 13F holdings via Fintel API · Latest filed quarter</div>
+
+    <!-- SUB-MODE switcher -->
+    <div class="sup-controls">
+      <label>View:</label>
+      <select id="sup-view" onchange="renderSuperinvestors()">
+        <option value="aggregate">Aggregate panel — overlap & changes</option>
+        <option value="byfund">By fund — single 13F portfolio</option>
+        <option value="ticker">Ticker lookup — who owns it?</option>
+      </select>
+
+      <span id="sup-byfund-controls" style="display:none">
+        <label style="margin-left:14px">Fund:</label>
+        <select id="sup-fund-select"></select>
+      </span>
+
+      <span id="sup-ticker-controls" style="display:none">
+        <label style="margin-left:14px">Ticker:</label>
+        <input type="text" id="sup-ticker-input" placeholder="e.g. BKNG" maxlength="6" style="width:90px;text-transform:uppercase">
+      </span>
+
+      <button id="sup-refresh-btn" onclick="loadSuperinvestors(true)" style="margin-left:auto">↻ Refresh</button>
+    </div>
+
+    <div class="fund-chips" id="fund-chips"></div>
+    <div class="sup-status" id="sup-status">Click Refresh to fetch latest 13F data.</div>
+
+    <div id="sup-content"></div>
+  </div>
+
 </main>
 
 <footer>
   <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
-  <span>Sector Screener v4 · roic.ai API · 2026-03-04</span>
+  <span id="footer-meta">Find · Sector Screener v4 + Superinvestors v1</span>
 </footer>
 
 <script>
+// ═══════════════════════════════════════════════════════════════════
+// MODE SWITCHING
+// ═══════════════════════════════════════════════════════════════════
+function showMode(mode, btn) {
+  document.querySelectorAll('.mode-pane').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.mode-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('mode-' + mode).classList.add('active');
+  btn.classList.add('active');
+  // Auto-load Superinvestors data on first activation
+  if (mode === 'superinvestors' && !window._supLoaded) {
+    loadSuperinvestors();
+  }
+}
+
 function showSector(id, btn) {
   document.querySelectorAll('[id^="sector-"]').forEach(el => el.style.display = 'none');
   document.querySelectorAll('.sector-tab').forEach(el => el.classList.remove('active'));
@@ -170,7 +270,9 @@ function showSector(id, btn) {
   btn.classList.add('active');
 }
 
-// ═══ LIVE PRICES (Finnhub) ═══
+// ═══════════════════════════════════════════════════════════════════
+// LIVE PRICES (Finnhub) — Sector Screener
+// ═══════════════════════════════════════════════════════════════════
 const FH_KEY = 'd6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg';
 const TICKERS = ['ORLY','AZO','ALSN','MOD','ALV','LKQ','APTV','BWA','GPC','MGA'];
 
@@ -183,28 +285,383 @@ async function fetchScreenerPrices() {
         .catch(() => ({ ticker: t, price: null }))
     );
     const results = await Promise.all(fetches);
-
     results.forEach(({ ticker, price }) => {
       if (!price || price <= 0) return;
-      // Update price cells
       document.querySelectorAll(`[data-live-price="${ticker}"]`).forEach(el => {
         el.textContent = '$' + price.toFixed(2);
         el.style.color = 'var(--green)';
       });
-      // Update market cap cells (need shares outstanding from Finnhub profile)
     });
-
     const note = document.getElementById('screener-live');
     if (note) {
       note.textContent = 'Live prices · ' + new Date().toLocaleTimeString();
       note.style.color = 'var(--green)';
     }
-  } catch(e) {
-    console.error('Finnhub error:', e);
-  }
+  } catch(e) { console.error('Finnhub error:', e); }
+}
+fetchScreenerPrices();
+
+// ═══════════════════════════════════════════════════════════════════
+// SUPERINVESTORS — DCE Quality-Value Panel (10 funds)
+// ═══════════════════════════════════════════════════════════════════
+const FUNDS = [
+  { slug: 'berkshire-hathaway',          name: 'Berkshire Hathaway',     manager: 'Buffett'   },
+  { slug: 'fundsmith-llp',               name: 'Fundsmith LLP',          manager: 'T. Smith'  },
+  { slug: 'akre-capital-management-llc', name: 'Akre Capital',           manager: 'Akre'      },
+  { slug: 'lone-pine-capital-llc',       name: 'Lone Pine Capital',      manager: 'Mandel'    },
+  { slug: 'polen-capital-management-llc',name: 'Polen Capital',          manager: 'Polen'     },
+  { slug: 'giverny-capital',             name: 'Giverny Capital',        manager: 'Rochon'    },
+  { slug: 'wedgewood-partners',          name: 'Wedgewood Partners',     manager: 'Rolfe'     },
+  { slug: 'markel',                      name: 'Markel (Gayner)',        manager: 'Gayner'    },
+  { slug: 'greenlight-capital',          name: 'Greenlight Capital',     manager: 'Einhorn'   },
+  { slug: 'tci-fund-management',         name: 'TCI Fund Management',    manager: 'Hohn'      },
+];
+
+const DCE_AUTH = sessionStorage.getItem('dce_auth') || 'Test1';
+const SUP_CACHE_KEY = 'dce_sup_cache_v1';
+const SUP_CACHE_TTL = 1000 * 60 * 60 * 6; // 6 hours
+
+// Populate fund select & chips
+(function initSup() {
+  const sel = document.getElementById('sup-fund-select');
+  FUNDS.forEach(f => {
+    const o = document.createElement('option');
+    o.value = f.slug;
+    o.textContent = f.name + ' — ' + f.manager;
+    sel.appendChild(o);
+  });
+  sel.addEventListener('change', renderSuperinvestors);
+  document.getElementById('sup-ticker-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') renderSuperinvestors();
+  });
+  document.getElementById('sup-view').addEventListener('change', () => {
+    const v = document.getElementById('sup-view').value;
+    document.getElementById('sup-byfund-controls').style.display = v === 'byfund' ? '' : 'none';
+    document.getElementById('sup-ticker-controls').style.display = v === 'ticker'  ? '' : 'none';
+  });
+  renderFundChips({});
+})();
+
+function renderFundChips(statusByFund) {
+  const wrap = document.getElementById('fund-chips');
+  wrap.innerHTML = '';
+  FUNDS.forEach(f => {
+    const span = document.createElement('span');
+    span.className = 'fund-chip';
+    const st = statusByFund[f.slug];
+    if (st === 'ok')    span.classList.add('active');
+    if (st === 'error') span.classList.add('error');
+    span.textContent = f.name;
+    span.title = f.manager + (st === 'error' ? ' — fetch failed' : '');
+    wrap.appendChild(span);
+  });
 }
 
-fetchScreenerPrices();
+function setStatus(msg, kind) {
+  const el = document.getElementById('sup-status');
+  el.textContent = msg;
+  el.className = 'sup-status' + (kind ? ' ' + kind : '');
+}
+
+async function fintelGet(endpoint) {
+  const r = await fetch('/api/fintel?endpoint=' + encodeURIComponent(endpoint), {
+    headers: { 'x-dashboard-auth': DCE_AUTH }
+  });
+  if (!r.ok) {
+    const body = await r.text();
+    throw new Error('HTTP ' + r.status + ': ' + body.slice(0, 200));
+  }
+  return r.json();
+}
+
+async function loadSuperinvestors(force) {
+  window._supLoaded = true;
+  // Check cache
+  if (!force) {
+    try {
+      const raw = localStorage.getItem(SUP_CACHE_KEY);
+      if (raw) {
+        const { ts, data } = JSON.parse(raw);
+        if (Date.now() - ts < SUP_CACHE_TTL) {
+          window._supData = data;
+          setStatus('Cached · ' + new Date(ts).toLocaleString() + ' (click Refresh to update)', 'success');
+          renderFundChips(Object.fromEntries(Object.keys(data).map(k => [k, data[k].error ? 'error' : 'ok'])));
+          renderSuperinvestors();
+          return;
+        }
+      }
+    } catch {}
+  }
+
+  const btn = document.getElementById('sup-refresh-btn');
+  btn.disabled = true;
+  btn.textContent = '… loading';
+  setStatus('Fetching 13F holdings for ' + FUNDS.length + ' funds…');
+
+  const statusByFund = {};
+  const data = {};
+  let okCount = 0, errCount = 0;
+
+  for (const f of FUNDS) {
+    try {
+      const json = await fintelGet('/web/v/0.0/i/' + f.slug);
+      data[f.slug] = json;
+      statusByFund[f.slug] = 'ok';
+      okCount++;
+    } catch (e) {
+      data[f.slug] = { error: e.message };
+      statusByFund[f.slug] = 'error';
+      errCount++;
+    }
+    renderFundChips(statusByFund);
+    setStatus('Loading… ' + (okCount + errCount) + '/' + FUNDS.length + ' funds (' + okCount + ' ok, ' + errCount + ' err)');
+    await new Promise(r => setTimeout(r, 300)); // gentle on rate limit
+  }
+
+  try { localStorage.setItem(SUP_CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
+
+  window._supData = data;
+  btn.disabled = false;
+  btn.textContent = '↻ Refresh';
+
+  if (okCount === 0) {
+    setStatus('All fund fetches failed. Check FINTEL_API_KEY in Vercel env vars and DASHBOARD_PASSWORD matches your gate password.', 'error');
+  } else {
+    setStatus('Loaded ' + okCount + '/' + FUNDS.length + ' funds · ' + new Date().toLocaleString(), 'success');
+  }
+  renderSuperinvestors();
+}
+
+// ── RENDERERS ──────────────────────────────────────────────────────
+function renderSuperinvestors() {
+  if (!window._supData) return;
+  const view = document.getElementById('sup-view').value;
+  const c = document.getElementById('sup-content');
+  if (view === 'aggregate') c.innerHTML = renderAggregate();
+  else if (view === 'byfund') c.innerHTML = renderByFund();
+  else if (view === 'ticker') c.innerHTML = renderTicker();
+}
+
+function fmtMoney(v) {
+  if (v == null || isNaN(v)) return '—';
+  if (v >= 1e9) return '$' + (v / 1e9).toFixed(2) + 'B';
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+  return '$' + Math.round(v).toLocaleString();
+}
+function fmtShares(v) {
+  if (v == null || isNaN(v)) return '—';
+  if (Math.abs(v) >= 1e6) return (v / 1e6).toFixed(2) + 'M';
+  if (Math.abs(v) >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+  return v.toLocaleString();
+}
+function fmtPct(v, dec) {
+  if (v == null || isNaN(v)) return '—';
+  return (v * 100).toFixed(dec || 1) + '%';
+}
+
+// AGGREGATE: combine all funds → table by ticker with overlap & changes
+function renderAggregate() {
+  const data = window._supData;
+  const byTicker = {}; // symbol → { name, holders: [...], totalValue, ... }
+
+  for (const f of FUNDS) {
+    const fd = data[f.slug];
+    if (!fd || fd.error || !fd.holdings) continue;
+    for (const h of fd.holdings) {
+      const sym = h.security && h.security.symbol;
+      if (!sym) continue;
+      const name = h.security.name || '';
+      if (!byTicker[sym]) byTicker[sym] = { symbol: sym, name, holders: [], totalValue: 0, totalShares: 0 };
+      byTicker[sym].holders.push({
+        fund: f.name,
+        slug: f.slug,
+        shares: h.shares,
+        sharesChange: h.sharesChange,
+        percentChange: h.percentChange,
+        value: h.value,
+        allocation: h.allocation,
+        action: classifyAction(h),
+      });
+      byTicker[sym].totalValue += h.value || 0;
+      byTicker[sym].totalShares += h.shares || 0;
+    }
+  }
+
+  const rows = Object.values(byTicker)
+    .map(r => ({
+      ...r,
+      n: r.holders.length,
+      newCount:  r.holders.filter(h => h.action === 'new').length,
+      addCount:  r.holders.filter(h => h.action === 'add').length,
+      trimCount: r.holders.filter(h => h.action === 'trim').length,
+      holdCount: r.holders.filter(h => h.action === 'hold').length,
+    }))
+    .sort((a, b) => b.n - a.n || b.totalValue - a.totalValue);
+
+  if (!rows.length) return '<div class="meta">No data. Click Refresh.</div>';
+
+  // Stats banner
+  const totalTickers = rows.length;
+  const overlap2 = rows.filter(r => r.n >= 2).length;
+  const overlap3 = rows.filter(r => r.n >= 3).length;
+  const newPicks = rows.filter(r => r.newCount > 0).length;
+
+  let html = `
+    <div class="section-hdr">Overview</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">
+      <div style="background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:16px"><div style="font-size:9px;letter-spacing:0.18em;color:var(--gray-mid);text-transform:uppercase;margin-bottom:6px">Distinct Tickers</div><div style="font-size:24px;font-weight:700;color:var(--navy)">${totalTickers}</div></div>
+      <div style="background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:16px"><div style="font-size:9px;letter-spacing:0.18em;color:var(--gray-mid);text-transform:uppercase;margin-bottom:6px">Overlap ≥2 funds</div><div style="font-size:24px;font-weight:700;color:var(--navy)">${overlap2}</div></div>
+      <div style="background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:16px"><div style="font-size:9px;letter-spacing:0.18em;color:var(--gray-mid);text-transform:uppercase;margin-bottom:6px">High conviction ≥3</div><div style="font-size:24px;font-weight:700;color:var(--green)">${overlap3}</div></div>
+      <div style="background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:16px"><div style="font-size:9px;letter-spacing:0.18em;color:var(--gray-mid);text-transform:uppercase;margin-bottom:6px">Tickers w/ new buys</div><div style="font-size:24px;font-weight:700;color:var(--gold)">${newPicks}</div></div>
+    </div>
+
+    <div class="section-hdr">Aggregate Panel — Sorted by Conviction Overlap</div>
+    <div style="overflow-x:auto">
+      <table class="stbl">
+        <thead><tr>
+          <th>Ticker</th><th>Company</th><th>Funds</th><th>Total $</th>
+          <th>New</th><th>Add</th><th>Trim</th><th>Hold</th><th>Holders</th>
+        </tr></thead>
+        <tbody>`;
+
+  for (const r of rows.slice(0, 80)) {
+    const pillCls = r.n >= 3 ? 'conviction-pill hi' : 'conviction-pill';
+    const holders = r.holders
+      .sort((a,b) => (b.value||0) - (a.value||0))
+      .map(h => {
+        const cls = h.action === 'new' ? 'v-new' : h.action === 'add' ? 'v-add' : h.action === 'trim' ? 'v-trim' : h.action === 'exit' ? 'v-exit' : 'v-pass';
+        return `<span class="verdict ${cls}" style="margin:1px 2px;font-size:8.5px" title="${h.fund}: ${fmtShares(h.shares)} sh, ${fmtPct(h.allocation/100,1)} allocation, ${h.action}">${h.fund.split(' ')[0]}</span>`;
+      }).join('');
+
+    html += `<tr>
+      <td class="ticker-cell"><a href="https://fintel.io/so/us/${r.symbol.toLowerCase()}" target="_blank" rel="noopener">${r.symbol}</a></td>
+      <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name}</td>
+      <td><span class="${pillCls}">${r.n}</span></td>
+      <td>${fmtMoney(r.totalValue)}</td>
+      <td class="${r.newCount>0?'green':'dim'}" style="font-weight:${r.newCount>0?'700':'400'}">${r.newCount||'—'}</td>
+      <td class="${r.addCount>0?'green':'dim'}" style="font-weight:${r.addCount>0?'700':'400'}">${r.addCount||'—'}</td>
+      <td class="${r.trimCount>0?'amber':'dim'}" style="font-weight:${r.trimCount>0?'700':'400'}">${r.trimCount||'—'}</td>
+      <td class="dim">${r.holdCount||'—'}</td>
+      <td style="text-align:left;max-width:380px">${holders}</td>
+    </tr>`;
+  }
+
+  html += '</tbody></table></div>';
+  if (rows.length > 80) html += `<div class="meta">Showing top 80 of ${rows.length} tickers (sorted by overlap, then total $).</div>`;
+  return html;
+}
+
+function classifyAction(h) {
+  // Heuristic: if sharesChange ≈ shares (within 1%), it's a new buy
+  const sh = h.shares || 0;
+  const ch = h.sharesChange || 0;
+  if (sh === 0 && ch < 0)            return 'exit';
+  if (sh > 0 && Math.abs(ch - sh) < Math.max(1, sh * 0.01)) return 'new';
+  if (ch > 0)                         return 'add';
+  if (ch < 0)                         return 'trim';
+  return 'hold';
+}
+
+// BY FUND: full 13F portfolio of selected fund
+function renderByFund() {
+  const slug = document.getElementById('sup-fund-select').value;
+  const data = window._supData[slug];
+  if (!data) return '<div class="meta">No data for this fund.</div>';
+  if (data.error) return '<div class="sup-status error">Error: ' + data.error + '</div>';
+
+  const fund = FUNDS.find(f => f.slug === slug);
+  const owner = data.owner || {};
+  const holdings = (data.holdings || []).slice().sort((a, b) => (b.value || 0) - (a.value || 0));
+
+  let html = `
+    <div class="section-hdr">${fund.name} — ${fund.manager}</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">
+      <div style="background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:16px"><div style="font-size:9px;letter-spacing:0.18em;color:var(--gray-mid);text-transform:uppercase;margin-bottom:6px">AUM</div><div style="font-size:20px;font-weight:700;color:var(--navy)">${fmtMoney(owner.aum)}</div></div>
+      <div style="background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:16px"><div style="font-size:9px;letter-spacing:0.18em;color:var(--gray-mid);text-transform:uppercase;margin-bottom:6px">Holdings</div><div style="font-size:20px;font-weight:700;color:var(--navy)">${holdings.length}</div></div>
+      <div style="background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:16px"><div style="font-size:9px;letter-spacing:0.18em;color:var(--gray-mid);text-transform:uppercase;margin-bottom:6px">Manager</div><div style="font-size:14px;font-weight:600;color:var(--navy)">${owner.manager || fund.manager}</div></div>
+      <div style="background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:16px"><div style="font-size:9px;letter-spacing:0.18em;color:var(--gray-mid);text-transform:uppercase;margin-bottom:6px">Top 10 weight</div><div style="font-size:20px;font-weight:700;color:var(--gold)">${(holdings.slice(0,10).reduce((s,h)=>s+(h.allocation||0),0)).toFixed(1)}%</div></div>
+    </div>
+
+    <div class="section-hdr">All Holdings</div>
+    <div style="overflow-x:auto">
+      <table class="stbl">
+        <thead><tr>
+          <th>Ticker</th><th>Company</th><th>Shares</th><th>Δ Shares</th><th>% Δ</th>
+          <th>Value</th><th>Allocation</th><th>Δ Alloc</th><th>Action</th>
+        </tr></thead>
+        <tbody>`;
+
+  for (const h of holdings) {
+    const sym = h.security && h.security.symbol;
+    const name = (h.security && h.security.name) || '';
+    if (!sym) continue;
+    const action = classifyAction(h);
+    const cls = action === 'new' ? 'v-new' : action === 'add' ? 'v-add' : action === 'trim' ? 'v-trim' : action === 'exit' ? 'v-exit' : 'v-pass';
+    html += `<tr>
+      <td class="ticker-cell"><a href="https://fintel.io/so/us/${sym.toLowerCase()}" target="_blank" rel="noopener">${sym}</a></td>
+      <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</td>
+      <td>${fmtShares(h.shares)}</td>
+      <td class="${(h.sharesChange||0)>0?'green':(h.sharesChange||0)<0?'red':'dim'}">${(h.sharesChange||0)>0?'+':''}${fmtShares(h.sharesChange)}</td>
+      <td class="${(h.percentChange||0)>0?'green':(h.percentChange||0)<0?'red':'dim'}">${h.percentChange != null ? ((h.percentChange>0?'+':'') + h.percentChange.toFixed(1) + '%') : '—'}</td>
+      <td>${fmtMoney(h.value)}</td>
+      <td style="font-weight:600">${h.allocation != null ? h.allocation.toFixed(2) + '%' : '—'}</td>
+      <td class="${(h.allocationChange||0)>0?'green':(h.allocationChange||0)<0?'red':'dim'}">${h.allocationChange != null ? ((h.allocationChange>0?'+':'') + h.allocationChange.toFixed(2) + 'pp') : '—'}</td>
+      <td><span class="verdict ${cls}">${action}</span></td>
+    </tr>`;
+  }
+  html += '</tbody></table></div>';
+  return html;
+}
+
+// TICKER LOOKUP: cross-reference panel against a single stock
+function renderTicker() {
+  const symRaw = (document.getElementById('sup-ticker-input').value || '').trim().toUpperCase();
+  if (!symRaw) return '<div class="meta">Type a ticker (e.g. <strong>BKNG</strong>) and press Enter.</div>';
+
+  const matches = [];
+  for (const f of FUNDS) {
+    const fd = window._supData[f.slug];
+    if (!fd || fd.error || !fd.holdings) continue;
+    const h = fd.holdings.find(x => x.security && x.security.symbol === symRaw);
+    if (h) matches.push({ fund: f, holding: h });
+  }
+
+  if (!matches.length) return `<div class="sup-status">No fund in the DCE panel currently holds <strong>${symRaw}</strong>.</div>`;
+
+  matches.sort((a,b) => (b.holding.value||0) - (a.holding.value||0));
+
+  let html = `
+    <div class="section-hdr">${symRaw} — Held by ${matches.length} of ${FUNDS.length} DCE panel funds</div>
+    <div style="overflow-x:auto">
+      <table class="stbl">
+        <thead><tr>
+          <th>Fund</th><th>Manager</th><th>Shares</th><th>Δ Shares</th><th>% Δ</th>
+          <th>Value</th><th>Allocation</th><th>Δ Alloc</th><th>Action</th>
+        </tr></thead>
+        <tbody>`;
+
+  for (const m of matches) {
+    const h = m.holding;
+    const action = classifyAction(h);
+    const cls = action === 'new' ? 'v-new' : action === 'add' ? 'v-add' : action === 'trim' ? 'v-trim' : action === 'exit' ? 'v-exit' : 'v-pass';
+    html += `<tr>
+      <td class="ticker-cell">${m.fund.name}</td>
+      <td>${m.fund.manager}</td>
+      <td>${fmtShares(h.shares)}</td>
+      <td class="${(h.sharesChange||0)>0?'green':(h.sharesChange||0)<0?'red':'dim'}">${(h.sharesChange||0)>0?'+':''}${fmtShares(h.sharesChange)}</td>
+      <td class="${(h.percentChange||0)>0?'green':(h.percentChange||0)<0?'red':'dim'}">${h.percentChange != null ? ((h.percentChange>0?'+':'') + h.percentChange.toFixed(1) + '%') : '—'}</td>
+      <td>${fmtMoney(h.value)}</td>
+      <td style="font-weight:600">${h.allocation != null ? h.allocation.toFixed(2) + '%' : '—'}</td>
+      <td class="${(h.allocationChange||0)>0?'green':(h.allocationChange||0)<0?'red':'dim'}">${h.allocationChange != null ? ((h.allocationChange>0?'+':'') + h.allocationChange.toFixed(2) + 'pp') : '—'}</td>
+      <td><span class="verdict ${cls}">${action}</span></td>
+    </tr>`;
+  }
+  html += `</tbody></table></div>
+    <div class="meta" style="margin-top:14px">
+      View on <a href="https://fintel.io/so/us/${symRaw.toLowerCase()}" target="_blank" rel="noopener" style="color:var(--gold)">Fintel ↗</a>
+    </div>`;
+  return html;
+}
 </script>
 </body>
 </html>
