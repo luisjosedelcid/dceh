@@ -139,7 +139,15 @@
 
 <script>
 const PROXY = '/api/claude';
+// Auth: prefer admin token (post-unification), fall back to legacy dce_auth
+const ADMIN_TOK = (function(){ try { return localStorage.getItem('dce_admin_token') || ''; } catch { return ''; } })();
 const DASH_PWD = sessionStorage.getItem('dce_auth') || '';
+function authHeaders(extra) {
+  const h = Object.assign({}, extra || {});
+  if (ADMIN_TOK) h['x-admin-token'] = ADMIN_TOK;
+  else if (DASH_PWD) h['x-dashboard-auth'] = DASH_PWD;
+  return h;
+}
 
 const CATEGORIES = {
   earnings: { label: 'Earnings & Financials' },
@@ -338,7 +346,7 @@ If nothing new, respond with exactly: []`;
     statusEl.textContent = 'Calling API with web search...';
     let resp = await fetch(PROXY, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-dashboard-auth': DASH_PWD },
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 4000,
@@ -366,7 +374,7 @@ If nothing new, respond with exactly: []`;
 
       resp = await fetch(PROXY, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-dashboard-auth': DASH_PWD },
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 4000,

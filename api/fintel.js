@@ -1,16 +1,24 @@
 // ═══════════════════════════════════════════════════════════════════
 // DCE Holdings — Fintel API Proxy (Vercel serverless function)
 // ───────────────────────────────────────────────────────────────────
-// Mirrors api/claude.js pattern: dashboard-auth header + env API key.
+// Auth (any of):
+//   1. x-admin-token  — verified against ADMIN_TOKEN_SECRET (preferred,
+//      issued by /api/admin-login and stored as dce_admin_token in
+//      localStorage by dce-auth.js)
+//   2. x-dashboard-auth === DASHBOARD_PASSWORD (legacy, kept for backwards
+//      compat with any embedded clients that still use it)
 //
 // Required env vars:
-//   FINTEL_API_KEY      — your Fintel Silver tier key (sk_...)
-//   DASHBOARD_PASSWORD  — same one used by the password gate
+//   FINTEL_API_KEY      — Fintel Silver tier key (sk_...)
+//   ADMIN_TOKEN_SECRET  — secret used by admin-login to sign tokens
+//   DASHBOARD_PASSWORD  — legacy gate password (optional)
 //
 // Client usage (from /screener.html Superinvestors tab):
 //   fetch('/api/fintel?endpoint=/web/v/0.0/i/berkshire-hathaway',
-//         { headers: { 'x-dashboard-auth': pwd } })
+//         { headers: { 'x-admin-token': adminToken } })
 // ═══════════════════════════════════════════════════════════════════
+
+const { verifyAdminToken } = require('./_admin-auth');
 
 // Whitelist of allowed Fintel path prefixes — prevents arbitrary proxying
 const ALLOWED_PREFIXES = [
@@ -22,11 +30,11 @@ const ALLOWED_PREFIXES = [
   '/data/v/0.0/so/',        // Premium owner history
 ];
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // CORS / preflight
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-dashboard-auth');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-dashboard-auth, x-admin-token');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     return res.status(200).end();
   }
@@ -35,9 +43,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Auth gate (same pattern as api/claude.js)
-  const auth = req.headers['x-dashboard-auth'];
-  if (auth !== process.env.DASHBOARD_PASSWORD) {
+  // ── Auth: prefer admin token; fall back to legacy dashboard password ──
+  const ADMIN_TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET;
+  const adminTok = req.headers['x-admin-token'];
+  const dashAuth = req.headers['x-dashboard-auth'];
+
+  let authed = false;
+  if (adminTok && ADMIN_TOKEN_SECRET && verifyAdminToken(adminTok, ADMIN_TOKEN_SECRET)) {
+    authed = true;
+  } else if (dashAuth && process.env.DASHBOARD_PASSWORD && dashAuth === process.env.DASHBOARD_PASSWORD) {
+    authed = true;
+  }
+  if (!authed) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -63,7 +80,6 @@ export default async function handler(req, res) {
       headers: {
         'X-API-KEY': process.env.FINTEL_API_KEY,
         'Accept': 'application/json',
-        // Cloudflare-friendly UA (Fintel blocks default node fetch UA sometimes)
         'User-Agent': 'Mozilla/5.0 (compatible; DCEHoldings/1.0; +https://dceholdings.app)',
       },
     });
@@ -76,11 +92,11 @@ export default async function handler(req, res) {
       console.error('Fintel error:', response.status, JSON.stringify(data).slice(0, 300));
     }
 
-    res.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate=3600'); // 15-min CDN cache
+    res.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate=3600');
     return res.status(response.ok ? 200 : response.status).json(data);
 
   } catch (error) {
     console.error('Fintel proxy error:', error.message);
     return res.status(500).json({ error: 'Proxy error', detail: error.message });
   }
-}
+};

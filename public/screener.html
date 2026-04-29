@@ -185,6 +185,7 @@
       <label>View:</label>
       <select id="sup-view" onchange="renderSuperinvestors()">
         <option value="aggregate">Aggregate panel — overlap & changes</option>
+        <option value="newbuys">New buys & adds — idea generation</option>
         <option value="byfund">By fund — single 13F portfolio</option>
         <option value="ticker">Ticker lookup — who owns it?</option>
       </select>
@@ -702,7 +703,9 @@ const FUNDS = [
   { slug: 'tci-fund-management',         name: 'TCI Fund Management',    manager: 'Hohn'      },
 ];
 
-const DCE_AUTH = sessionStorage.getItem('dce_auth') || 'Test1';
+// Auth: prefer admin token (post-unification), fall back to legacy dce_auth
+const ADMIN_TOK = (function(){ try { return localStorage.getItem('dce_admin_token') || ''; } catch { return ''; } })();
+const DCE_AUTH = sessionStorage.getItem('dce_auth') || '';
 const SUP_CACHE_KEY = 'dce_sup_cache_v1';
 const SUP_CACHE_TTL = 1000 * 60 * 60 * 6; // 6 hours
 
@@ -749,9 +752,10 @@ function setStatus(msg, kind) {
 }
 
 async function fintelGet(endpoint) {
-  const r = await fetch('/api/fintel?endpoint=' + encodeURIComponent(endpoint), {
-    headers: { 'x-dashboard-auth': DCE_AUTH }
-  });
+  const headers = {};
+  if (ADMIN_TOK) headers['x-admin-token'] = ADMIN_TOK;
+  else if (DCE_AUTH) headers['x-dashboard-auth'] = DCE_AUTH;
+  const r = await fetch('/api/fintel?endpoint=' + encodeURIComponent(endpoint), { headers });
   if (!r.ok) {
     const body = await r.text();
     throw new Error('HTTP ' + r.status + ': ' + body.slice(0, 200));
@@ -810,7 +814,7 @@ async function loadSuperinvestors(force) {
   btn.textContent = '↻ Refresh';
 
   if (okCount === 0) {
-    setStatus('All fund fetches failed. Check FINTEL_API_KEY in Vercel env vars and DASHBOARD_PASSWORD matches your gate password.', 'error');
+    setStatus('All fund fetches failed. Sign in as admin (top-right) and check FINTEL_API_KEY is set in Vercel env vars.', 'error');
   } else {
     setStatus('Loaded ' + okCount + '/' + FUNDS.length + ' funds · ' + new Date().toLocaleString(), 'success');
   }
@@ -823,8 +827,116 @@ function renderSuperinvestors() {
   const view = document.getElementById('sup-view').value;
   const c = document.getElementById('sup-content');
   if (view === 'aggregate') c.innerHTML = renderAggregate();
+  else if (view === 'newbuys') c.innerHTML = renderNewBuys();
   else if (view === 'byfund') c.innerHTML = renderByFund();
   else if (view === 'ticker') c.innerHTML = renderTicker();
+}
+
+// ── NEW BUYS & ADDS — idea generation view ──────────────────────────
+// Surfaces holdings where superinvestors made significant moves last quarter.
+// 'new'  = brand-new position (sharesChange ≈ shares)
+// 'add'  = increased >10% over prior quarter
+// Sorted by: action priority (new > add), then by # of funds making the move,
+// then by total $ value of the new/added position.
+function renderNewBuys() {
+  const data = window._supData;
+  const byTicker = {};
+
+  for (const f of FUNDS) {
+    const fd = data[f.slug];
+    if (!fd || fd.error || !fd.holdings) continue;
+    for (const h of fd.holdings) {
+      const sym = h.security && h.security.symbol;
+      if (!sym) continue;
+      const action = classifyAction(h);
+      if (action !== 'new' && action !== 'add') continue;
+      // Filter weak adds: require either truly new, or >10% share growth
+      const pctCh = Number(h.percentChange);
+      if (action === 'add' && (!Number.isFinite(pctCh) || pctCh < 10)) continue;
+      if (!byTicker[sym]) byTicker[sym] = { symbol: sym, name: h.security.name || '', moves: [], newValue: 0, addValue: 0 };
+      byTicker[sym].moves.push({
+        fund: f.name, slug: f.slug, manager: f.manager,
+        action, shares: h.shares, sharesChange: h.sharesChange,
+        percentChange: pctCh, value: h.value, allocation: h.allocation,
+        effectiveDate: h.effectiveDate,
+      });
+      if (action === 'new') byTicker[sym].newValue += h.value || 0;
+      else byTicker[sym].addValue += h.value || 0;
+    }
+  }
+
+  const rows = Object.values(byTicker).map(r => {
+    const newMoves = r.moves.filter(m => m.action === 'new');
+    const addMoves = r.moves.filter(m => m.action === 'add');
+    return { ...r, newCount: newMoves.length, addCount: addMoves.length, totalValue: r.newValue + r.addValue };
+  }).sort((a, b) => {
+    // Priority: highest # of new buys, then # of adds, then total $
+    if (b.newCount !== a.newCount) return b.newCount - a.newCount;
+    if (b.addCount !== a.addCount) return b.addCount - a.addCount;
+    return b.totalValue - a.totalValue;
+  });
+
+  if (!rows.length) return '<div class="meta">No new buys or significant adds in the latest quarter. Try Refresh.</div>';
+
+  const totalNewBuys = rows.filter(r => r.newCount > 0).length;
+  const totalAdds = rows.filter(r => r.addCount > 0 && r.newCount === 0).length;
+  const conviction = rows.filter(r => r.newCount + r.addCount >= 2).length;
+
+  // Universe tickers we already cover, for cross-link badges
+  const COVERED = ['BKNG', 'SAP'];
+
+  let html = `
+    <div class="section-hdr">Idea Generation — Latest Quarter Moves</div>
+    <div class="meta" style="margin-bottom:18px">Tickers where DCE quality-value funds opened a new position or added &gt;10% in their latest 13F. Sorted by conviction (number of funds making the move).</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">
+      <div style="background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:16px"><div style="font-size:9px;letter-spacing:0.18em;color:var(--gray-mid);text-transform:uppercase;margin-bottom:6px">Tickers w/ new buys</div><div style="font-size:24px;font-weight:700;color:var(--gold)">${totalNewBuys}</div></div>
+      <div style="background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:16px"><div style="font-size:9px;letter-spacing:0.18em;color:var(--gray-mid);text-transform:uppercase;margin-bottom:6px">Tickers w/ adds only</div><div style="font-size:24px;font-weight:700;color:var(--navy)">${totalAdds}</div></div>
+      <div style="background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:16px"><div style="font-size:9px;letter-spacing:0.18em;color:var(--gray-mid);text-transform:uppercase;margin-bottom:6px">Multi-fund conviction</div><div style="font-size:24px;font-weight:700;color:var(--green)">${conviction}</div></div>
+      <div style="background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:16px"><div style="font-size:9px;letter-spacing:0.18em;color:var(--gray-mid);text-transform:uppercase;margin-bottom:6px">Total ideas</div><div style="font-size:24px;font-weight:700;color:var(--navy)">${rows.length}</div></div>
+    </div>
+
+    <div style="overflow-x:auto">
+      <table class="stbl">
+        <thead><tr>
+          <th>Ticker</th><th>Company</th><th>New</th><th>Add</th><th>Total $ moved</th><th>Funds making moves</th>
+        </tr></thead>
+        <tbody>`;
+
+  for (const r of rows.slice(0, 80)) {
+    const inUniverse = COVERED.includes(r.symbol);
+    const tickerLink = inUniverse
+      ? `<a href="/company.html?ticker=${r.symbol}" style="color:var(--gold);font-weight:700" title="In DCE universe">${r.symbol}</a> <span class="tag tag-watch" style="font-size:8px;padding:1px 6px;margin-left:4px">covered</span>`
+      : `<a href="https://fintel.io/so/us/${r.symbol.toLowerCase()}" target="_blank" rel="noopener">${r.symbol}</a>`;
+
+    const moves = r.moves
+      .sort((a, b) => (b.value || 0) - (a.value || 0))
+      .map(m => {
+        const cls = m.action === 'new' ? 'v-new' : 'v-add';
+        const lbl = m.action === 'new' ? 'NEW' : `+${Math.round(m.percentChange)}%`;
+        const tipParts = [
+          m.fund + (m.manager ? ' (' + m.manager + ')' : ''),
+          'Action: ' + m.action.toUpperCase(),
+          'Shares: ' + fmtShares(m.shares),
+          'Δ: ' + fmtShares(m.sharesChange),
+          'Value: ' + fmtMoney(m.value),
+          'Allocation: ' + fmtPct((m.allocation || 0) / 100, 1),
+        ];
+        return `<span class="verdict ${cls}" style="margin:1px 2px;font-size:8.5px" title="${tipParts.join(' \u2014 ')}">${m.fund.split(' ')[0]} ${lbl}</span>`;
+      }).join('');
+
+    html += `<tr>
+      <td class="ticker-cell">${tickerLink}</td>
+      <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name}</td>
+      <td class="${r.newCount>0?'green':'dim'}" style="font-weight:${r.newCount>0?'700':'400'}">${r.newCount||'\u2014'}</td>
+      <td class="${r.addCount>0?'green':'dim'}" style="font-weight:${r.addCount>0?'700':'400'}">${r.addCount||'\u2014'}</td>
+      <td>${fmtMoney(r.totalValue)}</td>
+      <td style="text-align:left;max-width:420px">${moves}</td>
+    </tr>`;
+  }
+
+  html += '</tbody></table></div>';
+  if (rows.length > 80) html += `<div class="meta">Showing top 80 of ${rows.length} ideas. Hover any fund chip for details.</div>`;
+  return html;
 }
 
 function fmtMoney(v) {

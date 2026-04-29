@@ -800,8 +800,6 @@ async function checkPwd() {
   try { localStorage.setItem('dce_last_email', email); } catch {}
   const res = await window.dceAuth.login(email, val);
   if (res.ok) {
-    // Also keep legacy session flag so any leftover code still works
-    sessionStorage.setItem('dce_auth', 'Test1');
     document.getElementById('gate').classList.add('fade-out');
     setTimeout(() => {
       document.getElementById('gate').style.display = 'none';
@@ -831,7 +829,6 @@ window.addEventListener('DOMContentLoaded', () => {
   // Wait for dceAuth to be available, then check
   const tryUnlock = () => {
     if (window.dceAuth && window.dceAuth.isAdmin()) {
-      sessionStorage.setItem('dce_auth', 'Test1');
       document.getElementById('gate').style.display = 'none';
       document.getElementById('main').classList.add('visible');
       return true;
@@ -855,11 +852,19 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <script>
-  // Earnings widget: load earnings.json, show next 30 days (max 3 entries)
+  // Earnings widget: live from /api/earnings, show next 30 days (max 3 entries)
   (async function loadEarningsWidget() {
     try {
-      const res = await fetch('/data/earnings.json', { cache: 'no-store' });
-      const data = await res.json();
+      let data;
+      try {
+        const res = await fetch('/api/earnings?days=30&status=upcoming', { cache: 'no-store' });
+        if (!res.ok) throw new Error('api ' + res.status);
+        data = await res.json();
+      } catch (apiErr) {
+        // Fallback to static JSON if API fails
+        const res2 = await fetch('/data/earnings.json', { cache: 'no-store' });
+        data = await res2.json();
+      }
       const today = new Date();
       today.setHours(0,0,0,0);
       const cutoff = new Date(today.getTime() + 30 * 86400000);

@@ -127,7 +127,7 @@
 
   <!-- INFO BAR -->
   <div class="info-bar">
-    <span>Source: <code>/data/earnings.json</code> · edit the file in the repo to add or update events.</span>
+    <span>Source: live from <code>/api/earnings</code> · auto-refreshed daily from Finnhub.</span>
     <span id="last-updated" style="color:var(--gray-mid)"></span>
   </div>
 
@@ -171,9 +171,30 @@
   }
 
   async function load() {
-    const res = await fetch('/data/earnings.json', { cache: 'no-store' });
-    DATA = await res.json();
-    document.getElementById('last-updated').textContent = 'Last updated: ' + DATA.last_updated;
+    let data;
+    try {
+      const res = await fetch('/api/earnings?days=365&status=all', { cache: 'no-store' });
+      if (!res.ok) throw new Error('api ' + res.status);
+      data = await res.json();
+    } catch (err) {
+      console.warn('API failed, falling back to /data/earnings.json:', err);
+      const res2 = await fetch('/data/earnings.json', { cache: 'no-store' });
+      data = await res2.json();
+    }
+    DATA = data;
+    const ts = DATA.last_updated;
+    let label = 'Last updated: —';
+    if (ts) {
+      try {
+        const d = new Date(ts);
+        if (!Number.isNaN(d.getTime())) {
+          label = 'Last updated: ' + d.toISOString().slice(0, 10);
+        } else {
+          label = 'Last updated: ' + ts;
+        }
+      } catch { label = 'Last updated: ' + ts; }
+    }
+    document.getElementById('last-updated').textContent = label;
     renderKPIs();
     render();
   }
