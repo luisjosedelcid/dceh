@@ -66,6 +66,7 @@
     <a href="/universe.html">Universe</a>
     <a href="/screener.html">Find</a>
     <a href="/study.html">Study</a>
+    <a href="/journal.html">Journal</a>
     <a href="/portfolio.html" class="active">Portfolio</a>
     <a href="/calendar.html">Calendar</a>
   </div>
@@ -123,6 +124,7 @@ const FH_KEY = 'd6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg';
 
 // Single source of truth: /data/portfolio.json (also used by Daily Report)
 let HOLDINGS = [];
+let DECISIONS_BY_TICKER = {}; // ticker -> latest BUY/ADD decision id
 
 async function loadHoldings() {
   try {
@@ -216,11 +218,12 @@ function renderPortfolio(prices) {
     const months = Math.floor(r.days / 30);
     const holdStr = r.days < 30 ? r.days + 'd' : months + 'mo ' + (r.days % 30) + 'd';
     const linkHtml = r.link ? ` <a href="${r.link}" style="font-size:9px;color:var(--gold);text-decoration:none;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Dashboard →</a>` : '';
+    const journalHtml = DECISIONS_BY_TICKER[r.ticker] ? ` <a href="/journal.html?ticker=${encodeURIComponent(r.ticker)}" style="font-size:9px;color:var(--gold);text-decoration:none;letter-spacing:0.1em;text-transform:uppercase;font-weight:600" title="View original decision in Journal">📓 Decision</a>` : '';
 
     return `<tr>
       <td>
         <div class="ticker">${r.ticker}</div>
-        <div class="ticker-sub">${r.name} · ${r.sector}${linkHtml}</div>
+        <div class="ticker-sub">${r.name} · ${r.sector}${linkHtml}${journalHtml}</div>
       </td>
       <td>${r.shares}</td>
       <td>$${fmt(r.avgCost)}</td>
@@ -265,8 +268,25 @@ async function fetchPrices() {
   }
 }
 
+async function loadDecisionsMap() {
+  try {
+    const r = await fetch('/api/journal');
+    if (!r.ok) return;
+    const data = await r.json();
+    const map = {};
+    for (const it of (data.items || [])) {
+      // Pick the latest BUY/ADD decision per ticker (items are pre-sorted desc by date)
+      if (['BUY', 'ADD'].includes(it.decision_type) && !map[it.ticker]) {
+        map[it.ticker] = it.id;
+      }
+    }
+    DECISIONS_BY_TICKER = map;
+  } catch (e) { /* ignore */ }
+}
+
 (async () => {
   await loadHoldings();
+  await loadDecisionsMap();
   await fetchPrices();
 })();
 </script>

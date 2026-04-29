@@ -10,9 +10,12 @@
     { "source": "/news", "destination": "/news.html" },
     { "source": "/dataroom", "destination": "/dataroom.html" },
     { "source": "/reporting", "destination": "/reporting.html" },
-    { "source": "/research", "destination": "/research.html" }
+    { "source": "/research", "destination": "/research.html" },
+    { "source": "/study", "destination": "/study.html" },
+    { "source": "/journal", "destination": "/journal.html" }
   ],
   "crons": [
-    { "path": "/api/cron/refresh-feed", "schedule": "0 */6 * * *" }
+    { "path": "/api/cron/refresh-feed", "schedule": "0 */6 * * *" },
+    { "path": "/api/cron/journal-reviews", "schedule": "0 13 * * *" }
   ]
 }

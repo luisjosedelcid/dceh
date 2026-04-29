@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — Decision Journal</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#1b2642;--gold:#b88b47;--gold-lt:#d4aa6a;--gold-dim:rgba(184,139,71,0.10);--gold-rule:rgba(184,139,71,0.30);
+    --cream:#f5f1eb;--white:#ffffff;--ink:#1b2642;--gray-mid:#8a9098;--gray-txt:#606060;
+    --rule:rgba(27,38,66,0.09);
+    --green:#2e6b4f;--red:#8b0000;--amber:#b88b47;--gray-bar:#606060;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+  header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
+  .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
+  .hnav{display:flex;gap:8px;flex-wrap:wrap}
+  .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
+  .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
+  .hnav a.active{color:var(--gold);border-color:var(--gold)}
+
+  main{padding:28px 36px 60px;max-width:1500px;margin:0 auto}
+  .slbl{font-size:10px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+  h1{font-size:32px;font-weight:700;letter-spacing:-0.01em;margin-bottom:6px}
+  .sub{color:var(--gray-mid);font-size:14px;margin-bottom:24px}
+
+  /* KPI cards */
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:22px}
+  .kpi{background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:14px 18px}
+  .kpi-lbl{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:6px}
+  .kpi-val{font-size:24px;font-weight:700;color:var(--navy);line-height:1}
+  .kpi-sub{font-size:11px;color:var(--gray-mid);margin-top:4px}
+  .kpi.pending .kpi-val{color:var(--red)}
+
+  /* Tabs */
+  .mode-tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin-bottom:18px}
+  .mode-tab{background:none;border:none;padding:12px 22px;font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+  .mode-tab:hover{color:var(--ink)}
+  .mode-tab.active{color:var(--navy);border-bottom-color:var(--gold)}
+  .mode-tab .count{display:inline-block;margin-left:6px;font-size:10px;font-weight:500;color:var(--gray-mid);background:rgba(0,0,0,0.04);padding:1px 6px;border-radius:8px}
+  .mode-pane{display:none}.mode-pane.active{display:block}
+
+  /* Filters */
+  .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+  .chip{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:6px 12px;background:var(--white);border:1px solid var(--rule);color:var(--gray-txt);cursor:pointer;transition:all .15s}
+  .chip:hover{border-color:var(--gold-rule);color:var(--navy)}
+  .chip.active{background:var(--navy);color:var(--white);border-color:var(--navy)}
+  .filters input{font-family:'Archivo',sans-serif;font-size:12px;padding:7px 12px;border:1px solid var(--rule);background:var(--white);color:var(--ink);outline:none;width:160px}
+  .filters input:focus{border-color:var(--gold)}
+
+  /* Table */
+  .table-wrap{background:var(--white);border:1px solid var(--rule);overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  thead{background:var(--navy)}
+  thead th{color:var(--white);font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:11px 14px;text-align:left;border-bottom:1px solid var(--gold-rule)}
+  tbody tr{border-bottom:1px solid var(--rule);cursor:pointer;transition:background .12s}
+  tbody tr:hover{background:rgba(184,139,71,0.05)}
+  tbody td{padding:12px 14px;font-size:13px;vertical-align:top}
+  td.ticker{font-weight:700;color:var(--navy);font-size:14px;letter-spacing:0.04em}
+  td.thesis{color:var(--gray-txt);max-width:480px;text-align:justify;hyphens:auto;line-height:1.45}
+  td.right{text-align:right;font-variant-numeric:tabular-nums}
+  td.center{text-align:center}
+
+  /* Type badges */
+  .badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.1em;padding:3px 9px;border-radius:2px}
+  .badge.BUY{background:rgba(46,107,79,0.12);color:#2e6b4f}
+  .badge.ADD{background:rgba(46,107,79,0.08);color:#2e6b4f;border:1px solid rgba(46,107,79,0.3)}
+  .badge.SELL{background:rgba(139,0,0,0.10);color:#8b0000}
+  .badge.TRIM{background:rgba(139,0,0,0.06);color:#8b0000;border:1px solid rgba(139,0,0,0.25)}
+  .badge.PASS{background:rgba(96,96,96,0.10);color:#606060}
+  .badge.HOLD{background:rgba(184,139,71,0.12);color:#b88b47}
+
+  .review-pill{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;letter-spacing:0.05em;background:var(--gold-dim);color:var(--gold)}
+  .review-pill.due{background:rgba(139,0,0,0.10);color:var(--red)}
+  .review-pill.done{background:rgba(46,107,79,0.10);color:#2e6b4f}
+
+  .status{font-size:12px;color:var(--gray-mid);margin-bottom:14px}
+  .empty{padding:40px;text-align:center;color:var(--gray-mid);font-style:italic;background:var(--white);border:1px dashed var(--rule)}
+
+  /* Drawer */
+  .drawer-bg{position:fixed;inset:0;background:rgba(27,38,66,0.5);display:none;z-index:50}
+  .drawer-bg.open{display:block}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:min(720px,90vw);background:var(--cream);border-left:3px solid var(--gold);overflow-y:auto;transform:translateX(100%);transition:transform .25s ease;z-index:60}
+  .drawer.open{transform:translateX(0)}
+  .drawer-header{background:var(--navy);color:var(--white);padding:18px 28px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--gold)}
+  .drawer-title{font-size:22px;font-weight:700;letter-spacing:-0.01em}
+  .drawer-close{background:none;border:1px solid rgba(255,255,255,0.3);color:var(--white);font-size:20px;width:32px;height:32px;cursor:pointer;line-height:1}
+  .drawer-close:hover{border-color:var(--gold);color:var(--gold)}
+  .drawer-body{padding:24px 28px}
+  .field{margin-bottom:18px}
+  .field-lbl{font-size:9px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+  .field-val{font-size:14px;color:var(--ink);line-height:1.6;text-align:justify;hyphens:auto}
+  .field-val.muted{color:var(--gray-txt);font-style:italic}
+  .meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px;background:var(--white);border:1px solid var(--rule);padding:14px}
+  .meta-grid .k{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:3px}
+  .meta-grid .v{font-size:14px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
+  .review-block{background:var(--white);border:1px solid var(--rule);border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:10px}
+  .review-block.done{border-left-color:#2e6b4f}
+  .review-block.due{border-left-color:var(--red)}
+  .review-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .review-label{font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--navy)}
+  .review-outcome{font-size:13px;color:var(--gray-txt);line-height:1.5;margin-top:4px}
+  .pill-list{display:flex;flex-wrap:wrap;gap:6px}
+  .pill-list span{font-size:11px;background:var(--gold-dim);color:var(--gold);padding:3px 9px;letter-spacing:0.04em}
+
+  footer{padding:24px 48px;background:var(--navy);color:rgba(255,255,255,0.55);font-size:11px;letter-spacing:0.04em;display:flex;justify-content:space-between;border-top:2px solid var(--gold)}
+
+  @media (max-width: 720px){
+    header{padding:0 16px;flex-wrap:wrap;min-height:auto;padding-top:10px;padding-bottom:10px;gap:8px}
+    main{padding:18px 14px 40px}
+    table{font-size:12px}
+    td.thesis{max-width:240px}
+  }
+</style>
+<link rel="stylesheet" href="/responsive.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">DCE <span>Holdings</span></div>
+  <nav class="hnav">
+    <a href="/">Home</a>
+    <a href="/universe.html">Universe</a>
+    <a href="/screener.html">Find</a>
+    <a href="/study.html">Study</a>
+    <a href="/journal.html" class="active">Journal</a>
+    <a href="/portfolio.html">Portfolio</a>
+    <a href="/news.html">News</a>
+    <a href="/dataroom.html">Data Room</a>
+    <a href="/reporting.html">Reporting</a>
+    <a href="/calendar.html">Calendar</a>
+  </nav>
+</header>
+
+<main>
+  <div class="slbl">DCE Holdings — Investment Office</div>
+  <h1>Decision Journal</h1>
+  <div class="sub">Every investment decision — buys, sells, passes — recorded with thesis, pre-mortem, and scheduled reviews.</div>
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-lbl">Total</div><div class="kpi-val" id="kpi-total">—</div><div class="kpi-sub">All decisions</div></div>
+    <div class="kpi"><div class="kpi-lbl">Buy</div><div class="kpi-val" id="kpi-buy">—</div><div class="kpi-sub">Initiated / added</div></div>
+    <div class="kpi"><div class="kpi-lbl">Sell</div><div class="kpi-val" id="kpi-sell">—</div><div class="kpi-sub">Exits</div></div>
+    <div class="kpi"><div class="kpi-lbl">Pass</div><div class="kpi-val" id="kpi-pass">—</div><div class="kpi-sub">Studied, declined</div></div>
+    <div class="kpi"><div class="kpi-lbl">Hold</div><div class="kpi-val" id="kpi-hold">—</div><div class="kpi-sub">Reviewed, kept</div></div>
+    <div class="kpi pending"><div class="kpi-lbl">Pending Reviews</div><div class="kpi-val" id="kpi-pending">—</div><div class="kpi-sub">Due for revisit</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-tab="all" onclick="showTab('all', this)">All <span class="count" id="count-all">—</span></button>
+    <button class="mode-tab" data-tab="lessons" onclick="showTab('lessons', this)">Lessons learned <span class="count" id="count-lessons">—</span></button>
+  </div>
+
+  <!-- All decisions pane -->
+  <div class="mode-pane active" id="pane-all">
+    <div class="filters">
+      <span class="chip filter-type active" data-type="" onclick="setTypeFilter('', this)">All types</span>
+      <span class="chip filter-type" data-type="BUY" onclick="setTypeFilter('BUY', this)">Buy</span>
+      <span class="chip filter-type" data-type="SELL" onclick="setTypeFilter('SELL', this)">Sell</span>
+      <span class="chip filter-type" data-type="PASS" onclick="setTypeFilter('PASS', this)">Pass</span>
+      <span class="chip filter-type" data-type="HOLD" onclick="setTypeFilter('HOLD', this)">Hold</span>
+      <span class="chip filter-type" data-type="ADD" onclick="setTypeFilter('ADD', this)">Add</span>
+      <span class="chip filter-type" data-type="TRIM" onclick="setTypeFilter('TRIM', this)">Trim</span>
+      <input type="text" id="filter-ticker" placeholder="Ticker…" oninput="applyFilters()">
+      <input type="number" id="filter-year" placeholder="Year" min="2000" max="2100" oninput="applyFilters()">
+    </div>
+    <div class="status" id="status-all">Loading…</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Ticker</th>
+            <th>Type</th>
+            <th>Date</th>
+            <th class="right">Price</th>
+            <th>Thesis</th>
+            <th>Next review</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-all"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Lessons pane -->
+  <div class="mode-pane" id="pane-lessons">
+    <div class="status" id="status-lessons">Loading…</div>
+    <div id="lessons-list"></div>
+  </div>
+</main>
+
+<!-- Drawer -->
+<div class="drawer-bg" id="drawer-bg" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true">
+  <div class="drawer-header">
+    <div class="drawer-title" id="drawer-title">—</div>
+    <button class="drawer-close" onclick="closeDrawer()" aria-label="Close">×</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</aside>
+
+<footer>
+  <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
+  <span>Decision Journal v1</span>
+</footer>
+
+<script>
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d.length === 10 ? d + 'T00:00:00' : d);
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function fmtPrice(p) {
+  if (p == null || p === '') return '—';
+  const n = Number(p);
+  if (!isFinite(n)) return '—';
+  return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+
+const state = { items: [], filterType: '' };
+
+function showTab(name, btn) {
+  document.querySelectorAll('.mode-pane').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.mode-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('pane-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'lessons') renderLessons();
+}
+
+function setTypeFilter(type, chip) {
+  state.filterType = type;
+  document.querySelectorAll('.chip.filter-type').forEach(c => c.classList.remove('active'));
+  if (chip) chip.classList.add('active');
+  applyFilters();
+}
+
+function nextReview(it) {
+  const t = todayStr();
+  const reviews = [
+    { lbl: '3m', date: it.review_3m_date, done: !!it.review_3m_done_at },
+    { lbl: '6m', date: it.review_6m_date, done: !!it.review_6m_done_at },
+    { lbl: '12m', date: it.review_12m_date, done: !!it.review_12m_done_at },
+  ];
+  // First not-done
+  const upcoming = reviews.find(r => !r.done && r.date);
+  if (!upcoming) return { label: 'All done', cls: 'done' };
+  const due = upcoming.date <= t;
+  return {
+    label: upcoming.lbl + ' · ' + fmtDate(upcoming.date),
+    cls: due ? 'due' : '',
+  };
+}
+
+function applyFilters() {
+  const ticker = (document.getElementById('filter-ticker').value || '').toUpperCase().trim();
+  const year = (document.getElementById('filter-year').value || '').trim();
+  let rows = state.items.slice();
+  if (state.filterType) rows = rows.filter(r => r.decision_type === state.filterType);
+  if (ticker) rows = rows.filter(r => (r.ticker || '').includes(ticker));
+  if (year && /^\d{4}$/.test(year)) rows = rows.filter(r => (r.decision_date || '').startsWith(year));
+  renderTable(rows);
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('tbody-all');
+  const status = document.getElementById('status-all');
+  document.getElementById('count-all').textContent = state.items.length;
+  if (rows.length === 0) {
+    status.textContent = '';
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty">No decisions match these filters. Add entries via <a href="/reporting.html" style="color:var(--gold)">Reporting</a> → Decision Journal tab.</div></td></tr>`;
+    return;
+  }
+  status.textContent = rows.length + ' decision' + (rows.length === 1 ? '' : 's');
+  tbody.innerHTML = rows.map(r => {
+    const nr = nextReview(r);
+    const thesisShort = (r.thesis || '').length > 220 ? (r.thesis || '').slice(0, 220) + '…' : (r.thesis || '');
+    return `<tr onclick="openDrawer(${r.id})">
+      <td class="ticker">${escapeHtml(r.ticker)}</td>
+      <td><span class="badge ${escapeHtml(r.decision_type)}">${escapeHtml(r.decision_type)}</span></td>
+      <td>${fmtDate(r.decision_date)}</td>
+      <td class="right">${fmtPrice(r.price_at_decision)}</td>
+      <td class="thesis">${escapeHtml(thesisShort)}</td>
+      <td><span class="review-pill ${nr.cls}">${escapeHtml(nr.label)}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderLessons() {
+  const wrap = document.getElementById('lessons-list');
+  const status = document.getElementById('status-lessons');
+  const withLesson = state.items.filter(r =>
+    r.lesson_learned ||
+    r.review_3m_done_at || r.review_6m_done_at || r.review_12m_done_at
+  );
+  document.getElementById('count-lessons').textContent = withLesson.length;
+  if (withLesson.length === 0) {
+    status.textContent = '';
+    wrap.innerHTML = `<div class="empty">No reviews completed yet. Mark a review as done from the Reporting → Decision Journal tab.</div>`;
+    return;
+  }
+  status.textContent = withLesson.length + ' reviewed decision' + (withLesson.length === 1 ? '' : 's');
+  wrap.innerHTML = withLesson.map(r => {
+    const reviews = [
+      { lbl: '3-month', oc: r.review_3m_outcome, dt: r.review_3m_done_at },
+      { lbl: '6-month', oc: r.review_6m_outcome, dt: r.review_6m_done_at },
+      { lbl: '12-month', oc: r.review_12m_outcome, dt: r.review_12m_done_at },
+    ].filter(rv => rv.oc);
+    return `<div class="review-block done" onclick="openDrawer(${r.id})" style="cursor:pointer;margin-bottom:14px">
+      <div class="review-head">
+        <span class="review-label">${escapeHtml(r.ticker)} · ${escapeHtml(r.decision_type)} · ${fmtDate(r.decision_date)}</span>
+        <span class="review-pill done">${reviews.length} review${reviews.length === 1 ? '' : 's'}</span>
+      </div>
+      ${reviews.map(rv => `<div style="margin-top:8px"><strong style="font-size:11px;color:var(--navy)">${rv.lbl} (${fmtDate(rv.dt)}):</strong> <span class="review-outcome">${escapeHtml(rv.oc)}</span></div>`).join('')}
+      ${r.lesson_learned ? `<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--rule)"><strong style="font-size:11px;color:var(--gold)">Lesson:</strong> <span class="review-outcome">${escapeHtml(r.lesson_learned)}</span></div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function openDrawer(id) {
+  const r = state.items.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('drawer-title').textContent = r.ticker + ' · ' + r.decision_type;
+  const body = document.getElementById('drawer-body');
+  const cats = (r.catalysts || []).filter(Boolean);
+  const reviewBlock = (lbl, key) => {
+    const date = r['review_' + key + '_date'];
+    const oc = r['review_' + key + '_outcome'];
+    const done = r['review_' + key + '_done_at'];
+    const cls = done ? 'done' : (date && date <= todayStr() ? 'due' : '');
+    return `<div class="review-block ${cls}">
+      <div class="review-head">
+        <span class="review-label">${lbl} review · ${fmtDate(date)}</span>
+        <span class="review-pill ${cls}">${done ? 'Done ' + fmtDate(done) : (cls === 'due' ? 'Due' : 'Scheduled')}</span>
+      </div>
+      ${oc ? `<div class="review-outcome">${escapeHtml(oc)}</div>` : ''}
+    </div>`;
+  };
+  body.innerHTML = `
+    <div class="meta-grid">
+      <div><div class="k">Date</div><div class="v">${fmtDate(r.decision_date)}</div></div>
+      <div><div class="k">Price</div><div class="v">${fmtPrice(r.price_at_decision)}</div></div>
+      <div><div class="k">Type</div><div class="v"><span class="badge ${escapeHtml(r.decision_type)}">${escapeHtml(r.decision_type)}</span></div></div>
+      ${r.linked_holding ? `<div><div class="k">Linked</div><div class="v" style="font-size:12px">${escapeHtml(r.linked_holding)}</div></div>` : ''}
+    </div>
+    <div class="field">
+      <div class="field-lbl">Thesis</div>
+      <div class="field-val">${escapeHtml(r.thesis || '')}</div>
+    </div>
+    ${cats.length ? `<div class="field"><div class="field-lbl">Catalysts</div><div class="pill-list">${cats.map(c => `<span>${escapeHtml(c)}</span>`).join('')}</div></div>` : ''}
+    ${r.pre_mortem ? `<div class="field"><div class="field-lbl">Pre-mortem (what would change my mind)</div><div class="field-val">${escapeHtml(r.pre_mortem)}</div></div>` : ''}
+    <div class="field"><div class="field-lbl">Reviews</div>
+      ${reviewBlock('3-month', '3m')}
+      ${reviewBlock('6-month', '6m')}
+      ${reviewBlock('12-month', '12m')}
+    </div>
+    ${r.lesson_learned ? `<div class="field"><div class="field-lbl">Lesson learned</div><div class="field-val">${escapeHtml(r.lesson_learned)}</div></div>` : ''}
+  `;
+  document.getElementById('drawer-bg').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('drawer-bg').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+async function loadJournal() {
+  try {
+    // Pre-fill ticker filter from URL param ?ticker=XXX
+    const params = new URLSearchParams(window.location.search);
+    const tk = (params.get('ticker') || '').toUpperCase().trim();
+    if (tk) document.getElementById('filter-ticker').value = tk;
+    const r = await fetch('/api/journal');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    state.items = data.items || [];
+    const s = data.stats || {};
+    document.getElementById('kpi-total').textContent = s.total ?? 0;
+    document.getElementById('kpi-buy').textContent = (s.buy ?? 0) + (s.add ?? 0);
+    document.getElementById('kpi-sell').textContent = (s.sell ?? 0) + (s.trim ?? 0);
+    document.getElementById('kpi-pass').textContent = s.pass ?? 0;
+    document.getElementById('kpi-hold').textContent = s.hold ?? 0;
+    document.getElementById('kpi-pending').textContent = s.pending_reviews ?? 0;
+    applyFilters();
+  } catch (e) {
+    document.getElementById('status-all').textContent = 'Error loading: ' + e.message;
+  }
+}
+loadJournal();
+</script>
+</body>
+</html>
