@@ -239,7 +239,13 @@
     btn.className = 'dce-admin-btn';
     btn.addEventListener('click', () => {
       if (isAdmin()) {
-        if (confirm('Sign out of admin mode?')) { logout(); window.location.reload(); }
+        if (confirm('Sign out and return to login?')) {
+          logout();
+          // Also clear the legacy gate flag so user is fully logged out
+          try { sessionStorage.removeItem('dce_auth'); } catch {}
+          // Send them back to the landing/gate page
+          window.location.href = '/';
+        }
       } else {
         _showModal();
       }
