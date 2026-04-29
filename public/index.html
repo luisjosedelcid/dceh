@@ -571,9 +571,9 @@
     margin-left: 6px;
   }
 </style>
-<link rel="stylesheet" href="/responsive.css"><script src="/dce-auth.js" defer></script>
+<link rel="stylesheet" href="/responsive.css"><script src="/dce-auth.js"></script>
 </head>
-<body>
+<body data-dce-auth="manual">
 
 <!-- ── PASSWORD GATE ── -->
 <div id="gate">
@@ -775,12 +775,18 @@
 </div>
 
 <script>
-const CORRECT = 'Test1';
+// Gate now uses unified admin auth (dce-auth.js / localStorage).
+// Single password = the admin password. No separate Test1.
 
-function checkPwd() {
+async function checkPwd() {
   const val = document.getElementById('pwd-input').value;
-  if (val === CORRECT) {
-    sessionStorage.setItem('dce_auth', val);
+  if (!val) { document.getElementById('gate-error').textContent = 'Password required'; return; }
+  document.getElementById('gate-error').textContent = 'Verifying…';
+  document.getElementById('gate-error').style.color = 'var(--gray-mid)';
+  const res = await window.dceAuth.login(val);
+  if (res.ok) {
+    // Also keep legacy session flag so any leftover code still works
+    sessionStorage.setItem('dce_auth', 'Test1');
     document.getElementById('gate').classList.add('fade-out');
     setTimeout(() => {
       document.getElementById('gate').style.display = 'none';
@@ -788,7 +794,8 @@ function checkPwd() {
     }, 500);
     document.getElementById('gate-error').textContent = '';
   } else {
-    document.getElementById('gate-error').textContent = 'Incorrect password';
+    document.getElementById('gate-error').textContent = res.error || 'Incorrect password';
+    document.getElementById('gate-error').style.color = 'var(--red, #a02a1f)';
     document.getElementById('pwd-input').value = '';
     document.getElementById('pwd-input').focus();
   }
@@ -796,24 +803,28 @@ function checkPwd() {
 
 function passThrough(e, url) {
   e.preventDefault();
-  sessionStorage.setItem('dce_auth', CORRECT);
   window.location.href = url;
 }
 
-// Auto-unlock if already authenticated
+// Auto-unlock if already authenticated as admin
 window.addEventListener('DOMContentLoaded', () => {
-  // Set date
   const d = new Date();
   const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   document.getElementById('hdr-date').textContent =
     d.getDate().toString().padStart(2,'0') + '-' + months[d.getMonth()] + '-' + d.getFullYear();
 
-  // Check session
-  if (sessionStorage.getItem('dce_auth') === CORRECT) {
-    document.getElementById('gate').style.display = 'none';
-    document.getElementById('main').classList.add('visible');
-  } else {
-    setTimeout(() => document.getElementById('pwd-input').focus(), 100);
+  // Wait for dceAuth to be available, then check
+  const tryUnlock = () => {
+    if (window.dceAuth && window.dceAuth.isAdmin()) {
+      sessionStorage.setItem('dce_auth', 'Test1');
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('main').classList.add('visible');
+      return true;
+    }
+    return false;
+  };
+  if (!tryUnlock()) {
+    setTimeout(() => { if (!tryUnlock()) document.getElementById('pwd-input').focus(); }, 150);
   }
 });
 </script>
