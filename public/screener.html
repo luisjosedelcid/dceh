@@ -1206,7 +1206,6 @@ async function renderIdeaFeedTickers(items, status, cont) {
           <th>Mentions</th>
           <th style="text-align:left">Latest mention</th>
           <th style="text-align:left">Thesis (≈100w)</th>
-          <th style="text-align:left">Sources</th>
           <th></th>
         </tr></thead>
         <tbody id="if-tbl-body">
@@ -1218,16 +1217,15 @@ async function renderIdeaFeedTickers(items, status, cont) {
             <td>—</td>
             <td>—</td>
             <td style="font-weight:700">${r.mentions.length}</td>
-            <td style="text-align:left;font-size:11px;max-width:240px">
+            <td style="text-align:left;font-size:11px;max-width:260px">
               <a href="${_ifEscape(r.mentions[0].url || '#')}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:none">${_ifEscape(r.mentions[0].title)}</a>
-              <div style="color:var(--gray-mid);font-size:10px;margin-top:2px">${_ifFmtDate(r.mentions[0].published_at || r.mentions[0].fetched_at)}</div>
+              <div style="color:var(--gray-mid);font-size:10px;margin-top:3px;letter-spacing:0.04em">${_ifEscape([...r.sources].join(' · '))} — ${_ifFmtDate(r.mentions[0].published_at || r.mentions[0].fetched_at)}</div>
             </td>
-            <td style="text-align:left;font-size:11px;max-width:380px;line-height:1.45;color:var(--navy)">
+            <td style="text-align:left;font-size:11px;max-width:420px;line-height:1.45;color:var(--navy)">
               ${r.thesisItem && r.thesisItem.thesis
                 ? _ifEscape(r.thesisItem.thesis)
                 : '<span style="color:var(--gray-mid);font-style:italic">Pending next refresh…</span>'}
             </td>
-            <td style="text-align:left;color:var(--gray-mid);font-size:11px">${_ifEscape([...r.sources].join(', '))}</td>
             <td>
               <a href="/company.html?ticker=${encodeURIComponent(r.ticker)}" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px">Open →</a>
             </td>
