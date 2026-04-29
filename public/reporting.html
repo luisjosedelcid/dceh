@@ -391,7 +391,7 @@
 
   <!-- TAB: ACTIVITY -->
   <div class="tab-panel" data-panel="activity">
-    <div class="audit-controls">
+    <div class="audit-controls" style="flex-wrap:wrap;gap:8px">
       <span style="font-size:11px;color:var(--gray-mid);letter-spacing:0.08em;text-transform:uppercase">Filter</span>
       <select id="audit-folder-filter">
         <option value="">All folders</option>
@@ -399,7 +399,18 @@
         <option value="committee">Investment Committee</option>
         <option value="annual">Annual Report</option>
       </select>
-      <button class="btn ghost" type="button" id="btn-audit-refresh" style="margin-left:auto">Refresh</button>
+      <select id="audit-action-filter">
+        <option value="">All actions</option>
+        <option value="login">Login</option>
+        <option value="upload">Upload</option>
+        <option value="archive">Archive</option>
+        <option value="delete">Delete</option>
+        <option value="purge">Purge</option>
+      </select>
+      <input type="text" id="audit-actor-filter" placeholder="Actor email" style="padding:6px 8px;border:1px solid var(--rule);font-family:inherit;font-size:12px;min-width:180px">
+      <button class="btn ghost" type="button" id="btn-audit-clear" style="font-size:11px">Clear</button>
+      <span id="audit-count" style="font-size:11px;color:var(--gray-mid);margin-left:auto"></span>
+      <button class="btn ghost" type="button" id="btn-audit-refresh">Refresh</button>
     </div>
     <div class="audit-table" id="audit-table">
       <div class="audit-row head">
@@ -410,6 +421,9 @@
         <div class="audit-folder">Folder</div>
       </div>
       <div id="audit-body"><div class="loading-files">Sign in as admin to view activity</div></div>
+    </div>
+    <div style="display:flex;justify-content:center;margin-top:14px">
+      <button class="btn ghost" type="button" id="btn-audit-loadmore" style="display:none">Load more</button>
     </div>
   </div>
 
@@ -682,46 +696,111 @@ document.querySelectorAll('.tab').forEach(t => {
 });
 
 // ── AUDIT LOG ────────────────────────────────────────────
+const AUDIT_PAGE_SIZE = 100;
 const auditBody = document.getElementById('audit-body');
 const auditFolderFilter = document.getElementById('audit-folder-filter');
-document.getElementById('btn-audit-refresh').addEventListener('click', () => loadAudit());
-auditFolderFilter.addEventListener('change', () => loadAudit());
+const auditActionFilter = document.getElementById('audit-action-filter');
+const auditActorFilter = document.getElementById('audit-actor-filter');
+const auditCountLabel = document.getElementById('audit-count');
+const auditLoadMoreBtn = document.getElementById('btn-audit-loadmore');
+let auditOffset = 0;
+let auditTotal = 0;
+let auditActorDebounce = null;
 
-async function loadAudit() {
+document.getElementById('btn-audit-refresh').addEventListener('click', () => loadAudit({ reset: true }));
+document.getElementById('btn-audit-clear').addEventListener('click', () => {
+  auditFolderFilter.value = '';
+  auditActionFilter.value = '';
+  auditActorFilter.value = '';
+  loadAudit({ reset: true });
+});
+auditFolderFilter.addEventListener('change', () => loadAudit({ reset: true }));
+auditActionFilter.addEventListener('change', () => loadAudit({ reset: true }));
+auditActorFilter.addEventListener('input', () => {
+  if (auditActorDebounce) clearTimeout(auditActorDebounce);
+  auditActorDebounce = setTimeout(() => loadAudit({ reset: true }), 350);
+});
+auditLoadMoreBtn.addEventListener('click', () => loadAudit({ reset: false }));
+
+function renderAuditRows(entries, append) {
+  const html = entries.map(e => {
+    const folderLbl = e.folder ? e.folder.charAt(0).toUpperCase() + e.folder.slice(1) : '—';
+    const fileLbl = e.filename || (e.action === 'login' ? '(session)' : '—');
+    const detailLbl = e.detail ? ` — ${escapeHtml(e.detail)}` : '';
+    return `
+      <div class="audit-row">
+        <div class="audit-ts">${escapeHtml(fmtTs(e.ts))}</div>
+        <div><span class="audit-action ${escapeHtml(e.action)}">${escapeHtml(e.action)}</span></div>
+        <div class="audit-actor">${escapeHtml(e.actor_email)}</div>
+        <div class="audit-detail">${escapeHtml(fileLbl)}${detailLbl}</div>
+        <div class="audit-folder">${escapeHtml(folderLbl)}</div>
+      </div>
+    `;
+  }).join('');
+  if (append) {
+    auditBody.insertAdjacentHTML('beforeend', html);
+  } else {
+    auditBody.innerHTML = html;
+  }
+}
+
+async function loadAudit({ reset = true } = {}) {
   if (!isAdmin()) {
     auditBody.innerHTML = '<div class="loading-files">Sign in as admin to view activity</div>';
+    auditCountLabel.textContent = '';
+    auditLoadMoreBtn.style.display = 'none';
     return;
   }
-  auditBody.innerHTML = '<div class="loading-files">Loading…</div>';
+  if (reset) {
+    auditOffset = 0;
+    auditTotal = 0;
+    auditBody.innerHTML = '<div class="loading-files">Loading…</div>';
+    auditCountLabel.textContent = '';
+    auditLoadMoreBtn.style.display = 'none';
+  } else {
+    auditLoadMoreBtn.disabled = true;
+    auditLoadMoreBtn.textContent = 'Loading…';
+  }
   try {
     const folder = auditFolderFilter.value;
-    const qs = new URLSearchParams({ limit: '200' });
+    const action = auditActionFilter.value;
+    const actor = auditActorFilter.value.trim();
+    const qs = new URLSearchParams({ limit: String(AUDIT_PAGE_SIZE), offset: String(auditOffset) });
     if (folder) qs.set('folder', folder);
+    if (action) qs.set('action', action);
+    if (actor) qs.set('actor', actor);
     const token = localStorage.getItem(TOKEN_KEY);
     const r = await fetch(`/api/list-audit?${qs}`, { headers: { 'x-admin-token': token } });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Error');
     const entries = data.entries || [];
-    if (entries.length === 0) {
-      auditBody.innerHTML = '<div class="empty-files">No activity yet</div>';
+    auditTotal = Number.isFinite(data.total) ? data.total : entries.length;
+
+    if (reset && entries.length === 0) {
+      auditBody.innerHTML = '<div class="empty-files">No activity matching these filters</div>';
+      auditCountLabel.textContent = '0 entries';
+      auditLoadMoreBtn.style.display = 'none';
       return;
     }
-    auditBody.innerHTML = entries.map(e => {
-      const folderLbl = e.folder ? e.folder.charAt(0).toUpperCase() + e.folder.slice(1) : '—';
-      const fileLbl = e.filename || (e.action === 'login' ? '(session)' : '—');
-      const detailLbl = e.detail ? ` — ${escapeHtml(e.detail)}` : '';
-      return `
-        <div class="audit-row">
-          <div class="audit-ts">${escapeHtml(fmtTs(e.ts))}</div>
-          <div><span class="audit-action ${escapeHtml(e.action)}">${escapeHtml(e.action)}</span></div>
-          <div class="audit-actor">${escapeHtml(e.actor_email)}</div>
-          <div class="audit-detail">${escapeHtml(fileLbl)}${detailLbl}</div>
-          <div class="audit-folder">${escapeHtml(folderLbl)}</div>
-        </div>
-      `;
-    }).join('');
+
+    renderAuditRows(entries, !reset);
+    auditOffset += entries.length;
+    auditCountLabel.textContent = `Showing ${auditOffset} of ${auditTotal}`;
+    if (auditOffset < auditTotal) {
+      auditLoadMoreBtn.style.display = 'inline-flex';
+      auditLoadMoreBtn.disabled = false;
+      auditLoadMoreBtn.textContent = 'Load more';
+    } else {
+      auditLoadMoreBtn.style.display = 'none';
+    }
   } catch (e) {
-    auditBody.innerHTML = `<div class="empty-files">Error: ${escapeHtml(String(e.message || e))}</div>`;
+    if (reset) {
+      auditBody.innerHTML = `<div class="empty-files">Error: ${escapeHtml(String(e.message || e))}</div>`;
+    } else {
+      auditLoadMoreBtn.disabled = false;
+      auditLoadMoreBtn.textContent = 'Load more';
+      alert('Error loading more: ' + (e.message || e));
+    }
   }
 }
 
