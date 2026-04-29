@@ -3,7 +3,6 @@
   "rewrites": [
     { "source": "/bkng", "destination": "/company.html?ticker=BKNG" },
     { "source": "/sap", "destination": "/company.html?ticker=SAP" },
-    { "source": "/bkng-legacy", "destination": "/bkng-legacy.html" },
     { "source": "/universe", "destination": "/universe.html" },
     { "source": "/screener", "destination": "/screener.html" },
     { "source": "/portfolio", "destination": "/portfolio.html" },
