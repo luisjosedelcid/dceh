@@ -47,6 +47,11 @@
   /* TABLE STYLES */
   .stbl{width:100%;border-collapse:collapse;background:var(--white);border:1px solid var(--rule);font-size:12px;margin-bottom:28px}
   .stbl th{background:var(--navy);color:var(--white);font-size:8.5px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:10px 12px;text-align:right;position:sticky;top:0;z-index:2;white-space:nowrap}
+  .stbl.sortable th{cursor:pointer;user-select:none;padding-right:20px;position:relative}
+  .stbl.sortable th:hover{background:#2a3858}
+  .stbl.sortable th::after{content:'\2195';position:absolute;right:6px;top:50%;transform:translateY(-50%);opacity:0.35;font-size:10px;font-weight:400}
+  .stbl.sortable th.sort-asc::after{content:'\25B2';opacity:1;color:var(--gold)}
+  .stbl.sortable th.sort-desc::after{content:'\25BC';opacity:1;color:var(--gold)}
   .stbl th:first-child,.stbl th:nth-child(2){text-align:left}
   .stbl td{padding:9px 12px;border-bottom:1px solid rgba(27,38,66,0.05);text-align:right;font-variant-numeric:tabular-nums;font-size:12px}
   .stbl td:first-child,.stbl td:nth-child(2){text-align:left}
@@ -139,12 +144,12 @@
     <!-- CAR PARTS -->
     <div id="sector-car-parts">
       <!-- SUMMARY TABLE -->
-      <div class="section-hdr">Summary — Top 10 by Market Cap</div>
+      <div class="section-hdr">Summary — click any column to sort</div>
       <div style="overflow-x:auto">
-        <table class="stbl">
+        <table class="stbl sortable" data-default-sort="12" data-default-dir="desc">
           <thead><tr>
-            <th>Ticker</th><th>Company</th><th>Price</th><th>Q (Abs)</th><th>Q (Rel)</th><th>Quality</th><th>Q Δ</th>
-            <th>V (Abs)</th><th>V (Rel)</th><th>Valuation</th><th>IRR</th><th>Mkt Cap</th><th title="Quality + Valuation, on a /10 scale">Score /10</th><th>Verdict</th>
+            <th data-sort="text">Ticker</th><th data-sort="text">Company</th><th data-sort="number">Price</th><th data-sort="number">Q (Abs)</th><th data-sort="number">Q (Rel)</th><th data-sort="number">Quality</th><th data-sort="number">Q Δ</th>
+            <th data-sort="number">V (Abs)</th><th data-sort="number">V (Rel)</th><th data-sort="number">Valuation</th><th data-sort="percent">IRR</th><th data-sort="mktcap">Mkt Cap</th><th data-sort="number" title="Quality + Valuation, on a /10 scale">Score /10</th><th data-sort="verdict">Verdict</th>
           </tr></thead>
           <tbody>
             <tr><td class="ticker-cell">ORLY</td><td>O'Reilly Automotive</td><td data-live-price="ORLY" class="gold">—</td><td>4.30</td><td>3.96</td><td class="green" style="font-weight:700">4.20</td><td class="red">-0.20</td><td>1.00</td><td>1.00</td><td style="font-weight:700">1.00</td><td class="green" style="font-weight:700">16.6%</td><td>$1,038B</td><td class="red" style="font-weight:700">5.20</td><td><span class="verdict v-watchlist">WATCHLIST</span></td></tr>
@@ -164,10 +169,10 @@
       <!-- QUALITY METRICS -->
       <div class="section-hdr">Quality Metrics</div>
       <div style="overflow-x:auto">
-        <table class="stbl">
+        <table class="stbl sortable">
           <thead><tr>
-            <th>Ticker</th><th>ROIC 3yr</th><th>ROIC Trend</th><th>GM CV</th><th>Op Margin</th><th>FCF Conv</th>
-            <th>Rev CAGR 5y</th><th>EPS CAGR 5y</th><th>FCF/sh CAGR</th><th>ND/EBITDA</th><th>GW+Int %TA</th><th>Capex/Rev</th><th>FCF CV</th>
+            <th data-sort="text">Ticker</th><th data-sort="percent">ROIC 3yr</th><th data-sort="percent">ROIC Trend</th><th data-sort="number">GM CV</th><th data-sort="percent">Op Margin</th><th data-sort="multiplier">FCF Conv</th>
+            <th data-sort="percent">Rev CAGR 5y</th><th data-sort="percent">EPS CAGR 5y</th><th data-sort="percent">FCF/sh CAGR</th><th data-sort="multiplier">ND/EBITDA</th><th data-sort="percent">GW+Int %TA</th><th data-sort="percent">Capex/Rev</th><th data-sort="number">FCF CV</th>
           </tr></thead>
           <tbody>
             <tr><td class="ticker-cell">ORLY</td><td class="green">41.4%</td><td class="green">+32.7%</td><td>0.01</td><td>19.5%</td><td>0.91x</td><td>10.5%</td><td>17.9%</td><td>19.9%</td><td>1.5x</td><td>6.2%</td><td>5.5%</td><td>0.54</td></tr>
@@ -187,10 +192,10 @@
       <!-- VALUATION METRICS -->
       <div class="section-hdr">Valuation Metrics</div>
       <div style="overflow-x:auto">
-        <table class="stbl">
+        <table class="stbl sortable">
           <thead><tr>
-            <th>Ticker</th><th>EV/EBIT</th><th>P/E</th><th>EV/EBITDA</th><th>FCF Yield</th><th>Earn Yield</th>
-            <th>EY Spread</th><th>PEG</th><th>Base IRR</th><th>Full IRR</th><th>Mkt Cap ($M)</th>
+            <th data-sort="text">Ticker</th><th data-sort="multiplier">EV/EBIT</th><th data-sort="multiplier">P/E</th><th data-sort="multiplier">EV/EBITDA</th><th data-sort="percent">FCF Yield</th><th data-sort="percent">Earn Yield</th>
+            <th data-sort="percent">EY Spread</th><th data-sort="multiplier">PEG</th><th data-sort="percent">Base IRR</th><th data-sort="percent">Full IRR</th><th data-sort="mktcap">Mkt Cap ($M)</th>
           </tr></thead>
           <tbody>
             <tr><td class="ticker-cell">ORLY</td><td>321.6x</td><td>434.8x</td><td>281.6x</td><td class="green">40.9%</td><td>31.1%</td><td class="red">-4.0%</td><td>24.35x</td><td class="green">20.3%</td><td class="green">16.6%</td><td>$1,037,676M</td></tr>
@@ -328,6 +333,96 @@ async function fetchScreenerPrices() {
   } catch(e) { console.error('Finnhub error:', e); }
 }
 fetchScreenerPrices();
+
+// ═══════════════════════════════════════════════════════════════════
+// SORTABLE TABLES — click any <th data-sort="..."> in .stbl.sortable
+// ═══════════════════════════════════════════════════════════════════
+function parseSortValue(text, type) {
+  if (text == null) return null;
+  const t = String(text).trim();
+  if (t === '' || t === '—' || t === '-' || t === 'N/A') return null;
+  switch (type) {
+    case 'percent': {
+      const m = t.replace(/[+,]/g, '').match(/-?[0-9.]+/);
+      return m ? parseFloat(m[0]) : null;
+    }
+    case 'multiplier': {
+      // "24.35x", "1.5x"
+      const m = t.match(/-?[0-9.]+/);
+      return m ? parseFloat(m[0]) : null;
+    }
+    case 'mktcap': {
+      // "$1,038B" / "$70,489M" / "$1.04T"
+      const m = t.match(/-?[0-9.,]+/);
+      if (!m) return null;
+      const n = parseFloat(m[0].replace(/,/g, ''));
+      if (/T\b/.test(t)) return n * 1_000_000;        // T → millions
+      if (/B\b/.test(t)) return n * 1_000;            // B → millions
+      return n;                                        // M
+    }
+    case 'verdict': {
+      const order = { 'WATCHLIST': 3, 'REVIEW': 2, 'PASS': 1 };
+      const u = t.toUpperCase();
+      return order[u] ?? 0;
+    }
+    case 'number': {
+      const m = t.replace(/[$,+]/g, '').match(/-?[0-9.]+/);
+      return m ? parseFloat(m[0]) : null;
+    }
+    case 'text':
+    default:
+      return t.toLowerCase();
+  }
+}
+
+function sortTableByColumn(table, colIndex, direction) {
+  const tbody = table.tBodies[0];
+  if (!tbody) return;
+  const ths = table.tHead.rows[0].cells;
+  const type = ths[colIndex].dataset.sort || 'text';
+  const rows = Array.from(tbody.rows);
+  const dir = direction === 'asc' ? 1 : -1;
+
+  rows.sort((a, b) => {
+    const av = parseSortValue(a.cells[colIndex].textContent, type);
+    const bv = parseSortValue(b.cells[colIndex].textContent, type);
+    // Nulls always at the bottom regardless of direction
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    if (av < bv) return -1 * dir;
+    if (av > bv) return  1 * dir;
+    return 0;
+  });
+
+  rows.forEach(r => tbody.appendChild(r));
+  Array.from(ths).forEach(th => th.classList.remove('sort-asc', 'sort-desc'));
+  ths[colIndex].classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+}
+
+function initSortableTables() {
+  document.querySelectorAll('table.stbl.sortable').forEach(table => {
+    const ths = table.tHead?.rows[0]?.cells;
+    if (!ths) return;
+    Array.from(ths).forEach((th, idx) => {
+      th.addEventListener('click', () => {
+        const isDesc = th.classList.contains('sort-desc');
+        // Default first click: descending for numeric, ascending for text
+        const type = th.dataset.sort || 'text';
+        const isText = type === 'text';
+        const newDir = th.classList.contains('sort-asc') || th.classList.contains('sort-desc')
+          ? (isDesc ? 'asc' : 'desc')
+          : (isText ? 'asc' : 'desc');
+        sortTableByColumn(table, idx, newDir);
+      });
+    });
+    // Apply default sort if specified
+    const defCol = parseInt(table.dataset.defaultSort, 10);
+    const defDir = table.dataset.defaultDir || 'desc';
+    if (!isNaN(defCol)) sortTableByColumn(table, defCol, defDir);
+  });
+}
+initSortableTables();
 
 // ═══════════════════════════════════════════════════════════════════
 // WATCHLIST — quick view, live data only (no Columbia)
