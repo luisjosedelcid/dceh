@@ -130,15 +130,15 @@ const FOLDERS = {
   strategic: {
     name: 'Strategic',
     files: [
-      { name: 'Investment Charter', type: 'pdf', detail: 'DCE Holdings Investment Office', url: '#', icon: '📄' },
-      { name: 'Investment Policy Statement', type: 'pdf', detail: 'DCE Holdings Investment Office', url: '#', icon: '📄' },
-      { name: 'Governance & Succession Framework', type: 'pdf', detail: 'DCE Holdings Investment Office', url: '#', icon: '📄' },
+      { name: 'Investment Charter', type: 'pdf', detail: 'DCE Holdings Investment Office', url: '#' },
+      { name: 'Investment Policy Statement', type: 'pdf', detail: 'DCE Holdings Investment Office', url: '#' },
+      { name: 'Governance & Succession Framework', type: 'pdf', detail: 'DCE Holdings Investment Office', url: '#' },
     ]
   },
   operations: {
     name: 'Operations',
     files: [
-      { name: 'Operations Manual', type: 'pdf', detail: 'DCE Holdings', url: '#', icon: '📄' },
+      { name: 'Operations Manual', type: 'pdf', detail: 'DCE Holdings', url: '#' },
     ]
   }
 };
@@ -173,7 +173,6 @@ function openFolder(key) {
   content.innerHTML = folder.files.map(f => {
     const target = f.url.startsWith('http') ? ' target="_blank"' : '';
     return `<a class="file-item" href="${f.url}"${target}>
-      <div class="file-icon">${f.icon}</div>
       <div class="file-info">
         <div class="file-name">${f.name}</div>
         <div class="file-detail">${f.detail}</div>

@@ -301,7 +301,8 @@ function renderAlertCell(ticker, type, livePrice, currency) {
 
   const th = Number(a.threshold);
   const fired = !a.active && a.triggered_at;
-  const ico = fired ? '🔕' : '🔔';
+  // Sober monochrome indicators: filled diamond = armed, hollow = fired/disarmed
+  const ico = fired ? '◇' : '◆';
 
   let cls = 'armed';
   if (fired) cls = 'fired';

@@ -60,7 +60,7 @@ async function sendAlertEmail(triggers) {
     </tr>`;
   }).join('');
 
-  const subject = `🔔 [DCE] ${triggers.length} price alert${triggers.length === 1 ? '' : 's'} triggered`;
+  const subject = `[DCE] ${triggers.length} price alert${triggers.length === 1 ? '' : 's'} triggered`;
   const html = `
 <!DOCTYPE html>
 <html><body style="margin:0;padding:0;background:#f5f1eb;font-family:Helvetica,Arial,sans-serif;color:#0d0d0d">

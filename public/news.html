@@ -141,13 +141,13 @@ const PROXY = '/api/claude';
 const DASH_PWD = sessionStorage.getItem('dce_auth') || '';
 
 const CATEGORIES = {
-  earnings: { label: 'Earnings & Financials', icon: '📊' },
-  capital: { label: 'Capital Allocation', icon: '💰' },
-  management: { label: 'Management & Governance', icon: '👔' },
-  competitive: { label: 'Competitive & Moat', icon: '🏰' },
-  guidance: { label: 'Guidance & Outlook', icon: '🔭' },
-  regulatory: { label: 'Regulatory & Legal', icon: '⚖️' },
-  operational: { label: 'Operational & Strategy', icon: '⚙️' },
+  earnings: { label: 'Earnings & Financials' },
+  capital: { label: 'Capital Allocation' },
+  management: { label: 'Management & Governance' },
+  competitive: { label: 'Competitive & Moat' },
+  guidance: { label: 'Guidance & Outlook' },
+  regulatory: { label: 'Regulatory & Legal' },
+  operational: { label: 'Operational & Strategy' },
 };
 
 // ═══ STATE ═══
@@ -249,7 +249,6 @@ function renderTracker() {
   if (!freshNews) {
     const cur = getTicker(activeTicker);
     el.innerHTML = `<div class="empty">
-      <div class="empty-icon">📡</div>
       <p>Press scan to search for new events on <strong>${activeTicker}</strong>.</p>
       <p style="font-size:11px;margin-top:6px">${cur.events.length} in ledger · Last report: ${cur.lastReport ? fmtDate(cur.lastReport) : 'Never'}</p>
     </div>`;
@@ -284,11 +283,11 @@ function renderHistory() {
 }
 
 function renderEventCard(item, showReported) {
-  const cat = CATEGORIES[item.category] || { icon: '📌', label: item.category };
+  const cat = CATEGORIES[item.category] || { label: item.category };
   const matCls = item.materiality === 'high' ? 'mat-high' : item.materiality === 'medium' ? 'mat-medium' : 'mat-low';
   let html = `<div class="evt">
     <div class="evt-top">
-      <span>${cat.icon} <span class="evt-cat">${cat.label}</span></span>
+      <span><span class="evt-cat">${cat.label}</span></span>
       <span style="display:flex;align-items:center;gap:8px">
         <span class="mat ${matCls}">${item.materiality}</span>
         ${item.date ? `<span class="evt-date">${fmtDate(item.date)}</span>` : ''}

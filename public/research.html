@@ -370,7 +370,7 @@ function cardHTML(c) {
       ${c.note ? `<div class="card-nt">${esc(c.note)}</div>` : ''}
       <div class="card-meta">
         <span>Added ${fmtDate(c.created_at)}${c.moved_at && c.moved_at.slice(0,10) !== c.created_at.slice(0,10) ? ' · Moved ' + fmtDate(c.moved_at) : ''}</span>
-        ${cmtCount > 0 ? `<span class="comments-cnt">💬 ${cmtCount}</span>` : ''}
+        ${cmtCount > 0 ? `<span class="comments-cnt">[${cmtCount}]</span>` : ''}
       </div>
     </div>
   `;

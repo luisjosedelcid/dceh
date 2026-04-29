@@ -163,7 +163,8 @@ function renderAlertCell(ticker, type, livePrice) {
   }
   const th = Number(a.threshold);
   const fired = !a.active && a.triggered_at;
-  const ico = fired ? '🔕' : '🔔';
+  // Sober monochrome indicators: filled diamond = armed, hollow = fired/disarmed
+  const ico = fired ? '◇' : '◆';
   let cls = 'armed';
   if (fired) cls = 'fired';
   else if (livePrice && th) {
@@ -322,7 +323,7 @@ function renderPortfolio(prices) {
     const months = Math.floor(r.days / 30);
     const holdStr = r.days < 30 ? r.days + 'd' : months + 'mo ' + (r.days % 30) + 'd';
     const linkHtml = r.link ? ` <a href="${r.link}" style="font-size:9px;color:var(--gold);text-decoration:none;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Dashboard →</a>` : '';
-    const journalHtml = DECISIONS_BY_TICKER[r.ticker] ? ` <a href="/journal.html?ticker=${encodeURIComponent(r.ticker)}" style="font-size:9px;color:var(--gold);text-decoration:none;letter-spacing:0.1em;text-transform:uppercase;font-weight:600" title="View original decision in Journal">📓 Decision</a>` : '';
+    const journalHtml = DECISIONS_BY_TICKER[r.ticker] ? ` <a href="/journal.html?ticker=${encodeURIComponent(r.ticker)}" style="font-size:9px;color:var(--gold);text-decoration:none;letter-spacing:0.1em;text-transform:uppercase;font-weight:600" title="View original decision in Journal">Decision →</a>` : '';
 
     return `<tr>
       <td>
