@@ -141,6 +141,7 @@
     <a href="/">Home</a>
     <a href="/universe.html">Universe</a>
     <a href="/screener.html">Find</a>
+    <a href="/study.html">Study</a>
     <a href="/portfolio.html">Portfolio</a>
     <a href="/news.html">News</a>
     <a href="/dataroom.html">Data Room</a>
@@ -170,6 +171,7 @@
     <button class="tab active" data-tab="reports" type="button">Reports</button>
     <button class="tab" data-tab="activity" type="button" id="tab-activity">Activity log</button>
     <button class="tab" data-tab="ideafeed" type="button" id="tab-ideafeed">Idea Feed sources</button>
+    <button class="tab" data-tab="study" type="button" id="tab-study">Study articles</button>
   </div>
 
   <!-- TAB: REPORTS -->
@@ -292,6 +294,41 @@
       </div>
     </div>
   </div><!-- /tab-panel ideafeed -->
+
+  <!-- TAB: STUDY -->
+  <div class="tab-panel" data-panel="study">
+    <div class="section" style="border-top-color:var(--gold)">
+      <div class="section-head">
+        <div class="section-name">Study Articles</div>
+        <div class="section-meta">Sector & Megatrends</div>
+      </div>
+      <div class="section-desc">
+        Manage articles published on <a href="/study.html" style="color:var(--gold)">Study</a>. Each article has metadata + an optional PDF (max 25 MB). Soft-deletes hide articles from the public page.
+      </div>
+      <div style="padding:0 24px 22px">
+        <div id="st-admin-list" style="margin-bottom:18px"><div class="loading-files">Sign in to manage articles</div></div>
+
+        <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:18px 0 10px">Add new article</h4>
+        <form onsubmit="return addStudyArticle(event)" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px">
+          <select name="section" required style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+            <option value="sector">Sector Analysis</option>
+            <option value="megatrends">Megatrends</option>
+          </select>
+          <input type="text" name="cover_emoji" maxlength="4" placeholder="Emoji (optional, e.g. 📊)" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <input type="text" name="title" required placeholder="Title" style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 2">
+          <input type="text" name="author" placeholder="Author (optional)" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <input type="text" name="tags" placeholder="Tags, comma-separated" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <textarea name="description" rows="3" placeholder="Short description (max 2000 chars)" style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 2;resize:vertical"></textarea>
+          <input type="url" name="external_url" placeholder="External link (optional)" style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 2">
+          <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end;grid-column:span 2">
+            <span id="st-add-status" style="font-size:11px;font-style:italic"></span>
+            <button class="btn" type="submit">Add article</button>
+          </div>
+        </form>
+        <p style="font-size:11px;color:var(--gray-mid);margin-top:8px">After creating, attach a PDF using the upload button on its row.</p>
+      </div>
+    </div>
+  </div><!-- /tab-panel study -->
 
   <!-- TAB: ACTIVITY -->
   <div class="tab-panel" data-panel="activity">
@@ -580,6 +617,7 @@ document.querySelectorAll('.tab').forEach(t => {
     document.querySelector(`.tab-panel[data-panel="${t.dataset.tab}"]`).classList.add('active');
     if (t.dataset.tab === 'activity') loadAudit();
     if (t.dataset.tab === 'ideafeed') loadIdeaFeedSources();
+    if (t.dataset.tab === 'study') loadStudyAdmin();
   });
 });
 
@@ -832,6 +870,125 @@ async function runFeedRefreshNow() {
     status.style.color = 'var(--red)';
   } finally {
     btn.disabled = false;
+  }
+}
+
+// ── STUDY ADMIN ──────────────────────────────────────
+function _stEsc(s) { return String(s ?? '').replace(/[<>&"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function loadStudyAdmin() {
+  const cont = document.getElementById('st-admin-list');
+  if (!cont) return;
+  if (!isAdmin()) { cont.innerHTML = '<div class="loading-files">Sign in as admin to manage articles</div>'; return; }
+  cont.innerHTML = '<div class="loading-files">Loading…</div>';
+  try {
+    const token = sessionStorage.getItem(TOKEN_KEY);
+    const r = await fetch('/api/admin/study', { headers: { 'x-admin-token': token } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    const items = data.items || [];
+    if (items.length === 0) { cont.innerHTML = '<div class="loading-files">No articles yet.</div>'; return; }
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--navy);color:var(--white)"><th style="text-align:left;padding:8px 10px">Title</th><th style="text-align:left;padding:8px 10px">Section</th><th style="padding:8px 10px">PDF</th><th style="padding:8px 10px">Active</th><th style="padding:8px 10px"></th></tr></thead><tbody>';
+    for (const a of items) {
+      const pdfBadge = a.storage_path
+        ? '<span style="color:var(--green);font-size:10px">● attached</span>'
+        : '<span style="color:var(--gray-mid);font-size:10px">none</span>';
+      html += `<tr style="border-bottom:1px solid var(--rule)">
+        <td style="padding:8px 10px">
+          <strong>${a.cover_emoji ? a.cover_emoji + ' ' : ''}${_stEsc(a.title)}</strong>
+          <div style="font-size:10px;color:var(--gray-mid)">${_stEsc(a.author || 'DCE Holdings')} · ${(a.tags||[]).map(t => _stEsc(t)).join(', ') || 'no tags'}</div>
+        </td>
+        <td style="padding:8px 10px;text-transform:capitalize">${a.section}</td>
+        <td style="padding:8px 10px;text-align:center">${pdfBadge}</td>
+        <td style="padding:8px 10px;text-align:center">
+          <label style="cursor:pointer"><input type="checkbox" ${a.active?'checked':''} onchange="toggleStudyActive(${a.id}, this.checked)"></label>
+        </td>
+        <td style="padding:8px 10px;text-align:right;white-space:nowrap">
+          <label class="btn" style="font-size:10px;padding:4px 10px;cursor:pointer">
+            ${a.storage_path ? 'Replace PDF' : 'Upload PDF'}
+            <input type="file" accept="application/pdf" style="display:none" onchange="uploadStudyPdf(${a.id}, this)">
+          </label>
+          <button class="btn" style="font-size:10px;padding:4px 10px;background:transparent;color:var(--red);border:1px solid var(--red);margin-left:6px" onclick="deleteStudy(${a.id}, '${(a.title||'').replace(/'/g,"\\'")}')">Delete</button>
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    cont.innerHTML = html;
+  } catch (e) {
+    cont.innerHTML = '<div class="loading-files" style="color:var(--red)">Error: ' + e.message + '</div>';
+  }
+}
+
+async function addStudyArticle(ev) {
+  ev.preventDefault();
+  const f = ev.target;
+  const tags = (f.tags.value || '').split(',').map(t => t.trim()).filter(Boolean);
+  const body = {
+    section: f.section.value,
+    title: f.title.value.trim(),
+    author: f.author.value.trim() || null,
+    description: f.description.value.trim() || null,
+    external_url: f.external_url.value.trim() || null,
+    cover_emoji: f.cover_emoji.value.trim() || null,
+    tags,
+  };
+  const status = document.getElementById('st-add-status');
+  status.textContent = 'Saving…'; status.style.color = 'var(--gray-mid)';
+  const token = sessionStorage.getItem(TOKEN_KEY);
+  try {
+    const r = await fetch('/api/admin/study', {
+      method: 'POST',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    status.textContent = 'Added.'; status.style.color = 'var(--green)';
+    f.reset();
+    loadStudyAdmin();
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = 'var(--red)';
+  }
+  return false;
+}
+
+async function toggleStudyActive(id, active) {
+  const token = sessionStorage.getItem(TOKEN_KEY);
+  await fetch('/api/admin/study?id=' + id, {
+    method: 'PATCH',
+    headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ active }),
+  });
+}
+
+async function deleteStudy(id, title) {
+  if (!confirm('Hide article "' + title + '" from public Study page?')) return;
+  const token = sessionStorage.getItem(TOKEN_KEY);
+  const r = await fetch('/api/admin/study?id=' + id, { method: 'DELETE', headers: { 'x-admin-token': token } });
+  if (r.ok) loadStudyAdmin();
+  else alert('Delete failed');
+}
+
+async function uploadStudyPdf(id, input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 26214400) { alert('Max 25 MB'); input.value = ''; return; }
+  const token = sessionStorage.getItem(TOKEN_KEY);
+  const filename = file.name.replace(/[^A-Za-z0-9._-]/g, '_');
+  try {
+    const r = await fetch('/api/admin/study?upload=1&id=' + id + '&filename=' + encodeURIComponent(filename), {
+      method: 'POST',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/pdf' },
+      body: file,
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Upload failed');
+    loadStudyAdmin();
+  } catch (e) {
+    alert('Upload error: ' + e.message);
+  } finally {
+    input.value = '';
   }
 }
 

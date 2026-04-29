@@ -51,4 +51,14 @@ async function sbUpdate(table, query, patch) {
   return r.json();
 }
 
-module.exports = { sbInsert, sbSelect, sbUpdate, sbHeaders, sbBaseUrl };
+async function sbDelete(table, query) {
+  const url = `${sbBaseUrl()}/${table}?${query}`;
+  const r = await fetch(url, { method: 'DELETE', headers: sbHeaders() });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`sbDelete ${table} failed: ${r.status} ${t.slice(0, 300)}`);
+  }
+  return true;
+}
+
+module.exports = { sbInsert, sbSelect, sbUpdate, sbDelete, sbHeaders, sbBaseUrl };
