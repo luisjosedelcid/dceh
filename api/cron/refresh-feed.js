@@ -73,12 +73,16 @@ EXCERPT: ${(snippet || '').slice(0, 1500)}`;
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 200,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
-    if (!r.ok) return [];
+    if (!r.ok) {
+      const errTxt = await r.text().catch(() => '');
+      console.error('LLM HTTP', r.status, errTxt.slice(0, 200));
+      return [];
+    }
     const j = await r.json();
     const txt = j?.content?.[0]?.text?.trim() || '[]';
     // Find first JSON array in response
