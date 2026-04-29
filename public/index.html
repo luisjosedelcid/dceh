@@ -583,8 +583,10 @@
   </div>
   <div class="gate-divider"></div>
   <div class="gate-form">
-    <label>Access Password</label>
-    <input type="password" id="pwd-input" placeholder="··········" onkeydown="if(event.key==='Enter') checkPwd()">
+    <label>Email</label>
+    <input type="email" id="email-input" autocomplete="username" placeholder="luis@dceholdings.com" onkeydown="if(event.key==='Enter') document.getElementById('pwd-input').focus()">
+    <label style="margin-top:18px">Access Password</label>
+    <input type="password" id="pwd-input" autocomplete="current-password" placeholder="··········" onkeydown="if(event.key==='Enter') checkPwd()">
     <div id="gate-error"></div>
     <button class="gate-btn" onclick="checkPwd()">Enter</button>
   </div>
@@ -780,11 +782,23 @@
 
 async function checkPwd() {
   const val = document.getElementById('pwd-input').value;
-  if (!val) { document.getElementById('gate-error').textContent = 'Password required'; return; }
+  const email = (document.getElementById('email-input').value || '').trim();
+  if (!email) {
+    document.getElementById('gate-error').textContent = 'Email required';
+    document.getElementById('gate-error').style.color = 'var(--red, #a02a1f)';
+    document.getElementById('email-input').focus();
+    return;
+  }
+  if (!val) {
+    document.getElementById('gate-error').textContent = 'Password required';
+    document.getElementById('gate-error').style.color = 'var(--red, #a02a1f)';
+    return;
+  }
   document.getElementById('gate-error').textContent = 'Verifying…';
   document.getElementById('gate-error').style.color = 'var(--gray-mid)';
-  // Default email to the seed admin so legacy gate UX (password-only) keeps working
-  const res = await window.dceAuth.login('luis@dceholdings.com', val);
+  // Remember email for next visit (no password stored)
+  try { localStorage.setItem('dce_last_email', email); } catch {}
+  const res = await window.dceAuth.login(email, val);
   if (res.ok) {
     // Also keep legacy session flag so any leftover code still works
     sessionStorage.setItem('dce_auth', 'Test1');
@@ -824,8 +838,19 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     return false;
   };
+  // Pre-fill last used email if any
+  try {
+    const last = localStorage.getItem('dce_last_email');
+    if (last) document.getElementById('email-input').value = last;
+  } catch {}
+
+  const focusFirstEmpty = () => {
+    const e = document.getElementById('email-input');
+    const p = document.getElementById('pwd-input');
+    if (!e.value) e.focus(); else p.focus();
+  };
   if (!tryUnlock()) {
-    setTimeout(() => { if (!tryUnlock()) document.getElementById('pwd-input').focus(); }, 150);
+    setTimeout(() => { if (!tryUnlock()) focusFirstEmpty(); }, 150);
   }
 });
 </script>
