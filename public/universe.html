@@ -71,6 +71,21 @@
   .price-input:hover { border-color: var(--gold); background: rgba(184,139,71,0.10); }
   .price-input:focus { border-color: var(--gold); background: var(--white); box-shadow: 0 0 0 2px rgba(184,139,71,0.15); }
 
+  /* ALERT CELL */
+  .alert-cell { font-size: 12px; font-variant-numeric: tabular-nums; cursor: pointer; user-select: none; padding: 4px 6px; border-radius: 3px; display: inline-flex; align-items: center; gap: 5px; min-width: 70px; justify-content: flex-end; }
+  .alert-cell:hover { background: rgba(184,139,71,0.08); }
+  .alert-cell.empty { color: var(--gray-mid); font-weight: 400; opacity: 0.5; }
+  .alert-cell.empty:hover { opacity: 1; color: var(--gold); }
+  .alert-cell.armed { color: var(--navy); font-weight: 600; }
+  .alert-cell.warn { color: var(--gold); font-weight: 600; }
+  .alert-cell.broken { color: var(--red); font-weight: 700; }
+  .alert-cell.fired { color: var(--gray-mid); font-weight: 600; text-decoration: line-through; }
+  .alert-cell .ico { font-size: 11px; }
+  .alert-cell.readonly { cursor: default; }
+  .alert-cell.readonly:hover { background: transparent; }
+  .alert-cell.empty.readonly { opacity: 0.3; }
+  .alert-cell.empty.readonly:hover { opacity: 0.3; color: var(--gray-mid); }
+
   /* LINK */
   .dash-link { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); text-decoration: none; transition: color .2s; }
   .dash-link:hover { color: var(--gold-lt); }
@@ -128,6 +143,8 @@
           <th>Implied IRR</th>
           <th>MoS</th>
           <th>Moat (EPV/RV)</th>
+          <th title="Alert if price falls to or below this floor">Alert ↓</th>
+          <th title="Alert if price rises to or above this ceiling">Alert ↑</th>
           <th></th>
         </tr>
       </thead>
@@ -254,9 +271,113 @@ function renderRow(c, vals) {
     <td class="${irrClass}" style="font-weight:700;font-size:14px">${irrPct}%</td>
     <td class="${mosClass}" style="font-weight:700">${mosSign}${mosPct}%</td>
     <td>${moatHtml}</td>
+    <td>${renderAlertCell(c.ticker, 'floor', vals.price, sym(c))}</td>
+    <td>${renderAlertCell(c.ticker, 'ceiling', vals.price, sym(c))}</td>
     <td><a class="dash-link" href="${c.link}">Dashboard →</a></td>
   </tr>`;
 }
+
+// ═══ PRICE ALERTS ═══
+let ALERTS_BY_TICKER = {}; // { TICKER: { floor: {...} | null, ceiling: {...} | null } }
+
+function isAdmin() {
+  const tok = sessionStorage.getItem('dce_admin_token');
+  const exp = parseInt(sessionStorage.getItem('dce_admin_token_exp') || '0', 10);
+  if (!tok || !exp || exp < Math.floor(Date.now()/1000)) return false;
+  return true;
+}
+
+function adminToken() { return sessionStorage.getItem('dce_admin_token'); }
+
+function renderAlertCell(ticker, type, livePrice, currency) {
+  const a = (ALERTS_BY_TICKER[ticker] || {})[type];
+  const admin = isAdmin();
+  const ro = admin ? '' : ' readonly';
+  const onclick = admin ? `onclick="openAlertEditor('${ticker}','${type}', ${livePrice})"` : '';
+
+  if (!a) {
+    return `<span class="alert-cell empty${ro}" ${onclick} title="${admin ? 'Click to set' : 'Admin only'}">—</span>`;
+  }
+
+  const th = Number(a.threshold);
+  const fired = !a.active && a.triggered_at;
+  const ico = fired ? '🔕' : '🔔';
+
+  let cls = 'armed';
+  if (fired) cls = 'fired';
+  else if (livePrice && th) {
+    if (type === 'floor') {
+      if (livePrice <= th) cls = 'broken';
+      else if (livePrice <= th * 1.05) cls = 'warn';
+    } else {
+      if (livePrice >= th) cls = 'broken';
+      else if (livePrice >= th * 0.95) cls = 'warn';
+    }
+  }
+
+  const titleParts = [];
+  titleParts.push(`${type === 'floor' ? '↓ Floor' : '↑ Ceiling'}: ${currency}${th.toFixed(2)}`);
+  if (fired) titleParts.push(`Triggered ${new Date(a.triggered_at).toLocaleString()}`);
+  if (admin) titleParts.push(fired ? 'Click to re-arm' : 'Click to edit');
+
+  return `<span class="alert-cell ${cls}${ro}" ${onclick} title="${titleParts.join(' · ')}">
+    <span class="ico">${ico}</span>${currency}${th.toFixed(2)}
+  </span>`;
+}
+
+async function loadAlerts() {
+  try {
+    const r = await fetch('/api/alerts?scope=covered');
+    if (!r.ok) return;
+    const data = await r.json();
+    ALERTS_BY_TICKER = data.by_ticker || {};
+  } catch (e) { /* ignore */ }
+}
+
+async function openAlertEditor(ticker, type, livePrice) {
+  if (!isAdmin()) {
+    alert('Admin login required. Open /reporting and log in first, then come back.');
+    return;
+  }
+  const existing = (ALERTS_BY_TICKER[ticker] || {})[type];
+  const fired = existing && !existing.active && existing.triggered_at;
+  const arrow = type === 'floor' ? '↓' : '↑';
+  const dirLabel = type === 'floor' ? 'floor (alerts when price falls to this level)' : 'ceiling (alerts when price rises to this level)';
+
+  let prompt1 = `${ticker} ${arrow} alert ${dirLabel}\n\nLive price: $${(livePrice||0).toFixed(2)}\n`;
+  if (existing) prompt1 += `Current threshold: $${Number(existing.threshold).toFixed(2)}${fired ? ' (FIRED)' : ''}\n`;
+  prompt1 += `\nEnter threshold (or empty to delete):`;
+
+  const val = window.prompt(prompt1, existing ? Number(existing.threshold).toFixed(2) : (livePrice * (type === 'floor' ? 0.85 : 1.15)).toFixed(2));
+  if (val === null) return;
+  const trimmed = val.trim();
+
+  // Empty → delete
+  if (trimmed === '') {
+    if (!existing) return;
+    if (!confirm(`Delete ${type} alert for ${ticker}?`)) return;
+    const r = await fetch(`/api/admin/alerts?id=${existing.id}`, { method: 'DELETE', headers: { 'x-admin-token': adminToken() } });
+    if (!r.ok) { alert('Delete failed: ' + r.status); return; }
+    await loadAlerts();
+    renderTable();
+    return;
+  }
+
+  const num = Number(trimmed);
+  if (!Number.isFinite(num) || num <= 0) { alert('Invalid threshold'); return; }
+
+  // POST to upsert
+  const r = await fetch('/api/admin/alerts', {
+    method: 'POST',
+    headers: { 'x-admin-token': adminToken(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ticker, alert_type: type, threshold: num, scope: 'covered' }),
+  });
+  if (!r.ok) { const d = await r.json().catch(()=>({})); alert('Save failed: ' + (d.error || r.status)); return; }
+  await loadAlerts();
+  renderTable();
+}
+
+window.openAlertEditor = openAlertEditor;
 
 function renderTable() {
   const tbody = document.getElementById('universe-body');
@@ -283,8 +404,9 @@ function onPriceChange(ticker, val) {
   }
 }
 
-// Initial render
+// Initial render (alerts will be loaded after, then re-render)
 renderTable();
+loadAlerts().then(() => renderTable());
 
 // ═══ LIVE PRICE FETCH (Finnhub) ═══
 const FH_KEY = 'd6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg';
@@ -308,10 +430,12 @@ async function fetchLivePrices() {
       const input = document.querySelector(`input[data-ticker="${ticker}"]`);
       if (input) {
         input.value = price.toFixed(2);
-        onPriceChange(ticker, price.toFixed(2));
         updated++;
       }
     });
+    // Re-render the whole table once after all live prices are in,
+    // so alert cells reflect the latest live price (warn/broken thresholds)
+    if (updated > 0) renderTable();
 
     if (note) {
       if (updated > 0) {

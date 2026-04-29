@@ -47,6 +47,21 @@
   .ticker{font-size:16px;font-weight:700;color:var(--navy);letter-spacing:-0.01em}
   .ticker-sub{font-size:11px;color:var(--gray-mid);font-weight:300;margin-top:2px}
 
+  /* ALERT CELL */
+  .alert-cell{font-size:12px;font-variant-numeric:tabular-nums;cursor:pointer;user-select:none;padding:4px 6px;border-radius:3px;display:inline-flex;align-items:center;gap:5px;min-width:70px;justify-content:flex-end}
+  .alert-cell:hover{background:rgba(184,139,71,0.08)}
+  .alert-cell.empty{color:var(--gray-mid);font-weight:400;opacity:0.5}
+  .alert-cell.empty:hover{opacity:1;color:var(--gold)}
+  .alert-cell.armed{color:var(--navy);font-weight:600}
+  .alert-cell.warn{color:var(--gold);font-weight:600}
+  .alert-cell.broken{color:var(--red);font-weight:700}
+  .alert-cell.fired{color:var(--gray-mid);font-weight:600;text-decoration:line-through}
+  .alert-cell .ico{font-size:11px}
+  .alert-cell.readonly{cursor:default}
+  .alert-cell.readonly:hover{background:transparent}
+  .alert-cell.empty.readonly{opacity:0.3}
+  .alert-cell.empty.readonly:hover{opacity:0.3;color:var(--gray-mid)}
+
   /* ALLOCATION BAR */
   .alloc-bar{display:flex;height:32px;border-radius:4px;overflow:hidden;margin-bottom:8px}
   .alloc-seg{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--white);letter-spacing:0.05em;transition:width .5s}
@@ -107,6 +122,8 @@
         <th>P&L (%)</th>
         <th>IRR (Ann.)</th>
         <th>Weight</th>
+        <th title="Alert if price falls to or below this floor">Alert ↓</th>
+        <th title="Alert if price rises to or above this ceiling">Alert ↑</th>
         <th>Holding Period</th>
       </tr></thead>
       <tbody id="portfolio-body"></tbody>
@@ -125,6 +142,93 @@ const FH_KEY = 'd6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg';
 // Single source of truth: /data/portfolio.json (also used by Daily Report)
 let HOLDINGS = [];
 let DECISIONS_BY_TICKER = {}; // ticker -> latest BUY/ADD decision id
+let ALERTS_BY_TICKER = {};    // { TICKER: { floor: {...} | null, ceiling: {...} | null } }
+let LAST_PRICES = {};         // { TICKER: live price }
+
+function isAdmin() {
+  const tok = sessionStorage.getItem('dce_admin_token');
+  const exp = parseInt(sessionStorage.getItem('dce_admin_token_exp') || '0', 10);
+  if (!tok || !exp || exp < Math.floor(Date.now()/1000)) return false;
+  return true;
+}
+function adminToken() { return sessionStorage.getItem('dce_admin_token'); }
+
+function renderAlertCell(ticker, type, livePrice) {
+  const a = (ALERTS_BY_TICKER[ticker] || {})[type];
+  const admin = isAdmin();
+  const ro = admin ? '' : ' readonly';
+  const onclick = admin ? `onclick="openAlertEditor('${ticker}','${type}', ${livePrice})"` : '';
+  if (!a) {
+    return `<span class="alert-cell empty${ro}" ${onclick} title="${admin ? 'Click to set' : 'Admin only'}">—</span>`;
+  }
+  const th = Number(a.threshold);
+  const fired = !a.active && a.triggered_at;
+  const ico = fired ? '🔕' : '🔔';
+  let cls = 'armed';
+  if (fired) cls = 'fired';
+  else if (livePrice && th) {
+    if (type === 'floor') {
+      if (livePrice <= th) cls = 'broken';
+      else if (livePrice <= th * 1.05) cls = 'warn';
+    } else {
+      if (livePrice >= th) cls = 'broken';
+      else if (livePrice >= th * 0.95) cls = 'warn';
+    }
+  }
+  const titleParts = [];
+  titleParts.push(`${type === 'floor' ? '↓ Floor' : '↑ Ceiling'}: $${th.toFixed(2)}`);
+  if (fired) titleParts.push(`Triggered ${new Date(a.triggered_at).toLocaleString()}`);
+  if (admin) titleParts.push(fired ? 'Click to re-arm' : 'Click to edit');
+  return `<span class="alert-cell ${cls}${ro}" ${onclick} title="${titleParts.join(' · ')}">
+    <span class="ico">${ico}</span>$${th.toFixed(2)}
+  </span>`;
+}
+
+async function loadAlerts() {
+  try {
+    const r = await fetch('/api/alerts?scope=portfolio');
+    if (!r.ok) return;
+    const data = await r.json();
+    ALERTS_BY_TICKER = data.by_ticker || {};
+  } catch (e) { /* ignore */ }
+}
+
+async function openAlertEditor(ticker, type, livePrice) {
+  if (!isAdmin()) {
+    alert('Admin login required. Open /reporting and log in first, then come back.');
+    return;
+  }
+  const existing = (ALERTS_BY_TICKER[ticker] || {})[type];
+  const fired = existing && !existing.active && existing.triggered_at;
+  const arrow = type === 'floor' ? '↓' : '↑';
+  const dirLabel = type === 'floor' ? 'floor (alerts when price falls)' : 'ceiling (alerts when price rises)';
+  let prompt1 = `${ticker} ${arrow} alert ${dirLabel}\n\nLive price: $${(livePrice||0).toFixed(2)}\n`;
+  if (existing) prompt1 += `Current threshold: $${Number(existing.threshold).toFixed(2)}${fired ? ' (FIRED)' : ''}\n`;
+  prompt1 += `\nEnter threshold (or empty to delete):`;
+  const val = window.prompt(prompt1, existing ? Number(existing.threshold).toFixed(2) : (livePrice * (type === 'floor' ? 0.85 : 1.15)).toFixed(2));
+  if (val === null) return;
+  const trimmed = val.trim();
+  if (trimmed === '') {
+    if (!existing) return;
+    if (!confirm(`Delete ${type} alert for ${ticker}?`)) return;
+    const r = await fetch(`/api/admin/alerts?id=${existing.id}`, { method: 'DELETE', headers: { 'x-admin-token': adminToken() } });
+    if (!r.ok) { alert('Delete failed: ' + r.status); return; }
+    await loadAlerts();
+    renderPortfolio(LAST_PRICES);
+    return;
+  }
+  const num = Number(trimmed);
+  if (!Number.isFinite(num) || num <= 0) { alert('Invalid threshold'); return; }
+  const r = await fetch('/api/admin/alerts', {
+    method: 'POST',
+    headers: { 'x-admin-token': adminToken(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ticker, alert_type: type, threshold: num, scope: 'portfolio' }),
+  });
+  if (!r.ok) { const d = await r.json().catch(()=>({})); alert('Save failed: ' + (d.error || r.status)); return; }
+  await loadAlerts();
+  renderPortfolio(LAST_PRICES);
+}
+window.openAlertEditor = openAlertEditor;
 
 async function loadHoldings() {
   try {
@@ -234,6 +338,8 @@ function renderPortfolio(prices) {
       <td class="${pnlClass}" style="font-weight:700">${pnlSign}${r.pnlPct.toFixed(2)}%</td>
       <td class="${r.irr >= 12 ? 'green' : r.irr >= 0 ? 'gold' : 'red'}" style="font-weight:700">${r.irr >= 0 ? '+' : ''}${r.irr.toFixed(1)}%</td>
       <td>${(r.mktValue / totalValue * 100).toFixed(1)}%</td>
+      <td>${renderAlertCell(r.ticker, 'floor', r.price)}</td>
+      <td>${renderAlertCell(r.ticker, 'ceiling', r.price)}</td>
       <td>${holdStr}</td>
     </tr>`;
   }).join('');
@@ -252,6 +358,7 @@ async function fetchPrices() {
     const results = await Promise.all(fetches);
     const prices = {};
     results.forEach(([t, p]) => { if (p && p > 0) prices[t] = p; });
+    LAST_PRICES = prices;
 
     renderPortfolio(prices);
 
@@ -286,7 +393,7 @@ async function loadDecisionsMap() {
 
 (async () => {
   await loadHoldings();
-  await loadDecisionsMap();
+  await Promise.all([loadDecisionsMap(), loadAlerts()]);
   await fetchPrices();
 })();
 </script>

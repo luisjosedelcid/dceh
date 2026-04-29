@@ -16,6 +16,7 @@
   ],
   "crons": [
     { "path": "/api/cron/refresh-feed", "schedule": "0 */6 * * *" },
-    { "path": "/api/cron/journal-reviews", "schedule": "0 13 * * *" }
+    { "path": "/api/cron/journal-reviews", "schedule": "0 13 * * *" },
+    { "path": "/api/cron/price-alerts", "schedule": "*/30 13-20 * * 1-5" }
   ]
 }
