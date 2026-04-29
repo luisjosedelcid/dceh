@@ -1221,7 +1221,7 @@ async function renderIdeaFeedTickers(items, status, cont) {
               <a href="${_ifEscape(r.mentions[0].url || '#')}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:none">${_ifEscape(r.mentions[0].title)}</a>
               <div style="color:var(--gray-mid);font-size:10px;margin-top:3px;letter-spacing:0.04em">${_ifEscape([...r.sources].join(' · '))} — ${_ifFmtDate(r.mentions[0].published_at || r.mentions[0].fetched_at)}</div>
             </td>
-            <td style="text-align:left;font-size:11px;max-width:420px;line-height:1.45;color:var(--navy)">
+            <td style="text-align:justify;font-size:11px;max-width:420px;line-height:1.45;color:var(--navy);hyphens:auto">
               ${r.thesisItem && r.thesisItem.thesis
                 ? _ifEscape(r.thesisItem.thesis)
                 : '<span style="color:var(--gray-mid);font-style:italic">Pending next refresh…</span>'}
