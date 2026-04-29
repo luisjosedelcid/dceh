@@ -134,84 +134,14 @@
   <!-- MODE 1: SECTOR SCREENER (existing content)                    -->
   <!-- ════════════════════════════════════════════════════════════ -->
   <div class="mode-pane active" id="mode-sectors">
-    <div class="meta">Blend: 70% Absolute + 30% Relative · Hurdle: 12% · T10: 4.30% · Source: roic.ai API · <span id="screener-live" style="color:var(--gray-mid)">Fetching prices...</span></div>
+    <div class="meta" id="screener-meta">Source: roic.ai API · <span id="screener-live" style="color:var(--gray-mid)">Loading...</span></div>
 
-    <div class="sector-tabs">
-      <button class="sector-tab active" onclick="showSector('car-parts',this)">Car Parts</button>
-      <button class="sector-tab" disabled style="opacity:0.4;cursor:default">+ Add Sector</button>
+    <div class="sector-tabs" id="sector-tabs">
+      <span style="color:var(--gray-mid);font-size:13px">Loading sectors...</span>
     </div>
 
-    <!-- CAR PARTS -->
-    <div id="sector-car-parts">
-      <!-- SUMMARY TABLE -->
-      <div class="section-hdr">Summary — click any column to sort</div>
-      <div style="overflow-x:auto">
-        <table class="stbl sortable" data-default-sort="12" data-default-dir="desc">
-          <thead><tr>
-            <th data-sort="text">Ticker</th><th data-sort="text">Company</th><th data-sort="number">Price</th><th data-sort="number">Q (Abs)</th><th data-sort="number">Q (Rel)</th><th data-sort="number">Quality</th><th data-sort="number">Q Δ</th>
-            <th data-sort="number">V (Abs)</th><th data-sort="number">V (Rel)</th><th data-sort="number">Valuation</th><th data-sort="percent">IRR</th><th data-sort="mktcap">Mkt Cap</th><th data-sort="number" title="Quality + Valuation, on a /10 scale">Score /10</th><th data-sort="verdict">Verdict</th>
-          </tr></thead>
-          <tbody>
-            <tr><td class="ticker-cell">ORLY</td><td>O'Reilly Automotive</td><td data-live-price="ORLY" class="gold">—</td><td>4.30</td><td>3.96</td><td class="green" style="font-weight:700">4.20</td><td class="red">-0.20</td><td>1.00</td><td>1.00</td><td style="font-weight:700">1.00</td><td class="green" style="font-weight:700">16.6%</td><td>$1,038B</td><td class="red" style="font-weight:700">5.20</td><td><span class="verdict v-watchlist">WATCHLIST</span></td></tr>
-            <tr><td class="ticker-cell">AZO</td><td>AutoZone</td><td data-live-price="AZO" class="gold">—</td><td>4.15</td><td>3.77</td><td class="green" style="font-weight:700">4.04</td><td class="red">-0.35</td><td>3.14</td><td>1.14</td><td style="font-weight:700">2.54</td><td class="dim">9.9%</td><td>$70,489M</td><td style="font-weight:700">6.58</td><td><span class="verdict v-watchlist">WATCHLIST</span></td></tr>
-            <tr><td class="ticker-cell">ALSN</td><td>Allison Transmission</td><td data-live-price="ALSN" class="gold">—</td><td>4.07</td><td>3.37</td><td class="green" style="font-weight:700">3.86</td><td class="green">+0.24</td><td>4.79</td><td>3.50</td><td style="font-weight:700">4.40</td><td class="green" style="font-weight:700">12.9%</td><td>$9,404M</td><td class="green" style="font-weight:700">8.26</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-            <tr><td class="ticker-cell">MOD</td><td>Modine Manufacturing</td><td data-live-price="MOD" class="gold">—</td><td>3.64</td><td>3.27</td><td style="font-weight:700">3.53</td><td class="green">+0.47</td><td>3.83</td><td>2.00</td><td style="font-weight:700">3.28</td><td class="dim">—</td><td>$4,129M</td><td style="font-weight:700">6.81</td><td><span class="verdict v-pass">PASS</span></td></tr>
-            <tr><td class="ticker-cell">ALV</td><td>Autoliv</td><td data-live-price="ALV" class="gold">—</td><td>3.69</td><td>3.08</td><td style="font-weight:700">3.51</td><td class="green">+0.44</td><td>4.86</td><td>3.93</td><td style="font-weight:700">4.58</td><td class="green" style="font-weight:700">69.0%</td><td>$7,522M</td><td class="green" style="font-weight:700">8.09</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-            <tr><td class="ticker-cell">LKQ</td><td>LKQ Corp</td><td data-live-price="LKQ" class="gold">—</td><td>3.25</td><td>2.48</td><td style="font-weight:700">3.02</td><td class="red">-0.58</td><td>4.64</td><td>3.21</td><td style="font-weight:700">4.21</td><td class="green" style="font-weight:700">20.4%</td><td>$9,687M</td><td style="font-weight:700">7.23</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-            <tr><td class="ticker-cell">APTV</td><td>Aptiv</td><td data-live-price="APTV" class="gold">—</td><td>3.19</td><td>2.62</td><td style="font-weight:700">3.02</td><td class="red">-0.22</td><td>5.00</td><td>3.86</td><td style="font-weight:700">4.66</td><td class="green" style="font-weight:700">31.4%</td><td>$15,506M</td><td class="green" style="font-weight:700">7.68</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-            <tr><td class="ticker-cell">BWA</td><td>BorgWarner</td><td data-live-price="BWA" class="gold">—</td><td>3.04</td><td>2.92</td><td style="font-weight:700">3.00</td><td class="red">-0.21</td><td>4.67</td><td>4.50</td><td style="font-weight:700">4.62</td><td class="green" style="font-weight:700">21.1%</td><td>$6,952M</td><td class="green" style="font-weight:700">7.62</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-            <tr><td class="ticker-cell">GPC</td><td>Genuine Parts</td><td data-live-price="GPC" class="gold">—</td><td>3.14</td><td>2.22</td><td style="font-weight:700">2.87</td><td class="green">+0.39</td><td>3.93</td><td>2.21</td><td style="font-weight:700">3.41</td><td class="green" style="font-weight:700">17.1%</td><td>$16,254M</td><td style="font-weight:700">6.28</td><td><span class="verdict v-pass">PASS</span></td></tr>
-            <tr><td class="ticker-cell">MGA</td><td>Magna International</td><td data-live-price="MGA" class="gold">—</td><td>2.74</td><td>2.00</td><td style="font-weight:700">2.52</td><td class="red">-0.34</td><td>5.00</td><td>4.83</td><td style="font-weight:700">4.95</td><td class="green" style="font-weight:700">46.6%</td><td>$11,985M</td><td style="font-weight:700">7.47</td><td><span class="verdict v-review">REVIEW</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- QUALITY METRICS -->
-      <div class="section-hdr">Quality Metrics</div>
-      <div style="overflow-x:auto">
-        <table class="stbl sortable">
-          <thead><tr>
-            <th data-sort="text">Ticker</th><th data-sort="percent">ROIC 3yr</th><th data-sort="percent">ROIC Trend</th><th data-sort="number">GM CV</th><th data-sort="percent">Op Margin</th><th data-sort="multiplier">FCF Conv</th>
-            <th data-sort="percent">Rev CAGR 5y</th><th data-sort="percent">EPS CAGR 5y</th><th data-sort="percent">FCF/sh CAGR</th><th data-sort="multiplier">ND/EBITDA</th><th data-sort="percent">GW+Int %TA</th><th data-sort="percent">Capex/Rev</th><th data-sort="number">FCF CV</th>
-          </tr></thead>
-          <tbody>
-            <tr><td class="ticker-cell">ORLY</td><td class="green">41.4%</td><td class="green">+32.7%</td><td>0.01</td><td>19.5%</td><td>0.91x</td><td>10.5%</td><td>17.9%</td><td>19.9%</td><td>1.5x</td><td>6.2%</td><td>5.5%</td><td>0.54</td></tr>
-            <tr><td class="ticker-cell">AZO</td><td class="green">39.7%</td><td class="green">+0.6%</td><td>0.01</td><td>19.1%</td><td>1.05x</td><td>8.4%</td><td>15.0%</td><td>10.0%</td><td>2.0x</td><td>1.6%</td><td>—</td><td>0.41</td></tr>
-            <tr><td class="ticker-cell">ALSN</td><td>20.4%</td><td class="green">+65.0%</td><td>0.04</td><td class="green">30.8%</td><td>0.82x</td><td>3.6%</td><td>11.1%</td><td>6.4%</td><td>1.5x</td><td class="red">38.9%</td><td>4.9%</td><td>0.33</td></tr>
-            <tr><td class="ticker-cell">MOD</td><td>15.7%</td><td class="green">+474.2%</td><td>0.17</td><td>12.1%</td><td>0.92x</td><td>5.5%</td><td>—</td><td>—</td><td>0.7x</td><td>12.2%</td><td>—</td><td>1.01</td></tr>
-            <tr><td class="ticker-cell">ALV</td><td>12.5%</td><td class="green">+15.7%</td><td>0.09</td><td>9.4%</td><td>1.59x</td><td>4.0%</td><td>8.7%</td><td>48.9%</td><td>1.2x</td><td>17.5%</td><td>—</td><td>0.70</td></tr>
-            <tr><td class="ticker-cell">LKQ</td><td>9.8%</td><td class="green">+4.8%</td><td>0.02</td><td>9.3%</td><td>0.91x</td><td>2.8%</td><td>8.5%</td><td>3.6%</td><td>2.3x</td><td class="red">36.4%</td><td>2.2%</td><td>0.46</td></tr>
-            <tr><td class="ticker-cell">APTV</td><td>8.8%</td><td class="red">-52.1%</td><td>0.14</td><td>10.3%</td><td>1.02x</td><td>6.5%</td><td>12.6%</td><td>8.7%</td><td>2.3x</td><td>21.4%</td><td>—</td><td>0.23</td></tr>
-            <tr><td class="ticker-cell">BWA</td><td>8.4%</td><td class="red">-27.2%</td><td>0.07</td><td>9.3%</td><td>1.43x</td><td>6.7%</td><td class="red">-16.1%</td><td>5.3%</td><td>1.0x</td><td>16.8%</td><td>—</td><td>0.13</td></tr>
-            <tr><td class="ticker-cell">GPC</td><td>14.5%</td><td class="red">-5.4%</td><td>0.08</td><td>6.1%</td><td>0.75x</td><td>6.0%</td><td>8.8%</td><td>3.1%</td><td>2.1x</td><td>15.0%</td><td>2.1%</td><td>0.38</td></tr>
-            <tr><td class="ticker-cell">MGA</td><td>7.8%</td><td class="red">-49.4%</td><td>0.06</td><td>4.9%</td><td>0.57x</td><td>1.7%</td><td class="red">-8.8%</td><td class="red">-8.7%</td><td>1.0x</td><td>8.6%</td><td>5.2%</td><td>0.51</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- VALUATION METRICS -->
-      <div class="section-hdr">Valuation Metrics</div>
-      <div style="overflow-x:auto">
-        <table class="stbl sortable">
-          <thead><tr>
-            <th data-sort="text">Ticker</th><th data-sort="multiplier">EV/EBIT</th><th data-sort="multiplier">P/E</th><th data-sort="multiplier">EV/EBITDA</th><th data-sort="percent">FCF Yield</th><th data-sort="percent">Earn Yield</th>
-            <th data-sort="percent">EY Spread</th><th data-sort="multiplier">PEG</th><th data-sort="percent">Base IRR</th><th data-sort="percent">Full IRR</th><th data-sort="mktcap">Mkt Cap ($M)</th>
-          </tr></thead>
-          <tbody>
-            <tr><td class="ticker-cell">ORLY</td><td>321.6x</td><td>434.8x</td><td>281.6x</td><td class="green">40.9%</td><td>31.1%</td><td class="red">-4.0%</td><td>24.35x</td><td class="green">20.3%</td><td class="green">16.6%</td><td>$1,037,676M</td></tr>
-            <tr><td class="ticker-cell">AZO</td><td>22.9x</td><td>28.2x</td><td>19.5x</td><td>5.0%</td><td>4.4%</td><td class="green">+7.6%</td><td>1.88x</td><td>14.9%</td><td class="dim">9.9%</td><td>$70,489M</td></tr>
-            <tr><td class="ticker-cell">ALSN</td><td>11.1x</td><td>12.9x</td><td>9.9x</td><td>10.8%</td><td>9.0%</td><td class="green">+4.7%</td><td>1.16x</td><td class="green">17.3%</td><td class="green">12.9%</td><td>$9,404M</td></tr>
-            <tr><td class="ticker-cell">MOD</td><td>14.2x</td><td>22.4x</td><td>11.3x</td><td>5.6%</td><td>7.1%</td><td class="green">+2.8%</td><td>—</td><td>—</td><td class="dim">—</td><td>$4,129M</td></tr>
-            <tr><td class="ticker-cell">ALV</td><td>9.5x</td><td>11.6x</td><td>6.8x</td><td class="green">15.1%</td><td>10.6%</td><td class="green">+6.3%</td><td>1.34x</td><td class="green">64.0%</td><td class="green">69.0%</td><td>$7,522M</td></tr>
-            <tr><td class="ticker-cell">LKQ</td><td>11.3x</td><td>14.0x</td><td>8.7x</td><td class="green">16.7%</td><td>8.8%</td><td class="green">+4.5%</td><td>1.66x</td><td class="green">20.3%</td><td class="green">20.4%</td><td>$9,687M</td></tr>
-            <tr><td class="ticker-cell">APTV</td><td>11.4x</td><td>8.7x</td><td>7.7x</td><td class="green">17.7%</td><td>8.8%</td><td class="green">+4.5%</td><td>0.69x</td><td class="green">26.4%</td><td class="green">31.4%</td><td>$15,506M</td></tr>
-            <tr><td class="ticker-cell">BWA</td><td>7.2x</td><td>20.6x</td><td>4.7x</td><td class="green">20.8%</td><td class="green">13.9%</td><td class="green">+9.6%</td><td>—</td><td class="green">26.1%</td><td class="green">21.1%</td><td>$6,952M</td></tr>
-            <tr><td class="ticker-cell">GPC</td><td>14.9x</td><td>18.0x</td><td>11.6x</td><td>11.6%</td><td>6.7%</td><td class="green">+2.4%</td><td>2.04x</td><td>14.8%</td><td class="green">17.1%</td><td>$16,254M</td></tr>
-            <tr><td class="ticker-cell">MGA</td><td>8.6x</td><td>11.9x</td><td>4.5x</td><td class="green">50.3%</td><td>11.6%</td><td class="green">+7.3%</td><td>—</td><td class="green">41.6%</td><td class="green">46.6%</td><td>$11,985M</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <!-- DYNAMIC SECTOR CONTENT (rendered from /data/sectors/<slug>.json) -->
+    <div id="sector-content"></div>
   </div>
 
   <!-- ════════════════════════════════════════════════════════════ -->
@@ -296,22 +226,241 @@ function showMode(mode, btn) {
   }
 }
 
-function showSector(id, btn) {
-  document.querySelectorAll('[id^="sector-"]').forEach(el => el.style.display = 'none');
-  document.querySelectorAll('.sector-tab').forEach(el => el.classList.remove('active'));
-  document.getElementById('sector-' + id).style.display = 'block';
-  btn.classList.add('active');
-}
-
 // ═══════════════════════════════════════════════════════════════════
-// LIVE PRICES (Finnhub) — Sector Screener
+// SECTOR SCREENER — dynamic loader from /data/sectors/<slug>.json
+// To add a new sector: drop a JSON file in /public/data/sectors/ and
+// register it in /public/data/sectors/index.json — UI updates automatically.
 // ═══════════════════════════════════════════════════════════════════
 const FH_KEY = 'd6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg';
-const TICKERS = ['ORLY','AZO','ALSN','MOD','ALV','LKQ','APTV','BWA','GPC','MGA'];
+const _sectorCache = {};       // slug -> json
+let   _activeSector = null;
 
-async function fetchScreenerPrices() {
+// ── Formatters ───────────────────────────────────────────────────
+function fmtPct(x, signed) {
+  if (x == null || isNaN(x)) return '—';
+  const v = (x * 100);
+  const s = (signed && v > 0 ? '+' : '') + v.toFixed(1) + '%';
+  return s;
+}
+function fmtNum(x, dec) {
+  if (x == null || isNaN(x)) return '—';
+  return Number(x).toFixed(dec ?? 2);
+}
+function fmtMult(x) {
+  if (x == null || isNaN(x)) return '—';
+  return Number(x).toFixed(x < 10 ? 2 : 1) + 'x';
+}
+function fmtMktCapM(m) {
+  // value in millions
+  if (m == null || isNaN(m) || m <= 0) return '—';
+  if (m >= 1_000_000) return '$' + (m / 1_000_000).toFixed(2) + 'T';
+  if (m >= 1_000)     return '$' + Math.round(m / 1_000).toLocaleString() + 'B';
+  return '$' + Math.round(m).toLocaleString() + 'M';
+}
+function verdictBadge(v) {
+  const cls = {
+    'WATCHLIST': 'v-watchlist',
+    'DEEP DIVE': 'v-watchlist',
+    'REVIEW':    'v-review',
+    'PASS':      'v-pass',
+  }[v] || '';
+  return `<span class="verdict ${cls}">${v}</span>`;
+}
+function colorClassNum(v, goodThr, badThr) {
+  // higher is better
+  if (v == null || isNaN(v)) return '';
+  if (v >= goodThr) return 'green';
+  if (v <  badThr)  return 'red';
+  return '';
+}
+function colorClassPct(v, goodThr, badThr) {
+  if (v == null || isNaN(v)) return '';
+  if (v >= goodThr) return 'green';
+  if (v <  badThr)  return 'red';
+  return '';
+}
+function signClass(v) {
+  if (v == null || isNaN(v)) return '';
+  return v > 0 ? 'green' : (v < 0 ? 'red' : '');
+}
+function signedFmt(v, dec) {
+  if (v == null || isNaN(v)) return '—';
+  const n = Number(v).toFixed(dec ?? 2);
+  return (v > 0 ? '+' : '') + n;
+}
+
+// ── Render Summary, Quality, Valuation tables ─────────────────────
+function renderSector(sector) {
+  _activeSector = sector.slug;
+  const cfg = sector.config || {};
+  const blendAbs = (cfg.blend_absolute ?? 0.7) * 100;
+  const blendRel = (cfg.blend_relative ?? 0.3) * 100;
+  const hurdle   = (cfg.hurdle_rate    ?? 0.12) * 100;
+  const t10      = (cfg.t10_rate       ?? 0.043) * 100;
+  const tickers  = sector.tickers || [];
+
+  document.getElementById('screener-meta').innerHTML =
+    `Blend: ${blendAbs.toFixed(0)}% Absolute + ${blendRel.toFixed(0)}% Relative · ` +
+    `Hurdle: ${hurdle.toFixed(0)}% · T10: ${t10.toFixed(2)}% · Source: roic.ai API · ` +
+    `<span id="screener-live" style="color:var(--gray-mid)">Fetching prices...</span>`;
+
+  const summaryRows = tickers.map(t => {
+    const s = t.summary || {};
+    const v = t.valuation_metrics || {};
+    return `<tr>
+      <td class="ticker-cell">${t.ticker}</td>
+      <td>${t.name || ''}</td>
+      <td data-live-price="${t.ticker}" class="gold">—</td>
+      <td>${fmtNum(s.q_abs)}</td>
+      <td>${fmtNum(s.q_rel)}</td>
+      <td class="${colorClassNum(s.quality, 4.0, 3.0)}" style="font-weight:700">${fmtNum(s.quality)}</td>
+      <td class="${signClass(s.q_delta)}">${signedFmt(s.q_delta)}</td>
+      <td>${fmtNum(s.v_abs)}</td>
+      <td>${fmtNum(s.v_rel)}</td>
+      <td style="font-weight:700">${fmtNum(s.valuation)}</td>
+      <td class="${colorClassPct(s.irr, 0.12, 0.08)}" style="font-weight:${s.irr>=0.12?'700':'400'}">${fmtPct(s.irr)}</td>
+      <td>${fmtMktCapM(v.mkt_cap_m)}</td>
+      <td class="${colorClassNum(s.score_10, 7.5, 6.0)}" style="font-weight:700">${fmtNum(s.score_10)}</td>
+      <td>${verdictBadge(s.verdict)}</td>
+    </tr>`;
+  }).join('');
+
+  const qualityRows = tickers.map(t => {
+    const q = t.quality_metrics || {};
+    return `<tr>
+      <td class="ticker-cell">${t.ticker}</td>
+      <td class="${colorClassPct(q.roic_3yr, 0.20, 0.10)}">${fmtPct(q.roic_3yr)}</td>
+      <td class="${signClass(q.roic_trend)}">${fmtPct(q.roic_trend, true)}</td>
+      <td>${fmtNum(q.gm_cv)}</td>
+      <td class="${colorClassPct(q.op_margin, 0.20, 0.05)}">${fmtPct(q.op_margin)}</td>
+      <td>${fmtMult(q.fcf_conv)}</td>
+      <td class="${signClass(q.rev_cagr_5y)}">${fmtPct(q.rev_cagr_5y)}</td>
+      <td class="${signClass(q.eps_cagr_5y)}">${fmtPct(q.eps_cagr_5y)}</td>
+      <td class="${signClass(q.fcfps_cagr_5y)}">${fmtPct(q.fcfps_cagr_5y)}</td>
+      <td>${fmtMult(q.nd_ebitda)}</td>
+      <td class="${q.gw_pct_ta>=0.30?'red':''}">${fmtPct(q.gw_pct_ta)}</td>
+      <td>${fmtPct(q.capex_rev)}</td>
+      <td>${fmtNum(q.fcf_cv)}</td>
+    </tr>`;
+  }).join('');
+
+  const valuationRows = tickers.map(t => {
+    const v = t.valuation_metrics || {};
+    return `<tr>
+      <td class="ticker-cell">${t.ticker}</td>
+      <td>${fmtMult(v.ev_ebit)}</td>
+      <td>${fmtMult(v.pe)}</td>
+      <td>${fmtMult(v.ev_ebitda)}</td>
+      <td class="${colorClassPct(v.fcf_yield, 0.10, 0.05)}">${fmtPct(v.fcf_yield)}</td>
+      <td class="${colorClassPct(v.earn_yield, 0.10, 0.05)}">${fmtPct(v.earn_yield)}</td>
+      <td class="${signClass(v.ey_spread)}">${fmtPct(v.ey_spread, true)}</td>
+      <td>${fmtMult(v.peg)}</td>
+      <td class="${colorClassPct(v.base_irr, 0.15, 0.08)}">${fmtPct(v.base_irr)}</td>
+      <td class="${colorClassPct(v.full_irr, 0.12, 0.08)}">${fmtPct(v.full_irr)}</td>
+      <td>${fmtMktCapM(v.mkt_cap_m)}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `
+    <div class="section-hdr">Summary — click any column to sort</div>
+    <div style="overflow-x:auto">
+      <table class="stbl sortable" data-default-sort="12" data-default-dir="desc">
+        <thead><tr>
+          <th data-sort="text">Ticker</th><th data-sort="text">Company</th><th data-sort="number">Price</th>
+          <th data-sort="number">Q (Abs)</th><th data-sort="number">Q (Rel)</th><th data-sort="number">Quality</th><th data-sort="number">Q Δ</th>
+          <th data-sort="number">V (Abs)</th><th data-sort="number">V (Rel)</th><th data-sort="number">Valuation</th>
+          <th data-sort="percent">IRR</th><th data-sort="mktcap">Mkt Cap</th>
+          <th data-sort="number" title="Quality + Valuation, on a /10 scale">Score /10</th>
+          <th data-sort="verdict">Verdict</th>
+        </tr></thead>
+        <tbody>${summaryRows}</tbody>
+      </table>
+    </div>
+
+    <div class="section-hdr">Quality Metrics</div>
+    <div style="overflow-x:auto">
+      <table class="stbl sortable">
+        <thead><tr>
+          <th data-sort="text">Ticker</th><th data-sort="percent">ROIC 3yr</th><th data-sort="percent">ROIC Trend</th>
+          <th data-sort="number">GM CV</th><th data-sort="percent">Op Margin</th><th data-sort="multiplier">FCF Conv</th>
+          <th data-sort="percent">Rev CAGR 5y</th><th data-sort="percent">EPS CAGR 5y</th><th data-sort="percent">FCF/sh CAGR</th>
+          <th data-sort="multiplier">ND/EBITDA</th><th data-sort="percent">GW+Int %TA</th><th data-sort="percent">Capex/Rev</th>
+          <th data-sort="number">FCF CV</th>
+        </tr></thead>
+        <tbody>${qualityRows}</tbody>
+      </table>
+    </div>
+
+    <div class="section-hdr">Valuation Metrics</div>
+    <div style="overflow-x:auto">
+      <table class="stbl sortable">
+        <thead><tr>
+          <th data-sort="text">Ticker</th><th data-sort="multiplier">EV/EBIT</th><th data-sort="multiplier">P/E</th>
+          <th data-sort="multiplier">EV/EBITDA</th><th data-sort="percent">FCF Yield</th><th data-sort="percent">Earn Yield</th>
+          <th data-sort="percent">EY Spread</th><th data-sort="multiplier">PEG</th>
+          <th data-sort="percent">Base IRR</th><th data-sort="percent">Full IRR</th><th data-sort="mktcap">Mkt Cap ($M)</th>
+        </tr></thead>
+        <tbody>${valuationRows}</tbody>
+      </table>
+    </div>`;
+
+  document.getElementById('sector-content').innerHTML = html;
+  initSortableTables();
+  fetchScreenerPrices(tickers.map(t => t.ticker));
+}
+
+async function loadSector(slug) {
+  if (_sectorCache[slug]) {
+    renderSector(_sectorCache[slug]);
+    return;
+  }
   try {
-    const fetches = TICKERS.map(t =>
+    const r = await fetch(`/data/sectors/${slug}.json`, {cache: 'no-cache'});
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const json = await r.json();
+    _sectorCache[slug] = json;
+    renderSector(json);
+  } catch (e) {
+    console.error('Sector load failed:', slug, e);
+    document.getElementById('sector-content').innerHTML =
+      `<div class="meta" style="color:var(--red)">Failed to load sector: ${slug}</div>`;
+  }
+}
+
+function showSector(slug, btn) {
+  document.querySelectorAll('.sector-tab').forEach(el => el.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  loadSector(slug);
+}
+
+async function initSectors() {
+  try {
+    const r = await fetch('/data/sectors/index.json', {cache: 'no-cache'});
+    const idx = await r.json();
+    const tabsEl = document.getElementById('sector-tabs');
+    const sectors = idx.sectors || [];
+    if (!sectors.length) {
+      tabsEl.innerHTML = '<span style="color:var(--gray-mid);font-size:13px">No sectors available</span>';
+      return;
+    }
+    tabsEl.innerHTML = sectors.map((s, i) =>
+      `<button class="sector-tab${i===0?' active':''}" onclick="showSector('${s.slug}',this)">${s.name}</button>`
+    ).join('') +
+    '<button class="sector-tab" disabled style="opacity:0.4;cursor:default" title="Drop a JSON in /public/data/sectors/ and register it in index.json">+ Add Sector</button>';
+    // Load first sector
+    loadSector(sectors[0].slug);
+  } catch (e) {
+    console.error('Sectors index load failed:', e);
+    document.getElementById('sector-tabs').innerHTML =
+      '<span style="color:var(--red);font-size:13px">Failed to load sector index</span>';
+  }
+}
+
+// ── Live prices (Finnhub) ────────────────────────────────────────
+async function fetchScreenerPrices(tickers) {
+  if (!tickers || !tickers.length) return;
+  try {
+    const fetches = tickers.map(t =>
       fetch(`https://finnhub.io/api/v1/quote?symbol=${t}&token=${FH_KEY}`)
         .then(r => r.json())
         .then(d => ({ ticker: t, price: d.c }))
@@ -330,9 +479,10 @@ async function fetchScreenerPrices() {
       note.textContent = 'Live prices · ' + new Date().toLocaleTimeString();
       note.style.color = 'var(--green)';
     }
-  } catch(e) { console.error('Finnhub error:', e); }
+  } catch (e) { console.error('Finnhub error:', e); }
 }
-fetchScreenerPrices();
+
+initSectors();
 
 // ═══════════════════════════════════════════════════════════════════
 // SORTABLE TABLES — click any <th data-sort="..."> in .stbl.sortable
