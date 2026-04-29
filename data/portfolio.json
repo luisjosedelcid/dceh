@@ -1,0 +1,25 @@
+{
+  "fund_name": "DCE Holdings",
+  "currency": "USD",
+  "inception_date": "2024-01-15",
+  "inception_value": 100000,
+  "benchmark": "^GSPC",
+  "benchmark_label": "S&P 500",
+  "benchmark_inception_value": 4783.83,
+  "positions": [
+    {
+      "ticker": "BKNG",
+      "name": "Booking Holdings",
+      "shares": 5,
+      "cost_basis_total": 18500
+    },
+    {
+      "ticker": "SAP",
+      "name": "SAP SE",
+      "shares": 50,
+      "cost_basis_total": 8200
+    }
+  ],
+  "cash": 5000,
+  "_notes": "Edita este archivo y commit a main para actualizar. inception_value y benchmark_inception_value deben ser el valor del fondo y del SP500 en inception_date."
+}

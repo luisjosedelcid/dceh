@@ -174,6 +174,21 @@
   <!-- TAB: REPORTS -->
   <div class="tab-panel active" data-panel="reports">
 
+  <!-- DAILY REPORT (on-demand, generated, no storage) -->
+  <div class="section" style="border-top-color:var(--gold);">
+    <div class="section-head">
+      <div class="section-name">Daily Report</div>
+      <div class="section-meta">On-demand</div>
+    </div>
+    <div class="section-desc">
+      Generates a branded PDF with current NAV, day change, YTD vs S&amp;P 500, and Inception CAGR. Reads <code style="font-family:Menlo,monospace;font-size:11px;color:var(--navy)">/data/portfolio.json</code> for positions; pulls live prices from Finnhub and the S&amp;P 500 from Yahoo Finance. Not saved — downloaded directly.
+    </div>
+    <div style="padding:0 24px 22px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <button class="btn" type="button" id="btn-daily-generate">Generate Daily Report</button>
+      <span id="daily-status" style="font-size:11px;color:var(--gray-mid);font-style:italic"></span>
+    </div>
+  </div>
+
   <!-- MONTHLY CLOSE -->
   <div class="section">
     <div class="section-head">
@@ -622,6 +637,41 @@ document.addEventListener('click', async e => {
 // ── SIGN OUT clears user ─────────────────────────────────
 document.getElementById('btn-admin').addEventListener('click', () => {
   if (isAdmin()) sessionStorage.removeItem(USER_KEY);
+});
+
+// ── DAILY REPORT — generate & download ───────────────────
+document.getElementById('btn-daily-generate').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-daily-generate');
+  const status = document.getElementById('daily-status');
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Generating…';
+  status.textContent = 'Fetching live prices and building PDF…';
+  status.style.color = 'var(--gray-mid)';
+  try {
+    const r = await fetch('/api/generate-daily-report', { method: 'GET' });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${r.status}`);
+    }
+    const blob = await r.blob();
+    const today = new Date().toISOString().slice(0, 10);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `DCE_Daily_Report_${today}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    status.textContent = 'Downloaded.';
+    status.style.color = 'var(--green)';
+  } catch (err) {
+    status.textContent = 'Error: ' + (err.message || err);
+    status.style.color = 'var(--red)';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
 });
 
 // INIT
