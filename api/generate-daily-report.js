@@ -165,17 +165,24 @@ export default async function handler(req, res) {
     const sp500_ytd_start = ytdStartPrices[benchmarkSym] ?? null;
     const ytd_sp500_pct = (sp500_now && sp500_ytd_start) ? ((sp500_now - sp500_ytd_start) / sp500_ytd_start) * 100 : null;
 
-    // Inception: fund total return uses inception cost basis. CAGR if >0.05 yrs, else show total return.
+    // Inception: fund total return uses inception cost basis. CAGR only if >1 year (GIPS-style).
     const fund_total_return_pct = total_cost_basis > 0 ? ((total_value / total_cost_basis) - 1) * 100 : null;
     const years = yearsBetween(inceptionDate, now);
-    const fund_cagr = (years > 0.05 && total_cost_basis > 0)
+    const showCAGR = years >= 1.0;
+    const fund_cagr = (showCAGR && total_cost_basis > 0)
       ? (Math.pow(total_value / total_cost_basis, 1 / years) - 1) * 100
       : null;
 
     const sp500_total_return_pct = (sp500_now && bmInceptionValue) ? ((sp500_now / bmInceptionValue) - 1) * 100 : null;
-    const sp500_cagr = (sp500_total_return_pct !== null && years > 0.05)
+    const sp500_cagr = (sp500_total_return_pct !== null && showCAGR)
       ? (Math.pow(sp500_now / bmInceptionValue, 1 / years) - 1) * 100
       : null;
+
+    // Hide YTD row if inception is within the current calendar year
+    // (would be redundant with 'Total return since inception')
+    const inceptionYear = inceptionDate.getUTCFullYear();
+    const currentYear = now.getUTCFullYear();
+    const showYTD = inceptionYear < currentYear;
 
     // 7) Build PDF
     const doc = new PDFDocument({
@@ -220,21 +227,32 @@ export default async function handler(req, res) {
         sub: `Day ${fmtPct(day_change_total_pct)} · ${fmtUSD(day_change_total)}`,
         subColor: pctColor(day_change_total_pct),
       },
-      {
+    ];
+    if (showYTD) {
+      heroCells.push({
         label: `YTD vs ${benchmarkLabel.toUpperCase()}`,
         value: fmtPct(ytd_fund_pct),
         sub: `${benchmarkLabel}: ${fmtPct(ytd_sp500_pct)} · vs ${fmtPct((ytd_fund_pct ?? 0) - (ytd_sp500_pct ?? 0))}`,
         valueColor: pctColor(ytd_fund_pct),
         subColor: GRAY,
-      },
-      {
-        label: years > 0.05 ? 'INCEPTION CAGR' : 'INCEPTION RETURN',
-        value: years > 0.05 ? fmtPct(fund_cagr) : fmtPct(fund_total_return_pct),
-        sub: `${benchmarkLabel}: ${fmtPct(years > 0.05 ? sp500_cagr : sp500_total_return_pct)} · ${years.toFixed(2)} yrs`,
-        valueColor: pctColor(years > 0.05 ? fund_cagr : fund_total_return_pct),
+      });
+    }
+    heroCells.push({
+      label: showCAGR ? 'INCEPTION CAGR' : 'INCEPTION RETURN',
+      value: showCAGR ? fmtPct(fund_cagr) : fmtPct(fund_total_return_pct),
+      sub: `${benchmarkLabel}: ${fmtPct(showCAGR ? sp500_cagr : sp500_total_return_pct)} · ${years.toFixed(2)} yrs`,
+      valueColor: pctColor(showCAGR ? fund_cagr : fund_total_return_pct),
+      subColor: GRAY,
+    });
+    if (!showYTD) {
+      // Add a 3rd cell on the right showing inception date itself for visual balance
+      heroCells.push({
+        label: 'INCEPTION',
+        value: inceptionDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        sub: `Cost basis ${fmtUSD(total_cost_basis)} · ${Math.round(years * 365.25)} days held`,
         subColor: GRAY,
-      },
-    ];
+      });
+    }
     heroCells.forEach((cell, i) => {
       const x = 54 + cellW * i;
       doc.fillColor(GOLD).font('Helvetica').fontSize(7)
@@ -328,10 +346,12 @@ export default async function handler(req, res) {
     const perfTable = [
       ['', 'DCE Holdings', benchmarkLabel, 'Excess'],
       ['Day', fmtPct(day_change_total_pct), fmtPct(quotes[benchmarkSym]?.dp), fmtPct((day_change_total_pct ?? 0) - (quotes[benchmarkSym]?.dp ?? 0))],
-      ['YTD', fmtPct(ytd_fund_pct), fmtPct(ytd_sp500_pct), fmtPct((ytd_fund_pct ?? 0) - (ytd_sp500_pct ?? 0))],
-      ['Total return (since inception)', fmtPct(fund_total_return_pct), fmtPct(sp500_total_return_pct), fmtPct((fund_total_return_pct ?? 0) - (sp500_total_return_pct ?? 0))],
     ];
-    if (years > 0.05) {
+    if (showYTD) {
+      perfTable.push(['YTD', fmtPct(ytd_fund_pct), fmtPct(ytd_sp500_pct), fmtPct((ytd_fund_pct ?? 0) - (ytd_sp500_pct ?? 0))]);
+    }
+    perfTable.push(['Total return (since inception)', fmtPct(fund_total_return_pct), fmtPct(sp500_total_return_pct), fmtPct((fund_total_return_pct ?? 0) - (sp500_total_return_pct ?? 0))]);
+    if (showCAGR) {
       perfTable.push(['CAGR (since inception)', fmtPct(fund_cagr), fmtPct(sp500_cagr), fmtPct((fund_cagr ?? 0) - (sp500_cagr ?? 0))]);
     }
     const perfColW = [180, 110, 110, 100];
