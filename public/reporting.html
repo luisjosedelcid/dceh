@@ -169,6 +169,7 @@
   <div class="tabs">
     <button class="tab active" data-tab="reports" type="button">Reports</button>
     <button class="tab" data-tab="activity" type="button" id="tab-activity">Activity log</button>
+    <button class="tab" data-tab="ideafeed" type="button" id="tab-ideafeed">Idea Feed sources</button>
   </div>
 
   <!-- TAB: REPORTS -->
@@ -247,6 +248,50 @@
   </div>
 
   </div><!-- /tab-panel reports -->
+
+  <!-- TAB: IDEA FEED -->
+  <div class="tab-panel" data-panel="ideafeed">
+    <div class="section" style="border-top-color:var(--gold)">
+      <div class="section-head">
+        <div class="section-name">Idea Feed Sources</div>
+        <div class="section-meta">RSS · cron every 6h</div>
+      </div>
+      <div class="section-desc">
+        Manage the blog/Substack/podcast sources monitored by the Idea Feed. Tickers are extracted via regex with an LLM fallback. View results in <a href="/screener#ideafeed" style="color:var(--gold)">Find → Idea Feed</a>.
+      </div>
+      <div style="padding:0 24px 22px">
+        <div id="if-admin-list" style="margin-bottom:18px"><div class="loading-files">Sign in to manage sources</div></div>
+
+        <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:18px 0 10px">Add new source</h4>
+        <form onsubmit="return addIdeaFeedSource(event)" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px">
+          <input type="text" name="name"    required placeholder="Display name"  style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <select name="kind" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+            <option value="blog">Blog</option>
+            <option value="substack">Substack</option>
+            <option value="podcast">Podcast</option>
+            <option value="twitter">Twitter (manual)</option>
+            <option value="other">Other</option>
+          </select>
+          <input type="url"  name="url"     required placeholder="https://example.com"      style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <input type="url"  name="rss_url" required placeholder="https://example.com/feed" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <input type="text" name="notes"            placeholder="Notes (optional)"        style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 2">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray-mid)">
+            <input type="checkbox" name="is_paid"> Paywalled (preview-only)
+          </label>
+          <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end">
+            <span id="if-add-status" style="font-size:11px;font-style:italic"></span>
+            <button class="btn" type="submit">Add source</button>
+          </div>
+        </form>
+
+        <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:24px 0 10px">Manual refresh</h4>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <button class="btn" type="button" id="if-run-now" onclick="runFeedRefreshNow()">Run cron now</button>
+          <span id="if-run-status" style="font-size:11px;font-style:italic"></span>
+        </div>
+      </div>
+    </div>
+  </div><!-- /tab-panel ideafeed -->
 
   <!-- TAB: ACTIVITY -->
   <div class="tab-panel" data-panel="activity">
@@ -534,6 +579,7 @@ document.querySelectorAll('.tab').forEach(t => {
     t.classList.add('active');
     document.querySelector(`.tab-panel[data-panel="${t.dataset.tab}"]`).classList.add('active');
     if (t.dataset.tab === 'activity') loadAudit();
+    if (t.dataset.tab === 'ideafeed') loadIdeaFeedSources();
   });
 });
 
@@ -673,6 +719,121 @@ document.getElementById('btn-daily-generate').addEventListener('click', async ()
     btn.textContent = original;
   }
 });
+
+// ═══ IDEA FEED SOURCES (admin) ════════════════════════════════════════════
+async function loadIdeaFeedSources() {
+  const cont = document.getElementById('if-admin-list');
+  if (!cont) return;
+  if (!isAdmin()) {
+    cont.innerHTML = '<div class="loading-files">Sign in as admin to manage sources</div>';
+    return;
+  }
+  cont.innerHTML = '<div class="loading-files">Loading…</div>';
+  try {
+    const token = sessionStorage.getItem(TOKEN_KEY);
+    const r = await fetch('/api/admin/idea-feed-sources', { headers: { 'x-admin-token': token } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    const sources = data.sources || [];
+    if (sources.length === 0) { cont.innerHTML = '<div class="loading-files">No sources yet.</div>'; return; }
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--navy);color:var(--white)"><th style="text-align:left;padding:8px 10px">Name</th><th style="text-align:left;padding:8px 10px">Kind</th><th style="text-align:left;padding:8px 10px">RSS URL</th><th style="padding:8px 10px">Paid</th><th style="padding:8px 10px">Active</th><th style="padding:8px 10px"></th></tr></thead><tbody>';
+    for (const s of sources) {
+      html += `<tr style="border-bottom:1px solid var(--rule)">
+        <td style="padding:8px 10px"><strong>${(s.name||'').replace(/[<>&]/g,'')}</strong><div style="font-size:10px;color:var(--gray-mid)">${(s.url||'').replace(/[<>&]/g,'')}</div></td>
+        <td style="padding:8px 10px;text-transform:capitalize">${s.kind}</td>
+        <td style="padding:8px 10px;font-family:Menlo,monospace;font-size:10px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(s.rss_url||'').replace(/[<>&]/g,'')}</td>
+        <td style="padding:8px 10px;text-align:center">${s.is_paid ? 'Yes' : 'No'}</td>
+        <td style="padding:8px 10px;text-align:center">
+          <label style="cursor:pointer"><input type="checkbox" ${s.active?'checked':''} onchange="toggleSourceActive(${s.id}, this.checked)"></label>
+        </td>
+        <td style="padding:8px 10px;text-align:right">
+          <button class="btn" style="font-size:10px;padding:4px 10px;background:transparent;color:var(--red);border:1px solid var(--red)" onclick="deleteSource(${s.id}, '${(s.name||'').replace(/'/g,"\\'")}')">Delete</button>
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    cont.innerHTML = html;
+  } catch (e) {
+    cont.innerHTML = '<div class="loading-files" style="color:var(--red)">Error: ' + e.message + '</div>';
+  }
+}
+
+async function toggleSourceActive(id, active) {
+  const token = sessionStorage.getItem(TOKEN_KEY);
+  await fetch('/api/admin/idea-feed-sources?id=' + id, {
+    method: 'PATCH',
+    headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ active }),
+  });
+}
+
+async function deleteSource(id, name) {
+  if (!confirm('Delete source "' + name + '"? This will also remove its items.')) return;
+  const token = sessionStorage.getItem(TOKEN_KEY);
+  const r = await fetch('/api/admin/idea-feed-sources?id=' + id, {
+    method: 'DELETE',
+    headers: { 'x-admin-token': token },
+  });
+  if (r.ok) loadIdeaFeedSources();
+  else alert('Delete failed');
+}
+
+async function addIdeaFeedSource(ev) {
+  ev.preventDefault();
+  const f = ev.target;
+  const body = {
+    name: f.name.value.trim(),
+    url: f.url.value.trim(),
+    rss_url: f.rss_url.value.trim(),
+    kind: f.kind.value,
+    is_paid: f.is_paid.checked,
+    notes: f.notes.value.trim() || null,
+  };
+  const status = document.getElementById('if-add-status');
+  status.textContent = 'Saving…';
+  status.style.color = 'var(--gray-mid)';
+  const token = sessionStorage.getItem(TOKEN_KEY);
+  try {
+    const r = await fetch('/api/admin/idea-feed-sources', {
+      method: 'POST',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    status.textContent = 'Added.';
+    status.style.color = 'var(--green)';
+    f.reset();
+    loadIdeaFeedSources();
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = 'var(--red)';
+  }
+  return false;
+}
+
+async function runFeedRefreshNow() {
+  const btn = document.getElementById('if-run-now');
+  const status = document.getElementById('if-run-status');
+  const secret = prompt('CRON_SECRET (env var) — leave blank to skip:');
+  if (secret === null) return;
+  btn.disabled = true;
+  status.textContent = 'Running… this may take 30-60s';
+  status.style.color = 'var(--gray-mid)';
+  try {
+    const r = await fetch('/api/cron/refresh-feed', { headers: { 'x-cron-secret': secret } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    status.innerHTML = `Done — ${data.new_items} new / ${data.fetched} fetched / ${data.llm_calls} LLM calls / ${data.ms}ms`
+      + (data.errors && data.errors.length ? '<div style="color:var(--red);font-size:10px;margin-top:4px">' + data.errors.join(' | ') + '</div>' : '');
+    status.style.color = 'var(--green)';
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = 'var(--red)';
+  } finally {
+    btn.disabled = false;
+  }
+}
 
 // INIT
 refreshAdminUI();
