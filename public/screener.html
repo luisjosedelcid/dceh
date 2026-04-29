@@ -216,7 +216,12 @@
     </div>
 
     <div class="sup-controls" style="margin-top:14px">
-      <label>Window:</label>
+      <label>View:</label>
+      <select id="if-view" onchange="loadIdeaFeed()">
+        <option value="tickers" selected>Tickers — table (watchlist style)</option>
+        <option value="news">News — chronological feed</option>
+      </select>
+      <label style="margin-left:14px">Window:</label>
       <select id="if-days" onchange="loadIdeaFeed()">
         <option value="7">Last 7 days</option>
         <option value="21" selected>Last 21 days</option>
@@ -1114,6 +1119,12 @@ async function loadIdeaFeed() {
     cont.innerHTML = '';
     return;
   }
+
+  const view = document.getElementById('if-view').value || 'tickers';
+  if (view === 'tickers') {
+    await renderIdeaFeedTickers(items, status, cont);
+    return;
+  }
   status.textContent = items.length + ' items';
 
   // Render grouped by day
@@ -1150,6 +1161,96 @@ async function loadIdeaFeed() {
     html += '</div>';
   }
   cont.innerHTML = html;
+}
+
+// ─── Idea Feed: aggregate items by ticker and render watchlist-style table ───
+async function renderIdeaFeedTickers(items, status, cont) {
+  // 1. Aggregate
+  const map = new Map(); // ticker -> { ticker, mentions:[], sources:Set }
+  for (const it of items) {
+    for (const t of (it.tickers || [])) {
+      if (!map.has(t)) map.set(t, { ticker: t, mentions: [], sources: new Set() });
+      const e = map.get(t);
+      e.mentions.push(it);
+      const src = _ifSourcesIndex[it.source_id];
+      if (src) e.sources.add(src.name);
+    }
+  }
+  const rows = [...map.values()].sort((a, b) => b.mentions.length - a.mentions.length);
+
+  if (rows.length === 0) {
+    status.textContent = items.length + ' items — 0 tickers extracted in this window. Switch to News view to see all items.';
+    cont.innerHTML = '';
+    return;
+  }
+  status.textContent = rows.length + ' tickers across ' + items.length + ' items';
+
+  // 2. Skeleton
+  cont.innerHTML = `
+    <div style="overflow-x:auto;margin-top:6px">
+      <table class="stbl">
+        <thead><tr>
+          <th style="text-align:left">Ticker</th>
+          <th style="text-align:left">Company</th>
+          <th style="text-align:left">Sector</th>
+          <th>Price</th>
+          <th>Day %</th>
+          <th>Mkt Cap</th>
+          <th>Mentions</th>
+          <th style="text-align:left">Latest mention</th>
+          <th style="text-align:left">Sources</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="if-tbl-body">
+          ${rows.map(r => `<tr data-tk="${_ifEscape(r.ticker)}">
+            <td class="ticker-cell" style="text-align:left">${_ifEscape(r.ticker)}</td>
+            <td style="text-align:left;color:var(--gray-mid)">…</td>
+            <td style="text-align:left;color:var(--gray-mid);font-size:11px">—</td>
+            <td class="gold" style="font-weight:700">—</td>
+            <td>—</td>
+            <td>—</td>
+            <td style="font-weight:700">${r.mentions.length}</td>
+            <td style="text-align:left;font-size:11px;max-width:280px">
+              <a href="${_ifEscape(r.mentions[0].url || '#')}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:none">${_ifEscape(r.mentions[0].title)}</a>
+              <div style="color:var(--gray-mid);font-size:10px;margin-top:2px">${_ifFmtDate(r.mentions[0].published_at || r.mentions[0].fetched_at)}</div>
+            </td>
+            <td style="text-align:left;color:var(--gray-mid);font-size:11px">${_ifEscape([...r.sources].join(', '))}</td>
+            <td>
+              <a href="/company.html?ticker=${encodeURIComponent(r.ticker)}" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px">Open →</a>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  // 3. Enrich with Finnhub (in parallel, throttled to ~30/sec)
+  const tbody = document.getElementById('if-tbl-body');
+  await Promise.all(rows.map(async (r, i) => {
+    await new Promise(res => setTimeout(res, i * 35)); // gentle throttle
+    try {
+      const [quote, profile] = await Promise.all([
+        fetch(`https://finnhub.io/api/v1/quote?symbol=${r.ticker}&token=${FH_KEY}`).then(x => x.json()).catch(() => ({})),
+        fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${r.ticker}&token=${FH_KEY}`).then(x => x.json()).catch(() => ({})),
+      ]);
+      const tr = tbody.querySelector(`tr[data-tk="${r.ticker}"]`);
+      if (!tr) return;
+      const tds = tr.children;
+      const name = profile?.name || r.ticker;
+      const sector = profile?.finnhubIndustry || '—';
+      const price = quote?.c;
+      const dp = quote?.dp;
+      const dpClass = dp == null ? '' : (dp >= 0 ? 'green' : 'red');
+      const dpSign = dp == null ? '' : (dp >= 0 ? '+' : '');
+      tds[1].textContent = name;
+      tds[1].style.color = 'var(--navy)';
+      tds[2].textContent = sector;
+      tds[3].textContent = price ? '$' + price.toFixed(2) : '—';
+      tds[4].textContent = dp == null ? '—' : dpSign + dp.toFixed(2) + '%';
+      tds[4].className = dpClass;
+      tds[4].style.fontWeight = '700';
+      tds[5].textContent = fmtMktCap(profile?.marketCapitalization);
+    } catch (e) { /* ignore */ }
+  }));
 }
 
 // Submit ticker filter on Enter
