@@ -121,6 +121,7 @@
   <!-- ═══ MODE TABS ═══ -->
   <div class="mode-tabs">
     <button class="mode-tab active" data-mode="sectors" onclick="showMode('sectors',this)">Sector Screener</button>
+    <button class="mode-tab" data-mode="watchlist" onclick="showMode('watchlist',this)">Watchlist <span class="count" id="watchlist-count">—</span></button>
     <button class="mode-tab" data-mode="superinvestors" onclick="showMode('superinvestors',this)">Superinvestors <span class="count">10</span></button>
   </div>
 
@@ -209,7 +210,33 @@
   </div>
 
   <!-- ════════════════════════════════════════════════════════════ -->
-  <!-- MODE 2: SUPERINVESTORS                                        -->
+  <!-- MODE 2: WATCHLIST                                             -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="mode-pane" id="mode-watchlist">
+    <div class="meta">Names on the radar — quick view, no Columbia model required. Source: <code style="font-family:Menlo,monospace;font-size:11px">/data/watchlist.json</code> + Finnhub live data.</div>
+
+    <div style="overflow-x:auto;margin-top:18px">
+      <table class="stbl">
+        <thead><tr>
+          <th style="text-align:left">Ticker</th>
+          <th style="text-align:left">Company</th>
+          <th style="text-align:left">Sector</th>
+          <th>Price</th>
+          <th>Day %</th>
+          <th>Mkt Cap</th>
+          <th style="text-align:left">Thesis</th>
+          <th>Added</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="watchlist-body">
+          <tr><td colspan="9" style="text-align:center;color:var(--gray-mid);font-style:italic;padding:24px">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- MODE 3: SUPERINVESTORS                                        -->
   <!-- ════════════════════════════════════════════════════════════ -->
   <div class="mode-pane" id="mode-superinvestors">
     <div class="meta">DCE Quality-Value Panel · 13F holdings via Fintel API · Latest filed quarter</div>
@@ -301,6 +328,72 @@ async function fetchScreenerPrices() {
   } catch(e) { console.error('Finnhub error:', e); }
 }
 fetchScreenerPrices();
+
+// ═══════════════════════════════════════════════════════════════════
+// WATCHLIST — quick view, live data only (no Columbia)
+// ═══════════════════════════════════════════════════════════════════
+function fmtMktCap(mc) {
+  // Finnhub returns market cap in USD millions
+  if (!mc || mc <= 0) return '—';
+  if (mc >= 1_000_000) return '$' + (mc / 1_000_000).toFixed(2) + 'T';
+  if (mc >= 1_000)     return '$' + (mc / 1_000).toFixed(1) + 'B';
+  return '$' + Math.round(mc) + 'M';
+}
+
+function escapeHtmlW(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function loadWatchlist() {
+  const tbody = document.getElementById('watchlist-body');
+  try {
+    const r = await fetch('/data/watchlist.json', { cache: 'no-store' });
+    const data = await r.json();
+    const items = data.items || [];
+    document.getElementById('watchlist-count').textContent = items.length;
+
+    if (items.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--gray-mid);font-style:italic;padding:24px">No tickers in watchlist yet. Edit <code>public/data/watchlist.json</code> to add.</td></tr>`;
+      return;
+    }
+
+    const enriched = await Promise.all(items.map(async it => {
+      const [quote, profile] = await Promise.all([
+        fetch(`https://finnhub.io/api/v1/quote?symbol=${it.ticker}&token=${FH_KEY}`).then(r => r.json()).catch(() => ({})),
+        fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${it.ticker}&token=${FH_KEY}`).then(r => r.json()).catch(() => ({})),
+      ]);
+      return { ...it, quote, profile };
+    }));
+
+    tbody.innerHTML = enriched.map(it => {
+      const price = it.quote?.c;
+      const dp = it.quote?.dp;
+      const dpClass = dp == null ? '' : (dp >= 0 ? 'green' : 'red');
+      const dpSign = dp == null ? '' : (dp >= 0 ? '+' : '');
+      const sector = it.profile?.finnhubIndustry || '—';
+      const mktCap = fmtMktCap(it.profile?.marketCapitalization);
+      const company = it.name || it.profile?.name || it.ticker;
+      const action = it.link
+        ? `<a href="${escapeHtmlW(it.link)}" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px">Open →</a>`
+        : '';
+      return `<tr>
+        <td class="ticker-cell" style="text-align:left">${escapeHtmlW(it.ticker)}</td>
+        <td style="text-align:left">${escapeHtmlW(company)}</td>
+        <td style="text-align:left;color:var(--gray-mid);font-size:11px">${escapeHtmlW(sector)}</td>
+        <td class="gold" style="font-weight:700">${price ? '$' + price.toFixed(2) : '—'}</td>
+        <td class="${dpClass}" style="font-weight:700">${dp == null ? '—' : dpSign + dp.toFixed(2) + '%'}</td>
+        <td>${mktCap}</td>
+        <td style="text-align:left;color:var(--gray-mid);font-size:11px;max-width:240px">${escapeHtmlW(it.thesis || '')}</td>
+        <td style="color:var(--gray-mid);font-size:11px">${escapeHtmlW(it.added || '')}</td>
+        <td>${action}</td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    console.error('Watchlist load error:', e);
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);padding:24px">Error loading watchlist</td></tr>`;
+  }
+}
+loadWatchlist();
 
 // ═══════════════════════════════════════════════════════════════════
 // SUPERINVESTORS — DCE Quality-Value Panel (10 funds)

@@ -1,0 +1,12 @@
+{
+  "_notes": "Watchlist DCE Holdings. Edit and commit. Live price/sector/marketcap auto-fetched via Finnhub.",
+  "items": [
+    {
+      "ticker": "ADBE",
+      "name": "Adobe Inc.",
+      "added": "2026-04-29",
+      "thesis": "",
+      "link": null
+    }
+  ]
+}
