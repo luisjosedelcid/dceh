@@ -76,7 +76,8 @@
 
   footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
 </style>
-<link rel="stylesheet" href="/responsive.css"></head>
+<link rel="stylesheet" href="/responsive.css"><script src="/dce-auth.js" defer></script>
+</head>
 <body>
 
 <header>
@@ -151,12 +152,12 @@ let ALERTS_BY_TICKER = {};    // { TICKER: { floor: {...} | null, ceiling: {...}
 let LAST_PRICES = {};         // { TICKER: live price }
 
 function isAdmin() {
-  const tok = sessionStorage.getItem('dce_admin_token');
-  const exp = parseInt(sessionStorage.getItem('dce_admin_token_exp') || '0', 10);
+  const tok = localStorage.getItem('dce_admin_token');
+  const exp = parseInt(localStorage.getItem('dce_admin_token_exp') || '0', 10);
   if (!tok || !exp || exp < Math.floor(Date.now()/1000)) return false;
   return true;
 }
-function adminToken() { return sessionStorage.getItem('dce_admin_token'); }
+function adminToken() { return localStorage.getItem('dce_admin_token'); }
 
 function renderAlertCell(ticker, type, livePrice) {
   const a = (ALERTS_BY_TICKER[ticker] || {})[type];

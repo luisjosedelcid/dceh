@@ -132,8 +132,9 @@
   .sfile-history{font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-mid);background:transparent;border:1px solid var(--rule);cursor:pointer;padding:6px 10px;margin-left:8px;font-family:inherit;flex-shrink:0}
   .sfile-history:hover{color:var(--navy);border-color:var(--navy)}
 </style>
-<link rel="stylesheet" href="/responsive.css"></head>
-<body>
+<link rel="stylesheet" href="/responsive.css"><script src="/dce-auth.js" defer></script>
+</head>
+<body data-dce-auth="manual">
 
 <header>
   <div class="logo">DCE <span>Holdings</span></div>
@@ -448,24 +449,24 @@
 
 <script>
 const TOKEN_KEY = 'dce_admin_token';
-const TOKEN_EXP_KEY = 'dce_admin_exp';
+const TOKEN_EXP_KEY = 'dce_admin_token_exp';
 const USER_KEY = 'dce_admin_user';
 const FOLDERS = ['monthly', 'committee', 'annual'];
 
 function isAdmin() {
-  const tok = sessionStorage.getItem(TOKEN_KEY);
-  const exp = parseInt(sessionStorage.getItem(TOKEN_EXP_KEY) || '0', 10);
+  const tok = localStorage.getItem(TOKEN_KEY);
+  const exp = parseInt(localStorage.getItem(TOKEN_EXP_KEY) || '0', 10);
   if (!tok || !exp) return false;
   if (exp < Math.floor(Date.now() / 1000)) {
-    sessionStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem(TOKEN_EXP_KEY);
-    sessionStorage.removeItem(USER_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_EXP_KEY);
+    localStorage.removeItem(USER_KEY);
     return false;
   }
   return true;
 }
 function currentUser() {
-  try { return JSON.parse(sessionStorage.getItem(USER_KEY) || 'null'); } catch { return null; }
+  try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch { return null; }
 }
 function fmtTs(iso) {
   if (!iso) return '';
@@ -561,8 +562,8 @@ const errEl = document.getElementById('login-err');
 
 document.getElementById('btn-admin').addEventListener('click', () => {
   if (isAdmin()) {
-    sessionStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem(TOKEN_EXP_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_EXP_KEY);
     refreshAdminUI();
     return;
   }
@@ -594,9 +595,9 @@ document.getElementById('btn-submit').addEventListener('click', async () => {
       errEl.textContent = data.error || 'Invalid email or password';
       return;
     }
-    sessionStorage.setItem(TOKEN_KEY, data.token);
-    sessionStorage.setItem(TOKEN_EXP_KEY, String(data.expiresAt));
-    if (data.user) sessionStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    localStorage.setItem(TOKEN_KEY, data.token);
+    localStorage.setItem(TOKEN_EXP_KEY, String(data.expiresAt));
+    if (data.user) localStorage.setItem(USER_KEY, JSON.stringify(data.user));
     modal.classList.remove('show');
     refreshAdminUI();
   } catch (e) {
@@ -617,7 +618,7 @@ FOLDERS.forEach(folder => {
     const progressEl = document.querySelector(`[data-progress="${folder}"]`);
     progressEl.textContent = `Uploading ${file.name}…`;
     try {
-      const token = sessionStorage.getItem(TOKEN_KEY);
+      const token = localStorage.getItem(TOKEN_KEY);
       const url = `/api/upload-report?folder=${folder}&filename=${encodeURIComponent(file.name)}`;
       const r = await fetch(url, {
         method: 'POST',
@@ -651,7 +652,7 @@ document.addEventListener('click', async e => {
   btn.disabled = true;
   btn.textContent = 'Deleting…';
   try {
-    const token = sessionStorage.getItem(TOKEN_KEY);
+    const token = localStorage.getItem(TOKEN_KEY);
     const r = await fetch(`/api/delete-report?folder=${folder}&filename=${encodeURIComponent(filename)}`, {
       method: 'DELETE',
       headers: { 'x-admin-token': token },
@@ -696,7 +697,7 @@ async function loadAudit() {
     const folder = auditFolderFilter.value;
     const qs = new URLSearchParams({ limit: '200' });
     if (folder) qs.set('folder', folder);
-    const token = sessionStorage.getItem(TOKEN_KEY);
+    const token = localStorage.getItem(TOKEN_KEY);
     const r = await fetch(`/api/list-audit?${qs}`, { headers: { 'x-admin-token': token } });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Error');
@@ -740,7 +741,7 @@ document.addEventListener('click', async e => {
   document.getElementById('history-list').innerHTML = '';
   historyModal.classList.add('show');
   try {
-    const token = sessionStorage.getItem(TOKEN_KEY);
+    const token = localStorage.getItem(TOKEN_KEY);
     const r = await fetch(`/api/list-versions?folder=${folder}&filename=${encodeURIComponent(filename)}`, {
       headers: { 'x-admin-token': token },
     });
@@ -779,7 +780,7 @@ document.addEventListener('click', async e => {
 
 // ── SIGN OUT clears user ─────────────────────────────────
 document.getElementById('btn-admin').addEventListener('click', () => {
-  if (isAdmin()) sessionStorage.removeItem(USER_KEY);
+  if (isAdmin()) localStorage.removeItem(USER_KEY);
 });
 
 // ── DAILY REPORT — generate & download ───────────────────
@@ -827,7 +828,7 @@ async function loadIdeaFeedSources() {
   }
   cont.innerHTML = '<div class="loading-files">Loading…</div>';
   try {
-    const token = sessionStorage.getItem(TOKEN_KEY);
+    const token = localStorage.getItem(TOKEN_KEY);
     const r = await fetch('/api/admin/idea-feed-sources', { headers: { 'x-admin-token': token } });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Error');
@@ -856,7 +857,7 @@ async function loadIdeaFeedSources() {
 }
 
 async function toggleSourceActive(id, active) {
-  const token = sessionStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
   await fetch('/api/admin/idea-feed-sources?id=' + id, {
     method: 'PATCH',
     headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
@@ -866,7 +867,7 @@ async function toggleSourceActive(id, active) {
 
 async function deleteSource(id, name) {
   if (!confirm('Delete source "' + name + '"? This will also remove its items.')) return;
-  const token = sessionStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
   const r = await fetch('/api/admin/idea-feed-sources?id=' + id, {
     method: 'DELETE',
     headers: { 'x-admin-token': token },
@@ -889,7 +890,7 @@ async function addIdeaFeedSource(ev) {
   const status = document.getElementById('if-add-status');
   status.textContent = 'Saving…';
   status.style.color = 'var(--gray-mid)';
-  const token = sessionStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
   try {
     const r = await fetch('/api/admin/idea-feed-sources', {
       method: 'POST',
@@ -941,7 +942,7 @@ async function loadStudyAdmin() {
   if (!isAdmin()) { cont.innerHTML = '<div class="loading-files">Sign in as admin to manage articles</div>'; return; }
   cont.innerHTML = '<div class="loading-files">Loading…</div>';
   try {
-    const token = sessionStorage.getItem(TOKEN_KEY);
+    const token = localStorage.getItem(TOKEN_KEY);
     const r = await fetch('/api/admin/study', { headers: { 'x-admin-token': token } });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Error');
@@ -993,7 +994,7 @@ async function addStudyArticle(ev) {
   };
   const status = document.getElementById('st-add-status');
   status.textContent = 'Saving…'; status.style.color = 'var(--gray-mid)';
-  const token = sessionStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
   try {
     const r = await fetch('/api/admin/study', {
       method: 'POST',
@@ -1013,7 +1014,7 @@ async function addStudyArticle(ev) {
 }
 
 async function toggleStudyActive(id, active) {
-  const token = sessionStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
   await fetch('/api/admin/study?id=' + id, {
     method: 'PATCH',
     headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
@@ -1023,7 +1024,7 @@ async function toggleStudyActive(id, active) {
 
 async function deleteStudy(id, title) {
   if (!confirm('Hide article "' + title + '" from public Study page?')) return;
-  const token = sessionStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
   const r = await fetch('/api/admin/study?id=' + id, { method: 'DELETE', headers: { 'x-admin-token': token } });
   if (r.ok) loadStudyAdmin();
   else alert('Delete failed');
@@ -1033,7 +1034,7 @@ async function uploadStudyPdf(id, input) {
   const file = input.files && input.files[0];
   if (!file) return;
   if (file.size > 26214400) { alert('Max 25 MB'); input.value = ''; return; }
-  const token = sessionStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
   const filename = file.name.replace(/[^A-Za-z0-9._-]/g, '_');
   try {
     const r = await fetch('/api/admin/study?upload=1&id=' + id + '&filename=' + encodeURIComponent(filename), {
@@ -1063,7 +1064,7 @@ async function loadJournalAdmin() {
   if (!isAdmin()) { cont.innerHTML = '<div class="loading-files">Sign in as admin to manage decisions</div>'; pending.innerHTML=''; return; }
   cont.innerHTML = '<div class="loading-files">Loading…</div>';
   try {
-    const token = sessionStorage.getItem(TOKEN_KEY);
+    const token = localStorage.getItem(TOKEN_KEY);
     const r = await fetch('/api/admin/journal', { headers: { 'x-admin-token': token } });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Error');
@@ -1142,7 +1143,7 @@ async function addJournalEntry(ev) {
   };
   const status = document.getElementById('jr-add-status');
   status.textContent = 'Saving…'; status.style.color = 'var(--gray-mid)';
-  const token = sessionStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
   try {
     const r = await fetch('/api/admin/journal', {
       method: 'POST',
@@ -1162,7 +1163,7 @@ async function addJournalEntry(ev) {
 }
 
 async function toggleJournalActive(id, active) {
-  const token = sessionStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
   await fetch('/api/admin/journal?id=' + id, {
     method: 'PATCH',
     headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
@@ -1172,7 +1173,7 @@ async function toggleJournalActive(id, active) {
 
 async function deleteJournal(id, ticker) {
   if (!confirm('Hide ' + ticker + ' decision from public Journal?')) return;
-  const token = sessionStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
   const r = await fetch('/api/admin/journal?id=' + id, { method: 'DELETE', headers: { 'x-admin-token': token } });
   if (r.ok) loadJournalAdmin();
   else alert('Delete failed');
@@ -1194,7 +1195,7 @@ document.getElementById('jr-review-submit').addEventListener('click', async () =
   const lesson = document.getElementById('jr-review-lesson').value.trim();
   const err = document.getElementById('jr-review-err');
   if (!outcome) { err.textContent = 'Outcome is required.'; return; }
-  const token = sessionStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
   try {
     const r = await fetch('/api/admin/journal?review=' + _jrReviewCtx.lbl + '&id=' + _jrReviewCtx.id, {
       method: 'POST',
