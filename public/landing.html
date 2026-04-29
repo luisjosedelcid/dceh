@@ -608,7 +608,7 @@ async function checkPwd() {
   if (!val) { document.getElementById('gate-error').textContent = 'Password required'; return; }
   document.getElementById('gate-error').textContent = 'Verifying…';
   document.getElementById('gate-error').style.color = 'var(--gray-mid)';
-  const res = await window.dceAuth.login(val);
+  const res = await window.dceAuth.login('luis@dceholdings.com', val);
   if (res.ok) {
     sessionStorage.setItem('dce_auth', 'Test1');
     document.getElementById('gate').classList.add('fade-out');
