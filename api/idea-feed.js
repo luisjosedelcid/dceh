@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
 
     const since = new Date(Date.now() - days * 86400 * 1000).toISOString();
 
-    let q = `select=id,source_id,url,title,snippet,published_at,tickers,extraction_method,fetched_at`;
+    let q = `select=id,source_id,url,title,snippet,published_at,tickers,extraction_method,thesis,fetched_at`;
     q += `&order=published_at.desc.nullslast,fetched_at.desc&limit=300`;
     q += `&or=(published_at.gte.${since},and(published_at.is.null,fetched_at.gte.${since}))`;
     if (Number.isFinite(sourceId)) q += `&source_id=eq.${sourceId}`;

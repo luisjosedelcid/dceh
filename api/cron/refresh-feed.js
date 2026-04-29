@@ -101,6 +101,48 @@ EXCERPT: ${(snippet || '').slice(0, 1500)}`;
   }
 }
 
+// ── Generate ~100-word thesis from snippet ────────────────────────
+async function generateThesis(title, snippet, tickers) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return null;
+  if (!tickers || tickers.length === 0) return null;
+  const tickerList = tickers.join(', ');
+  const prompt = `You are summarizing an investment author's view for an internal research feed.
+Write a faithful ~100-word thesis (90-110 words) summarizing what the author argues about ${tickerList} in this post. Use ONLY information present in the title and excerpt — do NOT add outside facts. Plain prose, no bullets, no headings, third person. If the excerpt is too thin to support 100 words, write the most you can without inventing.
+
+TITLE: ${title}
+
+EXCERPT: ${(snippet || '').slice(0, 1500)}
+
+Reply with ONLY the thesis paragraph.`;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 350,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    if (!r.ok) {
+      const errTxt = await r.text().catch(() => '');
+      console.error('Thesis HTTP', r.status, errTxt.slice(0, 200));
+      return null;
+    }
+    const j = await r.json();
+    const txt = j?.content?.[0]?.text?.trim() || '';
+    return txt || null;
+  } catch (e) {
+    console.error('Thesis error:', e.message);
+    return null;
+  }
+}
+
 // ── RSS / Atom parser (lightweight, regex-based) ──────────────────
 function decodeEntities(s) {
   if (!s) return '';
@@ -189,7 +231,7 @@ module.exports = async (req, res) => {
   }
 
   const startedAt = Date.now();
-  const summary = { sources: 0, fetched: 0, new_items: 0, llm_calls: 0, errors: [] };
+  const summary = { sources: 0, fetched: 0, new_items: 0, llm_calls: 0, thesis_calls: 0, errors: [] };
 
   try {
     const sources = await sbSelect(
@@ -234,6 +276,13 @@ module.exports = async (req, res) => {
             method = tickers.length > 0 ? 'llm' : 'none';
           }
 
+          // Generate ~100-word thesis only when tickers present and budget left
+          let thesis = null;
+          if (tickers.length > 0 && summary.thesis_calls < 30) {
+            thesis = await generateThesis(it.title, it.snippet, tickers);
+            summary.thesis_calls += 1;
+          }
+
           try {
             await sbInsert('idea_feed_items', {
               source_id: src.id,
@@ -244,6 +293,7 @@ module.exports = async (req, res) => {
               published_at: it.published_at || null,
               tickers,
               extraction_method: method,
+              thesis,
             });
             summary.new_items += 1;
           } catch (e) {
