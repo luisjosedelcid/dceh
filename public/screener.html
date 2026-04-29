@@ -125,16 +125,16 @@
 
   <!-- ═══ MODE TABS ═══ -->
   <div class="mode-tabs">
-    <button class="mode-tab active" data-mode="sectors" onclick="showMode('sectors',this)">Sector Screener</button>
-    <button class="mode-tab" data-mode="watchlist" onclick="showMode('watchlist',this)">Watchlist <span class="count" id="watchlist-count">—</span></button>
+    <button class="mode-tab active" data-mode="ideafeed" onclick="showMode('ideafeed',this)">Idea Feed <span class="count" id="ideafeed-count">—</span></button>
     <button class="mode-tab" data-mode="superinvestors" onclick="showMode('superinvestors',this)">Superinvestors <span class="count">10</span></button>
-    <button class="mode-tab" data-mode="ideafeed" onclick="showMode('ideafeed',this)">Idea Feed <span class="count" id="ideafeed-count">—</span></button>
+    <button class="mode-tab" data-mode="sectors" onclick="showMode('sectors',this)">Sector Screener</button>
+    <button class="mode-tab" data-mode="watchlist" onclick="showMode('watchlist',this)">Watchlist <span class="count" id="watchlist-count">—</span></button>
   </div>
 
   <!-- ════════════════════════════════════════════════════════════ -->
   <!-- MODE 1: SECTOR SCREENER (existing content)                    -->
   <!-- ════════════════════════════════════════════════════════════ -->
-  <div class="mode-pane active" id="mode-sectors">
+  <div class="mode-pane" id="mode-sectors">
     <div class="meta" id="screener-meta">Source: roic.ai API · <span id="screener-live" style="color:var(--gray-mid)">Loading...</span></div>
 
     <div class="sector-tabs" id="sector-tabs">
@@ -208,7 +208,7 @@
   <!-- ════════════════════════════════════════════════════════════ -->
   <!-- MODE 4: IDEA FEED                                             -->
   <!-- ════════════════════════════════════════════════════════════ -->
-  <div class="mode-pane" id="mode-ideafeed">
+  <div class="mode-pane active" id="mode-ideafeed">
     <div class="meta">
       Stock ideas surfaced from blogs, Substacks &amp; podcasts. Refreshed every 6h via cron.
       Source: <code style="font-family:Menlo,monospace;font-size:11px">/api/idea-feed</code> ·
@@ -679,6 +679,9 @@ async function loadWatchlist() {
   }
 }
 loadWatchlist();
+// Auto-load Idea Feed (default tab on page load)
+if (typeof loadIdeaFeed === 'function') { loadIdeaFeed(); window._ifLoaded = true; }
+else { document.addEventListener('DOMContentLoaded', () => { loadIdeaFeed(); window._ifLoaded = true; }); }
 
 // ═══════════════════════════════════════════════════════════════════
 // SUPERINVESTORS — DCE Quality-Value Panel (10 funds)
