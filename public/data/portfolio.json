@@ -1,0 +1,21 @@
+{
+  "fund_name": "DCE Holdings",
+  "currency": "USD",
+  "inception_date": "2026-03-01",
+  "benchmark": "^GSPC",
+  "benchmark_label": "S&P 500",
+  "cash": 0,
+  "positions": [
+    {
+      "ticker": "MSFT",
+      "name": "Microsoft Corp",
+      "sector": "NASDAQ · Technology",
+      "shares": 1,
+      "avg_cost": 402.00,
+      "buy_date": "2026-03-01",
+      "color": "#b88b47",
+      "link": null
+    }
+  ],
+  "_notes": "Single source of truth for portfolio.html and Daily Report PDF. Edit and commit to update both. inception_date = earliest buy_date; benchmark inception value is auto-fetched from Yahoo at buy_date."
+}

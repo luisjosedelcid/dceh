@@ -120,18 +120,29 @@
 <script>
 const FH_KEY = 'd6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg';
 
-const HOLDINGS = [
-  {
-    ticker: 'MSFT',
-    name: 'Microsoft Corp',
-    sector: 'NASDAQ · Technology',
-    shares: 1,
-    avgCost: 402.00,
-    buyDate: '2026-03-01',
-    color: '#b88b47',
-    link: null,
-  },
-];
+// Single source of truth: /data/portfolio.json (also used by Daily Report)
+let HOLDINGS = [];
+
+async function loadHoldings() {
+  try {
+    const r = await fetch('/data/portfolio.json', { cache: 'no-store' });
+    const data = await r.json();
+    HOLDINGS = (data.positions || []).map(p => ({
+      ticker: p.ticker,
+      name: p.name,
+      sector: p.sector || '',
+      shares: Number(p.shares),
+      avgCost: Number(p.avg_cost),
+      buyDate: p.buy_date,
+      color: p.color || '#b88b47',
+      link: p.link || null,
+    }));
+    document.getElementById('kpi-positions').textContent = HOLDINGS.length;
+  } catch (e) {
+    console.error('Failed to load portfolio.json:', e);
+    HOLDINGS = [];
+  }
+}
 
 function daysBetween(d1, d2) {
   return Math.floor((d2 - d1) / (1000 * 60 * 60 * 24));
@@ -253,7 +264,10 @@ async function fetchPrices() {
   }
 }
 
-fetchPrices();
+(async () => {
+  await loadHoldings();
+  await fetchPrices();
+})();
 </script>
 <script src="/search.js" defer></script>
 </body>
