@@ -120,14 +120,15 @@
   function _injectStyles() {
     if (document.getElementById('dce-auth-styles')) return;
     const css = `
-      .dce-admin-btn{position:fixed;bottom:18px;right:18px;z-index:9998;
-        font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;
-        letter-spacing:0.12em;text-transform:uppercase;padding:10px 16px;
-        border:1px solid #1b2642;background:#fff;color:#1b2642;cursor:pointer;
-        border-radius:2px;box-shadow:0 4px 12px rgba(0,0,0,0.08);transition:all .2s}
-      .dce-admin-btn:hover{background:#1b2642;color:#fff}
-      .dce-admin-btn.is-admin{background:#1b2642;color:#b88b47;border-color:#1b2642}
-      .dce-admin-btn.is-admin:hover{background:#fff;color:#1b2642}
+      .dce-admin-btn{position:fixed;top:14px;right:18px;z-index:9998;
+        font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;
+        letter-spacing:0.14em;text-transform:uppercase;padding:6px 12px;
+        border:1px solid rgba(255,255,255,0.45);background:transparent;color:#fff;
+        cursor:pointer;border-radius:2px;transition:all .2s;line-height:1.2}
+      .dce-admin-btn:hover{background:rgba(255,255,255,0.12);border-color:#fff}
+      .dce-admin-btn.is-admin{background:#b88b47;color:#1b2642;border-color:#b88b47}
+      .dce-admin-btn.is-admin:hover{background:#d4aa6a;border-color:#d4aa6a}
+      @media (max-width: 720px){ .dce-admin-btn{top:10px;right:12px;padding:5px 10px;font-size:9px} }
       .dce-auth-modal{display:none;position:fixed;inset:0;background:rgba(13,13,13,0.55);
         z-index:9999;align-items:center;justify-content:center;font-family:'Inter',sans-serif}
       .dce-auth-modal.show{display:flex}
@@ -222,10 +223,10 @@
     if (adm) {
       const u = user();
       const who = u && u.displayName ? u.displayName.split(' ')[0] : 'Admin';
-      _btnEl.textContent = `${who} · Sign out`;
-      _btnEl.title = 'Click to sign out of admin mode';
+      _btnEl.textContent = `Sign out`;
+      _btnEl.title = `Signed in as ${who} — click to sign out`;
     } else {
-      _btnEl.textContent = 'Admin login';
+      _btnEl.textContent = 'Sign in';
       _btnEl.title = 'Sign in as admin to edit alerts, upload files, etc.';
     }
   }
