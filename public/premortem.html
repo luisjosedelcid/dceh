@@ -409,8 +409,53 @@
           <div class="fm-grid">
             ${fmCards || '<div class="nodata" style="grid-column:1/-1">No failure modes defined.</div>'}
           </div>
+          <div class="docs-panel" id="docs-${escHtml(pm.ticker)}">
+            <div class="docs-panel-title">Source documents (SEC EDGAR)</div>
+            <div id="docs-body-${escHtml(pm.ticker)}" style="font-size:12px;color:var(--gray-mid)">Loading…</div>
+          </div>
         </div>`;
     }).join('');
+
+    // After cards rendered, fetch source_documents per ticker (parallel, best-effort)
+    for (const pm of pms) {
+      loadDocsForTicker(pm.ticker);
+    }
+  }
+
+  async function loadDocsForTicker(ticker) {
+    const body = document.getElementById('docs-body-' + ticker);
+    if (!body) return;
+    try {
+      const tk = token();
+      const r = await fetch('/api/source-documents?ticker=' + encodeURIComponent(ticker), {
+        headers: tk ? { 'x-admin-token': tk } : {},
+      });
+      const data = await r.json();
+      if (!r.ok || !data.ok) {
+        body.textContent = 'No documents available.';
+        return;
+      }
+      const docs = data.documents || [];
+      if (docs.length === 0) {
+        body.innerHTML = '<span style="color:var(--gray-mid)">No documents ingested yet. Click “Ingest SEC filings” above.</span>';
+        return;
+      }
+      // Group by doc_type and render as a table-style strip
+      const rows = docs.map(d => {
+        const sects = d.parsed_summary ? Object.keys(d.parsed_summary).filter(k => !['extracted_at','full_text_length'].includes(k)) : [];
+        const sectStr = sects.length ? sects.join(', ') : '—';
+        return `<tr>
+          <td style="padding:4px 10px 4px 0;font-weight:600;color:var(--ink)">${escHtml(d.doc_type)}</td>
+          <td style="padding:4px 10px;color:var(--gray-mid)">${escHtml(d.period_end || '—')}</td>
+          <td style="padding:4px 10px;color:var(--gray-mid)">filed ${escHtml(d.filed_at || '—')}</td>
+          <td style="padding:4px 10px;color:var(--gray-mid)">${escHtml(sectStr)}</td>
+          <td style="padding:4px 0;"><a href="${escHtml(d.source_url)}" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none">View on EDGAR →</a></td>
+        </tr>`;
+      }).join('');
+      body.innerHTML = `<table style="border-collapse:collapse;font-size:12px"><tbody>${rows}</tbody></table>`;
+    } catch (e) {
+      body.textContent = 'Error loading documents.';
+    }
   }
 
   function renderManage(pms) {
