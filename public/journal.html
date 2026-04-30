@@ -155,6 +155,7 @@
   <!-- Tabs -->
   <div class="mode-tabs">
     <button class="mode-tab active" data-tab="all" onclick="showTab('all', this)">All <span class="count" id="count-all">—</span></button>
+    <button class="mode-tab" data-tab="reunderwriting" onclick="showTab('reunderwriting', this)">Re-underwriting <span class="count" id="count-reund">—</span></button>
     <button class="mode-tab" data-tab="lessons" onclick="showTab('lessons', this)">Lessons learned <span class="count" id="count-lessons">—</span></button>
   </div>
 
@@ -186,6 +187,17 @@
         </thead>
         <tbody id="tbody-all"></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Re-underwriting pane -->
+  <div class="mode-pane" id="pane-reunderwriting">
+    <div class="sub" style="margin-bottom:14px;font-size:13px">After every 10-Q or 10-K, each active position triggers a re-underwriting. Three questions: thesis still valid — kill criteria status — buy more, hold or sell.</div>
+    <div class="status" id="status-reund">Loading…</div>
+    <div id="reund-pending-list" style="margin-bottom:24px"></div>
+    <div id="reund-done-section" style="display:none">
+      <div class="slbl" style="margin-top:18px;margin-bottom:10px">Recently completed</div>
+      <div id="reund-done-list"></div>
     </div>
   </div>
 
@@ -236,6 +248,7 @@ function showTab(name, btn) {
   document.getElementById('pane-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
   if (name === 'lessons') renderLessons();
+  if (name === 'reunderwriting') loadReunderwriting();
 }
 
 function setTypeFilter(type, chip) {
@@ -398,6 +411,229 @@ async function loadJournal() {
   }
 }
 loadJournal();
+
+// =================== Re-underwriting ===================
+const reundState = { pending: [], done: [], loaded: false, current: null };
+
+function tokenAdmin() {
+  try { return localStorage.getItem('dce_admin_token') || ''; } catch (e) { return ''; }
+}
+function isAdmin() {
+  return !!tokenAdmin();
+}
+
+async function loadReunderwriting() {
+  const status = document.getElementById('status-reund');
+  status.textContent = 'Loading…';
+  try {
+    const tk = tokenAdmin();
+    const headers = tk ? { 'x-admin-token': tk } : {};
+    const [rPending, rDone] = await Promise.all([
+      fetch('/api/reunderwriting-due?status=pending', { headers }),
+      fetch('/api/reunderwriting-due?status=done&limit=20', { headers }),
+    ]);
+    if (!rPending.ok) {
+      // Probably auth required
+      status.innerHTML = `<div class="empty">Sign in as admin to view re-underwriting items.</div>`;
+      document.getElementById('count-reund').textContent = '—';
+      return;
+    }
+    const dPending = await rPending.json();
+    const dDone = rDone.ok ? await rDone.json() : { items: [] };
+    reundState.pending = dPending.items || [];
+    reundState.done = dDone.items || [];
+    reundState.loaded = true;
+    document.getElementById('count-reund').textContent = reundState.pending.length;
+    renderReunderwriting();
+    status.textContent = '';
+  } catch (e) {
+    status.textContent = 'Error loading: ' + (e.message || e);
+  }
+}
+
+function renderReunderwriting() {
+  const pendList = document.getElementById('reund-pending-list');
+  const doneSection = document.getElementById('reund-done-section');
+  const doneList = document.getElementById('reund-done-list');
+
+  if (reundState.pending.length === 0) {
+    pendList.innerHTML = `<div class="empty">No re-underwriting items pending. New ones appear automatically when MSFT or another active position files a 10-Q or 10-K.</div>`;
+  } else {
+    pendList.innerHTML = reundState.pending.map(p => {
+      const days = p.days_since_filing != null ? p.days_since_filing + 'd ago' : '';
+      const urgent = p.days_since_filing != null && p.days_since_filing > 14;
+      return `<div class="review-block ${urgent?'due':''}" style="margin-bottom:12px;cursor:pointer" onclick="openReundForm(${p.id})">
+        <div class="review-head">
+          <span class="review-label">${escapeHtml(p.ticker)} · ${escapeHtml(p.doc_type)} · period ${fmtDate(p.period_end)}</span>
+          <span class="review-pill ${urgent?'due':''}">${urgent?'Overdue':'Pending'}</span>
+        </div>
+        <div class="review-outcome" style="margin-top:6px">
+          Filed ${fmtDate(p.filed_at)} ${days?'· '+days:''}
+          ${p.source_url?` · <a href="${escapeHtml(p.source_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--gold)">View on EDGAR →</a>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  if (reundState.done.length === 0) {
+    doneSection.style.display = 'none';
+  } else {
+    doneSection.style.display = '';
+    doneList.innerHTML = reundState.done.map(d => `<div class="review-block done" style="margin-bottom:10px">
+      <div class="review-head">
+        <span class="review-label">${escapeHtml(d.ticker)} · ${escapeHtml(d.doc_type)} · period ${fmtDate(d.period_end)}</span>
+        <span class="review-pill done">Done ${fmtDate(d.completed_at)}</span>
+      </div>
+    </div>`).join('');
+  }
+}
+
+function openReundForm(dueId) {
+  if (!isAdmin()) {
+    alert('Sign in as admin to submit re-underwriting.');
+    return;
+  }
+  const item = reundState.pending.find(p => p.id === dueId);
+  if (!item) return;
+  reundState.current = item;
+
+  document.getElementById('drawer-title').textContent = item.ticker + ' · Re-underwriting';
+  const body = document.getElementById('drawer-body');
+  body.innerHTML = `
+    <div class="meta-grid">
+      <div><div class="k">Filing</div><div class="v">${escapeHtml(item.doc_type)}</div></div>
+      <div><div class="k">Period end</div><div class="v">${fmtDate(item.period_end)}</div></div>
+      <div><div class="k">Filed</div><div class="v" style="font-size:12px">${fmtDate(item.filed_at)}</div></div>
+    </div>
+    ${item.source_url ? `<div class="field"><a href="${escapeHtml(item.source_url)}" target="_blank" rel="noopener" style="color:var(--gold);font-size:12px">View filing on EDGAR →</a></div>` : ''}
+
+    <div id="reund-killmodes" class="field">
+      <div class="field-lbl">Kill criteria status (auto)</div>
+      <div class="field-val muted" id="reund-killmodes-body">Loading…</div>
+    </div>
+
+    <div class="field">
+      <div class="field-lbl">1. Thesis still valid? *</div>
+      <textarea id="reund-thesis" rows="4" style="width:100%;padding:10px;border:1px solid var(--rule);background:var(--white);font-family:inherit;font-size:13px;resize:vertical" placeholder="What's still working / what changed since last review…"></textarea>
+    </div>
+
+    <div class="field">
+      <div class="field-lbl">2. Any kill criterion approaching? (optional)</div>
+      <textarea id="reund-killconcern" rows="2" style="width:100%;padding:10px;border:1px solid var(--rule);background:var(--white);font-family:inherit;font-size:13px;resize:vertical" placeholder="If a failure mode is getting closer, note it here…"></textarea>
+    </div>
+
+    <div class="field">
+      <div class="field-lbl">3. Action *</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+        <label class="chip" style="cursor:pointer"><input type="radio" name="reund-action" value="buy_more" style="margin-right:6px">Buy more</label>
+        <label class="chip" style="cursor:pointer"><input type="radio" name="reund-action" value="hold" checked style="margin-right:6px">Hold</label>
+        <label class="chip" style="cursor:pointer"><input type="radio" name="reund-action" value="trim" style="margin-right:6px">Trim</label>
+        <label class="chip" style="cursor:pointer"><input type="radio" name="reund-action" value="sell" style="margin-right:6px">Sell</label>
+      </div>
+      <textarea id="reund-actionreason" rows="2" style="width:100%;padding:10px;border:1px solid var(--rule);background:var(--white);font-family:inherit;font-size:13px;resize:vertical;margin-top:8px" placeholder="Brief reason for the action…"></textarea>
+    </div>
+
+    <div class="field">
+      <button id="reund-submit" onclick="submitReund()" style="background:var(--navy);color:var(--white);border:none;padding:11px 22px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600">Submit re-underwriting</button>
+      <span id="reund-msg" style="margin-left:14px;font-size:12px"></span>
+    </div>
+  `;
+  document.getElementById('drawer-bg').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+
+  // Async load kill criteria status
+  loadKillCriteriaForReund(item.ticker);
+}
+
+async function loadKillCriteriaForReund(ticker) {
+  const target = document.getElementById('reund-killmodes-body');
+  if (!target) return;
+  try {
+    const tk = tokenAdmin();
+    const r = await fetch('/api/premortems?ticker=' + encodeURIComponent(ticker), {
+      headers: tk ? { 'x-admin-token': tk } : {},
+    });
+    if (!r.ok) {
+      target.textContent = 'Could not load kill criteria.';
+      return;
+    }
+    const data = await r.json();
+    const pms = data.items || data.premortems || [];
+    if (pms.length === 0) {
+      target.textContent = 'No active pre-mortem for this ticker.';
+      return;
+    }
+    const fms = (pms[0].failure_modes || []);
+    if (fms.length === 0) {
+      target.textContent = 'No failure modes defined.';
+      return;
+    }
+    target.innerHTML = fms.map(fm => {
+      const cls = fm.status === 'triggered' ? 'due' : (fm.status === 'resolved' ? 'done' : '');
+      return `<div style="margin-bottom:6px;font-size:13px">
+        <span class="review-pill ${cls}" style="min-width:80px;display:inline-block;text-align:center">${escapeHtml(fm.status)}</span>
+        <span style="margin-left:8px">${escapeHtml(fm.failure_mode)}</span>
+        <span style="color:var(--gray-mid);font-size:11px;margin-left:6px">P${fm.probability_pct ?? '—'}% · S${fm.severity_pct ?? '—'}%</span>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    target.textContent = 'Error: ' + e.message;
+  }
+}
+
+async function submitReund() {
+  const item = reundState.current;
+  if (!item) return;
+  const thesis = document.getElementById('reund-thesis').value.trim();
+  const killConcern = document.getElementById('reund-killconcern').value.trim();
+  const actionRadio = document.querySelector('input[name="reund-action"]:checked');
+  const action = actionRadio ? actionRadio.value : '';
+  const actionReason = document.getElementById('reund-actionreason').value.trim();
+  const msg = document.getElementById('reund-msg');
+  const btn = document.getElementById('reund-submit');
+
+  if (thesis.length < 10) {
+    msg.textContent = 'Thesis answer must be at least 10 characters.';
+    msg.style.color = 'var(--red)';
+    return;
+  }
+  if (!action) {
+    msg.textContent = 'Pick an action.';
+    msg.style.color = 'var(--red)';
+    return;
+  }
+
+  btn.disabled = true;
+  msg.style.color = 'var(--gray-mid)';
+  msg.textContent = 'Submitting…';
+
+  try {
+    const tk = tokenAdmin();
+    const r = await fetch('/api/reunderwriting-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': tk },
+      body: JSON.stringify({
+        due_id: item.id,
+        thesis_still_valid: thesis,
+        kill_criteria_concern: killConcern || null,
+        action,
+        action_reason: actionReason || null,
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'HTTP ' + r.status);
+    msg.style.color = 'var(--green)';
+    msg.textContent = 'Saved ✓  Reloading…';
+    setTimeout(() => {
+      closeDrawer();
+      loadReunderwriting();
+    }, 600);
+  } catch (e) {
+    msg.style.color = 'var(--red)';
+    msg.textContent = 'Error: ' + e.message;
+    btn.disabled = false;
+  }
+}
 </script>
 </body>
 </html>

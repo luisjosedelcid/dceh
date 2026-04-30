@@ -110,7 +110,28 @@ async function ingestTicker(ticker, { limitPerForm = 2, force = false } = {}) {
         fetched_by: 'system',
       };
 
-      await sbUpsert('source_documents', [row], 'ticker,doc_type,period_end');
+      const inserted = await sbUpsert('source_documents', [row], 'ticker,doc_type,period_end');
+      const insertedRow = Array.isArray(inserted) ? inserted[0] : inserted;
+
+      // Create reunderwriting_due for 10-K / 10-Q (skip 8-K — those are too
+      // frequent and not natural re-underwriting triggers). Idempotent via
+      // unique constraint on (ticker, period_end, doc_type).
+      if (docType === '10-K' || docType === '10-Q') {
+        try {
+          await sbUpsert('reunderwriting_due', [{
+            ticker,
+            period_end: f.report_date,
+            doc_type: docType,
+            source_doc_id: insertedRow ? insertedRow.id : null,
+            status: 'pending',
+            due_at: new Date().toISOString(),
+          }], 'ticker,period_end,doc_type');
+        } catch (eDue) {
+          // Don't fail the ingest if due creation fails
+          console.error('reunderwriting_due upsert failed', eDue.message);
+        }
+      }
+
       ingested.push({
         form: f.form,
         period_end: f.report_date,
