@@ -213,11 +213,13 @@
 </main>
 
 <script>
-const dceAuth = window.dceAuth;
 let parsedPayload = null;
 
-function adminToken(){ return (dceAuth && dceAuth.token && dceAuth.token()) || ''; }
-function isAdmin(){ return dceAuth && dceAuth.isAdmin && dceAuth.isAdmin() && (dceAuth.role()==='admin' || !dceAuth.role()); }
+// Always re-read window.dceAuth — the helper is loaded with `defer` so it may not
+// be ready when this inline script first runs.
+function auth(){ return window.dceAuth || null; }
+function adminToken(){ const a=auth(); return (a && a.token && a.token()) || ''; }
+function isAdmin(){ const a=auth(); if(!a||!a.isAdmin||!a.isAdmin()) return false; const r=a.role&&a.role(); return r==='admin' || !r; }
 
 // ── helpers ─────────────────────────────────────
 function fmtUsd(n){ if(n==null||isNaN(n)) return '—'; return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -445,7 +447,7 @@ function refreshAdminBar(){
   const label = document.getElementById('admin-label');
   const btn = document.getElementById('btn-admin');
   if(ok){
-    const u = (dceAuth && dceAuth.user && dceAuth.user()) || {};
+    const a=auth(); const u = (a && a.user && a.user()) || {};
     bar.classList.add('is-admin');
     label.innerHTML = `<strong>${(u.displayName||u.email||'Admin')}</strong> · admin mode`;
     btn.textContent = 'Sign out';
@@ -457,9 +459,9 @@ function refreshAdminBar(){
 }
 document.getElementById('btn-admin').addEventListener('click',()=>{
   if(isAdmin()){
-    if(confirm('Sign out?')){ dceAuth.logout(); applyAdminGate(); }
+    if(confirm('Sign out?')){ auth().logout(); applyAdminGate(); }
   }else{
-    dceAuth.openLoginModal && dceAuth.openLoginModal();
+    const a=auth(); if(a && a.openLoginModal) a.openLoginModal();
   }
 });
 
@@ -476,12 +478,20 @@ function applyAdminGate(){
     wrap.innerHTML = 'Admin access required. Click <strong>Admin login</strong> above.';
   }
 }
-if(dceAuth && dceAuth.onChange){ dceAuth.onChange(applyAdminGate); }
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(applyAdminGate,50));
-}else{
-  setTimeout(applyAdminGate,50);
+// Wait until window.dceAuth is defined (defer-loaded), then wire up.
+function whenAuthReady(cb){
+  if(window.dceAuth){ cb(); return; }
+  let tries=0;
+  const iv=setInterval(()=>{
+    if(window.dceAuth){ clearInterval(iv); cb(); }
+    else if(++tries>50){ clearInterval(iv); cb(); /* give up, run anyway */ }
+  },100);
 }
+whenAuthReady(()=>{
+  const a=auth();
+  if(a && a.onChange) a.onChange(applyAdminGate);
+  applyAdminGate();
+});
 </script>
 </body>
 </html>
