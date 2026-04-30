@@ -94,7 +94,7 @@ function htmlToText(html) {
   // Strip remaining tags (replaced with space for safety)
   s = s.replace(/<[^>]+>/g, ' ');
   // Decode common HTML entities
-  s = s.replace(/&nbsp;/g, ' ')
+  s = s.replace(/&nbsp;|&#160;|&#xa0;/gi, ' ')
        .replace(/&amp;/g, '&')
        .replace(/&lt;/g, '<')
        .replace(/&gt;/g, '>')
@@ -140,17 +140,21 @@ function extractRiskFactors(text) {
 }
 
 // Try to locate MD&A section (Item 2 in 10-Q, Item 7 in 10-K).
+// Pick the LAST occurrence to skip Table of Contents entries.
 function extractMDA(text) {
   if (!text) return null;
-  const re = /(Management['\u2019]s\s+Discussion\s+and\s+Analysis)/i;
-  const m = re.exec(text);
-  if (!m) return null;
-  const start = m.index;
-  // End: next major Item heading or 80k chars
-  const endRe = /\n\s*Item\s+(3|4|7A|8|9)\b/i;
-  const tail = text.slice(start + 200);
+  const re = /(Management['\u2019]s\s+Discussion\s+and\s+Analysis)/gi;
+  let m, lastIdx = -1;
+  while ((m = re.exec(text)) !== null) {
+    lastIdx = m.index;
+  }
+  if (lastIdx === -1) return null;
+  const start = lastIdx;
+  // End: next major Item heading or 120k chars
+  const endRe = /Item\s+(3|4|7A|8|9)\b/i;
+  const tail = text.slice(start + 500);
   const em = endRe.exec(tail);
-  const end = em ? (start + 200 + em.index) : Math.min(start + 80000, text.length);
+  const end = em ? (start + 500 + em.index) : Math.min(start + 120000, text.length);
   return text.slice(start, end).trim();
 }
 
