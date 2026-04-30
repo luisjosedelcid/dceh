@@ -96,6 +96,15 @@
   .mini-label{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:4px}
   .mini-value{font-size:15px;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums}
   .mini-value.pos{color:var(--green)} .mini-value.neg{color:var(--red)}
+
+  /* ── Tabs ── */
+  .tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin-bottom:24px}
+  .tab-btn{background:transparent;border:0;border-bottom:2px solid transparent;padding:12px 20px;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:8px}
+  .tab-btn:hover{color:var(--navy)}
+  .tab-btn.active{color:var(--navy);border-bottom-color:var(--gold)}
+  .tab-btn .tab-badge{font-size:9px;padding:2px 6px;background:var(--gold);color:var(--white);font-weight:500;letter-spacing:0.1em;border-radius:2px}
+  .tab-pane{display:none}
+  .tab-pane.active{display:block}
 </style>
 <link rel="stylesheet" href="/responsive.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
@@ -134,6 +143,15 @@
       <button class="btn ghost" id="btn-admin" type="button">Admin login</button>
     </div>
   </div>
+
+  <!-- ====== TAB NAV ====== -->
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="tab-dashboard" role="tab" type="button">Dashboard</button>
+    <button class="tab-btn" data-tab="tab-data" role="tab" type="button">Data &amp; audit <span class="tab-badge admin-only-badge">Admin</span></button>
+  </nav>
+
+  <!-- ====== TAB: DASHBOARD ====== -->
+  <section class="tab-pane active" id="tab-dashboard" role="tabpanel">
 
   <!-- ====== DASHBOARD PANEL ====== -->
   <div class="panel" id="panel-dashboard">
@@ -183,6 +201,11 @@
       <div id="dash-alert"></div>
     </div>
   </div>
+
+  </section><!-- /tab-dashboard -->
+
+  <!-- ====== TAB: DATA & AUDIT ====== -->
+  <section class="tab-pane" id="tab-data" role="tabpanel">
 
   <!-- ====== IMPORT PANEL ====== -->
   <div class="panel" id="panel-import">
@@ -285,6 +308,8 @@
     <div class="sub" style="margin-bottom:14px">Last 50 transactions and cashflows in the database.</div>
     <div id="existing-tx-wrap" class="nodata">Loading…</div>
   </div>
+
+  </section><!-- /tab-data -->
 
 </main>
 
@@ -747,22 +772,42 @@ document.getElementById('btn-dash-snapshot').addEventListener('click', async()=>
   }
 });
 
+// ── Tabs ─────────────────────────────────────
+const TAB_STORAGE_KEY = 'dce-perf-tab';
+function switchTab(tabId){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabId));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('active', p.id===tabId));
+  try{ localStorage.setItem(TAB_STORAGE_KEY, tabId); }catch(e){}
+  // Equity chart resizes correctly only if the canvas is visible when Chart.js measures it.
+  // If switching to dashboard tab and chart already rendered, trigger resize.
+  if(tabId==='tab-dashboard' && equityChart){ try{ equityChart.resize(); }catch(e){} }
+}
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> switchTab(btn.dataset.tab));
+});
+
 function applyAdminGate(){
   refreshAdminBar();
   const ok = isAdmin();
-  document.getElementById('panel-import').style.display = ok ? '' : 'none';
-  document.getElementById('panel-manual').style.display = ok ? '' : 'none';
-  document.getElementById('panel-prices').style.display = ok ? '' : 'none';
-  // Dashboard panel: visible to everyone (read-only).
+  // Hide the entire Data & audit tab for non-admins
+  const dataTabBtn = document.querySelector('.tab-btn[data-tab="tab-data"]');
+  dataTabBtn.style.display = ok ? '' : 'none';
   // Snapshot button only visible to admins.
   document.getElementById('btn-dash-snapshot').style.display = ok ? '' : 'none';
+
   if(ok){
     loadExisting();
     loadPricesSummary();
+    // Restore preferred tab
+    let preferred = 'tab-dashboard';
+    try{ const v = localStorage.getItem(TAB_STORAGE_KEY); if(v==='tab-data'||v==='tab-dashboard') preferred = v; }catch(e){}
+    switchTab(preferred);
   }else{
     const wrap = document.getElementById('existing-tx-wrap');
     wrap.className = 'nodata';
     wrap.innerHTML = 'Admin access required. Click <strong>Admin login</strong> above.';
+    // Force back to dashboard if currently on data tab
+    if(document.getElementById('tab-data').classList.contains('active')) switchTab('tab-dashboard');
   }
   loadDashboard();
 }
