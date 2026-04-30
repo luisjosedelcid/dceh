@@ -12,6 +12,7 @@ _Última actualización: 30 abril 2026 (PM-2)_
 - **Resend cuenta dedicada DCE** — nueva cuenta con `luis@dceholdings.com`, API key rotada en Vercel, emails llegan al inbox de trabajo (30 abril)
 - **Segundo usuario `info@dceholdings.com`** creado como `analyst` en `admin_users` (30 abril)
 - **RBAC en endpoints de reporting** — `_require-role.js` aplicado a `list-reports`, `list-versions`, `delete-report`, `upload-report`, `list-audit`. Analyst recibe 403 en endpoints financieros y la nav oculta `/reporting.html` para no-admin (30 abril)
+- **Rotación `SUPABASE_SERVICE_ROLE_KEY`** — migrada al nuevo formato `sb_secret_...`, legacy JWT deshabilitada en Supabase. Smoke test OK en login, list-reports, list-audit, earnings, journal (30 abril)
 
 ---
 
@@ -23,7 +24,7 @@ _— Sin items críticos abiertos. Los crons funcionan, los emails llegan. —_
 
 ## 🔐 Seguridad
 
-1. Rotar `SUPABASE_SERVICE_ROLE_KEY` (acción manual en Supabase dashboard → Settings → API → Reset service_role → actualizar Vercel env → redeploy).
+_— Sin items abiertos. —_
 
 ---
 
