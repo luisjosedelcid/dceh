@@ -24,6 +24,7 @@
     { "path": "/api/cron/earnings-alerts", "schedule": "0 8 * * *" },
     { "path": "/api/cron/prices-refresh", "schedule": "0 22 * * 1-5" },
     { "path": "/api/cron/portfolio-snapshot", "schedule": "30 22 * * 1-5" },
+    { "path": "/api/cron/ingest-docs", "schedule": "45 22 * * 1-5" },
     { "path": "/api/cron/premortem-eval", "schedule": "0 23 * * 1-5" }
   ]
 }

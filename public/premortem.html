@@ -119,6 +119,12 @@
   details.eval-log{margin-top:6px}
   details.eval-log summary{font-size:10px;color:var(--gray-mid);cursor:pointer;letter-spacing:0.08em;text-transform:uppercase}
   .eval-log pre{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--cream);padding:10px;margin-top:6px;white-space:pre-wrap;color:var(--ink);max-height:200px;overflow:auto}
+  .docs-panel{padding:12px 22px 18px;border-top:1px solid var(--rule);background:var(--row-alt)}
+  .docs-panel-title{font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);font-weight:600;margin-bottom:8px}
+  .docs-list{display:flex;gap:10px;flex-wrap:wrap}
+  .doc-pill{font-size:11px;padding:6px 10px;background:var(--white);border:1px solid var(--rule);color:var(--navy);text-decoration:none;font-variant-numeric:tabular-nums;display:inline-flex;gap:6px;align-items:center}
+  .doc-pill:hover{border-color:var(--gold);color:var(--gold)}
+  .doc-pill .doc-type{font-weight:600;color:var(--gold)}
 
   @media (max-width:760px){
     main{padding:24px 18px 40px}
@@ -187,8 +193,9 @@
     <div class="panel">
       <div class="panel-row">
         <h2 style="margin:0;border:0;padding:0">Live monitoring</h2>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn ghost sm" id="btn-refresh" type="button">Refresh</button>
+          <button class="btn ghost sm admin-only" id="btn-ingest" type="button">Ingest SEC filings</button>
           <button class="btn gold sm admin-only" id="btn-eval-now" type="button">Run evaluation now</button>
         </div>
       </div>
@@ -515,6 +522,40 @@
   });
 
   document.getElementById('btn-refresh').addEventListener('click', () => loadPremortems());
+
+  // ── Ingest SEC filings (admin) ───────────────────────────────────────────
+  document.getElementById('btn-ingest').addEventListener('click', async () => {
+    if (!isAdmin()) return;
+    const btn = document.getElementById('btn-ingest');
+    btn.disabled = true;
+    btn.textContent = 'Ingesting…';
+    showAlert('watch-msg', 'Fetching SEC EDGAR filings—this can take 30-60s.', 'warn');
+    try {
+      const r = await fetch('/api/admin-ingest-docs', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'x-admin-token': token() },
+        body: JSON.stringify({}),
+      });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || 'Ingest failed');
+      const res = j.result;
+      let summary;
+      if (res.results) {
+        let ing=0, skip=0, err=0;
+        for (const r of res.results) { ing+=(r.ingested||[]).length; skip+=(r.skipped||[]).length; err+=(r.errors||[]).length; }
+        summary = `Ingested ${ing} new doc(s), skipped ${skip} already-stored, ${err} error(s) across ${res.tickers.length} ticker(s).`;
+      } else {
+        summary = `Ticker ${res.ticker}: ingested ${(res.ingested||[]).length} new, skipped ${(res.skipped||[]).length}, ${(res.errors||[]).length} error(s).`;
+      }
+      showAlert('watch-msg', summary, 'ok');
+      await loadPremortems();
+    } catch(e){
+      showAlert('watch-msg', 'Error: ' + e.message, 'err');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Ingest SEC filings';
+    }
+  });
 
   // ── Boot ─────────────────────────────────────────────────────────────────
   whenAuthReady(() => {

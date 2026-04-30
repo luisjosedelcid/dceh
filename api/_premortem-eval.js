@@ -15,6 +15,7 @@
 
 const { sbSelect, sbInsert, sbUpdate } = require('./_supabase');
 const { loadAndCompute } = require('./_perf-load');
+const { evaluateLlmTrigger } = require('./_premortem-llm');
 
 // Cached holdings/prices per request to avoid redundant queries.
 async function buildContext() {
@@ -179,7 +180,11 @@ async function evaluateOne(fm, ctx, ticker) {
     return null; // skip; updated only via UI
   }
   if (tt === 'qualitative_llm') {
-    return null; // deferred to Capa 4
+    try {
+      return await evaluateLlmTrigger(fm, ticker);
+    } catch (e) {
+      return { status: 'error', evidence: `LLM eval threw: ${String(e.message || e).slice(0,200)}` };
+    }
   }
   if (tt !== 'quantitative') {
     return { status: 'error', evidence: `Unknown trigger_type: ${tt}` };
@@ -259,15 +264,20 @@ async function evaluateAll({ ticker = null, dryRun = false } = {}) {
     }
 
     if (!dryRun) {
-      // Insert evaluation row
-      await sbInsert('trigger_evaluations', {
+      // Insert evaluation row (now also persists llm_response + source_doc_id)
+      const evalRow = {
         failure_mode_id: fm.id,
         evaluated_at: new Date().toISOString(),
         status: newStatus,
         observed_value: result.observed_value ?? null,
         threshold_value: result.threshold_value ?? null,
         evidence_text: result.evidence,
-      });
+      };
+      if (result.llm_response) evalRow.llm_response = result.llm_response;
+      if (result.source_doc_ids && result.source_doc_ids.length > 0) {
+        evalRow.source_doc_id = result.source_doc_ids[0]; // primary doc
+      }
+      await sbInsert('trigger_evaluations', evalRow);
       // Update failure_mode if status changed (or last_evaluated_at always)
       const patch = { last_evaluated_at: new Date().toISOString() };
       if (newStatus !== fm.status && newStatus !== 'error') {
