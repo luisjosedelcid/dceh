@@ -1,5 +1,5 @@
 # DCE Holdings — Backlog
-_Última actualización: 29 abril 2026_
+_Última actualización: 30 abril 2026_
 
 ---
 
@@ -7,16 +7,16 @@ _Última actualización: 29 abril 2026_
 - **Earnings calendar automation** — cron Finnhub + alertas email + endpoint `/api/earnings` + widget home
 - **Fintel idea generation** — vista "New Buys" en Superinvestors + auth migrada a `x-admin-token`
 - **Unify bkng.html / bkng-legacy.html** — borrados (eran idénticos), `/bkng` redirige a `/company.html?ticker=BKNG`
+- **`ALERT_EMAIL_TO` + `ALERT_EMAIL_FROM`** configurados en Vercel env (30 abril)
+- **Smoke test earnings end-to-end** — Finnhub→Supabase→email validado con evento de prueba (30 abril)
 
 ---
 
 ## 🔴 Crítico (bloqueantes operativos)
 
-1. **`ALERT_EMAIL_TO`** → configurar `luisjose.delcid@gmail.com` en Vercel env.
-   _Sin esto, el cron de earnings-alerts no envía._
-2. **DNS Wix → Cloudflare** + verificar dominio `dceholdings.com` en Resend.
-   _Mientras tanto los emails salen desde `onboarding@resend.dev`._
-3. **Disparar `earnings-refresh` manualmente** y validar end-to-end (Finnhub → Supabase → calendar.html → email alert).
+1. **DNS Wix → Cloudflare** + verificar dominio `dceholdings.com` en Resend.
+   _Mientras tanto los emails salen desde `onboarding@resend.dev` (sin DKIM propio → riesgo spam)._
+   _Tras migrar: cambiar `ALERT_EMAIL_FROM` a `DCE Reporting <reports@dceholdings.com>`._
 
 ---
 
