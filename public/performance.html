@@ -82,8 +82,23 @@
   .hide{display:none}
   .muted{color:var(--gray-mid)}
   .nodata{padding:40px 20px;text-align:center;color:var(--gray-mid);font-size:13px}
+
+  /* ── Dashboard KPIs ── */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+  .kpi{background:var(--cream);border:1px solid var(--rule);padding:16px 18px;display:flex;flex-direction:column;gap:4px;position:relative}
+  .kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold)}
+  .kpi-label{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid)}
+  .kpi-value{font-size:22px;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums;letter-spacing:-0.01em;line-height:1.1;margin-top:4px}
+  .kpi-sub{font-size:11px;color:var(--gray-txt);font-variant-numeric:tabular-nums}
+  .kpi-value.pos{color:var(--green)}
+  .kpi-value.neg{color:var(--red)}
+  .mini-stat{background:var(--cream);border:1px solid var(--rule);padding:12px 14px;border-left:3px solid var(--navy)}
+  .mini-label{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:4px}
+  .mini-value{font-size:15px;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums}
+  .mini-value.pos{color:var(--green)} .mini-value.neg{color:var(--red)}
 </style>
 <link rel="stylesheet" href="/responsive.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 <script src="/dce-auth.js" defer></script>
 </head>
 <body data-dce-auth="manual">
@@ -108,7 +123,7 @@
 <main id="main-root">
   <div class="slbl">DCE Holdings — Investment Office</div>
   <h1>Performance Tracking</h1>
-  <div class="sub">Cost basis, time-weighted return, and benchmark attribution. Inception: 2026-01-01.</div>
+  <div class="sub">Cost basis, time-weighted return, and benchmark attribution.</div>
 
   <div class="admin-bar" id="admin-bar">
     <div class="admin-status">
@@ -117,6 +132,55 @@
     </div>
     <div>
       <button class="btn ghost" id="btn-admin" type="button">Admin login</button>
+    </div>
+  </div>
+
+  <!-- ====== DASHBOARD PANEL ====== -->
+  <div class="panel" id="panel-dashboard">
+    <h2>Performance dashboard</h2>
+    <div id="dash-loading" class="nodata">Loading…</div>
+    <div id="dash-content" class="hide">
+      <!-- KPI grid -->
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">NAV (USD)</div><div class="kpi-value" id="kpi-nav">—</div><div class="kpi-sub" id="kpi-nav-sub">—</div></div>
+        <div class="kpi"><div class="kpi-label">TWR cumulative</div><div class="kpi-value" id="kpi-twr">—</div><div class="kpi-sub" id="kpi-twr-sub">vs URTH —</div></div>
+        <div class="kpi"><div class="kpi-label">IRR (annualized)</div><div class="kpi-value" id="kpi-irr">—</div><div class="kpi-sub" id="kpi-irr-sub">since inception</div></div>
+        <div class="kpi"><div class="kpi-label">Max drawdown</div><div class="kpi-value" id="kpi-dd">—</div><div class="kpi-sub" id="kpi-dd-sub">peak-to-trough</div></div>
+        <div class="kpi"><div class="kpi-label">Total P&amp;L</div><div class="kpi-value" id="kpi-pnl">—</div><div class="kpi-sub" id="kpi-pnl-sub">realized + unrealized</div></div>
+        <div class="kpi"><div class="kpi-label">Net invested</div><div class="kpi-value" id="kpi-inv">—</div><div class="kpi-sub" id="kpi-inv-sub">contrib. − withdr.</div></div>
+      </div>
+
+      <!-- Equity curve -->
+      <div style="margin-top:24px">
+        <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin-bottom:10px">Equity curve — Portfolio TWR vs URTH</h3>
+        <div style="position:relative;height:340px;background:var(--cream);border:1px solid var(--rule);padding:12px">
+          <canvas id="chart-equity"></canvas>
+        </div>
+      </div>
+
+      <!-- Holdings -->
+      <div style="margin-top:24px">
+        <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin-bottom:10px">Holdings</h3>
+        <div style="overflow-x:auto;border:1px solid var(--rule)">
+          <table class="tbl" id="tbl-holdings"></table>
+        </div>
+      </div>
+
+      <!-- Income / Cash detail -->
+      <div style="margin-top:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+        <div class="mini-stat"><div class="mini-label">Cash (USD)</div><div class="mini-value" id="st-cash">—</div></div>
+        <div class="mini-stat"><div class="mini-label">Market value</div><div class="mini-value" id="st-mv">—</div></div>
+        <div class="mini-stat"><div class="mini-label">Realized P&amp;L</div><div class="mini-value" id="st-realized">—</div></div>
+        <div class="mini-stat"><div class="mini-label">Unrealized P&amp;L</div><div class="mini-value" id="st-unrealized">—</div></div>
+        <div class="mini-stat"><div class="mini-label">Dividends + interest</div><div class="mini-value" id="st-income">—</div></div>
+        <div class="mini-stat"><div class="mini-label">Withholding tax</div><div class="mini-value" id="st-tax">—</div></div>
+      </div>
+
+      <div class="actions" style="margin-top:18px">
+        <button class="btn ghost" id="btn-dash-reload" type="button">Reload</button>
+        <button class="btn gold admin-only" id="btn-dash-snapshot" type="button">Backfill snapshots</button>
+      </div>
+      <div id="dash-alert"></div>
     </div>
   </div>
 
@@ -533,12 +597,165 @@ document.getElementById('btn-prices-backfill').addEventListener('click',async()=
   }
 });
 
+// ── Dashboard ─────────────────────────────────
+let equityChart = null;
+function fmtUsdShort(n){ if(n==null||isNaN(n)) return '—'; return '$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:0}); }
+function fmtPct(n,dec){ dec=dec||2; if(n==null||isNaN(n)) return '—'; const s=(Number(n)*100).toFixed(dec)+'%'; return s; }
+function signedPct(n,dec){ if(n==null||isNaN(n)) return '—'; const v=Number(n)*100; return (v>=0?'+':'')+v.toFixed(dec||2)+'%'; }
+function signedUsd(n){ if(n==null||isNaN(n)) return '—'; const v=Number(n); return (v>=0?'+$':'−$')+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function setSignClass(el,n){ if(n==null||isNaN(n)){ el.classList.remove('pos','neg'); return;} el.classList.toggle('pos',n>0); el.classList.toggle('neg',n<0); }
+
+async function loadDashboard(){
+  document.getElementById('dash-loading').classList.remove('hide');
+  document.getElementById('dash-content').classList.add('hide');
+  try{
+    const r = await fetch('/api/performance');
+    const j = await r.json();
+    if(!r.ok || !j.ok) throw new Error(j.error || ('HTTP '+r.status));
+    if(!j.kpis){
+      document.getElementById('dash-loading').textContent = 'No data yet — import a Schwab CSV or add manual entries below.';
+      return;
+    }
+    renderDashboard(j);
+    document.getElementById('dash-loading').classList.add('hide');
+    document.getElementById('dash-content').classList.remove('hide');
+  }catch(e){
+    document.getElementById('dash-loading').textContent = 'Failed to load: '+e.message;
+  }
+}
+
+function renderDashboard(j){
+  const k = j.kpis;
+  // KPI cards
+  document.getElementById('kpi-nav').textContent = fmtUsdShort(k.nav);
+  document.getElementById('kpi-nav-sub').textContent = `${k.inception_date} → ${k.last_date} · ${k.days_elapsed} d`;
+
+  const twrEl = document.getElementById('kpi-twr');
+  twrEl.textContent = signedPct(k.twr_cum_pct);
+  setSignClass(twrEl, k.twr_cum_pct);
+  const urthDelta = (k.twr_cum_pct!=null && k.urth_return_pct!=null) ? (k.twr_cum_pct - k.urth_return_pct) : null;
+  document.getElementById('kpi-twr-sub').textContent = `URTH ${signedPct(k.urth_return_pct)} · Δ ${signedPct(urthDelta)}`;
+
+  const irrEl = document.getElementById('kpi-irr');
+  irrEl.textContent = signedPct(k.irr_pct);
+  setSignClass(irrEl, k.irr_pct);
+
+  const ddEl = document.getElementById('kpi-dd');
+  ddEl.textContent = '−'+fmtPct(k.max_drawdown_pct);
+  ddEl.classList.add('neg');
+
+  const pnlEl = document.getElementById('kpi-pnl');
+  pnlEl.textContent = signedUsd(k.total_pnl_usd);
+  setSignClass(pnlEl, k.total_pnl_usd);
+  document.getElementById('kpi-pnl-sub').textContent = `total return ${signedPct(k.total_return_pct)}`;
+
+  document.getElementById('kpi-inv').textContent = fmtUsdShort(k.invested_usd);
+  document.getElementById('kpi-inv-sub').textContent = `contrib $${k.total_contributions.toLocaleString('en-US',{maximumFractionDigits:0})} · withdr $${k.total_withdrawals.toLocaleString('en-US',{maximumFractionDigits:0})}`;
+
+  // Mini stats
+  document.getElementById('st-cash').textContent = fmtUsdShort(k.cash_usd);
+  document.getElementById('st-mv').textContent = fmtUsdShort(k.market_value_usd);
+  const r=document.getElementById('st-realized'); r.textContent = signedUsd(k.realized_pnl); setSignClass(r, k.realized_pnl);
+  const u=document.getElementById('st-unrealized'); u.textContent = signedUsd(k.unrealized_pnl); setSignClass(u, k.unrealized_pnl);
+  document.getElementById('st-income').textContent = '$'+(k.total_dividends + k.total_interest).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('st-tax').textContent = '−$'+Math.abs(k.total_taxes).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  // Holdings table
+  renderHoldings(j.holdings);
+
+  // Equity curve
+  renderEquityChart(j.series);
+}
+
+function renderHoldings(holdings){
+  const tbl = document.getElementById('tbl-holdings');
+  if(!holdings || holdings.length===0){ tbl.innerHTML = '<tbody><tr><td>No open positions.</td></tr></tbody>'; return; }
+  let html = '<thead><tr><th>Ticker</th><th class="r">Quantity</th><th class="r">Avg cost</th><th class="r">Last price</th><th class="r">Cost basis</th><th class="r">Market value</th><th class="r">Unrealized P&L</th><th class="r">Weight</th></tr></thead><tbody>';
+  for(const h of holdings){
+    const pnl = h.unrealized_pnl;
+    const pnlCls = pnl>0?'pos':(pnl<0?'neg':'');
+    const ret = (h.cost_basis>0 && pnl!=null) ? (pnl/h.cost_basis) : null;
+    html += `<tr>
+      <td><strong>${h.ticker}</strong></td>
+      <td class="r">${Number(h.qty).toLocaleString('en-US',{maximumFractionDigits:4})}</td>
+      <td class="r">${h.avg_cost!=null?Number(h.avg_cost).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4}):'—'}</td>
+      <td class="r">${h.last_price!=null?Number(h.last_price).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4}):'—'}</td>
+      <td class="r">${h.cost_basis!=null?'$'+Number(h.cost_basis).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
+      <td class="r">${h.market_value!=null?'$'+Number(h.market_value).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
+      <td class="r ${pnlCls}" style="font-weight:600">${signedUsd(pnl)}${ret!=null?' <span style="font-weight:400;color:var(--gray-mid)">('+signedPct(ret,1)+')</span>':''}</td>
+      <td class="r">${h.weight_pct!=null?(h.weight_pct*100).toFixed(2)+'%':'—'}</td>
+    </tr>`;
+  }
+  html += '</tbody>';
+  tbl.innerHTML = html;
+}
+
+function renderEquityChart(series){
+  if(!window.Chart){ console.warn('Chart.js not yet loaded'); return; }
+  const ctx = document.getElementById('chart-equity').getContext('2d');
+  if(equityChart) equityChart.destroy();
+
+  // Portfolio = (1+twr_cum)*100; benchmark = urth_norm*100
+  const labels = series.map(s=>s.date);
+  const portfolio = series.map(s=> (s.twr_cum!=null) ? (1+s.twr_cum)*100 : null);
+  const urth = series.map(s=> (s.urth_norm!=null) ? s.urth_norm*100 : null);
+
+  equityChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Portfolio (TWR)', data: portfolio, borderColor: '#1b2642', backgroundColor: 'rgba(27,38,66,0.06)', borderWidth: 2, fill: true, pointRadius: 0, tension: 0.15 },
+        { label: 'URTH (MSCI World)', data: urth, borderColor: '#b88b47', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [4,4], pointRadius: 0, tension: 0.15 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, color: '#1b2642' } },
+        tooltip: {
+          callbacks: {
+            label: (ctx)=> `${ctx.dataset.label}: ${ctx.parsed.y!=null?ctx.parsed.y.toFixed(2):'—'} (${ctx.parsed.y!=null?((ctx.parsed.y/100-1)*100).toFixed(2)+'%':'—'})`,
+          },
+        },
+      },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8, color: '#606060', font:{size:10} }, grid:{color:'rgba(27,38,66,0.05)'} },
+        y: { ticks: { color: '#606060', font:{size:10}, callback:(v)=>v.toFixed(0) }, grid:{color:'rgba(27,38,66,0.05)'}, title:{display:true,text:'Index (inception=100)',font:{size:10},color:'#8a9098'} },
+      },
+    },
+  });
+}
+
+document.getElementById('btn-dash-reload').addEventListener('click', loadDashboard);
+document.getElementById('btn-dash-snapshot').addEventListener('click', async()=>{
+  if(!isAdmin()) return;
+  const btn = document.getElementById('btn-dash-snapshot');
+  const slot = document.getElementById('dash-alert');
+  btn.disabled = true; slot.innerHTML = '<div class="alert">Computing snapshots…</div>';
+  try{
+    const r = await fetch('/api/admin-backfill-snapshots',{method:'POST',headers:{'Authorization':'Bearer '+adminToken()}});
+    const j = await r.json();
+    if(!r.ok || !j.ok) throw new Error(j.error || 'failed');
+    slot.innerHTML = `<div class="alert ok">Snapshots written: ${j.written} (${j.first_date} → ${j.last_date}).</div>`;
+    loadDashboard();
+  }catch(e){
+    slot.innerHTML = `<div class="alert err">${e.message}</div>`;
+  }finally{
+    btn.disabled = false;
+  }
+});
+
 function applyAdminGate(){
   refreshAdminBar();
   const ok = isAdmin();
   document.getElementById('panel-import').style.display = ok ? '' : 'none';
   document.getElementById('panel-manual').style.display = ok ? '' : 'none';
   document.getElementById('panel-prices').style.display = ok ? '' : 'none';
+  // Dashboard panel: visible to everyone (read-only).
+  // Snapshot button only visible to admins.
+  document.getElementById('btn-dash-snapshot').style.display = ok ? '' : 'none';
   if(ok){
     loadExisting();
     loadPricesSummary();
@@ -547,6 +764,7 @@ function applyAdminGate(){
     wrap.className = 'nodata';
     wrap.innerHTML = 'Admin access required. Click <strong>Admin login</strong> above.';
   }
+  loadDashboard();
 }
 // Wait until window.dceAuth is defined (defer-loaded), then wire up.
 function whenAuthReady(cb){
