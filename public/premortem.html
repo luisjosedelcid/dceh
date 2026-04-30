@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — Pre-mortem Watch</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1b2642;--gold:#b88b47;--gold-lt:#d4aa6a;--gold-rule:rgba(184,139,71,0.30);
+    --cream:#f5f1eb;--white:#ffffff;--ink:#1b2642;--gray-mid:#8a9098;--gray-txt:#606060;
+    --green:#2a7a56;--red:#9b2335;--amber:#a26a1f;
+    --rule:rgba(27,38,66,0.09);--row-alt:#fafaf7;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+  header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
+  .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
+  .hnav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
+  .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
+  .hnav a.active{color:var(--gold);border-color:var(--gold)}
+
+  main{max-width:1200px;margin:0 auto;padding:36px 48px 60px}
+  .slbl{font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+  .slbl::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
+  h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;color:var(--navy);margin-bottom:4px}
+  .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:24px}
+
+  .admin-bar{display:flex;align-items:center;justify-content:space-between;background:var(--white);border:1px solid var(--rule);padding:12px 20px;margin-bottom:20px;font-size:12px}
+  .admin-bar.is-admin{border-color:var(--gold);border-left:3px solid var(--gold)}
+  .admin-status{color:var(--gray-mid);display:flex;align-items:center;gap:10px}
+  .admin-dot{width:8px;height:8px;border-radius:50%;background:var(--gray-mid)}
+  .is-admin .admin-dot{background:var(--gold)}
+  .is-admin .admin-status strong{color:var(--navy)}
+  .btn{font-family:inherit;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:8px 14px;border:1px solid var(--navy);background:var(--navy);color:var(--white);cursor:pointer;transition:all .15s}
+  .btn:hover{background:var(--gold);border-color:var(--gold)}
+  .btn:disabled{opacity:0.4;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--navy)}
+  .btn.ghost:hover{background:var(--navy);color:var(--white)}
+  .btn.gold{background:var(--gold);border-color:var(--gold)}
+  .btn.gold:hover{background:var(--navy);border-color:var(--navy)}
+  .btn.sm{padding:5px 9px;font-size:9px;letter-spacing:0.1em}
+
+  .panel{background:var(--white);border:1px solid var(--rule);padding:20px;margin-bottom:20px}
+  .panel h2{font-size:13px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--navy);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
+  .panel-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
+
+  /* KPI strip */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}
+  .kpi{background:var(--white);border:1px solid var(--rule);padding:16px 18px;display:flex;flex-direction:column;gap:4px;position:relative}
+  .kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold)}
+  .kpi.danger::before{background:var(--red)}
+  .kpi-label{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid)}
+  .kpi-value{font-size:24px;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums;letter-spacing:-0.01em;line-height:1.1;margin-top:4px}
+  .kpi-value.pos{color:var(--green)}
+  .kpi-value.neg{color:var(--red)}
+  .kpi-sub{font-size:11px;color:var(--gray-txt);font-variant-numeric:tabular-nums}
+
+  /* Tabs */
+  .tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin-bottom:24px}
+  .tab-btn{background:transparent;border:0;border-bottom:2px solid transparent;padding:12px 20px;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:8px}
+  .tab-btn:hover{color:var(--navy)}
+  .tab-btn.active{color:var(--navy);border-bottom-color:var(--gold)}
+  .tab-btn .tab-badge{font-size:9px;padding:2px 6px;background:var(--gold);color:var(--white);font-weight:500;letter-spacing:0.1em}
+  .tab-pane{display:none}
+  .tab-pane.active{display:block}
+
+  /* Pre-mortem ticker block */
+  .pm-block{background:var(--white);border:1px solid var(--rule);margin-bottom:24px}
+  .pm-head{padding:18px 22px;border-bottom:1px solid var(--rule);display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .pm-ticker{font-size:22px;font-weight:700;color:var(--navy);letter-spacing:-0.01em}
+  .pm-meta{font-size:11px;color:var(--gray-mid);margin-top:4px}
+  .pm-thesis{font-size:13px;color:var(--ink);margin-top:8px;max-width:760px;line-height:1.55}
+  .pm-stats{display:flex;gap:20px;font-variant-numeric:tabular-nums}
+  .pm-stat{text-align:right}
+  .pm-stat-lbl{font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid)}
+  .pm-stat-val{font-size:20px;font-weight:600;color:var(--navy);margin-top:4px}
+  .pm-stat-val.danger{color:var(--red)}
+
+  /* Failure mode grid */
+  .fm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:0;border-top:1px solid var(--rule)}
+  .fm-card{padding:18px 22px;border-bottom:1px solid var(--rule);border-right:1px solid var(--rule);background:var(--white);display:flex;flex-direction:column;gap:10px}
+  .fm-card:nth-child(2n){border-right:0}
+  .fm-card.triggered{background:#fef6f6;border-left:3px solid var(--red)}
+  .fm-card.resolved{opacity:0.6}
+  .fm-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .fm-cat{font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:600}
+  .fm-title{font-size:14px;font-weight:600;color:var(--navy);line-height:1.35;margin-top:4px}
+  .fm-evidence{font-size:12px;color:var(--gray-txt);line-height:1.55;background:var(--cream);padding:10px 12px;border-left:2px solid var(--gold-rule)}
+  .fm-evidence.danger{border-left-color:var(--red);background:#fef6f6;color:var(--ink)}
+  .fm-meta{font-size:11px;color:var(--gray-mid);display:flex;gap:14px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+  .fm-actions{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+
+  .pill{display:inline-block;padding:3px 9px;font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;line-height:1.4}
+  .pill.monitoring{background:#eef3f9;color:#3a6ea5}
+  .pill.triggered{background:#f7e6e9;color:var(--red)}
+  .pill.resolved{background:#e8f3ee;color:var(--green)}
+  .pill.invalidated{background:#f0eded;color:var(--gray-txt)}
+  .pill.type-quant{background:#f4ede0;color:#7a5a1f}
+  .pill.type-llm{background:#eef3f9;color:#3a6ea5}
+  .pill.type-manual{background:#f0eded;color:var(--gray-txt)}
+
+  .nodata{padding:40px 20px;text-align:center;color:var(--gray-mid);font-size:13px}
+  .alert{padding:10px 14px;font-size:12px;margin-bottom:16px;border-left:3px solid var(--gold)}
+  .alert.ok{background:#e8f3ee;border-color:var(--green);color:var(--green)}
+  .alert.err{background:#f7e6e9;border-color:var(--red);color:var(--red)}
+  .alert.warn{background:#fdf6e3;border-color:var(--gold)}
+  .hide{display:none}
+  .muted{color:var(--gray-mid)}
+
+  /* Manage tab — table */
+  table.tbl{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+  table.tbl th{background:var(--navy);color:var(--white);font-weight:500;text-transform:uppercase;letter-spacing:0.1em;font-size:10px;padding:10px;text-align:left}
+  table.tbl td{padding:10px;border-bottom:1px solid var(--rule);vertical-align:top}
+  table.tbl tr:nth-child(even) td{background:var(--row-alt)}
+
+  details.eval-log{margin-top:6px}
+  details.eval-log summary{font-size:10px;color:var(--gray-mid);cursor:pointer;letter-spacing:0.08em;text-transform:uppercase}
+  .eval-log pre{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--cream);padding:10px;margin-top:6px;white-space:pre-wrap;color:var(--ink);max-height:200px;overflow:auto}
+
+  @media (max-width:760px){
+    main{padding:24px 18px 40px}
+    header{padding:0 18px}
+    .pm-head{flex-direction:column}
+    .pm-stats{align-self:flex-start}
+    .fm-grid{grid-template-columns:1fr}
+    .fm-card{border-right:0}
+  }
+</style>
+<link rel="stylesheet" href="/responsive.css">
+<script src="/dce-auth.js" defer></script>
+</head>
+<body data-dce-auth="manual">
+
+<header>
+  <div class="logo">DCE <span>Holdings</span></div>
+  <div class="hnav">
+    <a href="/">Home</a>
+    <a href="/universe.html">Universe</a>
+    <a href="/screener.html">Find</a>
+    <a href="/study.html">Study</a>
+    <a href="/journal.html">Journal</a>
+    <a href="/portfolio.html">Portfolio</a>
+    <a href="/news.html">News</a>
+    <a href="/dataroom.html">Data Room</a>
+    <a href="/reporting.html">Reporting</a>
+    <a href="/performance.html">Performance</a>
+    <a href="/premortem.html" class="active">Pre-mortem</a>
+    <a href="/calendar.html">Calendar</a>
+  </div>
+</header>
+
+<main id="main-root">
+  <div class="slbl">DCE Holdings — Investment Office</div>
+  <h1>Pre-mortem Watch</h1>
+  <div class="sub">Live monitoring layer over each thesis. Quantitative triggers re-evaluated daily; qualitative triggers reviewed manually until LLM ingestion is enabled.</div>
+
+  <div class="admin-bar" id="admin-bar">
+    <div class="admin-status">
+      <span class="admin-dot"></span>
+      <span id="admin-label">Read-only mode</span>
+    </div>
+    <div>
+      <button class="btn ghost" id="btn-admin" type="button">Admin login</button>
+    </div>
+  </div>
+
+  <!-- KPI strip -->
+  <div class="kpi-grid" id="kpi-strip">
+    <div class="kpi" id="kpi-active"><div class="kpi-label">Active pre-mortems</div><div class="kpi-value" id="v-active">—</div><div class="kpi-sub" id="v-active-sub">—</div></div>
+    <div class="kpi danger" id="kpi-triggered"><div class="kpi-label">Triggered failure modes</div><div class="kpi-value" id="v-triggered">—</div><div class="kpi-sub" id="v-triggered-sub">—</div></div>
+    <div class="kpi"><div class="kpi-label">Total tracked</div><div class="kpi-value" id="v-total">—</div><div class="kpi-sub" id="v-total-sub">—</div></div>
+    <div class="kpi"><div class="kpi-label">Last evaluation</div><div class="kpi-value" id="v-last" style="font-size:14px">—</div><div class="kpi-sub" id="v-last-sub">—</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="tab-watch" role="tab" type="button">Watch</button>
+    <button class="tab-btn" data-tab="tab-manage" role="tab" type="button">Manage <span class="tab-badge">Admin</span></button>
+  </nav>
+
+  <!-- ====== TAB: WATCH ====== -->
+  <section class="tab-pane active" id="tab-watch" role="tabpanel">
+
+    <div class="panel">
+      <div class="panel-row">
+        <h2 style="margin:0;border:0;padding:0">Live monitoring</h2>
+        <div style="display:flex;gap:8px">
+          <button class="btn ghost sm" id="btn-refresh" type="button">Refresh</button>
+          <button class="btn gold sm admin-only" id="btn-eval-now" type="button">Run evaluation now</button>
+        </div>
+      </div>
+      <div id="watch-msg"></div>
+      <div id="watch-loading" class="nodata">Loading pre-mortems…</div>
+      <div id="watch-content" class="hide"></div>
+    </div>
+
+  </section>
+
+  <!-- ====== TAB: MANAGE ====== -->
+  <section class="tab-pane" id="tab-manage" role="tabpanel">
+
+    <div class="panel">
+      <h2>Manage failure modes</h2>
+      <p class="muted" style="font-size:12px;margin-bottom:14px">
+        Manually flip qualitative triggers, edit notes, or add new failure modes. Quantitative triggers update automatically via the daily cron and the "Run evaluation now" button.
+      </p>
+      <div id="manage-msg"></div>
+      <div id="manage-loading" class="nodata">Loading…</div>
+      <div id="manage-content" class="hide"></div>
+    </div>
+
+  </section>
+
+</main>
+
+<script>
+  // ── Tabs ─────────────────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === tab));
+      try { localStorage.setItem('premortem.activeTab', tab); } catch(e){}
+    });
+  });
+  try {
+    const saved = localStorage.getItem('premortem.activeTab');
+    if (saved) {
+      const btn = document.querySelector(`.tab-btn[data-tab="${saved}"]`);
+      if (btn) btn.click();
+    }
+  } catch(e){}
+
+  // ── Auth & admin gating ──────────────────────────────────────────────────
+  function token(){ try { return window.dceAuth && window.dceAuth.token() || null; } catch(e){ return null; } }
+  function user(){ try { return window.dceAuth && window.dceAuth.user() || null; } catch(e){ return null; } }
+  function isAdmin(){ try { return window.dceAuth && window.dceAuth.isAdmin(); } catch(e){ return false; } }
+
+  function applyAdminGating() {
+    const bar = document.getElementById('admin-bar');
+    const lbl = document.getElementById('admin-label');
+    const btnAdm = document.getElementById('btn-admin');
+    const u = user();
+    const adm = isAdmin();
+    if (u) {
+      bar.classList.toggle('is-admin', adm);
+      lbl.innerHTML = adm
+        ? `<strong>${u.displayName || u.email}</strong> · Admin`
+        : `${u.displayName || u.email} · Read-only`;
+      btnAdm.textContent = 'Sign out';
+      btnAdm.onclick = () => { window.dceAuth.logout(); location.reload(); };
+    } else {
+      bar.classList.remove('is-admin');
+      lbl.textContent = 'Read-only mode';
+      btnAdm.textContent = 'Admin login';
+      btnAdm.onclick = () => { window.dceAuth.openLoginModal(); };
+    }
+    document.querySelectorAll('.admin-only').forEach(el => {
+      el.style.display = adm ? '' : 'none';
+    });
+  }
+
+  function whenAuthReady(cb) {
+    if (window.dceAuth) { cb(); return; }
+    const t = setInterval(() => {
+      if (window.dceAuth) { clearInterval(t); cb(); }
+    }, 30);
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  function fmtNum(n, d=2) { return (n==null||isNaN(n)) ? '—' : Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+  function fmtDt(s) {
+    if (!s) return '—';
+    try {
+      const d = new Date(s);
+      return d.toLocaleString('en-US',{month:'short',day:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    } catch(e){ return s; }
+  }
+  function escHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function showAlert(elId, msg, kind='ok') {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.innerHTML = `<div class="alert ${kind}">${escHtml(msg)}</div>`;
+    setTimeout(() => { if (el) el.innerHTML = ''; }, 6000);
+  }
+
+  function categoryLabel(c){ return c ? c.charAt(0).toUpperCase() + c.slice(1) : 'Risk'; }
+  function triggerTypePill(tt){
+    if (tt === 'quantitative') return '<span class="pill type-quant">Quantitative</span>';
+    if (tt === 'qualitative_llm') return '<span class="pill type-llm">LLM (auto)</span>';
+    return '<span class="pill type-manual">Manual review</span>';
+  }
+  function statusPill(s){
+    return `<span class="pill ${s}">${s.charAt(0).toUpperCase()+s.slice(1)}</span>`;
+  }
+
+  // ── Load + render ────────────────────────────────────────────────────────
+  let _premortems = [];
+
+  async function loadPremortems() {
+    document.getElementById('watch-loading').classList.remove('hide');
+    document.getElementById('watch-content').classList.add('hide');
+    document.getElementById('manage-loading').classList.remove('hide');
+    document.getElementById('manage-content').classList.add('hide');
+
+    const tk = token();
+    if (!tk) {
+      document.getElementById('watch-loading').textContent = 'Sign in to view pre-mortems.';
+      document.getElementById('manage-loading').textContent = 'Sign in to manage.';
+      return;
+    }
+
+    try {
+      const r = await fetch('/api/premortems', { headers: { 'x-admin-token': tk } });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || 'Load failed');
+      _premortems = j.premortems || [];
+      renderKpis(_premortems);
+      renderWatch(_premortems);
+      renderManage(_premortems);
+    } catch (e) {
+      document.getElementById('watch-loading').textContent = 'Error: ' + e.message;
+      document.getElementById('manage-loading').textContent = 'Error: ' + e.message;
+    }
+  }
+
+  function renderKpis(pms) {
+    const totalFm = pms.reduce((s,p) => s + (p.total_count||0), 0);
+    const triggered = pms.reduce((s,p) => s + (p.triggered_count||0), 0);
+    const lastEval = pms.flatMap(p => (p.failure_modes||[]).map(fm => fm.last_evaluated_at)).filter(Boolean).sort().slice(-1)[0];
+    document.getElementById('v-active').textContent = pms.length;
+    document.getElementById('v-active-sub').textContent = pms.map(p => p.ticker).join(', ') || '—';
+    document.getElementById('v-triggered').textContent = triggered;
+    document.getElementById('v-triggered-sub').textContent = triggered === 0 ? 'All clear' : 'Review required';
+    document.getElementById('v-total').textContent = totalFm;
+    document.getElementById('v-total-sub').textContent = `${triggered} triggered · ${totalFm - triggered} monitoring`;
+    document.getElementById('v-last').textContent = lastEval ? fmtDt(lastEval) : 'Never';
+    document.getElementById('v-last-sub').textContent = lastEval ? 'Latest cron run' : 'Awaiting first run';
+  }
+
+  function renderWatch(pms) {
+    const root = document.getElementById('watch-content');
+    document.getElementById('watch-loading').classList.add('hide');
+    root.classList.remove('hide');
+
+    if (pms.length === 0) {
+      root.innerHTML = '<div class="nodata">No active pre-mortems. Add one in the Manage tab.</div>';
+      return;
+    }
+
+    root.innerHTML = pms.map(pm => {
+      const fms = pm.failure_modes || [];
+      const triggeredCount = pm.triggered_count || 0;
+      const total = pm.total_count || 0;
+
+      const fmCards = fms.map(fm => {
+        const isTrig = fm.status === 'triggered';
+        const isResolved = fm.status === 'resolved' || fm.status === 'invalidated';
+        const ev = fm.last_evaluation;
+        const evidence = ev ? ev.evidence_text : (fm.trigger_type === 'qualitative_llm' ? 'Awaiting LLM ingestion (Capa 4).' : (fm.trigger_type === 'qualitative_manual' ? 'Manual review — flip status from Manage tab when you observe this trigger.' : 'No evaluation recorded yet.'));
+        const evDanger = isTrig;
+        return `
+          <div class="fm-card ${isTrig?'triggered':''} ${isResolved?'resolved':''}">
+            <div class="fm-top">
+              <div>
+                <div class="fm-cat">${escHtml(categoryLabel(fm.category))}</div>
+                <div class="fm-title">${escHtml(fm.failure_mode)}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+                ${statusPill(fm.status)}
+                ${triggerTypePill(fm.trigger_type)}
+              </div>
+            </div>
+            <div class="fm-evidence ${evDanger?'danger':''}">${escHtml(evidence)}</div>
+            <div class="fm-meta">
+              <span>P ${fm.probability_pct ?? '—'}%</span>
+              <span>S ${fm.severity_pct ?? '—'}%</span>
+              <span>Last eval: ${fmtDt(fm.last_evaluated_at)}</span>
+              ${fm.triggered_at ? `<span style="color:var(--red)">Triggered ${fmtDt(fm.triggered_at)}</span>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+
+      return `
+        <div class="pm-block">
+          <div class="pm-head">
+            <div style="flex:1;min-width:260px">
+              <div class="pm-ticker">${escHtml(pm.ticker)}</div>
+              <div class="pm-meta">${escHtml(pm.status)} · created ${fmtDt(pm.created_at)} ${pm.created_by ? '· by ' + escHtml(pm.created_by) : ''}</div>
+              ${pm.thesis_summary ? `<div class="pm-thesis">${escHtml(pm.thesis_summary)}</div>` : ''}
+            </div>
+            <div class="pm-stats">
+              <div class="pm-stat">
+                <div class="pm-stat-lbl">Triggered</div>
+                <div class="pm-stat-val ${triggeredCount>0?'danger':''}">${triggeredCount}/${total}</div>
+              </div>
+            </div>
+          </div>
+          <div class="fm-grid">
+            ${fmCards || '<div class="nodata" style="grid-column:1/-1">No failure modes defined.</div>'}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderManage(pms) {
+    const root = document.getElementById('manage-content');
+    document.getElementById('manage-loading').classList.add('hide');
+    root.classList.remove('hide');
+
+    if (!isAdmin()) {
+      root.innerHTML = '<div class="nodata">Sign in as admin to manage failure modes.</div>';
+      return;
+    }
+
+    if (pms.length === 0) {
+      root.innerHTML = '<div class="nodata">No active pre-mortems.</div>';
+      return;
+    }
+
+    const rows = [];
+    for (const pm of pms) {
+      for (const fm of (pm.failure_modes||[])) {
+        rows.push({ pm, fm });
+      }
+    }
+
+    root.innerHTML = `
+      <table class="tbl">
+        <thead><tr>
+          <th>Ticker</th>
+          <th>Failure mode</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>P%</th>
+          <th>S%</th>
+          <th>Actions</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map(({pm,fm}) => `
+            <tr data-fm-id="${fm.id}">
+              <td><strong>${escHtml(pm.ticker)}</strong></td>
+              <td>${escHtml(fm.failure_mode)}<br><span class="muted" style="font-size:10px">${escHtml(categoryLabel(fm.category))}</span></td>
+              <td>${triggerTypePill(fm.trigger_type)}</td>
+              <td>${statusPill(fm.status)}</td>
+              <td>${fm.probability_pct ?? '—'}</td>
+              <td>${fm.severity_pct ?? '—'}</td>
+              <td>
+                <div class="fm-actions">
+                  ${fm.status !== 'triggered' ? `<button class="btn sm" data-act="trigger" data-id="${fm.id}">Mark triggered</button>` : ''}
+                  ${fm.status !== 'monitoring' ? `<button class="btn ghost sm" data-act="monitor" data-id="${fm.id}">Mark monitoring</button>` : ''}
+                  ${fm.status !== 'resolved' ? `<button class="btn ghost sm" data-act="resolve" data-id="${fm.id}">Mark resolved</button>` : ''}
+                  ${fm.status !== 'invalidated' ? `<button class="btn ghost sm" data-act="invalidate" data-id="${fm.id}">Invalidate</button>` : ''}
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`;
+
+    root.querySelectorAll('button[data-act]').forEach(b => {
+      b.addEventListener('click', async () => {
+        const id = b.dataset.id;
+        const act = b.dataset.act;
+        const statusMap = { trigger:'triggered', monitor:'monitoring', resolve:'resolved', invalidate:'invalidated' };
+        const newStatus = statusMap[act];
+        if (!newStatus) return;
+        b.disabled = true;
+        try {
+          const r = await fetch(`/api/failure-modes?id=${id}`, {
+            method:'PATCH',
+            headers:{ 'Content-Type':'application/json', 'x-admin-token': token() },
+            body: JSON.stringify({ status: newStatus }),
+          });
+          const j = await r.json();
+          if (!j.ok) throw new Error(j.error || 'Update failed');
+          showAlert('manage-msg', `Failure mode marked ${newStatus}.`, 'ok');
+          await loadPremortems();
+        } catch(e){
+          showAlert('manage-msg', 'Error: ' + e.message, 'err');
+          b.disabled = false;
+        }
+      });
+    });
+  }
+
+  // ── Run evaluation now (admin) ───────────────────────────────────────────
+  document.getElementById('btn-eval-now').addEventListener('click', async () => {
+    if (!isAdmin()) return;
+    const btn = document.getElementById('btn-eval-now');
+    btn.disabled = true;
+    btn.textContent = 'Running…';
+    showAlert('watch-msg', 'Evaluating triggers — this may take a few seconds.', 'warn');
+    try {
+      const r = await fetch('/api/admin-premortem-eval', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'x-admin-token': token() },
+        body: JSON.stringify({}),
+      });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || 'Eval failed');
+      const newCount = (j.transitions||[]).length;
+      const emailMsg = j.email && j.email.ok ? ' · Email sent.' : (j.email && j.email.skipped ? '' : ' · Email failed.');
+      showAlert('watch-msg', `Evaluated ${j.evaluated} triggers · ${newCount} new transition(s).${emailMsg}`, newCount>0?'warn':'ok');
+      await loadPremortems();
+    } catch(e){
+      showAlert('watch-msg', 'Error: ' + e.message, 'err');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Run evaluation now';
+    }
+  });
+
+  document.getElementById('btn-refresh').addEventListener('click', () => loadPremortems());
+
+  // ── Boot ─────────────────────────────────────────────────────────────────
+  whenAuthReady(() => {
+    window.dceAuth.mountAdminButton();
+    applyAdminGating();
+    window.dceAuth.onChange(() => { applyAdminGating(); loadPremortems(); });
+    loadPremortems();
+  });
+</script>
+
+</body>
+</html>

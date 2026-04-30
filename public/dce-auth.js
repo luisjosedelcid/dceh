@@ -296,7 +296,7 @@
   // ── Role-based UI hiding ────────────────────────────────────────────
   // Admin-only routes: hidden from nav for non-admin authenticated users.
   // Backwards-compat: sessions without role are treated as admin.
-  const ADMIN_ONLY_HREFS = ['/reporting.html', '/reporting', '/performance.html', '/performance'];
+  const ADMIN_ONLY_HREFS = ['/reporting.html', '/reporting', '/performance.html', '/performance', '/premortem.html', '/premortem'];
   function _applyRoleVisibility() {
     const u = user();
     if (!u) return; // not signed in — leave nav alone
