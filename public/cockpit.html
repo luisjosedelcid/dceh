@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — Portfolio Cockpit</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#1b2642; --gold:#b88b47; --gold-lt:#d4aa6a;
+    --gold-dim:rgba(184,139,71,0.10); --gold-rule:rgba(184,139,71,0.30);
+    --cream:#f5f1eb; --white:#ffffff; --ink:#1b2642;
+    --gray-mid:#8a9098; --gray-txt:#606060;
+    --rule:rgba(27,38,66,0.09);
+    --green:#2e6b4f; --red:#8b0000; --amber:#b88b47;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+  header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
+  .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
+  .hnav{display:flex;gap:8px;flex-wrap:wrap}
+  .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
+  .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
+  .hnav a.active{color:var(--gold);border-color:var(--gold)}
+
+  main{padding:28px 36px 60px;max-width:1500px;margin:0 auto}
+  .slbl{font-size:10px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+  h1{font-size:32px;font-weight:700;letter-spacing:-0.01em;margin-bottom:6px}
+  .sub{color:var(--gray-mid);font-size:14px;margin-bottom:24px}
+  .meta-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:24px}
+  .meta-row .updated{font-size:11px;color:var(--gray-mid)}
+
+  /* ── KPI strip (estilo A) ── */
+  .strip {
+    background: var(--white);
+    border:1px solid var(--rule);
+    border-left: 4px solid var(--navy);
+    padding: 18px 24px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) auto;
+    gap: 24px;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .kpi .lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gray-mid); margin-bottom: 6px; }
+  .kpi .val { font-size: 26px; font-weight: 700; color: var(--navy); line-height: 1; font-variant-numeric: tabular-nums; }
+  .kpi .sub2 { font-size: 11px; color: var(--gray-txt); margin-top: 4px; }
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+  .gld { color: var(--gold); }
+
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; max-width: 360px; }
+  .chip {
+    background: var(--white); border: 1px solid var(--rule);
+    padding: 6px 12px; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--gray-txt);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .chip.alert { background: rgba(184,139,71,0.08); border-color: var(--gold); color: #8a6a35; }
+  .chip.danger { background: rgba(139,0,0,0.08); border-color: var(--red); color: var(--red); }
+  .chip.ok { background: rgba(46,107,79,0.08); border-color: var(--green); color: var(--green); }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  /* ── Main grid ── */
+  .grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; }
+
+  .card {
+    background: var(--white); border: 1px solid var(--rule);
+    margin-bottom: 24px;
+  }
+  .card .head {
+    background: var(--navy); color: var(--white);
+    padding: 12px 18px; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--gold-rule);
+  }
+  .card .head .badge {
+    font-size: 10px; background: var(--gold); color: var(--navy);
+    padding: 2px 8px; font-weight: 700; letter-spacing: 0.1em;
+  }
+  .card .body { padding: 8px 18px; }
+
+  /* ── Discipline gates ── */
+  .gate {
+    display: grid; grid-template-columns: 28px 1fr auto;
+    gap: 14px; padding: 14px 0;
+    border-bottom: 1px solid var(--rule); align-items: center;
+  }
+  .gate:last-child { border-bottom: none; }
+  .gate .icon {
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: var(--white);
+  }
+  .gate .icon.ok { background: var(--green); }
+  .gate .icon.fail { background: var(--red); }
+  .gate .icon.warn { background: var(--gold); }
+  .gate .text strong { color: var(--navy); display: block; font-size: 13px; }
+  .gate .text .sub3 { font-size: 11px; color: var(--gray-txt); margin-top: 3px; }
+  .gate .status { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
+  .gate .status.ok { color: var(--green); }
+  .gate .status.fail { color: var(--red); }
+  .gate .status.warn { color: var(--gold); }
+
+  /* ── Positions table ── */
+  .pos-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .pos-table thead th {
+    background: var(--cream); color: var(--gray-txt);
+    font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; padding: 10px 12px; text-align: left;
+    border-bottom: 1px solid var(--rule);
+  }
+  .pos-table thead th.right { text-align: right; }
+  .pos-table tbody td {
+    padding: 12px; border-bottom: 1px solid var(--rule);
+    font-variant-numeric: tabular-nums;
+  }
+  .pos-table tbody td.right { text-align: right; }
+  .pos-table tbody td.tk { font-weight: 700; color: var(--navy); }
+  .pos-table tbody tr:last-child td { border-bottom: none; }
+  .mos-pill {
+    display: inline-block; padding: 2px 8px; font-size: 10px;
+    font-weight: 700; letter-spacing: 0.05em;
+  }
+  .mos-pill.ok { background: rgba(46,107,79,0.12); color: var(--green); }
+  .mos-pill.warn { background: rgba(184,139,71,0.12); color: var(--gold); }
+  .mos-pill.bad { background: rgba(139,0,0,0.12); color: var(--red); }
+  .mos-pill.none { background: rgba(96,96,96,0.10); color: var(--gray-txt); }
+
+  /* ── Decisions ── */
+  .decision {
+    padding: 14px 0; border-bottom: 1px solid var(--rule);
+  }
+  .decision:last-child { border-bottom: none; }
+  .decision .row1 {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
+  }
+  .decision .ticker { font-size: 14px; font-weight: 700; color: var(--navy); letter-spacing: 0.04em; }
+  .decision .deadline {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--gray-mid);
+  }
+  .decision .deadline.urgent { color: var(--red); }
+  .decision .what { font-size: 13px; color: var(--ink); line-height: 1.5; }
+  .decision .why { font-size: 11px; color: var(--gray-txt); font-style: italic; margin-top: 4px; }
+  .decision .cta {
+    display: inline-block; margin-top: 6px; font-size: 10px;
+    color: var(--gold); text-decoration: none;
+    letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600;
+  }
+  .decision .cta:hover { color: var(--navy); }
+
+  /* ── Events ── */
+  .event { font-size: 12px; padding: 8px 0; border-bottom: 1px solid var(--rule); }
+  .event:last-child { border-bottom: none; }
+  .event .ts { color: var(--gold); font-weight: 600; font-size: 11px; }
+  .event .lbl { color: var(--navy); font-weight: 600; }
+  .event .det { color: var(--gray-txt); font-size: 11px; margin-top: 2px; }
+
+  .empty { color: var(--gray-mid); font-size: 12px; padding: 16px 0; text-align: center; font-style: italic; }
+  .footer-rule {
+    margin-top: 32px; padding-top: 16px;
+    border-top: 1px solid var(--gold-rule);
+    font-size: 11px; color: var(--gray-txt);
+  }
+  .footer-rule strong { color: var(--navy); }
+
+  /* ── Loading state ── */
+  .loading { color: var(--gray-mid); padding: 24px; text-align: center; font-size: 13px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 1024px) {
+    .strip { grid-template-columns: repeat(2, 1fr); }
+    .strip .chips { grid-column: 1 / -1; justify-content: flex-start; max-width: 100%; }
+    .grid { grid-template-columns: 1fr; }
+    main { padding: 20px 16px 40px; }
+    header { padding: 0 16px; }
+    h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">DCE <span>Holdings</span></div>
+  <nav class="hnav">
+    <a href="/">Home</a>
+    <a href="/cockpit.html" class="active">Cockpit</a>
+    <a href="/universe.html">Universe</a>
+    <a href="/screener.html">Find</a>
+    <a href="/study.html">Study</a>
+    <a href="/journal.html">Journal</a>
+    <a href="/portfolio.html">Portfolio</a>
+    <a href="/news.html">News</a>
+    <a href="/dataroom.html">Data Room</a>
+    <a href="/reporting.html">Reporting</a>
+    <a href="/performance.html">Performance</a>
+    <a href="/calendar.html">Calendar</a>
+  </nav>
+</header>
+
+<main>
+  <div class="slbl">DCE Holdings — Investment Office</div>
+  <div class="meta-row">
+    <div>
+      <h1>Portfolio Cockpit</h1>
+      <div class="sub">Tu pantalla diaria de CIO — disciplina, decisiones, estado del sistema.</div>
+    </div>
+    <div class="updated" id="updated">—</div>
+  </div>
+
+  <!-- KPI strip + chips -->
+  <div class="strip" id="strip">
+    <div class="kpi"><div class="lbl">NAV</div><div class="val" id="nav-val">—</div><div class="sub2" id="nav-sub">—</div></div>
+    <div class="kpi"><div class="lbl">vs URTH YTD</div><div class="val" id="vsurth-val">—</div><div class="sub2" id="vsurth-sub">—</div></div>
+    <div class="kpi"><div class="lbl">Posiciones</div><div class="val" id="pos-val">—</div><div class="sub2" id="pos-sub">—</div></div>
+    <div class="kpi"><div class="lbl">Cash</div><div class="val" id="cash-val">—</div><div class="sub2" id="cash-sub">—</div></div>
+    <div class="chips" id="chips"><div class="chip">Cargando…</div></div>
+  </div>
+
+  <div class="grid">
+
+    <!-- ── Left column ── -->
+    <div>
+      <!-- Discipline gates -->
+      <div class="card">
+        <div class="head">
+          Discipline Gates
+          <span class="badge" id="gates-badge">— / —</span>
+        </div>
+        <div class="body" id="gates-body">
+          <div class="loading">Cargando gates…</div>
+        </div>
+      </div>
+
+      <!-- Positions -->
+      <div class="card">
+        <div class="head">Posiciones</div>
+        <div class="body" style="padding: 0;" id="positions-body">
+          <div class="loading">Cargando posiciones…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Right column ── -->
+    <div>
+      <!-- Outstanding Decisions -->
+      <div class="card">
+        <div class="head">
+          Outstanding Decisions
+          <span class="badge" id="dec-badge">—</span>
+        </div>
+        <div class="body" id="decisions-body">
+          <div class="loading">Cargando decisiones…</div>
+        </div>
+      </div>
+
+      <!-- Today / Recent events -->
+      <div class="card">
+        <div class="head">Eventos recientes</div>
+        <div class="body" id="events-body">
+          <div class="loading">Cargando eventos…</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-rule">
+    <strong>Reglas de la disciplina —</strong>
+    Si hay un gate en FAIL o una decisión vencida, esa tarea es la siguiente acción.
+    No se invierte ni se modifica peso sin pasar las gates verdes.
+    Thresholds actuales: re-underwriting ≤5d · revisión posiciones ≤90d · cash ≥10% · concentración ≤35%.
+  </div>
+</main>
+
+<script>
+(function() {
+  const TOKEN_KEY = 'dce_admin_token';
+
+  const fmtUsd = (n) => {
+    if (n == null || isNaN(n)) return '—';
+    const abs = Math.abs(n);
+    if (abs >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    if (abs >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+    return '$' + n.toFixed(0);
+  };
+  const fmtUsdFull = (n) => {
+    if (n == null || isNaN(n)) return '—';
+    return '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
+  };
+  const fmtPct = (n, dp = 1) => {
+    if (n == null || isNaN(n)) return '—';
+    const sign = n > 0 ? '+' : '';
+    return sign + (n * 100).toFixed(dp) + '%';
+  };
+  const fmtPctRaw = (n, dp = 1) => {
+    if (n == null || isNaN(n)) return '—';
+    return (n * 100).toFixed(dp) + '%';
+  };
+  const cls = (n) => n == null ? '' : (n > 0 ? 'pos' : n < 0 ? 'neg' : '');
+  const escapeHtml = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  function setKpi() {}
+
+  async function fetchSummary() {
+    const token = localStorage.getItem(TOKEN_KEY) || '';
+    if (!token) {
+      showAuthError('Necesitas iniciar sesión.');
+      return null;
+    }
+    try {
+      const res = await fetch('/api/cockpit-summary', {
+        headers: { 'x-admin-token': token },
+      });
+      if (res.status === 401 || res.status === 403) {
+        showAuthError('Sesión expirada — vuelve a iniciar sesión.');
+        return null;
+      }
+      const data = await res.json();
+      if (!data.ok) {
+        showError(data.error || 'Error desconocido');
+        return null;
+      }
+      return data;
+    } catch (e) {
+      showError('Error de red: ' + e.message);
+      return null;
+    }
+  }
+
+  function showAuthError(msg) {
+    const containers = ['gates-body','positions-body','decisions-body','events-body'];
+    containers.forEach(id => {
+      document.getElementById(id).innerHTML = `<div class="empty">${escapeHtml(msg)} <a href="/" style="color:var(--gold)">Iniciar sesión</a></div>`;
+    });
+  }
+  function showError(msg) {
+    document.getElementById('gates-body').innerHTML = `<div class="empty">⚠ ${escapeHtml(msg)}</div>`;
+  }
+
+  function renderKpis(d) {
+    const k = d.kpis;
+    document.getElementById('nav-val').textContent = fmtUsdFull(k.nav_usd);
+    const dayPnl = k.day_pnl_usd;
+    const dayPct = k.day_pnl_pct;
+    document.getElementById('nav-sub').innerHTML =
+      dayPnl != null
+        ? `<span class="${cls(dayPnl)}">${dayPnl > 0 ? '+' : ''}${fmtUsdFull(dayPnl)} hoy (${fmtPct(dayPct)})</span>`
+        : 'Sin datos del día';
+
+    const vsUrth = k.vs_urth_ytd_pct;
+    const vsEl = document.getElementById('vsurth-val');
+    vsEl.textContent = fmtPct(vsUrth);
+    vsEl.className = 'val ' + cls(vsUrth);
+    document.getElementById('vsurth-sub').textContent =
+      `Portfolio ${fmtPct(k.ytd_pct)} · URTH ${fmtPct(k.urth_ytd_pct)}`;
+
+    document.getElementById('pos-val').textContent = k.positions_count;
+    document.getElementById('pos-sub').textContent = d.positions.map(p => p.ticker).join(' · ') || 'Ninguna';
+
+    const cashEl = document.getElementById('cash-val');
+    cashEl.textContent = fmtPctRaw(k.cash_pct);
+    cashEl.className = 'val ' + (k.cash_pct >= (d.thresholds.CASH_MIN_PCT || 0.10) ? 'pos' : 'neg');
+    document.getElementById('cash-sub').textContent = `${fmtUsdFull(k.cash_usd)} · ≥${(d.thresholds.CASH_MIN_PCT * 100).toFixed(0)}% ${k.cash_pct >= d.thresholds.CASH_MIN_PCT ? '✓' : '✗'}`;
+
+    // Chips
+    const chips = [];
+    const a = d.alerts;
+    if (a.reviews_overdue > 0) chips.push(`<div class="chip danger"><span class="dot"></span>${a.reviews_overdue} reviews vencidas</div>`);
+    if (a.watch_triggered > 0) chips.push(`<div class="chip alert"><span class="dot"></span>${a.watch_triggered} watch trigger</div>`);
+    if (a.pm_triggered > 0) chips.push(`<div class="chip alert"><span class="dot"></span>${a.pm_triggered} pre-mortem trigger</div>`);
+    if (a.concentration_warn > 0) chips.push(`<div class="chip alert"><span class="dot"></span>concentración &gt;35%</div>`);
+    if (a.cash_low > 0) chips.push(`<div class="chip danger"><span class="dot"></span>cash bajo</div>`);
+    if (chips.length === 0) chips.push('<div class="chip ok"><span class="dot"></span>todo en orden</div>');
+    document.getElementById('chips').innerHTML = chips.join('');
+  }
+
+  function renderGates(d) {
+    const body = document.getElementById('gates-body');
+    body.innerHTML = '';
+    for (const g of d.gates) {
+      const iconCls = g.status === 'OK' ? 'ok' : g.status === 'FAIL' ? 'fail' : 'warn';
+      const iconChar = g.status === 'OK' ? '✓' : g.status === 'FAIL' ? '✗' : '!';
+      const div = document.createElement('div');
+      div.className = 'gate';
+      div.innerHTML = `
+        <div class="icon ${iconCls}">${iconChar}</div>
+        <div class="text">
+          <strong>${escapeHtml(g.label)}</strong>
+          <div class="sub3">${escapeHtml(g.detail)}</div>
+        </div>
+        <div class="status ${iconCls}">${g.status}</div>
+      `;
+      body.appendChild(div);
+    }
+    document.getElementById('gates-badge').textContent = `${d.gates_summary.ok} / ${d.gates_summary.total} OK`;
+  }
+
+  function mosClass(p) {
+    if (p.mos_pct == null) return 'none';
+    if (p.mos_pct >= 0.20) return 'ok';
+    if (p.mos_pct >= 0.0) return 'warn';
+    return 'bad';
+  }
+  function mosLabel(p) {
+    if (p.mos_pct == null) return '— sin ancla';
+    const sign = p.mos_pct > 0 ? '+' : '';
+    return `${p.anchor_type} · ${sign}${(p.mos_pct * 100).toFixed(0)}% MoS`;
+  }
+
+  function renderPositions(d) {
+    const body = document.getElementById('positions-body');
+    if (!d.positions.length) {
+      body.innerHTML = '<div class="empty">Sin posiciones de equity.</div>';
+      return;
+    }
+    let html = `
+      <table class="pos-table">
+        <thead>
+          <tr>
+            <th>Ticker</th>
+            <th class="right">Peso</th>
+            <th class="right">P&amp;L</th>
+            <th>MoS vs ancla</th>
+            <th>Última revisión</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    for (const p of d.positions) {
+      const reviewTxt = p.days_since_review == null
+        ? '<span style="color:var(--red)">sin revisión</span>'
+        : (p.days_since_review > 90
+          ? `<span style="color:var(--red);font-weight:600">${p.days_since_review}d ⚠</span>`
+          : `${p.days_since_review}d`);
+      html += `
+        <tr>
+          <td class="tk">${escapeHtml(p.ticker)}</td>
+          <td class="right">${p.weight_pct != null ? (p.weight_pct * 100).toFixed(1) + '%' : '—'}</td>
+          <td class="right ${cls(p.unrealized_pct)}">${fmtPct(p.unrealized_pct)}</td>
+          <td><span class="mos-pill ${mosClass(p)}">${escapeHtml(mosLabel(p))}</span></td>
+          <td>${reviewTxt}</td>
+        </tr>
+      `;
+    }
+    html += '</tbody></table>';
+    body.innerHTML = html;
+  }
+
+  function renderDecisions(d) {
+    const body = document.getElementById('decisions-body');
+    if (!d.decisions.length) {
+      body.innerHTML = '<div class="empty">Sin decisiones pendientes — disciplina al día.</div>';
+      document.getElementById('dec-badge').textContent = '0';
+      return;
+    }
+    body.innerHTML = '';
+    for (const dec of d.decisions) {
+      const div = document.createElement('div');
+      div.className = 'decision';
+      div.innerHTML = `
+        <div class="row1">
+          <div class="ticker">${escapeHtml(dec.ticker)}</div>
+          <div class="deadline ${dec.deadline_urgent ? 'urgent' : ''}">${escapeHtml(dec.deadline_label || '')}</div>
+        </div>
+        <div class="what">${escapeHtml(dec.title)}</div>
+        <div class="why">${escapeHtml(dec.detail)}</div>
+        ${dec.cta_url ? `<a class="cta" href="${escapeHtml(dec.cta_url)}">Ir →</a>` : ''}
+      `;
+      body.appendChild(div);
+    }
+    document.getElementById('dec-badge').textContent = String(d.decisions.length);
+  }
+
+  function renderEvents(d) {
+    const body = document.getElementById('events-body');
+    if (!d.events.length) {
+      body.innerHTML = '<div class="empty">Sin eventos recientes.</div>';
+      return;
+    }
+    body.innerHTML = d.events.map(e => `
+      <div class="event">
+        <span class="ts">${escapeHtml(e.when || '—')}</span> ·
+        <span class="lbl">${escapeHtml(e.label)}</span>
+        <div class="det">${escapeHtml(e.detail)}</div>
+      </div>
+    `).join('');
+  }
+
+  async function load() {
+    const data = await fetchSummary();
+    if (!data) return;
+
+    document.getElementById('updated').textContent =
+      'Última actualización: ' + new Date(data.generated_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
+
+    renderKpis(data);
+    renderGates(data);
+    renderPositions(data);
+    renderDecisions(data);
+    renderEvents(data);
+  }
+
+  load();
+})();
+</script>
+
+</body>
+</html>
