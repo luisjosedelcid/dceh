@@ -44,11 +44,11 @@
   .panel{background:var(--white);border:1px solid var(--rule);padding:20px;margin-bottom:20px}
   .panel h2{font-size:13px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--navy);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
 
-  .dropzone{border:2px dashed var(--gold-rule);background:var(--cream);padding:36px 24px;text-align:center;cursor:pointer;transition:all .2s}
+  .dropzone{display:block;width:100%;border:2px dashed var(--gold-rule);background:var(--cream);padding:36px 24px;text-align:center;cursor:pointer;transition:all .2s}
   .dropzone:hover,.dropzone.drag{border-color:var(--gold);background:rgba(184,139,71,0.06)}
   .dropzone-title{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:6px}
   .dropzone-sub{font-size:11px;color:var(--gray-mid)}
-  .dropzone input{display:none}
+  .dropzone input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
   .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin-bottom:16px}
   .summary-cell{background:var(--white);padding:14px 16px}
@@ -158,7 +158,7 @@
     <h2>Add manual entry</h2>
     <div class="sub" style="margin-bottom:16px">For prior wires, dividends, fees, or transactions outside Schwab.</div>
 
-    <div style="display:grid;grid-template-columns:120px 1fr 1fr 1fr 1fr;gap:10px;align-items:end">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;align-items:end">
       <div>
         <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Kind</div>
         <select id="m-kind" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
