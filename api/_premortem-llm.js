@@ -19,12 +19,28 @@ const { sbSelect } = require('./_supabase');
 const DEFAULT_MODEL = 'claude-haiku-4-5'; // cheap + fast
 const MAX_DOC_CHARS = 25000;              // truncate each doc section sent to LLM
 
+// Map logical source names from trigger_config to actual doc_type values
+// stored in source_documents. 'earnings_call' -> 8-K (which holds the earnings
+// press release + transcript exhibits in EDGAR).
+function mapSources(sources) {
+  const types = (sources && sources.length) ? sources : ['10-Q','10-K','8-K'];
+  const mapped = new Set();
+  for (const s of types) {
+    if (s === 'earnings_call' || s === 'earnings_press_release' || s === 'press_release') {
+      mapped.add('8-K');
+    } else {
+      mapped.add(s);
+    }
+  }
+  return Array.from(mapped);
+}
+
 async function gatherDocs(ticker, sources, windowDays) {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - (windowDays || 365));
   const cutoffIso = cutoff.toISOString().slice(0, 10);
 
-  const types = (sources && sources.length) ? sources : ['10-Q','10-K','8-K'];
+  const types = mapSources(sources);
   const inList = types.map(t => `"${t}"`).join(',');
 
   const docs = await sbSelect(
@@ -190,4 +206,4 @@ async function evaluateLlmTrigger(fm, ticker) {
   };
 }
 
-module.exports = { evaluateLlmTrigger, callClaude, gatherDocs };
+module.exports = { evaluateLlmTrigger, callClaude, gatherDocs, mapSources };
