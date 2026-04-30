@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — Performance</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1b2642;--gold:#b88b47;--gold-lt:#d4aa6a;--gold-rule:rgba(184,139,71,0.30);
+    --cream:#f5f1eb;--white:#ffffff;--ink:#1b2642;--gray-mid:#8a9098;--gray-txt:#606060;
+    --green:#2a7a56;--red:#9b2335;--rule:rgba(27,38,66,0.09);--row-alt:#fafaf7;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+  header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
+  .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
+  .hnav{display:flex;gap:8px;align-items:center}
+  .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
+  .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
+  .hnav a.active{color:var(--gold);border-color:var(--gold)}
+
+  main{max-width:1100px;margin:0 auto;padding:36px 48px 60px}
+  .slbl{font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+  .slbl::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
+  h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;color:var(--navy);margin-bottom:4px}
+  .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:24px}
+
+  .admin-bar{display:flex;align-items:center;justify-content:space-between;background:var(--white);border:1px solid var(--rule);padding:12px 20px;margin-bottom:20px;font-size:12px}
+  .admin-bar.is-admin{border-color:var(--gold);border-left:3px solid var(--gold)}
+  .admin-status{color:var(--gray-mid);display:flex;align-items:center;gap:10px}
+  .admin-dot{width:8px;height:8px;border-radius:50%;background:var(--gray-mid)}
+  .is-admin .admin-dot{background:var(--gold)}
+  .is-admin .admin-status strong{color:var(--navy)}
+  .btn{font-family:inherit;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:8px 14px;border:1px solid var(--navy);background:var(--navy);color:var(--white);cursor:pointer;transition:all .15s}
+  .btn:hover{background:var(--gold);border-color:var(--gold)}
+  .btn:disabled{opacity:0.4;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--navy)}
+  .btn.ghost:hover{background:var(--navy);color:var(--white)}
+  .btn.gold{background:var(--gold);border-color:var(--gold)}
+  .btn.gold:hover{background:var(--navy);border-color:var(--navy)}
+
+  .panel{background:var(--white);border:1px solid var(--rule);padding:20px;margin-bottom:20px}
+  .panel h2{font-size:13px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--navy);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
+
+  .dropzone{border:2px dashed var(--gold-rule);background:var(--cream);padding:36px 24px;text-align:center;cursor:pointer;transition:all .2s}
+  .dropzone:hover,.dropzone.drag{border-color:var(--gold);background:rgba(184,139,71,0.06)}
+  .dropzone-title{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:6px}
+  .dropzone-sub{font-size:11px;color:var(--gray-mid)}
+  .dropzone input{display:none}
+
+  .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin-bottom:16px}
+  .summary-cell{background:var(--white);padding:14px 16px}
+  .summary-cell .lbl{font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:6px}
+  .summary-cell .val{font-size:18px;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums}
+  .summary-cell .val.green{color:var(--green)}
+  .summary-cell .val.red{color:var(--red)}
+  .summary-cell .val.small{font-size:13px}
+
+  table.tbl{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+  table.tbl th{background:var(--navy);color:var(--white);font-weight:500;text-transform:uppercase;letter-spacing:0.1em;font-size:10px;padding:8px 10px;text-align:left}
+  table.tbl td{padding:8px 10px;border-bottom:1px solid var(--rule)}
+  table.tbl tr:nth-child(even) td{background:var(--row-alt)}
+  table.tbl td.r{text-align:right}
+  table.tbl td.c{text-align:center}
+  .pill{display:inline-block;padding:2px 8px;font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase}
+  .pill.buy{background:#e8f3ee;color:var(--green)}
+  .pill.sell{background:#f7e6e9;color:var(--red)}
+  .pill.div{background:#eef3f9;color:#3a6ea5}
+  .pill.tax{background:#f4ede0;color:#7a5a1f}
+  .pill.fee{background:#f0eded;color:var(--gray-txt)}
+  .pill.contrib{background:#e8f3ee;color:var(--green)}
+  .pill.with{background:#f7e6e9;color:var(--red)}
+  .pill.int{background:#eef3f9;color:#3a6ea5}
+
+  .actions{display:flex;gap:10px;margin-top:16px;justify-content:flex-end}
+  .alert{padding:10px 14px;font-size:12px;margin-bottom:16px;border-left:3px solid var(--gold)}
+  .alert.ok{background:#e8f3ee;border-color:var(--green);color:var(--green)}
+  .alert.err{background:#f7e6e9;border-color:var(--red);color:var(--red)}
+  .alert.warn{background:#fdf6e3;border-color:var(--gold)}
+  .hide{display:none}
+  .muted{color:var(--gray-mid)}
+  .nodata{padding:40px 20px;text-align:center;color:var(--gray-mid);font-size:13px}
+</style>
+<link rel="stylesheet" href="/responsive.css">
+<script src="/dce-auth.js" defer></script>
+</head>
+<body data-dce-auth="manual">
+
+<header>
+  <div class="logo">DCE <span>Holdings</span></div>
+  <div class="hnav">
+    <a href="/">Home</a>
+    <a href="/universe.html">Universe</a>
+    <a href="/screener.html">Find</a>
+    <a href="/study.html">Study</a>
+    <a href="/journal.html">Journal</a>
+    <a href="/portfolio.html">Portfolio</a>
+    <a href="/news.html">News</a>
+    <a href="/dataroom.html">Data Room</a>
+    <a href="/reporting.html">Reporting</a>
+    <a href="/performance.html" class="active">Performance</a>
+    <a href="/calendar.html">Calendar</a>
+  </div>
+</header>
+
+<main id="main-root">
+  <div class="slbl">DCE Holdings — Investment Office</div>
+  <h1>Performance Tracking</h1>
+  <div class="sub">Cost basis, time-weighted return, and benchmark attribution. Inception: 2026-01-01.</div>
+
+  <div class="admin-bar" id="admin-bar">
+    <div class="admin-status">
+      <span class="admin-dot"></span>
+      <span id="admin-label">Read-only mode</span>
+    </div>
+    <div>
+      <button class="btn ghost" id="btn-admin" type="button">Admin login</button>
+    </div>
+  </div>
+
+  <!-- ====== IMPORT PANEL ====== -->
+  <div class="panel" id="panel-import">
+    <h2>Import Schwab CSV</h2>
+    <div id="alert-slot"></div>
+
+    <label class="dropzone" id="dz">
+      <input type="file" id="file-csv" accept=".csv,text/csv">
+      <div class="dropzone-title">Drop CSV here or click to browse</div>
+      <div class="dropzone-sub">Schwab "All-Brokerage Transactions" export · max 10 MB</div>
+    </label>
+
+    <div id="preview-area" class="hide" style="margin-top:20px">
+      <div class="summary" id="preview-summary"></div>
+
+      <h2 style="font-size:11px;margin-top:18px;border:0;padding-bottom:6px">Transactions <span class="muted" id="tx-count"></span></h2>
+      <div style="overflow-x:auto;max-height:340px;overflow-y:auto;border:1px solid var(--rule)">
+        <table class="tbl" id="tbl-tx"></table>
+      </div>
+
+      <h2 style="font-size:11px;margin-top:18px;border:0;padding-bottom:6px">Cashflows <span class="muted" id="cf-count"></span></h2>
+      <div style="overflow-x:auto;max-height:340px;overflow-y:auto;border:1px solid var(--rule)">
+        <table class="tbl" id="tbl-cf"></table>
+      </div>
+
+      <div id="warn-slot"></div>
+
+      <div class="actions">
+        <button class="btn ghost" id="btn-clear" type="button">Clear</button>
+        <button class="btn gold" id="btn-commit" type="button" disabled>Commit to database</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== MANUAL ENTRY PANEL ====== -->
+  <div class="panel" id="panel-manual">
+    <h2>Add manual entry</h2>
+    <div class="sub" style="margin-bottom:16px">For prior wires, dividends, fees, or transactions outside Schwab.</div>
+
+    <div style="display:grid;grid-template-columns:120px 1fr 1fr 1fr 1fr;gap:10px;align-items:end">
+      <div>
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Kind</div>
+        <select id="m-kind" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+          <option value="CONTRIBUTION">Contribution (wire in)</option>
+          <option value="WITHDRAWAL">Withdrawal (wire out)</option>
+          <option value="DIVIDEND">Dividend</option>
+          <option value="INTEREST">Interest</option>
+          <option value="FEE">Fee</option>
+          <option value="TAX">Tax</option>
+          <option value="BUY">Buy (transaction)</option>
+          <option value="SELL">Sell (transaction)</option>
+        </select>
+      </div>
+      <div>
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Date</div>
+        <input id="m-date" type="date" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+      </div>
+      <div id="m-ticker-wrap">
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Ticker</div>
+        <input id="m-ticker" type="text" placeholder="MSFT, SGOV..." style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+      </div>
+      <div id="m-qty-wrap" class="hide">
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Quantity</div>
+        <input id="m-qty" type="number" step="any" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+      </div>
+      <div>
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Amount (USD)</div>
+        <input id="m-amount" type="number" step="0.01" placeholder="74000.00" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px">
+      <div>
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Notes</div>
+        <input id="m-notes" type="text" placeholder="Optional context, e.g. 'Initial wire pre-Schwab export'" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn gold" id="btn-add-manual" type="button">Add entry</button>
+    </div>
+    <div id="manual-alert"></div>
+  </div>
+
+  <!-- ====== EXISTING DATA PANEL ====== -->
+  <div class="panel">
+    <h2>Existing data</h2>
+    <div class="sub" style="margin-bottom:14px">Last 50 transactions and cashflows in the database.</div>
+    <div id="existing-tx-wrap" class="nodata">Loading…</div>
+  </div>
+
+</main>
+
+<script>
+const dceAuth = window.dceAuth;
+let parsedPayload = null;
+
+function adminToken(){ return (dceAuth && dceAuth.token && dceAuth.token()) || ''; }
+function isAdmin(){ return dceAuth && dceAuth.isAdmin && dceAuth.isAdmin() && (dceAuth.role()==='admin' || !dceAuth.role()); }
+
+// ── helpers ─────────────────────────────────────
+function fmtUsd(n){ if(n==null||isNaN(n)) return '—'; return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtNum(n,d=4){ if(n==null||isNaN(n)) return '—'; return Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:d}); }
+function pillFor(type){
+  const m={BUY:'buy',SELL:'sell',DIVIDEND:'div',TAX:'tax',FEE:'fee',CONTRIBUTION:'contrib',WITHDRAWAL:'with',INTEREST:'int'};
+  return `<span class="pill ${m[type]||''}">${type}</span>`;
+}
+function setAlert(slotId,kind,msg){
+  const s=document.getElementById(slotId);
+  if(!msg){ s.innerHTML=''; return; }
+  s.innerHTML=`<div class="alert ${kind}">${msg}</div>`;
+}
+
+// ── drag-drop ──────────────────────────────────
+const dz=document.getElementById('dz');
+const fileInput=document.getElementById('file-csv');
+['dragenter','dragover'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.add('drag');}));
+['dragleave','drop'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.remove('drag');}));
+dz.addEventListener('drop',ev=>{
+  const f=ev.dataTransfer.files[0]; if(f) handleFile(f);
+});
+fileInput.addEventListener('change',ev=>{
+  const f=ev.target.files[0]; if(f) handleFile(f);
+});
+
+async function handleFile(file){
+  setAlert('alert-slot','',null);
+  if(!file.name.toLowerCase().endsWith('.csv')){
+    setAlert('alert-slot','err','File must be a .csv');
+    return;
+  }
+  const text=await file.text();
+  setAlert('alert-slot','warn','Parsing CSV…');
+  try{
+    const r=await fetch('/api/admin-import-schwab?dryRun=1',{
+      method:'POST',
+      headers:{'Content-Type':'text/csv','x-admin-token':adminToken()},
+      body:text,
+    });
+    const j=await r.json();
+    if(!r.ok){ setAlert('alert-slot','err','Parse failed: '+(j.error||r.status)); return; }
+    parsedPayload={csv:text,...j};
+    renderPreview(j);
+    setAlert('alert-slot','ok',`Parsed ${j.summary.transactions} transactions and ${j.summary.cashflows} cashflows. Review below before committing.`);
+  }catch(e){
+    setAlert('alert-slot','err','Network error: '+e.message);
+  }
+}
+
+function renderPreview(j){
+  document.getElementById('preview-area').classList.remove('hide');
+  document.getElementById('btn-commit').disabled=false;
+  // Summary
+  const dr=j.summary.dateRange;
+  const drStr=dr?`${dr.from} → ${dr.to}`:'—';
+  const net=j.summary.netContribution||0;
+  document.getElementById('preview-summary').innerHTML=`
+    <div class="summary-cell"><div class="lbl">Transactions</div><div class="val">${j.summary.transactions}</div></div>
+    <div class="summary-cell"><div class="lbl">Cashflows</div><div class="val">${j.summary.cashflows}</div></div>
+    <div class="summary-cell"><div class="lbl">Date range</div><div class="val small">${drStr}</div></div>
+    <div class="summary-cell"><div class="lbl">Net contribution</div><div class="val ${net>=0?'green':'red'}">$${fmtUsd(net)}</div></div>
+    <div class="summary-cell"><div class="lbl">Skipped</div><div class="val small">${j.summary.skipped}</div></div>
+    <div class="summary-cell"><div class="lbl">Errors</div><div class="val small ${j.summary.errors?'red':''}">${j.summary.errors}</div></div>
+  `;
+  // Transactions table
+  document.getElementById('tx-count').textContent=`(${j.transactions.length})`;
+  document.getElementById('tbl-tx').innerHTML=`
+    <thead><tr><th>Date</th><th>Side</th><th>Symbol</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Fee</th><th class="r">Amount</th></tr></thead>
+    <tbody>${j.transactions.map(t=>`
+      <tr>
+        <td>${t.trade_date}</td>
+        <td>${pillFor(t.side)}</td>
+        <td><strong>${t.ticker}</strong></td>
+        <td class="r">${fmtNum(t.qty,0)}</td>
+        <td class="r">${fmtNum(t.price_native,4)}</td>
+        <td class="r">${fmtUsd(t.fee_native)}</td>
+        <td class="r"><strong>$${fmtUsd(t.qty*t.price_native)}</strong></td>
+      </tr>`).join('')}
+    </tbody>`;
+  // Cashflows table
+  document.getElementById('cf-count').textContent=`(${j.cashflows.length})`;
+  document.getElementById('tbl-cf').innerHTML=`
+    <thead><tr><th>Date</th><th>Type</th><th>Symbol</th><th class="r">Amount</th><th>Notes</th></tr></thead>
+    <tbody>${j.cashflows.map(c=>`
+      <tr>
+        <td>${c.occurred_at}</td>
+        <td>${pillFor(c.cf_type)}</td>
+        <td>${c.ticker||'—'}</td>
+        <td class="r ${c.amount_native>=0?'':'red'}">$${fmtUsd(c.amount_native)}</td>
+        <td class="muted" style="font-size:11px">${c.notes||''}</td>
+      </tr>`).join('')}
+    </tbody>`;
+  // Warnings
+  const warnings=[];
+  if(j.skipped.length) warnings.push(`Skipped ${j.skipped.length} row(s): ${j.skipped.map(s=>s.action).join(', ')}`);
+  if(j.errors.length) warnings.push(`Errors: ${j.errors.map(e=>e.reason||JSON.stringify(e)).join('; ')}`);
+  document.getElementById('warn-slot').innerHTML=warnings.length?`<div class="alert warn" style="margin-top:14px">${warnings.join(' · ')}</div>`:'';
+}
+
+document.getElementById('btn-clear').addEventListener('click',()=>{
+  parsedPayload=null;
+  fileInput.value='';
+  document.getElementById('preview-area').classList.add('hide');
+  document.getElementById('btn-commit').disabled=true;
+  setAlert('alert-slot','',null);
+});
+
+document.getElementById('btn-commit').addEventListener('click',async()=>{
+  if(!parsedPayload) return;
+  if(!confirm(`Commit ${parsedPayload.summary.transactions} transactions and ${parsedPayload.summary.cashflows} cashflows to the database? (Re-imports are idempotent — duplicates are merged.)`)) return;
+  setAlert('alert-slot','warn','Committing…');
+  document.getElementById('btn-commit').disabled=true;
+  try{
+    const r=await fetch('/api/admin-import-schwab?dryRun=0',{
+      method:'POST',
+      headers:{'Content-Type':'text/csv','x-admin-token':adminToken()},
+      body:parsedPayload.csv,
+    });
+    const j=await r.json();
+    if(!r.ok){ setAlert('alert-slot','err','Commit failed: '+(j.error||r.status)); document.getElementById('btn-commit').disabled=false; return; }
+    setAlert('alert-slot','ok',`Committed ${j.summary.txInserted||j.summary.transactions} transactions and ${j.summary.cfInserted||j.summary.cashflows} cashflows.`);
+    loadExisting();
+  }catch(e){
+    setAlert('alert-slot','err','Network error: '+e.message);
+    document.getElementById('btn-commit').disabled=false;
+  }
+});
+
+// ── manual entry ───────────────────────────────
+const mKind=document.getElementById('m-kind');
+function syncManualForm(){
+  const k=mKind.value;
+  const isTx=k==='BUY'||k==='SELL';
+  document.getElementById('m-qty-wrap').classList.toggle('hide',!isTx);
+  document.getElementById('m-ticker-wrap').classList.toggle('hide',k==='CONTRIBUTION'||k==='WITHDRAWAL');
+}
+mKind.addEventListener('change',syncManualForm);
+syncManualForm();
+
+document.getElementById('btn-add-manual').addEventListener('click',async()=>{
+  const kind=mKind.value;
+  const date=document.getElementById('m-date').value;
+  const ticker=(document.getElementById('m-ticker').value||'').trim().toUpperCase();
+  const qty=parseFloat(document.getElementById('m-qty').value||'0');
+  const amount=parseFloat(document.getElementById('m-amount').value||'0');
+  const notes=(document.getElementById('m-notes').value||'').trim();
+  if(!date||!amount){
+    setAlert('manual-alert','err','Date and amount are required.'); return;
+  }
+  setAlert('manual-alert','warn','Saving…');
+  try{
+    const r=await fetch('/api/admin-add-manual-entry',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-token':adminToken()},
+      body:JSON.stringify({kind,date,ticker,qty,amount,notes}),
+    });
+    const j=await r.json();
+    if(!r.ok){ setAlert('manual-alert','err',j.error||'Failed'); return; }
+    setAlert('manual-alert','ok','Entry added.');
+    document.getElementById('m-amount').value='';
+    document.getElementById('m-qty').value='';
+    document.getElementById('m-notes').value='';
+    loadExisting();
+  }catch(e){
+    setAlert('manual-alert','err','Network error: '+e.message);
+  }
+});
+
+// ── existing data ──────────────────────────────
+async function loadExisting(){
+  const wrap=document.getElementById('existing-tx-wrap');
+  wrap.className='nodata';wrap.textContent='Loading…';
+  try{
+    const r=await fetch('/api/list-transactions?limit=50',{headers:{'x-admin-token':adminToken()}});
+    const j=await r.json();
+    if(!r.ok){ wrap.textContent='Error: '+(j.error||r.status); return; }
+    if(!j.transactions.length && !j.cashflows.length){
+      wrap.className='nodata';wrap.textContent='No data yet. Import a CSV or add a manual entry.';
+      return;
+    }
+    wrap.className='';
+    wrap.innerHTML=`
+      <h2 style="font-size:11px;margin-top:0;border:0;padding-bottom:6px">Transactions (${j.transactions.length})</h2>
+      <div style="overflow-x:auto;max-height:300px;overflow-y:auto;border:1px solid var(--rule);margin-bottom:16px">
+        <table class="tbl">
+          <thead><tr><th>Date</th><th>Side</th><th>Symbol</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th><th>Source</th></tr></thead>
+          <tbody>${j.transactions.map(t=>`
+            <tr>
+              <td>${t.trade_date}</td>
+              <td>${pillFor(t.side)}</td>
+              <td><strong>${t.ticker}</strong></td>
+              <td class="r">${fmtNum(t.qty,0)}</td>
+              <td class="r">${fmtNum(t.price_native,4)}</td>
+              <td class="r"><strong>$${fmtUsd(t.qty*t.price_native)}</strong></td>
+              <td class="muted">${t.source}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <h2 style="font-size:11px;border:0;padding-bottom:6px">Cashflows (${j.cashflows.length})</h2>
+      <div style="overflow-x:auto;max-height:300px;overflow-y:auto;border:1px solid var(--rule)">
+        <table class="tbl">
+          <thead><tr><th>Date</th><th>Type</th><th>Symbol</th><th class="r">Amount</th><th>Source</th></tr></thead>
+          <tbody>${j.cashflows.map(c=>`
+            <tr>
+              <td>${c.occurred_at}</td>
+              <td>${pillFor(c.cf_type)}</td>
+              <td>${c.ticker||'—'}</td>
+              <td class="r ${c.amount_native>=0?'':'red'}">$${fmtUsd(c.amount_native)}</td>
+              <td class="muted">${c.source}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }catch(e){
+    wrap.textContent='Network error: '+e.message;
+  }
+}
+
+// ── Admin bar wiring ──────────────────────────
+function refreshAdminBar(){
+  const ok = isAdmin();
+  const bar = document.getElementById('admin-bar');
+  const label = document.getElementById('admin-label');
+  const btn = document.getElementById('btn-admin');
+  if(ok){
+    const u = (dceAuth && dceAuth.user && dceAuth.user()) || {};
+    bar.classList.add('is-admin');
+    label.innerHTML = `<strong>${(u.displayName||u.email||'Admin')}</strong> · admin mode`;
+    btn.textContent = 'Sign out';
+  }else{
+    bar.classList.remove('is-admin');
+    label.textContent = 'Read-only mode';
+    btn.textContent = 'Admin login';
+  }
+}
+document.getElementById('btn-admin').addEventListener('click',()=>{
+  if(isAdmin()){
+    if(confirm('Sign out?')){ dceAuth.logout(); applyAdminGate(); }
+  }else{
+    dceAuth.openLoginModal && dceAuth.openLoginModal();
+  }
+});
+
+function applyAdminGate(){
+  refreshAdminBar();
+  const ok = isAdmin();
+  document.getElementById('panel-import').style.display = ok ? '' : 'none';
+  document.getElementById('panel-manual').style.display = ok ? '' : 'none';
+  if(ok){
+    loadExisting();
+  }else{
+    const wrap = document.getElementById('existing-tx-wrap');
+    wrap.className = 'nodata';
+    wrap.innerHTML = 'Admin access required. Click <strong>Admin login</strong> above.';
+  }
+}
+if(dceAuth && dceAuth.onChange){ dceAuth.onChange(applyAdminGate); }
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(applyAdminGate,50));
+}else{
+  setTimeout(applyAdminGate,50);
+}
+</script>
+</body>
+</html>

@@ -51,6 +51,25 @@ async function sbUpdate(table, query, patch) {
   return r.json();
 }
 
+async function sbUpsert(table, rows, onConflict) {
+  // PostgREST upsert via Prefer: resolution=merge-duplicates + on_conflict.
+  // `onConflict` should be a comma-separated list of unique columns/index name.
+  const url = `${sbBaseUrl()}/${table}${onConflict ? `?on_conflict=${onConflict}` : ''}`;
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: {
+      ...sbHeaders(),
+      'Prefer': 'return=representation,resolution=merge-duplicates',
+    },
+    body: JSON.stringify(rows),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(`sbUpsert ${table} failed: ${r.status} ${t.slice(0, 300)}`);
+  }
+  return r.json();
+}
+
 async function sbDelete(table, query) {
   const url = `${sbBaseUrl()}/${table}?${query}`;
   const r = await fetch(url, { method: 'DELETE', headers: sbHeaders() });
@@ -61,4 +80,4 @@ async function sbDelete(table, query) {
   return true;
 }
 
-module.exports = { sbInsert, sbSelect, sbUpdate, sbDelete, sbHeaders, sbBaseUrl };
+module.exports = { sbInsert, sbUpsert, sbSelect, sbUpdate, sbDelete, sbHeaders, sbBaseUrl };
