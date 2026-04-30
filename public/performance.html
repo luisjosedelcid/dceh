@@ -125,6 +125,7 @@
     <a href="/dataroom.html">Data Room</a>
     <a href="/reporting.html">Reporting</a>
     <a href="/performance.html" class="active">Performance</a>
+    <a href="/premortem.html">Pre-mortem</a>
     <a href="/calendar.html">Calendar</a>
   </div>
 </header>
@@ -685,21 +686,47 @@ function renderDashboard(j){
   document.getElementById('st-income').textContent = '$'+(k.total_dividends + k.total_interest).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   document.getElementById('st-tax').textContent = '−$'+Math.abs(k.total_taxes).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 
-  // Holdings table
-  renderHoldings(j.holdings);
+  // Holdings table — fetch pre-mortem risk data first (best-effort)
+  fetchPremortemRisk().then(riskByTicker => renderHoldings(j.holdings, riskByTicker));
 
   // Equity curve
   renderEquityChart(j.series);
 }
 
-function renderHoldings(holdings){
+async function fetchPremortemRisk(){
+  // Returns {TICKER: {triggered, total}} — empty object on any error.
+  try{
+    const tk = (window.dceAuth && window.dceAuth.token && window.dceAuth.token()) || null;
+    if (!tk) return {};
+    const r = await fetch('/api/premortems', { headers: { 'x-admin-token': tk } });
+    if (!r.ok) return {};
+    const j = await r.json();
+    if (!j.ok || !j.premortems) return {};
+    const out = {};
+    for (const pm of j.premortems) {
+      out[pm.ticker] = { triggered: pm.triggered_count || 0, total: pm.total_count || 0 };
+    }
+    return out;
+  } catch(e){ return {}; }
+}
+
+function renderHoldings(holdings, riskByTicker){
+  riskByTicker = riskByTicker || {};
   const tbl = document.getElementById('tbl-holdings');
   if(!holdings || holdings.length===0){ tbl.innerHTML = '<tbody><tr><td>No open positions.</td></tr></tbody>'; return; }
-  let html = '<thead><tr><th>Ticker</th><th class="r">Quantity</th><th class="r">Avg cost</th><th class="r">Last price</th><th class="r">Cost basis</th><th class="r">Market value</th><th class="r">Unrealized P&L</th><th class="r">Weight</th></tr></thead><tbody>';
+  let html = '<thead><tr><th>Ticker</th><th class="r">Quantity</th><th class="r">Avg cost</th><th class="r">Last price</th><th class="r">Cost basis</th><th class="r">Market value</th><th class="r">Unrealized P&L</th><th class="r">Weight</th><th class="c">Risk</th></tr></thead><tbody>';
   for(const h of holdings){
     const pnl = h.unrealized_pnl;
     const pnlCls = pnl>0?'pos':(pnl<0?'neg':'');
     const ret = (h.cost_basis>0 && pnl!=null) ? (pnl/h.cost_basis) : null;
+    const risk = riskByTicker[h.ticker];
+    let riskCell = '<span class="muted" style="font-size:11px">—</span>';
+    if (risk) {
+      const danger = risk.triggered > 0;
+      const color = danger ? 'var(--red)' : 'var(--gray-mid)';
+      const weight = danger ? '600' : '500';
+      riskCell = `<a href="/premortem?ticker=${encodeURIComponent(h.ticker)}" style="color:${color};font-weight:${weight};text-decoration:none;font-size:11px;font-variant-numeric:tabular-nums" title="${risk.triggered} of ${risk.total} failure modes triggered">${risk.triggered}/${risk.total}${danger?' \u26A0':''}</a>`;
+    }
     html += `<tr>
       <td><strong>${h.ticker}</strong></td>
       <td class="r">${Number(h.qty).toLocaleString('en-US',{maximumFractionDigits:4})}</td>
@@ -709,6 +736,7 @@ function renderHoldings(holdings){
       <td class="r">${h.market_value!=null?'$'+Number(h.market_value).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
       <td class="r ${pnlCls}" style="font-weight:600">${signedUsd(pnl)}${ret!=null?' <span style="font-weight:400;color:var(--gray-mid)">('+signedPct(ret,1)+')</span>':''}</td>
       <td class="r">${h.weight_pct!=null?(h.weight_pct*100).toFixed(2)+'%':'—'}</td>
+      <td class="c">${riskCell}</td>
     </tr>`;
   }
   html += '</tbody>';
