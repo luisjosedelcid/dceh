@@ -20,6 +20,7 @@
     { "path": "/api/cron/price-alerts", "schedule": "*/30 13-20 * * 1-5" },
     { "path": "/api/cron/purge-archive", "schedule": "0 4 * * 0" },
     { "path": "/api/cron/earnings-refresh", "schedule": "0 6 * * *" },
-    { "path": "/api/cron/earnings-alerts", "schedule": "0 8 * * *" }
+    { "path": "/api/cron/earnings-alerts", "schedule": "0 8 * * *" },
+    { "path": "/api/cron/prices-refresh", "schedule": "0 22 * * 1-5" }
   ]
 }

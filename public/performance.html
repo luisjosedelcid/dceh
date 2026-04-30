@@ -203,6 +203,18 @@
     <div id="manual-alert"></div>
   </div>
 
+  <!-- ====== PRICES PANEL ====== -->
+  <div class="panel" id="panel-prices">
+    <h2>Prices &amp; benchmark</h2>
+    <div class="sub" style="margin-bottom:14px">Daily EOD closes for every tracked ticker plus URTH (MSCI World benchmark). Cron refreshes Mon–Fri at 22:00 UTC; click Backfill to load history from inception.</div>
+    <div id="prices-summary" class="nodata">Loading…</div>
+    <div class="actions">
+      <button class="btn ghost" id="btn-prices-reload" type="button">Reload</button>
+      <button class="btn gold" id="btn-prices-backfill" type="button">Backfill from inception</button>
+    </div>
+    <div id="prices-alert"></div>
+  </div>
+
   <!-- ====== EXISTING DATA PANEL ====== -->
   <div class="panel">
     <h2>Existing data</h2>
@@ -465,13 +477,71 @@ document.getElementById('btn-admin').addEventListener('click',()=>{
   }
 });
 
+// ── Prices panel ─────────────────────────────────
+async function loadPricesSummary(){
+  const slot = document.getElementById('prices-summary');
+  slot.className = 'nodata'; slot.textContent = 'Loading…';
+  try{
+    const r = await fetch('/api/list-prices-summary',{headers:{'x-admin-token':adminToken()}});
+    const j = await r.json();
+    if(!r.ok){ slot.textContent='Error: '+(j.error||r.status); return; }
+    if(!j.tickers || !j.tickers.length){
+      slot.className='nodata';
+      slot.innerHTML='No price data yet. Click <strong>Backfill from inception</strong> to load from Yahoo Finance.';
+      return;
+    }
+    slot.className='';
+    slot.innerHTML = `
+      <div style="overflow-x:auto;border:1px solid var(--rule)">
+        <table class="tbl">
+          <thead><tr><th>Ticker</th><th class="r">Rows</th><th>From</th><th>To</th><th class="r">Last close</th><th>Source</th></tr></thead>
+          <tbody>${j.tickers.map(t=>`
+            <tr>
+              <td><strong>${t.ticker}</strong></td>
+              <td class="r">${t.rows}</td>
+              <td>${t.first_date||'—'}</td>
+              <td>${t.last_date||'—'}</td>
+              <td class="r">${t.last_close!=null?fmtUsd(t.last_close):'—'}</td>
+              <td class="muted">${t.source||'—'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }catch(e){ slot.textContent='Network error: '+e.message; }
+}
+document.getElementById('btn-prices-reload').addEventListener('click',loadPricesSummary);
+document.getElementById('btn-prices-backfill').addEventListener('click',async()=>{
+  if(!confirm('Backfill EOD prices from inception for every tracked ticker? Takes ~10s.')) return;
+  setAlert('prices-alert','warn','Fetching from Yahoo Finance…');
+  document.getElementById('btn-prices-backfill').disabled=true;
+  try{
+    const r = await fetch('/api/admin-backfill-prices',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-token':adminToken()},
+      body:'{}',
+    });
+    const j = await r.json();
+    if(!r.ok){ setAlert('prices-alert','err','Backfill failed: '+(j.error||r.status)); return; }
+    const lines = Object.entries(j.perTicker).map(([t,v])=>`${t}: ${v.rows} rows (${v.source||'—'})`).join(' · ');
+    const errStr = j.errors.length ? ` · errors: ${j.errors.map(e=>e.ticker+'='+e.reason).join('; ')}` : '';
+    setAlert('prices-alert','ok','Backfilled. '+lines+errStr);
+    loadPricesSummary();
+  }catch(e){
+    setAlert('prices-alert','err','Network error: '+e.message);
+  }finally{
+    document.getElementById('btn-prices-backfill').disabled=false;
+  }
+});
+
 function applyAdminGate(){
   refreshAdminBar();
   const ok = isAdmin();
   document.getElementById('panel-import').style.display = ok ? '' : 'none';
   document.getElementById('panel-manual').style.display = ok ? '' : 'none';
+  document.getElementById('panel-prices').style.display = ok ? '' : 'none';
   if(ok){
     loadExisting();
+    loadPricesSummary();
   }else{
     const wrap = document.getElementById('existing-tx-wrap');
     wrap.className = 'nodata';
