@@ -34,7 +34,7 @@ function trunc(s, max) {
   return s.slice(0, max) + '\n\n... [truncated, full doc available at source_url]';
 }
 
-async function ingestTicker(ticker, { limitPerForm = 2 } = {}) {
+async function ingestTicker(ticker, { limitPerForm = 2, force = false } = {}) {
   ticker = String(ticker).toUpperCase();
   const cik = await getCikForTicker(ticker);
   if (!cik) {
@@ -73,7 +73,7 @@ async function ingestTicker(ticker, { limitPerForm = 2 } = {}) {
     const docType = FORM_TO_DOCTYPE[f.form];
     if (!docType) continue;
     const key = `${ticker}|${docType}|${f.report_date}`;
-    if (existingKeys.has(key)) {
+    if (existingKeys.has(key) && !force) {
       skipped.push({ ...f, reason: 'already ingested' });
       continue;
     }
@@ -129,6 +129,7 @@ async function ingestTicker(ticker, { limitPerForm = 2 } = {}) {
 
 // Ingest all tickers that have an active premortem.
 async function ingestAllActive(opts = {}) {
+  // opts may include { limitPerForm, force }
   const pms = await sbSelect('premortems', 'select=ticker&status=eq.active');
   const tickers = Array.from(new Set(pms.map(p => p.ticker)));
   const results = [];

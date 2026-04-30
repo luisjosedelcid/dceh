@@ -86,7 +86,12 @@ function htmlToText(html) {
   // Replace block tags with newlines for readability
   s = s.replace(/<\/(p|div|tr|li|h[1-6]|br)>/gi, '\n')
        .replace(/<br\s*\/?>/gi, '\n');
-  // Strip remaining tags
+  // Strip inline tags WITHOUT inserting whitespace (avoids splitting words like
+  // "RISK" into "RIS K" when an HTML span breaks them apart). For block tags
+  // we already inserted newlines above.
+  s = s.replace(/<\/(span|font|b|i|u|em|strong|a)>/gi, '');
+  s = s.replace(/<(span|font|b|i|u|em|strong|a)\b[^>]*>/gi, '');
+  // Strip remaining tags (replaced with space for safety)
   s = s.replace(/<[^>]+>/g, ' ');
   // Decode common HTML entities
   s = s.replace(/&nbsp;/g, ' ')
@@ -108,19 +113,29 @@ function htmlToText(html) {
 
 // Try to locate "Risk Factors" section in 10-K / 10-Q text.
 // Returns the section as plain text or null if not found.
+//
+// IMPORTANT: SEC HTML often inserts <span>/<font> tags inside words, so when
+// stripped to text we get artefacts like "RIS K FACTORS". The regex below
+// tolerates an optional internal space inside RISK and FACTORS.
 function extractRiskFactors(text) {
   if (!text) return null;
-  // Locate "Item 1A" (10-K) or "Item 1A" within Part II (10-Q).
-  // Use a forgiving regex that matches "Item 1A. Risk Factors"
-  const startRe = /Item\s+1A\s*[\.:\-]?\s*Risk\s+Factors/i;
-  const m = startRe.exec(text);
-  if (!m) return null;
-  const start = m.index;
+  // Match "Item 1A. Risk Factors" with optional broken whitespace inside words.
+  const startRe = /Item\s+1A\s*[\.:\-]?\s*Ris\s?k\s+Fact\s?ors/i;
+  // Find the LAST occurrence (the heading appears once in TOC, once at the
+  // actual section — the section is later in the doc and has more body after).
+  let m;
+  let lastIdx = -1;
+  const re = new RegExp(startRe, 'gi');
+  while ((m = re.exec(text)) !== null) {
+    lastIdx = m.index;
+  }
+  if (lastIdx === -1) return null;
+  const start = lastIdx;
   // End: next "Item 1B", "Item 2", "Unresolved Staff Comments", or end-of-doc
-  const endRe = /Item\s+(1B|2|3|4|5)\b/i;
+  const endRe = /Item\s+(1B|2|3|4|5|7)\b/i;
   const tail = text.slice(start + 200); // skip the heading itself
   const em = endRe.exec(tail);
-  const end = em ? (start + 200 + em.index) : Math.min(start + 80000, text.length);
+  const end = em ? (start + 200 + em.index) : Math.min(start + 120000, text.length);
   return text.slice(start, end).trim();
 }
 

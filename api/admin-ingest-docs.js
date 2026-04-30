@@ -18,12 +18,13 @@ module.exports = async (req, res) => {
     const body = await readJsonBody(req);
     const ticker = body.ticker ? String(body.ticker).toUpperCase() : null;
     const limitPerForm = Number(body.limitPerForm || 2);
+    const force = body.force === true;
 
     let result;
     if (ticker) {
-      result = await ingestTicker(ticker, { limitPerForm });
+      result = await ingestTicker(ticker, { limitPerForm, force });
     } else {
-      result = await ingestAllActive({ limitPerForm });
+      result = await ingestAllActive({ limitPerForm, force });
     }
 
     res.setHeader('content-type', 'application/json');
