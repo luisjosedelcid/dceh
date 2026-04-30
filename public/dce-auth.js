@@ -55,6 +55,20 @@
     catch { return null; }
   }
 
+  function role() {
+    const u = user();
+    return (u && u.role) ? u.role : null;
+  }
+
+  function hasRole(allowed) {
+    if (!isAdmin()) return false;
+    const r = role();
+    if (!Array.isArray(allowed) || allowed.length === 0) return true;
+    if (allowed.includes('any')) return true;
+    // Backwards-compat: legacy sessions without role default to admin
+    return allowed.includes(r || 'admin');
+  }
+
   function _clear() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(EXP_KEY);
@@ -276,7 +290,25 @@
   function _autoMount() {
     if (document.body.dataset.dceAuth === 'manual') return;
     mountAdminButton();
+    _applyRoleVisibility();
   }
+
+  // ── Role-based UI hiding ────────────────────────────────────────────
+  // Admin-only routes: hidden from nav for non-admin authenticated users.
+  // Backwards-compat: sessions without role are treated as admin.
+  const ADMIN_ONLY_HREFS = ['/reporting.html', '/reporting'];
+  function _applyRoleVisibility() {
+    const u = user();
+    if (!u) return; // not signed in — leave nav alone
+    const r = (u && u.role) ? u.role : 'admin';
+    if (r === 'admin') return;
+    try {
+      const sel = ADMIN_ONLY_HREFS.map(h => `a[href="${h}"]`).join(',');
+      document.querySelectorAll(sel).forEach(a => { a.style.display = 'none'; });
+    } catch (e) { /* ignore */ }
+  }
+  // Re-apply on cross-tab login/logout
+  onChange(_applyRoleVisibility);
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', _autoMount);
@@ -286,7 +318,7 @@
 
   // ── Public API ────────────────────────────────────────────────────────
   window.dceAuth = {
-    isAdmin, token, user, login, logout,
+    isAdmin, token, user, role, hasRole, login, logout,
     onChange, openLoginModal, mountAdminButton, ensureAdmin,
     // For backwards-compat with code reading these directly:
     TOKEN_KEY, EXP_KEY, USER_KEY,

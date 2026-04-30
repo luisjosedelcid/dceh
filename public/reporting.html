@@ -467,6 +467,23 @@ const TOKEN_EXP_KEY = 'dce_admin_token_exp';
 const USER_KEY = 'dce_admin_user';
 const FOLDERS = ['monthly', 'committee', 'annual'];
 
+// ── Role gate ────────────────────────────────────────────────────────
+// Reporting Hub contains financial reports and the audit log — restricted
+// to role='admin'. Other authenticated roles (analyst, viewer) get redirected.
+(function enforceRoleGate() {
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+    if (!raw) return; // not signed in — page will prompt login as before
+    const u = JSON.parse(raw);
+    // Backwards-compat: legacy sessions without role are treated as admin
+    const role = (u && u.role) ? u.role : 'admin';
+    if (role !== 'admin') {
+      alert('Acceso restringido: el Reporting Hub solo está disponible para administradores.');
+      window.location.href = '/';
+    }
+  } catch (e) { /* ignore */ }
+})();
+
 function isAdmin() {
   const tok = localStorage.getItem(TOKEN_KEY);
   const exp = parseInt(localStorage.getItem(TOKEN_EXP_KEY) || '0', 10);

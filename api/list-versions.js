@@ -3,20 +3,21 @@
 // Returns: { versions: [{ ts, archivePath, url, sizeBytes, actor }] }
 // Lists archived versions of a given filename plus the current live one.
 
-const { verifyAdminToken } = require('./_admin-auth');
+const { requireRole } = require('./_require-role');
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
 
+  // Role check: only admins can view archived report versions
+  const auth = await requireRole(req, ['admin']);
+  if (!auth.ok) { res.status(auth.status).json({ error: auth.error }); return; }
+
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const ADMIN_TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET;
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !ADMIN_TOKEN_SECRET) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
     res.status(500).json({ error: 'Server not configured' });
     return;
   }
-  const auth = verifyAdminToken(req.headers['x-admin-token'], ADMIN_TOKEN_SECRET);
-  if (!auth) { res.status(401).json({ error: 'Unauthorized' }); return; }
 
   const folder = (req.query.folder || '').toString();
   const filename = (req.query.filename || '').toString();

@@ -1,10 +1,19 @@
 // GET /api/list-reports?folder=monthly|committee|annual
-// Public endpoint — used by reporting.html to render file lists.
+// Admin-only endpoint — quarterly/financial reports are restricted to role='admin'.
 // Returns: { files: [{ name, size, updated_at, url }] }
+
+const { requireRole } = require('./_require-role');
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  // Role check: only admins can view financial reports
+  const auth = await requireRole(req, ['admin']);
+  if (!auth.ok) {
+    res.status(auth.status).json({ error: auth.error });
     return;
   }
 

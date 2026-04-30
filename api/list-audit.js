@@ -9,22 +9,22 @@
 //
 // Pagination: classic limit/offset; total comes from PostgREST count=exact header.
 
-const { verifyAdminToken } = require('./_admin-auth');
+const { requireRole } = require('./_require-role');
 
 const ALLOWED_ACTIONS = ['login', 'upload', 'archive', 'delete', 'purge'];
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
 
-  const ADMIN_TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET;
-  if (!ADMIN_TOKEN_SECRET || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     res.status(500).json({ error: 'Server not configured' });
     return;
   }
 
-  const auth = verifyAdminToken(req.headers['x-admin-token'], ADMIN_TOKEN_SECRET);
-  if (!auth) {
-    res.status(401).json({ error: 'Unauthorized' });
+  // Role check: only admins can view audit log
+  const auth = await requireRole(req, ['admin']);
+  if (!auth.ok) {
+    res.status(auth.status).json({ error: auth.error });
     return;
   }
 

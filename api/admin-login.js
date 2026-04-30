@@ -50,7 +50,7 @@ module.exports = async (req, res) => {
   // ── Try admin_users table first ───────────────────────────
   let users = [];
   try {
-    users = await sbSelect('admin_users', 'select=id,email,display_name,password_hash,is_active&is_active=eq.true');
+    users = await sbSelect('admin_users', 'select=id,email,display_name,password_hash,is_active,role&is_active=eq.true');
   } catch (e) {
     // Table missing or other error — fall through to legacy mode
     users = [];
@@ -121,6 +121,10 @@ module.exports = async (req, res) => {
   res.status(200).json({
     token,
     expiresAt,
-    user: { email: matched.email, displayName: matched.display_name },
+    user: {
+      email: matched.email,
+      displayName: matched.display_name,
+      role: matched.role || 'admin',
+    },
   });
 };

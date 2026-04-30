@@ -9,7 +9,7 @@
 //   - Inserts a row in report_audit (action='upload'; if archived, also action='archive').
 //   - Sends an email notification via Resend (best-effort).
 
-const { verifyAdminToken } = require('./_admin-auth');
+const { requireRole } = require('./_require-role');
 const { sbInsert } = require('./_supabase');
 const { sendUploadEmail } = require('./_notify');
 
@@ -46,18 +46,17 @@ module.exports = async (req, res) => {
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const ADMIN_TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET;
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !ADMIN_TOKEN_SECRET) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
     res.status(500).json({ error: 'Server not configured' });
     return;
   }
 
-  const auth = verifyAdminToken(req.headers['x-admin-token'], ADMIN_TOKEN_SECRET);
-  if (!auth) {
-    res.status(401).json({ error: 'Unauthorized' });
+  const auth = await requireRole(req, ['admin']);
+  if (!auth.ok) {
+    res.status(auth.status).json({ error: auth.error });
     return;
   }
-  const actor = auth.email || 'unknown';
+  const actor = auth.user.email || 'unknown';
 
   const folder = (req.query.folder || '').toString();
   if (!['monthly', 'committee', 'annual'].includes(folder)) {
