@@ -105,11 +105,72 @@
   /* FOOTER */
   footer { background: var(--navy); padding: 16px 48px; display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.08em; }
 
+  /* TABS */
+  .tabs { display:flex; gap:0; border-bottom:1px solid var(--rule); margin-bottom:24px; }
+  .tab-btn { background:transparent; border:none; padding:12px 20px; font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--gray-mid); cursor:pointer; border-bottom:2px solid transparent; transition:all .2s; margin-bottom:-1px; }
+  .tab-btn:hover { color:var(--navy); }
+  .tab-btn.active { color:var(--navy); border-bottom-color:var(--gold); }
+  .tab-btn .count { display:inline-block; background:var(--gold-dim); color:var(--gold); font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; margin-left:8px; letter-spacing:0; }
+  .tab-pane { display:none; }
+  .tab-pane.active { display:block; }
+
+  /* WATCHLIST */
+  .watch-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+  .watch-add-btn { background:var(--navy); color:var(--white); font-family:'Archivo',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; padding:10px 18px; border:none; cursor:pointer; transition:background .2s; }
+  .watch-add-btn:hover { background:var(--navy-deep); }
+  .watch-add-btn:disabled { opacity:0.4; cursor:not-allowed; }
+  .watch-section-title { font-size:9px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--gray-mid); margin:24px 0 10px; }
+  .watch-cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:14px; }
+  .watch-card { background:var(--white); border:1px solid var(--rule); border-left:3px solid var(--gold-rule); padding:18px 20px; transition:border-color .2s; position:relative; }
+  .watch-card.triggered { border-left-color:var(--green); background:rgba(42,122,86,0.04); }
+  .watch-card .wc-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+  .watch-card .wc-tkr { font-size:18px; font-weight:700; color:var(--navy); letter-spacing:-0.02em; }
+  .watch-card .wc-status { font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; padding:3px 8px; }
+  .watch-card .wc-status.active { background:var(--gold-dim); color:var(--gold); }
+  .watch-card .wc-status.triggered { background:rgba(42,122,86,0.14); color:var(--green); }
+  .watch-card .wc-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px 18px; font-size:12px; margin-bottom:12px; }
+  .watch-card .wc-grid .lbl { font-size:9px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--gray-mid); margin-bottom:2px; }
+  .watch-card .wc-grid .val { font-size:13px; font-weight:600; color:var(--navy); font-variant-numeric:tabular-nums; }
+  .watch-card .wc-grid .val.green { color:var(--green); }
+  .watch-card .wc-grid .val.red { color:var(--red); }
+  .watch-card .wc-meta { font-size:11px; color:var(--gray-txt); line-height:1.5; padding-top:10px; border-top:1px solid var(--rule); }
+  .watch-card .wc-meta strong { color:var(--navy); font-weight:600; }
+  .watch-card .wc-actions { display:flex; gap:8px; margin-top:12px; }
+  .watch-card .wc-act { background:transparent; border:1px solid var(--rule); color:var(--gray-txt); font-family:'Archivo',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; padding:6px 12px; cursor:pointer; transition:all .2s; }
+  .watch-card .wc-act:hover { border-color:var(--navy); color:var(--navy); }
+  .watch-card .wc-act.danger:hover { border-color:var(--red); color:var(--red); }
+  .watch-empty { background:var(--white); border:1px dashed var(--rule); padding:40px 20px; text-align:center; color:var(--gray-mid); font-size:13px; }
+
+  /* MODAL */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(20,29,53,0.5); backdrop-filter:blur(2px); z-index:100; align-items:center; justify-content:center; padding:20px; }
+  .modal-overlay.open { display:flex; }
+  .modal-box { background:var(--white); width:100%; max-width:520px; max-height:90vh; overflow-y:auto; border:1px solid var(--rule); border-top:3px solid var(--gold); }
+  .modal-head { padding:18px 22px; border-bottom:1px solid var(--rule); display:flex; justify-content:space-between; align-items:center; }
+  .modal-head .mtitle { font-size:14px; font-weight:700; color:var(--navy); }
+  .modal-head .mclose { background:transparent; border:none; font-size:20px; cursor:pointer; color:var(--gray-mid); padding:0 4px; }
+  .modal-body { padding:22px; }
+  .modal-body label { display:block; font-size:9px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--gray-mid); margin-bottom:5px; margin-top:14px; }
+  .modal-body label:first-child { margin-top:0; }
+  .modal-body input[type=text], .modal-body input[type=number], .modal-body input[type=date], .modal-body select, .modal-body textarea { width:100%; padding:9px 11px; font-family:'Archivo',sans-serif; font-size:13px; color:var(--navy); border:1px solid var(--rule); background:var(--white); outline:none; transition:border-color .2s; }
+  .modal-body input:focus, .modal-body select:focus, .modal-body textarea:focus { border-color:var(--gold); }
+  .modal-body textarea { resize:vertical; min-height:60px; font-family:'Archivo',sans-serif; }
+  .modal-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .modal-foot { padding:14px 22px; border-top:1px solid var(--rule); display:flex; gap:10px; justify-content:flex-end; }
+  .btn-primary, .btn-secondary { font-family:'Archivo',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; padding:10px 18px; border:1px solid var(--navy); cursor:pointer; transition:all .2s; }
+  .btn-primary { background:var(--navy); color:var(--white); }
+  .btn-primary:hover { background:var(--navy-deep); }
+  .btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+  .btn-secondary { background:transparent; color:var(--navy); }
+  .btn-secondary:hover { background:rgba(27,38,66,0.05); }
+  .modal-error { color:var(--red); font-size:12px; margin-top:10px; min-height:14px; }
+  .modal-hint { font-size:11px; color:var(--gray-mid); margin-top:4px; line-height:1.4; }
+
   @media (max-width: 1024px) {
     main { padding: 24px 20px 40px; }
     header { padding: 0 20px; }
     .universe-tbl { font-size: 11px; }
     .universe-tbl th, .universe-tbl td { padding: 10px 10px; }
+    .modal-row { grid-template-columns:1fr; }
   }
 </style>
 <link rel="stylesheet" href="/responsive.css"><script src="/dce-auth.js" defer></script>
@@ -134,6 +195,12 @@
   <h1>Covered Universe</h1>
   <p class="page-sub">Columbia Framework valuation summary. Edit price to recalculate IRR and Margin of Safety in real time. <span id="live-note" style="font-size:11px;font-weight:500;color:var(--gray-mid)">Fetching live prices...</span></p>
 
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="all">All Universe</button>
+    <button class="tab-btn" data-tab="watch">Watchlist <span class="count" id="watch-count">0</span></button>
+  </div>
+
+  <div class="tab-pane active" id="pane-all">
   <div style="overflow-x:auto;">
     <table class="universe-tbl" id="universe-table">
       <thead>
@@ -156,6 +223,72 @@
       <tbody id="universe-body">
       </tbody>
     </table>
+  </div>
+  </div><!-- /pane-all -->
+
+  <div class="tab-pane" id="pane-watch">
+    <div class="watch-toolbar">
+      <div style="font-size:13px; color:var(--gray-mid);">Disciplined buy-zone tracking. A watch fires when price ≤ target AND MoS vs anchor (RV/EPV) ≥ required.</div>
+      <button id="watch-add-btn" class="watch-add-btn" disabled title="Admin login required">+ Add Watch</button>
+    </div>
+    <div id="watch-active-section">
+      <div class="watch-section-title">Active</div>
+      <div id="watch-cards-active" class="watch-cards"></div>
+    </div>
+    <div id="watch-triggered-section" style="display:none;">
+      <div class="watch-section-title">Triggered — Buy Zone</div>
+      <div id="watch-cards-triggered" class="watch-cards"></div>
+    </div>
+  </div><!-- /pane-watch -->
+
+  <!-- Watchlist modal -->
+  <div id="watch-modal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div class="mtitle" id="watch-modal-title">New Watchlist Entry</div>
+        <button class="mclose" id="watch-modal-close" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="wm-id">
+        <label for="wm-ticker">Ticker</label>
+        <select id="wm-ticker"></select>
+        <div class="modal-row">
+          <div>
+            <label for="wm-target">Target Price</label>
+            <input type="number" id="wm-target" step="0.01" min="0" placeholder="3800">
+          </div>
+          <div>
+            <label for="wm-mos">MoS Required (%)</label>
+            <input type="number" id="wm-mos" step="1" min="0" max="100" placeholder="25">
+          </div>
+        </div>
+        <div class="modal-row">
+          <div>
+            <label for="wm-anchor-type">Anchor Type</label>
+            <select id="wm-anchor-type">
+              <option value="RV">RV (Reproduction Value)</option>
+              <option value="EPV">EPV (Earnings Power Value)</option>
+            </select>
+          </div>
+          <div>
+            <label for="wm-anchor-val">Anchor / share</label>
+            <input type="number" id="wm-anchor-val" step="0.01" min="0" placeholder="505.58">
+          </div>
+        </div>
+        <div class="modal-hint" id="wm-anchor-hint">Auto-filled from the Columbia model when ticker changes.</div>
+        <label for="wm-catalyst">Catalyst</label>
+        <textarea id="wm-catalyst" placeholder="e.g. Q3 2026 booking growth >12% confirms Azure-comparable growth"></textarea>
+        <label for="wm-deadline">Deadline Review</label>
+        <input type="date" id="wm-deadline">
+        <label for="wm-notes">Notes (optional)</label>
+        <textarea id="wm-notes" placeholder="Additional context, thesis link, conditions..."></textarea>
+        <div class="modal-error" id="wm-error"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-secondary" id="wm-cancel">Cancel</button>
+        <button class="btn-primary" id="wm-save">Save</button>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -459,6 +592,233 @@ async function fetchLivePrices() {
 }
 
 fetchLivePrices();
+
+// =================== WATCHLIST ===================
+const watchState = { items: [], loaded: false, editingId: null };
+
+function wmEl(id) { return document.getElementById(id); }
+function watchToken() { try { return localStorage.getItem('dce_admin_token') || ''; } catch (e) { return ''; } }
+function watchIsAdmin() { return !!watchToken(); }
+function fmtMoney(n, ccy) { if (n == null || isNaN(n)) return '—'; return (ccy || '$') + Number(n).toFixed(2); }
+function fmtPct(n) { if (n == null || isNaN(n)) return '—'; return (Number(n) * 100).toFixed(1) + '%'; }
+function fmtPctSigned(n) { if (n == null || isNaN(n)) return '—'; const v = Number(n) * 100; return (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; }
+function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    const target = btn.dataset.tab;
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    wmEl(`pane-${target}`).classList.add('active');
+    if (target === 'watch' && !watchState.loaded) loadWatchlist();
+  });
+});
+
+async function loadWatchlist() {
+  try {
+    const r = await fetch('/api/watchlist?status=active,triggered');
+    if (!r.ok) throw new Error('http ' + r.status);
+    const data = await r.json();
+    watchState.items = data.items || [];
+    watchState.loaded = true;
+    renderWatchlist();
+  } catch (e) {
+    console.error('loadWatchlist failed:', e);
+    wmEl('watch-cards-active').innerHTML = '<div class="watch-empty">Failed to load watchlist.</div>';
+  }
+}
+
+function renderWatchlist() {
+  const active = watchState.items.filter(i => i.status === 'active');
+  const triggered = watchState.items.filter(i => i.status === 'triggered');
+  wmEl('watch-count').textContent = active.length + triggered.length;
+
+  const aHost = wmEl('watch-cards-active');
+  if (active.length === 0) {
+    aHost.innerHTML = '<div class="watch-empty">No active watches yet. ' + (watchIsAdmin() ? 'Click “+ Add Watch” to create one.' : 'Sign in as admin to create one.') + '</div>';
+  } else {
+    aHost.innerHTML = active.map(renderWatchCard).join('');
+  }
+
+  const tSec = wmEl('watch-triggered-section');
+  const tHost = wmEl('watch-cards-triggered');
+  if (triggered.length > 0) {
+    tSec.style.display = '';
+    tHost.innerHTML = triggered.map(renderWatchCard).join('');
+  } else {
+    tSec.style.display = 'none';
+  }
+
+  // Bind action buttons
+  document.querySelectorAll('[data-watch-edit]').forEach(b => b.addEventListener('click', () => openWatchModal(Number(b.dataset.watchEdit))));
+  document.querySelectorAll('[data-watch-archive]').forEach(b => b.addEventListener('click', () => archiveWatch(Number(b.dataset.watchArchive))));
+}
+
+function renderWatchCard(it) {
+  const u = UNIVERSE.find(x => x.ticker === it.ticker);
+  const ccy = u ? u.currency : '$';
+  const triggered = it.status === 'triggered';
+  const inZone = it.in_buy_zone;
+  const gapClass = it.gap_pct == null ? '' : (it.gap_pct <= 0 ? 'green' : 'red');
+  const mosClass = it.mos_current_pct == null ? '' : (it.mos_current_pct >= it.mos_required_pct ? 'green' : 'red');
+  const reviewLine = it.deadline_review ? `<strong>Review by:</strong> ${escHtml(it.deadline_review)}${it.days_to_review != null ? ` (${it.days_to_review >= 0 ? it.days_to_review + ' days' : 'overdue ' + Math.abs(it.days_to_review) + 'd'})` : ''}<br>` : '';
+  const catalystLine = it.catalyst ? `<strong>Catalyst:</strong> ${escHtml(it.catalyst)}<br>` : '';
+  const notesLine = it.notes ? `<strong>Notes:</strong> ${escHtml(it.notes)}` : '';
+  const triggeredMeta = triggered && it.triggered_at ? `<div style="font-size:10px;color:var(--green);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin-top:4px;">Triggered ${new Date(it.triggered_at).toLocaleString()} · price ${fmtMoney(it.triggered_price, ccy)} · MoS ${fmtPct(it.triggered_mos_pct)}</div>` : '';
+  const adminActions = watchIsAdmin() ? `
+      <div class="wc-actions">
+        <button class="wc-act" data-watch-edit="${it.id}">Edit</button>
+        <button class="wc-act danger" data-watch-archive="${it.id}">Archive</button>
+      </div>` : '';
+  return `
+    <div class="watch-card${triggered ? ' triggered' : ''}">
+      <div class="wc-head">
+        <div>
+          <div class="wc-tkr">${escHtml(it.ticker)}${u ? `<span style="font-size:11px;font-weight:300;color:var(--gray-mid);margin-left:8px;">${escHtml(u.name)}</span>` : ''}</div>
+        </div>
+        <div class="wc-status ${triggered ? 'triggered' : 'active'}">${triggered ? 'Buy Zone' : (inZone ? 'In Zone *' : 'Active')}</div>
+      </div>
+      <div class="wc-grid">
+        <div><div class="lbl">Current</div><div class="val">${fmtMoney(it.current_price, ccy)}</div></div>
+        <div><div class="lbl">Target</div><div class="val">${fmtMoney(it.target_price, ccy)}</div></div>
+        <div><div class="lbl">Gap to target</div><div class="val ${gapClass}">${fmtPctSigned(it.gap_pct)}</div></div>
+        <div><div class="lbl">Anchor (${escHtml(it.anchor_type)})</div><div class="val">${fmtMoney(it.anchor_value_per_share, ccy)}</div></div>
+        <div><div class="lbl">MoS current</div><div class="val ${mosClass}">${fmtPct(it.mos_current_pct)}</div></div>
+        <div><div class="lbl">MoS required</div><div class="val">${fmtPct(it.mos_required_pct)}</div></div>
+      </div>
+      <div class="wc-meta">
+        ${catalystLine}${reviewLine}${notesLine}
+        ${triggeredMeta}
+      </div>${adminActions}
+    </div>`;
+}
+
+function openWatchModal(editId) {
+  if (!watchIsAdmin()) { alert('Admin login required.'); return; }
+  watchState.editingId = editId || null;
+  wmEl('watch-modal-title').textContent = editId ? 'Edit Watchlist Entry' : 'New Watchlist Entry';
+  wmEl('wm-error').textContent = '';
+  wmEl('wm-id').value = editId || '';
+
+  // Populate ticker dropdown from UNIVERSE
+  const sel = wmEl('wm-ticker');
+  sel.innerHTML = UNIVERSE.map(u => `<option value="${u.ticker}">${u.ticker} — ${escHtml(u.name)}</option>`).join('');
+
+  if (editId) {
+    const it = watchState.items.find(x => x.id === editId);
+    if (!it) { alert('Entry not found.'); return; }
+    sel.value = it.ticker; sel.disabled = true;
+    wmEl('wm-target').value = it.target_price;
+    wmEl('wm-mos').value = (Number(it.mos_required_pct) * 100).toFixed(0);
+    wmEl('wm-anchor-type').value = it.anchor_type;
+    wmEl('wm-anchor-val').value = it.anchor_value_per_share;
+    wmEl('wm-catalyst').value = it.catalyst || '';
+    wmEl('wm-deadline').value = it.deadline_review || '';
+    wmEl('wm-notes').value = it.notes || '';
+  } else {
+    sel.disabled = false;
+    wmEl('wm-target').value = '';
+    wmEl('wm-mos').value = '25';
+    wmEl('wm-anchor-type').value = 'RV';
+    wmEl('wm-catalyst').value = '';
+    wmEl('wm-deadline').value = '';
+    wmEl('wm-notes').value = '';
+    autofillAnchor();
+  }
+  wmEl('watch-modal').classList.add('open');
+}
+
+function autofillAnchor() {
+  const tkr = wmEl('wm-ticker').value;
+  const u = UNIVERSE.find(x => x.ticker === tkr);
+  if (!u) return;
+  const anchorType = wmEl('wm-anchor-type').value;
+  let val = null;
+  if (anchorType === 'RV') val = u.rvPerShare;
+  else if (anchorType === 'EPV') {
+    const nopat = u.nopatNorm || 0;
+    const wacc = u.wacc || 0.10;
+    const bridge = u.bridgeAdj || 0;
+    const shares = u.shares || 1;
+    const epvEnt = wacc > 0 ? nopat / wacc : 0;
+    val = (epvEnt + bridge) / shares;
+  }
+  if (val != null) wmEl('wm-anchor-val').value = Number(val).toFixed(2);
+  wmEl('wm-anchor-hint').textContent = anchorType === 'RV'
+    ? `Auto-filled from RV per share for ${tkr}.`
+    : `Auto-filled from EPV per share for ${tkr} (NOPAT/WACC + bridge ÷ shares).`;
+}
+wmEl('wm-ticker').addEventListener('change', autofillAnchor);
+wmEl('wm-anchor-type').addEventListener('change', autofillAnchor);
+
+wmEl('watch-modal-close').addEventListener('click', () => wmEl('watch-modal').classList.remove('open'));
+wmEl('wm-cancel').addEventListener('click', () => wmEl('watch-modal').classList.remove('open'));
+wmEl('watch-modal').addEventListener('click', (e) => { if (e.target.id === 'watch-modal') wmEl('watch-modal').classList.remove('open'); });
+
+wmEl('wm-save').addEventListener('click', async () => {
+  const errEl = wmEl('wm-error'); errEl.textContent = '';
+  const id = wmEl('wm-id').value ? Number(wmEl('wm-id').value) : null;
+  const ticker = wmEl('wm-ticker').value;
+  const target = Number(wmEl('wm-target').value);
+  const mos = Number(wmEl('wm-mos').value) / 100;
+  const anchorType = wmEl('wm-anchor-type').value;
+  const anchorVal = Number(wmEl('wm-anchor-val').value);
+  const catalyst = wmEl('wm-catalyst').value.trim() || null;
+  const deadline = wmEl('wm-deadline').value || null;
+  const notes = wmEl('wm-notes').value.trim() || null;
+
+  if (!ticker) return errEl.textContent = 'Select a ticker.';
+  if (!(target > 0)) return errEl.textContent = 'Target price must be > 0.';
+  if (!(mos >= 0 && mos <= 1)) return errEl.textContent = 'MoS must be 0–100%.';
+  if (!(anchorVal > 0)) return errEl.textContent = 'Anchor value must be > 0.';
+
+  const body = { ticker, target_price: target, anchor_type: anchorType, anchor_value_per_share: anchorVal, mos_required_pct: mos, catalyst, deadline_review: deadline, notes };
+  if (id) body.id = id;
+
+  wmEl('wm-save').disabled = true;
+  try {
+    const r = await fetch('/api/admin-watchlist', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-admin-token': watchToken() },
+      body: JSON.stringify(body),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) { errEl.textContent = data.error || 'Save failed.'; return; }
+    wmEl('watch-modal').classList.remove('open');
+    watchState.loaded = false;
+    await loadWatchlist();
+  } catch (e) {
+    errEl.textContent = 'Network error: ' + e.message;
+  } finally {
+    wmEl('wm-save').disabled = false;
+  }
+});
+
+async function archiveWatch(id) {
+  if (!watchIsAdmin()) return alert('Admin login required.');
+  const it = watchState.items.find(x => x.id === id);
+  if (!it) return;
+  if (!confirm(`Archive watch for ${it.ticker}? It can be re-added later.`)) return;
+  try {
+    const r = await fetch(`/api/admin-watchlist?id=${id}`, { method: 'DELETE', headers: { 'x-admin-token': watchToken() } });
+    if (!r.ok) { alert('Archive failed.'); return; }
+    watchState.loaded = false;
+    await loadWatchlist();
+  } catch (e) { alert('Network error: ' + e.message); }
+}
+
+wmEl('watch-add-btn').addEventListener('click', () => openWatchModal(null));
+
+// Enable Add button if admin (re-check after a tick to give dce-auth.js a chance to load)
+function refreshWatchAdminUI() {
+  const btn = wmEl('watch-add-btn');
+  if (watchIsAdmin()) { btn.disabled = false; btn.title = 'Add a new watchlist entry'; }
+  else { btn.disabled = true; btn.title = 'Admin login required'; }
+}
+refreshWatchAdminUI();
+setTimeout(refreshWatchAdminUI, 300);
+window.addEventListener('storage', refreshWatchAdminUI);
 </script>
 <script src="/search.js" defer></script>
 </body>

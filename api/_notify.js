@@ -263,4 +263,97 @@ async function sendReunderwritingDueAlert({ items }) {
   }
 }
 
-module.exports = { sendUploadEmail, sendPremortemAlert, sendReunderwritingDueAlert };
+// ============================================================================
+// Watchlist trigger alerts — sends email when a watchlist entry enters BUY ZONE.
+// ============================================================================
+async function sendWatchlistTriggerAlert({ items }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const to = (process.env.ALERT_EMAIL_TO || '').split(',').map(s => s.trim()).filter(Boolean);
+  const from = process.env.ALERT_EMAIL_FROM || 'DCE Watchlist <onboarding@resend.dev>';
+
+  if (!apiKey || to.length === 0) {
+    return { skipped: true, reason: 'RESEND_API_KEY or ALERT_EMAIL_TO not set' };
+  }
+  if (!items || items.length === 0) {
+    return { skipped: true, reason: 'No new triggers to report' };
+  }
+
+  const ts = new Date().toLocaleString('en-US', {
+    timeZone: 'America/New_York',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+
+  const tickers = Array.from(new Set(items.map(t => t.ticker))).join(', ');
+  const subject = `[DCE Watchlist] BUY ZONE — ${items.length} ticker${items.length>1?'s':''} triggered (${tickers})`;
+
+  const fmtMoney = (n) => n == null ? '—' : '$' + Number(n).toFixed(2);
+  const fmtPct = (n) => n == null ? '—' : (Number(n) * 100).toFixed(1) + '%';
+
+  const rowsHtml = items.map(it => `
+        <tr><td style="padding:14px 16px;border-bottom:1px solid #e6e6e6;vertical-align:top">
+          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#b88b47;font-weight:600;margin-bottom:4px">${escapeHtml(it.ticker)} · buy zone</div>
+          <div style="font-size:14px;font-weight:600;color:#1b2642;margin-bottom:6px">${escapeHtml(it.catalyst || 'Catalyst threshold reached')}</div>
+          <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:12px;color:#0d0d0d;line-height:1.6">
+            <tr><td style="color:#606060;padding-right:12px">Price</td><td><strong>${escapeHtml(fmtMoney(it.triggered_price))}</strong> ≤ target ${escapeHtml(fmtMoney(it.target_price))}</td></tr>
+            <tr><td style="color:#606060;padding-right:12px">Anchor</td><td>${escapeHtml(it.anchor_type)} ${escapeHtml(fmtMoney(it.anchor_value_per_share))} / share</td></tr>
+            <tr><td style="color:#606060;padding-right:12px">MoS</td><td>${escapeHtml(fmtPct(it.triggered_mos_pct))} (required ${escapeHtml(fmtPct(it.mos_required_pct))})</td></tr>
+          </table>
+        </td></tr>`).join('');
+
+  const html = `
+<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Helvetica,Arial,sans-serif;color:#0d0d0d">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:24px 0">
+    <tr><td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e6e6e6">
+        <tr><td style="background:#1b2642;padding:18px 24px;color:#ffffff">
+          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#b88b47">DCE Holdings · Watchlist</div>
+          <div style="font-size:18px;font-weight:bold;margin-top:4px">BUY ZONE · ${items.length} trigger${items.length>1?'s':''}</div>
+        </td></tr>
+        <tr><td style="padding:20px 24px;background:#fdf6e3;border-bottom:1px solid #e6e6e6">
+          <div style="font-size:13px;line-height:1.6">
+            <strong>${items.length}</strong> watchlist ticker${items.length>1?'s':''} on <strong>${escapeHtml(tickers)}</strong> just entered the buy zone (price ≤ target AND MoS threshold met).
+            <br><span style="color:#606060;font-size:11px">${escapeHtml(ts)} ET</span>
+          </div>
+        </td></tr>
+        <tr><td>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            ${rowsHtml}
+          </table>
+        </td></tr>
+        <tr><td style="padding:20px 24px;border-top:1px solid #e6e6e6">
+          <a href="https://www.dceholdings.app/universe" style="display:inline-block;background:#1b2642;color:#ffffff;padding:10px 20px;text-decoration:none;font-size:13px;font-weight:bold;letter-spacing:0.04em">Open Watchlist →</a>
+        </td></tr>
+        <tr><td style="background:#f5f5f5;border-top:2px solid #b88b47;padding:14px 24px;font-size:11px;color:#606060">
+          DCE Holdings — Investment Office · Confidential · Internal use only
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const textLines = [
+    `DCE Watchlist — ${items.length} BUY ZONE trigger(s) on ${tickers}`,
+    '',
+    ...items.map(it => `• [${it.ticker}] price ${fmtMoney(it.triggered_price)} ≤ target ${fmtMoney(it.target_price)} · MoS ${fmtPct(it.triggered_mos_pct)} (req ${fmtPct(it.mos_required_pct)})`),
+    '',
+    `${ts} ET`,
+    `Open: https://www.dceholdings.app/universe`,
+  ];
+
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, to, subject, html, text: textLines.join('\n') }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return { ok: false, status: r.status, error: data };
+    return { ok: true, id: data.id };
+  } catch (e) {
+    return { ok: false, error: String(e).slice(0, 200) };
+  }
+}
+
+module.exports = { sendUploadEmail, sendPremortemAlert, sendReunderwritingDueAlert, sendWatchlistTriggerAlert };
