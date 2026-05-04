@@ -10,6 +10,7 @@
 
 const { verifyAdminToken } = require('../_admin-auth');
 const { sbSelect, sbInsert, sbUpdate } = require('../_supabase');
+const pipelineStage = require('../_pipeline-stage');
 
 const VALID_TYPES = ['BUY', 'SELL', 'PASS', 'HOLD', 'TRIM', 'ADD'];
 const VALID_OUTCOMES = ['played_out', 'partially', 'failed'];
@@ -206,7 +207,16 @@ module.exports = async (req, res) => {
         }
       }
 
-      res.status(200).json({ ok: true, item, archive });
+      // ── Auto-transition pipeline_card stage ─────────────────────────────
+      let stageSync = null;
+      try {
+        if (type === 'SELL')      stageSync = await pipelineStage.onSellDecision(ticker);
+        else if (type === 'PASS') stageSync = await pipelineStage.onPassDecision(ticker);
+      } catch (e) {
+        console.warn('[admin/journal POST] pipeline stage transition failed', e.message);
+      }
+
+      res.status(200).json({ ok: true, item, archive, stageSync });
       return;
     }
 
@@ -260,7 +270,23 @@ module.exports = async (req, res) => {
         }
       }
 
-      res.status(200).json({ ok: true, item: Array.isArray(updated) ? updated[0] : updated, premortemSync });
+      // ── Pipeline stage sync on PATCH (handle SELL/PASS transitions both ways) ──
+      let stageSync = null;
+      if (tickerForChange) {
+        const wasActivePass = prev && prev.decision_type === 'PASS' && prev.active !== false;
+        const willBeActivePass = (patch.decision_type !== undefined ? patch.decision_type : prev?.decision_type) === 'PASS'
+          && (patch.active !== undefined ? patch.active : prev?.active) !== false;
+        try {
+          if (!wasActiveSell && willBeActiveSell)        stageSync = await pipelineStage.onSellDecision(tickerForChange);
+          else if (wasActiveSell && !willBeActiveSell)   stageSync = await pipelineStage.revertFromClosed(tickerForChange);
+          else if (!wasActivePass && willBeActivePass)   stageSync = await pipelineStage.onPassDecision(tickerForChange);
+          else if (wasActivePass && !willBeActivePass)   stageSync = await pipelineStage.revertFromPassed(tickerForChange);
+        } catch (e) {
+          console.warn('[admin/journal PATCH] pipeline stage sync failed', e.message);
+        }
+      }
+
+      res.status(200).json({ ok: true, item: Array.isArray(updated) ? updated[0] : updated, premortemSync, stageSync });
       return;
     }
 
@@ -281,7 +307,19 @@ module.exports = async (req, res) => {
         try { premortemSync = { action: 'reactivated', ...(await reactivatePremortemForTicker(prev.ticker)) }; }
         catch (e) { premortemSync = { action: 'reactivate_failed', error: e.message }; }
       }
-      res.status(200).json({ ok: true, premortemSync });
+
+      // ── Pipeline stage revert on soft-delete of active SELL or PASS ──
+      let stageSync = null;
+      if (prev && prev.active !== false && prev.ticker) {
+        try {
+          if (prev.decision_type === 'SELL')      stageSync = await pipelineStage.revertFromClosed(prev.ticker);
+          else if (prev.decision_type === 'PASS') stageSync = await pipelineStage.revertFromPassed(prev.ticker);
+        } catch (e) {
+          console.warn('[admin/journal DELETE] pipeline stage revert failed', e.message);
+        }
+      }
+
+      res.status(200).json({ ok: true, premortemSync, stageSync });
       return;
     }
 

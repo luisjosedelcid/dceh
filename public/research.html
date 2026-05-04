@@ -52,7 +52,13 @@
   .stats strong{color:var(--ink);font-weight:600;margin-right:4px}
 
   /* KANBAN */
-  .kanban{display:grid;grid-template-columns:repeat(6,minmax(220px,1fr));gap:14px}
+  .kanban{display:grid;grid-template-columns:repeat(9,minmax(200px,1fr));gap:12px}
+  @media (max-width:1400px){.kanban{display:flex;overflow-x:auto;padding-bottom:8px}.kanban>.col{min-width:240px;flex:0 0 240px}}
+  .col.terminal{border-top-color:#9aa0a6}
+  .col.terminal-invested{border-top-color:#2f7a3f}
+  .col.terminal-closed{border-top-color:#1b2642}
+  .col.terminal-passed{border-top-color:#b88b47}
+  .col.terminal-rejected{border-top-color:#b8443c}
   .col{background:var(--white);border-top:2px solid var(--gold);min-height:300px;display:flex;flex-direction:column}
   .col-h{padding:14px 14px 8px;border-bottom:1px solid var(--rule)}
   .col-h .ttl{font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink);margin-bottom:2px}
@@ -168,7 +174,10 @@ const COLUMNS = [
   { id: 'review',   title: 'Review',           desc: 'Model & thesis review' },
   { id: 'decision', title: 'Decision Pending', desc: 'Awaiting CIO decision' },
   { id: 'approved', title: 'Approved',         desc: 'Thesis approved' },
-  { id: 'rejected', title: 'Rejected',         desc: 'Not pursuing' },
+  { id: 'invested', title: 'Invested',         desc: 'Position open',           terminal: true, cls: 'terminal-invested', auto: true },
+  { id: 'closed',   title: 'Closed',           desc: 'Position closed',         terminal: true, cls: 'terminal-closed',   auto: true },
+  { id: 'passed',   title: 'Passed',           desc: 'Researched, not bought',  terminal: true, cls: 'terminal-passed',   auto: true },
+  { id: 'rejected', title: 'Rejected',         desc: 'Did not pass screen',     terminal: true, cls: 'terminal-rejected' },
 ];
 
 let currentUser = null;   // { username, name }
@@ -324,21 +333,28 @@ function dismissPrefill() {
 }
 
 function renderBoard() {
+  const TERMINAL = ['invested','closed','passed','rejected'];
   const total = pipeline.length;
-  const inPipe = pipeline.filter(c => !['approved','rejected'].includes(c.stage)).length;
+  const inPipe = pipeline.filter(c => !TERMINAL.includes(c.stage) && c.stage !== 'approved').length;
   const approved = pipeline.filter(c => c.stage === 'approved').length;
+  const invested = pipeline.filter(c => c.stage === 'invested').length;
+  const closed = pipeline.filter(c => c.stage === 'closed').length;
   document.getElementById('stats').innerHTML =
     `<span><strong>${total}</strong>total</span>
      <span><strong>${inPipe}</strong>in pipeline</span>
-     <span><strong>${approved}</strong>approved</span>`;
+     <span><strong>${approved}</strong>approved</span>
+     <span><strong>${invested}</strong>invested</span>
+     <span><strong>${closed}</strong>closed</span>`;
 
   const k = document.getElementById('kanban');
   k.innerHTML = COLUMNS.map(col => {
     const cards = pipeline.filter(c => c.stage === col.id);
+    const colClass = col.terminal ? `col terminal ${col.cls || ''}` : 'col';
+    const autoBadge = col.auto ? '<span title="Auto-set by trades or journal" style="font-size:9px;background:#fdf6ec;color:#b88b47;padding:1px 5px;border:1px solid #b88b47;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-left:6px">auto</span>' : '';
     return `
-      <div class="col">
+      <div class="${colClass}">
         <div class="col-h">
-          <div class="ttl">${col.title}</div>
+          <div class="ttl">${col.title}${autoBadge}</div>
           <div class="cnt">${cards.length} card${cards.length === 1 ? '' : 's'}</div>
         </div>
         <div class="col-body" data-stage="${col.id}"

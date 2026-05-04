@@ -20,7 +20,7 @@ const { verifyAdminToken } = require('../_admin-auth');
 const { sbSelect, sbInsert, sbUpdate, sbDelete } = require('../_supabase');
 const { sendStageChangeAlert } = require('../_notify');
 
-const VALID_STAGES = ['backlog', 'analysis', 'review', 'decision', 'approved', 'rejected'];
+const VALID_STAGES = ['backlog', 'analysis', 'review', 'decision', 'approved', 'rejected', 'invested', 'closed', 'passed'];
 
 function requireAuth(req, res) {
   const tok = req.headers['x-admin-token'];

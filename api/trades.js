@@ -18,6 +18,7 @@
 
 const { sbSelect, sbInsert, sbDelete } = require('./_supabase');
 const { requireRole } = require('./_require-role');
+const pipelineStage = require('./_pipeline-stage');
 
 const ALLOWED_TYPES = ['BUY', 'ADD', 'TRIM', 'SELL'];
 
@@ -112,7 +113,18 @@ async function handlePost(req, res, user) {
   };
 
   const inserted = await sbInsert('trades', row);
-  return res.status(200).json({ ok: true, trade: inserted[0] || inserted });
+
+  // Auto-transition pipeline_card to 'invested' on first BUY/ADD trade
+  let stageSync = null;
+  if (tradeType === 'BUY' || tradeType === 'ADD') {
+    try {
+      stageSync = await pipelineStage.onBuyTrade(ticker);
+    } catch (e) {
+      console.warn('[trades.POST] pipeline auto-transition failed', e.message);
+    }
+  }
+
+  return res.status(200).json({ ok: true, trade: inserted[0] || inserted, stageSync });
 }
 
 async function handleDelete(req, res) {
@@ -120,6 +132,24 @@ async function handleDelete(req, res) {
   if (!Number.isFinite(id) || id <= 0) {
     return res.status(400).json({ ok: false, error: 'id required' });
   }
+  // Capture trade row before delete (need ticker + type for revert)
+  let priorTrade = null;
+  try {
+    const rows = await sbSelect('trades', `select=ticker,trade_type&id=eq.${id}&limit=1`);
+    priorTrade = rows && rows.length ? rows[0] : null;
+  } catch (e) { /* silent */ }
+
   await sbDelete('trades', `id=eq.${id}`);
-  return res.status(200).json({ ok: true });
+
+  // If we removed the last BUY/ADD for this ticker, revert pipeline stage
+  let stageSync = null;
+  if (priorTrade && (priorTrade.trade_type === 'BUY' || priorTrade.trade_type === 'ADD')) {
+    try {
+      stageSync = await pipelineStage.revertFromInvested(priorTrade.ticker);
+    } catch (e) {
+      console.warn('[trades.DELETE] pipeline revert failed', e.message);
+    }
+  }
+
+  return res.status(200).json({ ok: true, stageSync });
 }
