@@ -144,19 +144,27 @@ module.exports = async (req, res) => {
         return;
       }
 
-      // Fire-and-forget email alert when stage actually changes.
+      // Email alert when stage actually changes — must await before responding
+      // because Vercel freezes the lambda after res.send (no background work).
+      let alertResult = null;
       if (prevCard && patch.stage && prevCard.stage !== patch.stage) {
-        sendStageChangeAlert({
-          ticker: item.ticker || prevCard.ticker,
-          name: item.name || prevCard.name,
-          oldStage: prevCard.stage,
-          newStage: patch.stage,
-          actor,
-          note: patch.note !== undefined ? patch.note : item.note,
-        }).catch(err => console.error('[stage-alert]', err));
+        try {
+          alertResult = await sendStageChangeAlert({
+            ticker: item.ticker || prevCard.ticker,
+            name: item.name || prevCard.name,
+            oldStage: prevCard.stage,
+            newStage: patch.stage,
+            actor,
+            note: patch.note !== undefined ? patch.note : item.note,
+          });
+          console.log('[stage-alert]', JSON.stringify(alertResult));
+        } catch (err) {
+          console.error('[stage-alert] threw', err);
+          alertResult = { ok: false, error: String(err).slice(0, 200) };
+        }
       }
 
-      res.status(200).json({ item });
+      res.status(200).json({ item, alert: alertResult });
       return;
     }
 
