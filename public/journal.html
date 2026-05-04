@@ -58,7 +58,15 @@
   thead th{color:var(--white);font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:11px 14px;text-align:left;border-bottom:1px solid var(--gold-rule)}
   tbody tr{border-bottom:1px solid var(--rule);cursor:pointer;transition:background .12s}
   tbody tr:hover{background:rgba(184,139,71,0.05)}
+  tbody tr.expanded{background:rgba(184,139,71,0.08)}
   tbody td{padding:12px 14px;font-size:13px;vertical-align:top}
+  .row-caret{display:inline-block;width:10px;color:var(--gray-mid);transition:transform .18s;font-size:10px;margin-right:6px}
+  tr.expanded .row-caret{transform:rotate(90deg);color:var(--gold)}
+  tr.detail-row td{padding:0!important;background:var(--cream)!important;border-bottom:2px solid var(--gold-rule)!important;cursor:default}
+  tr.detail-row:hover td{background:var(--cream)!important}
+  tr.detail-row.hide{display:none}
+  .detail-inner{padding:22px 28px}
+  .detail-inner .meta-grid{margin-bottom:14px}
   td.ticker{font-weight:700;color:var(--navy);font-size:14px;letter-spacing:0.04em}
   td.thesis{color:var(--gray-txt);max-width:480px;text-align:justify;hyphens:auto;line-height:1.45}
   td.right{text-align:right;font-variant-numeric:tabular-nums}
@@ -300,15 +308,81 @@ function renderTable(rows) {
   tbody.innerHTML = rows.map(r => {
     const nr = nextReview(r);
     const thesisShort = (r.thesis || '').length > 220 ? (r.thesis || '').slice(0, 220) + '…' : (r.thesis || '');
-    return `<tr onclick="openDrawer(${r.id})">
-      <td class="ticker">${escapeHtml(r.ticker)}</td>
+    const isExp = _expandedDecisions.has(r.id);
+    return `<tr class="row-decision ${isExp?'expanded':''}" data-id="${r.id}" onclick="toggleDecisionRow(${r.id})">
+      <td class="ticker"><span class="row-caret">▶</span>${escapeHtml(r.ticker)}</td>
       <td><span class="badge ${escapeHtml(r.decision_type)}">${escapeHtml(r.decision_type)}</span></td>
       <td>${fmtDate(r.decision_date)}</td>
       <td class="right">${fmtPrice(r.price_at_decision)}</td>
       <td class="thesis">${escapeHtml(thesisShort)}</td>
       <td><span class="review-pill ${nr.cls}">${escapeHtml(nr.label)}</span></td>
+    </tr>
+    <tr class="detail-row ${isExp?'':'hide'}" data-detail-for="${r.id}">
+      <td colspan="6"><div class="detail-inner" id="decision-detail-${r.id}"></div></td>
     </tr>`;
   }).join('');
+
+  // Re-render any pre-expanded panels (e.g. after applyFilters)
+  for (const id of _expandedDecisions) {
+    if (rows.find(r => r.id === id)) renderDecisionDetail(id);
+  }
+}
+
+const _expandedDecisions = new Set();
+
+function toggleDecisionRow(id) {
+  const tr = document.querySelector(`tr.row-decision[data-id="${id}"]`);
+  const det = document.querySelector(`tr.detail-row[data-detail-for="${id}"]`);
+  if (!tr || !det) return;
+  const willExpand = !tr.classList.contains('expanded');
+  tr.classList.toggle('expanded', willExpand);
+  det.classList.toggle('hide', !willExpand);
+  if (willExpand) {
+    _expandedDecisions.add(id);
+    renderDecisionDetail(id);
+  } else {
+    _expandedDecisions.delete(id);
+  }
+}
+
+function renderDecisionDetail(id) {
+  const r = state.items.find(x => x.id === id);
+  const host = document.getElementById('decision-detail-' + id);
+  if (!r || !host) return;
+  const cats = (r.catalysts || []).filter(Boolean);
+  const reviewBlock = (lbl, key) => {
+    const date = r['review_' + key + '_date'];
+    const oc = r['review_' + key + '_outcome'];
+    const done = r['review_' + key + '_done_at'];
+    const cls = done ? 'done' : (date && date <= todayStr() ? 'due' : '');
+    return `<div class="review-block ${cls}">
+      <div class="review-head">
+        <span class="review-label">${lbl} review · ${fmtDate(date)}</span>
+        <span class="review-pill ${cls}">${done ? 'Done ' + fmtDate(done) : (cls === 'due' ? 'Due' : 'Scheduled')}</span>
+      </div>
+      ${oc ? `<div class="review-outcome">${escapeHtml(oc)}</div>` : ''}
+    </div>`;
+  };
+  host.innerHTML = `
+    <div class="meta-grid">
+      <div><div class="k">Date</div><div class="v">${fmtDate(r.decision_date)}</div></div>
+      <div><div class="k">Price</div><div class="v">${fmtPrice(r.price_at_decision)}</div></div>
+      <div><div class="k">Type</div><div class="v"><span class="badge ${escapeHtml(r.decision_type)}">${escapeHtml(r.decision_type)}</span></div></div>
+      ${r.linked_holding ? `<div><div class="k">Linked</div><div class="v" style="font-size:12px">${escapeHtml(r.linked_holding)}</div></div>` : ''}
+    </div>
+    <div class="field">
+      <div class="field-lbl">Thesis</div>
+      <div class="field-val">${escapeHtml(r.thesis || '')}</div>
+    </div>
+    ${cats.length ? `<div class="field"><div class="field-lbl">Catalysts</div><div class="pill-list">${cats.map(c => `<span>${escapeHtml(c)}</span>`).join('')}</div></div>` : ''}
+    ${r.pre_mortem ? `<div class="field"><div class="field-lbl">Pre-mortem (what would change my mind)</div><div class="field-val">${escapeHtml(r.pre_mortem)}</div></div>` : ''}
+    <div class="field"><div class="field-lbl">Reviews</div>
+      ${reviewBlock('3-month', '3m')}
+      ${reviewBlock('6-month', '6m')}
+      ${reviewBlock('12-month', '12m')}
+    </div>
+    ${r.lesson_learned ? `<div class="field"><div class="field-lbl">Lesson learned</div><div class="field-val">${escapeHtml(r.lesson_learned)}</div></div>` : ''}
+  `;
 }
 
 function renderLessons() {
@@ -342,47 +416,24 @@ function renderLessons() {
   }).join('');
 }
 
+// Decision drawer replaced by inline expansion (toggleDecisionRow + renderDecisionDetail).
+// Lessons tab still calls openDrawer(id), redirect to inline expand.
 function openDrawer(id) {
-  const r = state.items.find(x => x.id === id);
-  if (!r) return;
-  document.getElementById('drawer-title').textContent = r.ticker + ' · ' + r.decision_type;
-  const body = document.getElementById('drawer-body');
-  const cats = (r.catalysts || []).filter(Boolean);
-  const reviewBlock = (lbl, key) => {
-    const date = r['review_' + key + '_date'];
-    const oc = r['review_' + key + '_outcome'];
-    const done = r['review_' + key + '_done_at'];
-    const cls = done ? 'done' : (date && date <= todayStr() ? 'due' : '');
-    return `<div class="review-block ${cls}">
-      <div class="review-head">
-        <span class="review-label">${lbl} review · ${fmtDate(date)}</span>
-        <span class="review-pill ${cls}">${done ? 'Done ' + fmtDate(done) : (cls === 'due' ? 'Due' : 'Scheduled')}</span>
-      </div>
-      ${oc ? `<div class="review-outcome">${escapeHtml(oc)}</div>` : ''}
-    </div>`;
-  };
-  body.innerHTML = `
-    <div class="meta-grid">
-      <div><div class="k">Date</div><div class="v">${fmtDate(r.decision_date)}</div></div>
-      <div><div class="k">Price</div><div class="v">${fmtPrice(r.price_at_decision)}</div></div>
-      <div><div class="k">Type</div><div class="v"><span class="badge ${escapeHtml(r.decision_type)}">${escapeHtml(r.decision_type)}</span></div></div>
-      ${r.linked_holding ? `<div><div class="k">Linked</div><div class="v" style="font-size:12px">${escapeHtml(r.linked_holding)}</div></div>` : ''}
-    </div>
-    <div class="field">
-      <div class="field-lbl">Thesis</div>
-      <div class="field-val">${escapeHtml(r.thesis || '')}</div>
-    </div>
-    ${cats.length ? `<div class="field"><div class="field-lbl">Catalysts</div><div class="pill-list">${cats.map(c => `<span>${escapeHtml(c)}</span>`).join('')}</div></div>` : ''}
-    ${r.pre_mortem ? `<div class="field"><div class="field-lbl">Pre-mortem (what would change my mind)</div><div class="field-val">${escapeHtml(r.pre_mortem)}</div></div>` : ''}
-    <div class="field"><div class="field-lbl">Reviews</div>
-      ${reviewBlock('3-month', '3m')}
-      ${reviewBlock('6-month', '6m')}
-      ${reviewBlock('12-month', '12m')}
-    </div>
-    ${r.lesson_learned ? `<div class="field"><div class="field-lbl">Lesson learned</div><div class="field-val">${escapeHtml(r.lesson_learned)}</div></div>` : ''}
-  `;
-  document.getElementById('drawer-bg').classList.add('open');
-  document.getElementById('drawer').classList.add('open');
+  // Switch to All tab and expand the row
+  const allTab = document.querySelector('.mode-tab[data-tab="all"]');
+  if (allTab && !document.getElementById('pane-all').classList.contains('active')) {
+    showTab('all', allTab);
+  }
+  // Wait a tick for the pane to render then expand
+  setTimeout(() => {
+    const tr = document.querySelector(`tr.row-decision[data-id="${id}"]`);
+    if (tr && !tr.classList.contains('expanded')) {
+      toggleDecisionRow(id);
+      tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (tr) {
+      tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 50);
 }
 function closeDrawer() {
   document.getElementById('drawer-bg').classList.remove('open');
