@@ -14,8 +14,8 @@ async function loadAndCompute({ endDate } = {}) {
     return { dailySeries: [], holdings: [], kpis: null };
   }
 
-  const urthSeries = prices.filter(p => p.ticker === 'URTH');
-  const otherPrices = prices.filter(p => p.ticker !== 'URTH');
+  const iwquSeries = prices.filter(p => p.ticker === 'IWQU.L');
+  const otherPrices = prices.filter(p => p.ticker !== 'IWQU.L');
 
   const startDate = [
     ...tx.map(t => t.trade_date),
@@ -24,16 +24,16 @@ async function loadAndCompute({ endDate } = {}) {
 
   const today = new Date();
   // Use yesterday as end if before market close today (price might not be in DB yet).
-  // Caller can override with endDate. Default to last available URTH date or today, whichever earlier.
-  const lastUrth = urthSeries.length ? urthSeries[urthSeries.length - 1].price_date : null;
+  // Caller can override with endDate. Default to last available IWQU.L date or today, whichever earlier.
+  const lastIwqu = iwquSeries.length ? iwquSeries[iwquSeries.length - 1].price_date : null;
   const todayStr = today.toISOString().slice(0, 10);
-  const computedEnd = endDate || (lastUrth && lastUrth < todayStr ? lastUrth : todayStr);
+  const computedEnd = endDate || (lastIwqu && lastIwqu < todayStr ? lastIwqu : todayStr);
 
   return computeDaily({
     transactions: tx,
     cashflows: cf,
     prices: otherPrices,
-    urthSeries,
+    iwquSeries,
     startDate,
     endDate: computedEnd,
   });

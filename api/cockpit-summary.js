@@ -86,7 +86,7 @@ module.exports = async (req, res) => {
     // Load discipline thresholds from DB (with hardcoded fallback)
     const GATES = await loadDisciplineRules();
 
-    // ── 1) Performance: NAV, holdings, cash, vs URTH ──────────────────────
+    // ── 1) Performance: NAV, holdings, cash, vs IWQU.L ────────────────────
     const perf = await loadAndCompute({});
     const k = perf.kpis || null;
     const holdings = perf.holdings || [];
@@ -108,11 +108,11 @@ module.exports = async (req, res) => {
       ? ((1 + (k.twr_cum_pct || 0)) / (1 + (ytdAnchor.twr_cum || 0))) - 1
       : null;
 
-    // URTH YTD same way
-    const urthAnchor = ytdAnchor && ytdAnchor.urth_norm ? ytdAnchor.urth_norm : null;
-    const urthLast = series.length ? series[series.length - 1].urth_norm : null;
-    const urthYtd = (urthAnchor && urthLast) ? (urthLast / urthAnchor) - 1 : null;
-    const vsUrthYtd = (ytdPct != null && urthYtd != null) ? ytdPct - urthYtd : null;
+    // IWQU.L YTD same way
+    const iwquAnchor = ytdAnchor && ytdAnchor.iwqu_norm ? ytdAnchor.iwqu_norm : null;
+    const iwquLast = series.length ? series[series.length - 1].iwqu_norm : null;
+    const iwquYtd = (iwquAnchor && iwquLast) ? (iwquLast / iwquAnchor) - 1 : null;
+    const vsIwquYtd = (ytdPct != null && iwquYtd != null) ? ytdPct - iwquYtd : null;
 
     // Cash %: holdings entries where ticker is SGOV or 91282CBT7 (T-bill) treated as cash
     const CASH_TICKERS = new Set(['SGOV', '91282CBT7']);
@@ -425,8 +425,8 @@ module.exports = async (req, res) => {
         day_pnl_usd: dayPnl,
         day_pnl_pct: dayPnlPct,
         ytd_pct: ytdPct,
-        urth_ytd_pct: urthYtd,
-        vs_urth_ytd_pct: vsUrthYtd,
+        iwqu_ytd_pct: iwquYtd,
+        vs_iwqu_ytd_pct: vsIwquYtd,
         positions_count: positions.length,
         cash_usd: cashUsd,
         cash_pct: cashPct,

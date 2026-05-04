@@ -352,7 +352,7 @@
     { id:'monitor', label:'Monitor', items:[
       { href:'/cockpit.html',     label:'Cockpit',     desc:'Daily CIO screen — gates, decisiones, eventos' },
       { href:'/portfolio.html',   label:'Portfolio',   desc:'P&L live, posiciones, allocation' },
-      { href:'/performance.html', label:'Performance', desc:'NAV histórico vs URTH, transactions' },
+      { href:'/performance.html', label:'Performance', desc:'NAV histórico vs IWQU.L, transactions' },
     ]},
     { id:'pipeline', label:'Pipeline', items:[
       { href:'/screener.html',    label:'Find',     desc:'Idea generation — superinvestors, sector screener' },

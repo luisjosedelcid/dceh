@@ -4,18 +4,18 @@
 //   transactions: [{ trade_date:'YYYY-MM-DD', ticker, side:'BUY'|'SELL', qty, price_native, fee_native, fx_to_usd }]
 //   cashflows:    [{ occurred_at:'YYYY-MM-DD', ticker?, cf_type:'CONTRIBUTION'|'WITHDRAWAL'|'DIVIDEND'|'INTEREST'|'FEE'|'TAX', amount_native, fx_to_usd }]
 //   prices:       [{ price_date:'YYYY-MM-DD', ticker, close_native }]   (currency assumed USD here)
-//   urthSeries:   [{ price_date, close_native }]                         (URTH benchmark)
+//   iwquSeries:   [{ price_date, close_native }]                         (IWQU.L benchmark)
 //   startDate:    'YYYY-MM-DD' (typically MIN(trade_date, occurred_at))
 //   endDate:      'YYYY-MM-DD' (typically today)
 //
 // Outputs:
 //   {
-//     dailySeries: [{ date, nav, cash, invested_basis, twr_daily, twr_cum, drawdown, urth_norm }],
+//     dailySeries: [{ date, nav, cash, invested_basis, twr_daily, twr_cum, drawdown, iwqu_norm }],
 //     holdings:    [{ ticker, qty, avg_cost, last_price, market_value, unrealized_pnl, weight_pct }],
 //     kpis: {
 //       nav, cash_usd, market_value_usd, invested_usd, total_contributions, total_withdrawals,
 //       realized_pnl, unrealized_pnl, total_pnl_usd, total_return_pct,
-//       twr_cum_pct, irr_pct, max_drawdown_pct, urth_return_pct,
+//       twr_cum_pct, irr_pct, max_drawdown_pct, iwqu_return_pct,
 //       inception_date, last_date, days_elapsed
 //     }
 //   }
@@ -131,9 +131,9 @@ function fifoWalk(transactions) {
 }
 
 // ── Replay engine: walk every calendar day, compute NAV ──────────────────────
-function computeDaily({ transactions, cashflows, prices, urthSeries, startDate, endDate }) {
+function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, endDate }) {
   const priceOn = buildPriceLookup(prices);
-  const urthOn  = buildPriceLookup(urthSeries.map(p => ({ ...p, ticker: '__URTH__' })));
+  const iwquOn  = buildPriceLookup(iwquSeries.map(p => ({ ...p, ticker: '__IWQU__' })));
 
   // Sort tx & cf by date
   const sortedTx = [...transactions].sort((a, b) => {
@@ -159,7 +159,7 @@ function computeDaily({ transactions, cashflows, prices, urthSeries, startDate, 
   let prevNav = 0;
   let twrCum = 1.0; // multiplicative
   let peakNav = 0;
-  let urthBase = null;
+  let iwquBase = null;
 
   const dates = eachDate(startDate, endDate);
 
@@ -253,10 +253,10 @@ function computeDaily({ transactions, cashflows, prices, urthSeries, startDate, 
     if (nav > peakNav) peakNav = nav;
     const dd = peakNav > 0 ? (peakNav - nav) / peakNav : 0;
 
-    // 5) URTH benchmark — normalize to 1.0 at first date with both URTH price & non-zero NAV
-    const urthPx = urthOn('__URTH__', date);
-    if (urthBase == null && urthPx != null && nav > 0) urthBase = urthPx;
-    const urthNorm = (urthBase != null && urthPx != null) ? (urthPx / urthBase) : null;
+    // 5) IWQU.L benchmark — normalize to 1.0 at first date with both IWQU.L price & non-zero NAV
+    const iwquPx = iwquOn('__IWQU__', date);
+    if (iwquBase == null && iwquPx != null && nav > 0) iwquBase = iwquPx;
+    const iwquNorm = (iwquBase != null && iwquPx != null) ? (iwquPx / iwquBase) : null;
 
     daily.push({
       date,
@@ -267,7 +267,7 @@ function computeDaily({ transactions, cashflows, prices, urthSeries, startDate, 
       twr_daily: r,
       twr_cum: twrCum - 1,
       drawdown: dd,
-      urth_norm: urthNorm,
+      iwqu_norm: iwquNorm,
       unrealized_pnl: round2(unrealizedPnl),
     });
 
@@ -303,12 +303,12 @@ function computeDaily({ transactions, cashflows, prices, urthSeries, startDate, 
   holdings.sort((a, b) => (b.market_value || 0) - (a.market_value || 0));
 
   // ── KPIs ───────────────────────────────────────────────────────────────────
-  const last = daily[daily.length - 1] || { nav: 0, cash: 0, market_value: 0, twr_cum: 0, drawdown: 0, urth_norm: null };
+  const last = daily[daily.length - 1] || { nav: 0, cash: 0, market_value: 0, twr_cum: 0, drawdown: 0, iwqu_norm: null };
   const navInvested = totalContributions - totalWithdrawals;
   const totalPnl = last.nav - navInvested;
   const totalRetPct = navInvested > 0 ? (last.nav / navInvested - 1) : 0;
   const maxDrawdown = daily.reduce((m, d) => Math.max(m, d.drawdown), 0);
-  const urthRet = (last.urth_norm != null) ? (last.urth_norm - 1) : null;
+  const iwquRet = (last.iwqu_norm != null) ? (last.iwqu_norm - 1) : null;
 
   // IRR — XIRR-style on external cashflows + terminal NAV
   const irrFlows = [];
@@ -345,7 +345,7 @@ function computeDaily({ transactions, cashflows, prices, urthSeries, startDate, 
       twr_cum_pct: round4(last.twr_cum),
       irr_pct: irr != null ? round4(irr) : null,
       max_drawdown_pct: round4(maxDrawdown),
-      urth_return_pct: urthRet != null ? round4(urthRet) : null,
+      iwqu_return_pct: iwquRet != null ? round4(iwquRet) : null,
       inception_date: inceptionDate,
       last_date: lastDate,
       days_elapsed: daysElapsed,

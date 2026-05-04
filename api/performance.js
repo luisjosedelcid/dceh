@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Trim daily series response: we only need {date, nav, twr_cum, drawdown, urth_norm}
+    // Trim daily series response: we only need {date, nav, twr_cum, drawdown, iwqu_norm}
     const series = (result.dailySeries || []).map(d => ({
       date: d.date,
       nav: d.nav,
@@ -34,7 +34,7 @@ module.exports = async (req, res) => {
       mv: d.market_value,
       twr_cum: d.twr_cum,
       drawdown: d.drawdown,
-      urth_norm: d.urth_norm,
+      iwqu_norm: d.iwqu_norm,
     }));
 
     res.setHeader('content-type', 'application/json');

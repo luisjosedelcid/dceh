@@ -217,7 +217,7 @@
   <!-- KPI strip + chips -->
   <div class="strip" id="strip">
     <div class="kpi"><div class="lbl">NAV</div><div class="val" id="nav-val">—</div><div class="sub2" id="nav-sub">—</div></div>
-    <div class="kpi"><div class="lbl">vs URTH YTD</div><div class="val" id="vsurth-val">—</div><div class="sub2" id="vsurth-sub">—</div></div>
+    <div class="kpi"><div class="lbl">vs IWQU.L YTD</div><div class="val" id="vsurth-val">—</div><div class="sub2" id="vsurth-sub">—</div></div>
     <div class="kpi"><div class="lbl">Posiciones</div><div class="val" id="pos-val">—</div><div class="sub2" id="pos-sub">—</div></div>
     <div class="kpi"><div class="lbl">Cash</div><div class="val" id="cash-val">—</div><div class="sub2" id="cash-sub">—</div></div>
     <div class="chips" id="chips"><div class="chip">Cargando…</div></div>
@@ -354,12 +354,14 @@
         ? `<span class="${cls(dayPnl)}">${dayPnl > 0 ? '+' : ''}${fmtUsdFull(dayPnl)} hoy (${fmtPct(dayPct)})</span>`
         : 'Sin datos del día';
 
-    const vsUrth = k.vs_urth_ytd_pct;
+    const vsIwqu = k.vs_iwqu_ytd_pct;
     const vsEl = document.getElementById('vsurth-val');
-    vsEl.textContent = fmtPct(vsUrth);
-    vsEl.className = 'val ' + cls(vsUrth);
+    vsEl.textContent = fmtPct(vsIwqu);
+    vsEl.className = 'val ' + cls(vsIwqu);
     document.getElementById('vsurth-sub').textContent =
-      `Portfolio ${fmtPct(k.ytd_pct)} · URTH ${fmtPct(k.urth_ytd_pct)}`;
+      `Portfolio ${fmtPct(k.ytd_pct)} · IWQU.L ${fmtPct(k.iwqu_ytd_pct)}`;
+    // IPS §4.8 benchmark note
+    document.getElementById('vsurth-val').title = 'Benchmark IPS §4.8: MSCI World Quality NR (proxy IWQU.L)';
 
     document.getElementById('pos-val').textContent = k.positions_count;
     document.getElementById('pos-sub').textContent = d.positions.map(p => p.ticker).join(' · ') || 'Ninguna';

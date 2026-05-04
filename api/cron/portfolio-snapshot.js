@@ -27,7 +27,7 @@ module.exports = async (req, res) => {
       cash_usd: d.cash,
       twr_daily: d.twr_daily,
       twr_cumulative: d.twr_cum,
-      benchmark_urth: d.urth_norm,
+      benchmark_iwqu: d.iwqu_norm,
       drawdown_pct: d.drawdown,
       holdings_json: null,
     }));
