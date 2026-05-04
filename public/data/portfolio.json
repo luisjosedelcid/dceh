@@ -1,7 +1,7 @@
 {
   "fund_name": "DCE Holdings",
   "currency": "USD",
-  "inception_date": "2026-03-01",
+  "inception_date": "2025-09-18",
   "benchmark": "^GSPC",
   "benchmark_label": "S&P 500",
   "cash": 0,
@@ -10,10 +10,20 @@
       "ticker": "MSFT",
       "name": "Microsoft Corp",
       "sector": "NASDAQ · Technology",
-      "shares": 1,
-      "avg_cost": 402.00,
-      "buy_date": "2026-03-01",
+      "shares": 250,
+      "avg_cost": 401.115,
+      "buy_date": "2026-02-18",
       "color": "#b88b47",
+      "link": null
+    },
+    {
+      "ticker": "LULU",
+      "name": "Lululemon Athletica",
+      "sector": "NASDAQ · Consumer Discretionary",
+      "shares": 590,
+      "avg_cost": 167.835,
+      "buy_date": "2025-09-18",
+      "color": "#1b2642",
       "link": null
     }
   ],
