@@ -21,7 +21,7 @@
   ];
 
   // Built-in tickers — extend as we add company JSONs
-  const KNOWN_TICKERS = ['BKNG', 'SAP'];
+  const KNOWN_TICKERS = ['BKNG', 'SAP', 'LULU'];
 
   // Static documents in the GitHub repo (BKNG/SAP institutional deliverables)
   const STATIC_DOCS = [
@@ -31,6 +31,9 @@
     { title: 'SAP · Valuation Report',   url: '/docs/DCE_SAP_Valuation_Report.pdf',  ticker: 'SAP',  kind: 'Valuation Report' },
     { title: 'SAP · Thesis Breaker',     url: '/docs/DCE_SAP_Thesis_Breaker.pdf',    ticker: 'SAP',  kind: 'Thesis Breaker'   },
     { title: 'SAP · Munger Digital',     url: '/docs/DCE_SAP_Munger_Digital.pdf',    ticker: 'SAP',  kind: 'Munger Digital'   },
+    { title: 'LULU · Valuation Report',  url: '/docs/DCE_LULU_Valuation_Report.pdf', ticker: 'LULU', kind: 'Valuation Report' },
+    { title: 'LULU · Thesis Breaker',    url: '/docs/DCE_LULU_Thesis_Breaker.pdf',   ticker: 'LULU', kind: 'Thesis Breaker'   },
+    { title: 'LULU · Munger Digital',    url: '/docs/DCE_LULU_Munger_Digital.pdf',   ticker: 'LULU', kind: 'Munger Digital'   },
   ];
 
   // ──────────────────────────────────────────────────────────
