@@ -67,6 +67,37 @@
   tr.detail-row.hide{display:none}
   .detail-inner{padding:22px 28px}
   .detail-inner .meta-grid{margin-bottom:14px}
+
+  /* Executions section */
+  .exec-section{margin-top:14px;background:var(--white);border:1px solid var(--rule);padding:14px 18px}
+  .exec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap}
+  .exec-head h3{font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:0}
+  .exec-tbl{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+  .exec-tbl th{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-mid);padding:6px 10px 6px 0;text-align:left;border-bottom:1px solid var(--rule);font-weight:600}
+  .exec-tbl td{padding:8px 10px 8px 0;border-bottom:1px solid var(--rule);color:var(--ink)}
+  .exec-tbl td.right{text-align:right}
+  .exec-tbl tr:last-child td{border-bottom:0}
+  .exec-empty{font-size:12px;color:var(--gray-mid);font-style:italic;padding:6px 0}
+  .exec-badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:2px}
+  .exec-badge.BUY,.exec-badge.ADD{background:rgba(46,107,79,0.12);color:#2e6b4f}
+  .exec-badge.TRIM,.exec-badge.SELL{background:rgba(139,0,0,0.10);color:#8b0000}
+  .exec-undo{font-size:10px;color:var(--gray-mid);background:none;border:none;cursor:pointer;text-decoration:underline}
+  .exec-undo:hover{color:var(--red)}
+  .exec-form{margin-top:12px;padding:14px;background:var(--cream);border:1px dashed var(--gold-rule);display:none}
+  .exec-form.open{display:block}
+  .exec-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px 14px}
+  .exec-form label{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);display:block;margin-bottom:4px}
+  .exec-form input,.exec-form select,.exec-form textarea{width:100%;padding:7px 10px;border:1px solid var(--rule);background:var(--white);font-family:inherit;font-size:13px;color:var(--ink);outline:none}
+  .exec-form input:focus,.exec-form select:focus,.exec-form textarea:focus{border-color:var(--gold)}
+  .exec-form .full{grid-column:1/-1}
+  .exec-form-actions{display:flex;gap:8px;align-items:center;margin-top:10px}
+  .exec-form-msg{font-size:12px;flex:1}
+  .btn-primary{background:var(--navy);color:var(--white);border:none;padding:9px 18px;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600;font-family:inherit}
+  .btn-primary:hover{background:var(--gold)}
+  .btn-primary:disabled{opacity:0.4;cursor:not-allowed}
+  .btn-ghost{background:transparent;color:var(--gray-mid);border:1px solid var(--rule);padding:9px 14px;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600;font-family:inherit}
+  .btn-ghost:hover{color:var(--navy);border-color:var(--gold-rule)}
+  .btn-ghost.sm{padding:6px 12px;font-size:9px}
   td.ticker{font-weight:700;color:var(--navy);font-size:14px;letter-spacing:0.04em}
   td.thesis{color:var(--gray-txt);max-width:480px;text-align:justify;hyphens:auto;line-height:1.45}
   td.right{text-align:right;font-variant-numeric:tabular-nums}
@@ -345,6 +376,15 @@ function toggleDecisionRow(id) {
   }
 }
 
+function adminAvailable() {
+  try { return window.dceAuth && window.dceAuth.isAdmin && window.dceAuth.isAdmin(); }
+  catch(e) { return !!tokenAdmin(); }
+}
+function adminToken() {
+  try { return (window.dceAuth && window.dceAuth.token && window.dceAuth.token()) || tokenAdmin(); }
+  catch(e) { return tokenAdmin(); }
+}
+
 function renderDecisionDetail(id) {
   const r = state.items.find(x => x.id === id);
   const host = document.getElementById('decision-detail-' + id);
@@ -382,7 +422,203 @@ function renderDecisionDetail(id) {
       ${reviewBlock('12-month', '12m')}
     </div>
     ${r.lesson_learned ? `<div class="field"><div class="field-lbl">Lesson learned</div><div class="field-val">${escapeHtml(r.lesson_learned)}</div></div>` : ''}
+    <div class="exec-section" id="exec-section-${id}">
+      <div class="exec-head">
+        <h3>Executions</h3>
+        ${adminAvailable() ? `<button class="btn-ghost sm" onclick="toggleExecForm(${id})" id="exec-toggle-${id}">+ Log execution</button>` : ''}
+      </div>
+      <div id="exec-list-${id}" class="exec-empty">Loading…</div>
+      ${adminAvailable() ? renderExecForm(id, r) : ''}
+    </div>
   `;
+  // Async load trades for this decision
+  loadTradesForDecision(id);
+}
+
+function renderExecForm(id, r) {
+  const today = todayStr();
+  return `
+    <div class="exec-form" id="exec-form-${id}">
+      <div class="exec-form-grid">
+        <div>
+          <label>Type</label>
+          <select id="ef-type-${id}">
+            <option value="BUY">BUY — initial entry</option>
+            <option value="ADD">ADD — increase position</option>
+            <option value="TRIM">TRIM — reduce position</option>
+            <option value="SELL">SELL — full exit</option>
+          </select>
+        </div>
+        <div>
+          <label>Trade date</label>
+          <input type="date" id="ef-date-${id}" value="${today}" max="${today}">
+        </div>
+        <div>
+          <label>Shares</label>
+          <input type="number" id="ef-shares-${id}" min="0" step="0.000001" placeholder="0">
+        </div>
+        <div>
+          <label>Price (USD)</label>
+          <input type="number" id="ef-price-${id}" min="0" step="0.0001" placeholder="0.00">
+        </div>
+        <div>
+          <label>Fees (USD)</label>
+          <input type="number" id="ef-fees-${id}" min="0" step="0.01" placeholder="0.00" value="0">
+        </div>
+        <div>
+          <label>Broker</label>
+          <input type="text" id="ef-broker-${id}" placeholder="IBKR, Schwab…">
+        </div>
+        <div class="full">
+          <label>Notes</label>
+          <textarea id="ef-notes-${id}" rows="2" placeholder="Optional context…"></textarea>
+        </div>
+      </div>
+      <div class="exec-form-actions">
+        <button class="btn-primary" onclick="submitExec(${id}, '${escapeHtml(r.ticker)}')">Save trade</button>
+        <button class="btn-ghost sm" onclick="toggleExecForm(${id})">Cancel</button>
+        <span class="exec-form-msg" id="ef-msg-${id}"></span>
+      </div>
+    </div>`;
+}
+
+function toggleExecForm(id) {
+  const f = document.getElementById('exec-form-' + id);
+  if (!f) return;
+  f.classList.toggle('open');
+  const btn = document.getElementById('exec-toggle-' + id);
+  if (btn) btn.textContent = f.classList.contains('open') ? '✕ Cancel' : '+ Log execution';
+  // Default trade_type based on decision_type for convenience
+  if (f.classList.contains('open')) {
+    const r = state.items.find(x => x.id === id);
+    const sel = document.getElementById('ef-type-' + id);
+    if (sel && r) {
+      const map = { BUY: 'BUY', ADD: 'ADD', TRIM: 'TRIM', SELL: 'SELL' };
+      if (map[r.decision_type]) sel.value = map[r.decision_type];
+    }
+  }
+}
+
+async function loadTradesForDecision(id) {
+  const target = document.getElementById('exec-list-' + id);
+  if (!target) return;
+  try {
+    const r = await fetch('/api/trades?decision_id=' + id);
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'HTTP ' + r.status);
+    renderTradesList(id, data.items || []);
+  } catch (e) {
+    target.innerHTML = `<span style="color:var(--red)">Error loading trades: ${escapeHtml(e.message)}</span>`;
+  }
+}
+
+function renderTradesList(id, trades) {
+  const target = document.getElementById('exec-list-' + id);
+  if (!target) return;
+  if (!trades.length) {
+    target.innerHTML = '<div class="exec-empty">No executions logged yet for this decision.</div>';
+    return;
+  }
+  const totals = trades.reduce((acc, t) => {
+    const sh = Number(t.shares) || 0;
+    const sign = (t.trade_type === 'BUY' || t.trade_type === 'ADD') ? 1 : -1;
+    acc.net += sign * sh;
+    acc.count += 1;
+    return acc;
+  }, { net: 0, count: 0 });
+
+  const rows = trades.map(t => {
+    const total = Number(t.shares) * Number(t.price) + Number(t.fees || 0);
+    return `<tr>
+      <td>${fmtDate(t.trade_date)}</td>
+      <td><span class="exec-badge ${escapeHtml(t.trade_type)}">${escapeHtml(t.trade_type)}</span></td>
+      <td class="right">${Number(t.shares).toLocaleString('en-US',{maximumFractionDigits:6})}</td>
+      <td class="right">${fmtPrice(t.price)}</td>
+      <td class="right">${fmtPrice(t.fees || 0)}</td>
+      <td class="right">${fmtPrice(total)}</td>
+      <td>${escapeHtml(t.broker || '')}</td>
+      <td style="font-size:11px;color:var(--gray-mid)">${escapeHtml(t.notes || '')}</td>
+      <td>${adminAvailable() ? `<button class="exec-undo" onclick="deleteTrade(${id}, ${t.id})">undo</button>` : ''}</td>
+    </tr>`;
+  }).join('');
+  target.innerHTML = `
+    <table class="exec-tbl">
+      <thead><tr>
+        <th>Date</th><th>Type</th><th class="right">Shares</th><th class="right">Price</th><th class="right">Fees</th><th class="right">Total</th><th>Broker</th><th>Notes</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="font-size:11px;color:var(--gray-mid);margin-top:8px;letter-spacing:0.05em">
+      ${totals.count} execution${totals.count===1?'':'s'} · net shares: <strong style="color:var(--navy)">${totals.net.toLocaleString('en-US',{maximumFractionDigits:6})}</strong>
+    </div>`;
+}
+
+async function submitExec(id, ticker) {
+  const tk = adminToken();
+  if (!tk) {
+    alert('Sign in as admin first.');
+    return;
+  }
+  const msg = document.getElementById('ef-msg-' + id);
+  const get = (k) => document.getElementById(`ef-${k}-${id}`).value.trim();
+  const payload = {
+    decision_id: id,
+    ticker,
+    trade_type: get('type'),
+    trade_date: get('date'),
+    shares: Number(get('shares')),
+    price: Number(get('price')),
+    fees: get('fees') === '' ? 0 : Number(get('fees')),
+    broker: get('broker') || null,
+    notes: get('notes') || null,
+  };
+  if (!payload.shares || !payload.price || !payload.trade_date) {
+    msg.style.color = 'var(--red)';
+    msg.textContent = 'Shares, price and date are required.';
+    return;
+  }
+  msg.style.color = 'var(--gray-mid)';
+  msg.textContent = 'Saving…';
+  try {
+    const r = await fetch('/api/trades', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': tk },
+      body: JSON.stringify(payload),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'HTTP ' + r.status);
+    msg.style.color = 'var(--green)';
+    msg.textContent = 'Saved ✓';
+    // Reload trades list, close form, clear inputs
+    await loadTradesForDecision(id);
+    setTimeout(() => {
+      toggleExecForm(id);
+      ['shares','price','fees','broker','notes'].forEach(k => {
+        const el = document.getElementById(`ef-${k}-${id}`);
+        if (el) el.value = (k === 'fees' ? '0' : '');
+      });
+      msg.textContent = '';
+    }, 700);
+  } catch (e) {
+    msg.style.color = 'var(--red)';
+    msg.textContent = 'Error: ' + e.message;
+  }
+}
+
+async function deleteTrade(decisionId, tradeId) {
+  if (!confirm('Undo this execution? This permanently deletes the trade record.')) return;
+  const tk = adminToken();
+  try {
+    const r = await fetch('/api/trades?id=' + tradeId, {
+      method: 'DELETE',
+      headers: { 'x-admin-token': tk },
+    });
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'HTTP ' + r.status);
+    await loadTradesForDecision(decisionId);
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
 }
 
 function renderLessons() {
