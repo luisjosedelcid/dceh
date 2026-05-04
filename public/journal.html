@@ -389,6 +389,10 @@ function renderDecisionDetail(id) {
   const r = state.items.find(x => x.id === id);
   const host = document.getElementById('decision-detail-' + id);
   if (!r || !host) return;
+  if (r.decision_type === 'SELL') {
+    renderSellDetail(id, r, host);
+    return;
+  }
   const cats = (r.catalysts || []).filter(Boolean);
   const reviewBlock = (lbl, key) => {
     const date = r['review_' + key + '_date'];
@@ -433,6 +437,158 @@ function renderDecisionDetail(id) {
   `;
   // Async load trades for this decision
   loadTradesForDecision(id);
+}
+
+function renderSellDetail(id, r, host) {
+  const outcomeMap = {
+    played_out: { label: 'Played out', color: '#2f7a3f', desc: 'The thesis worked. Exiting because the position has reached fair value or the catalysts have fully played out.' },
+    partially:  { label: 'Partially',  color: '#b88b47', desc: 'Mixed result. Some elements of the thesis worked, others did not.' },
+    failed:     { label: 'Failed',     color: '#b8443c', desc: 'The thesis was wrong. Exiting because the original reasoning no longer holds.' },
+  };
+  const oc = outcomeMap[r.thesis_outcome] || null;
+  // Find linked BUY decision
+  const buy = r.linked_buy_id ? state.items.find(x => x.id === r.linked_buy_id) : null;
+  // Find triggered failure mode (loaded async below)
+  host.innerHTML = `
+    <div style="background:#fdf6ec;border-left:3px solid var(--gold);padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--navy)">Position closed · Post-mortem</div>
+      <div style="font-size:12px;color:#5a5a5a;margin-top:4px">${oc ? oc.desc : 'Thesis outcome not recorded.'}</div>
+    </div>
+
+    <div class="meta-grid">
+      <div><div class="k">Closed</div><div class="v">${fmtDate(r.decision_date)}</div></div>
+      <div><div class="k">Exit price</div><div class="v">${fmtPrice(r.price_at_decision)}</div></div>
+      <div><div class="k">Type</div><div class="v"><span class="badge SELL">SELL</span></div></div>
+      ${oc ? `<div><div class="k">Outcome</div><div class="v"><span style="display:inline-block;padding:2px 8px;background:${oc.color};color:#fff;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase">${oc.label}</span></div></div>` : ''}
+    </div>
+
+    ${buy ? `
+      <div class="field">
+        <div class="field-lbl">Linked entry decision</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f6f6f4;border:1px solid var(--rule)">
+          <span class="badge ${escapeHtml(buy.decision_type)}">${escapeHtml(buy.decision_type)}</span>
+          <span style="font-size:12px"><b>#${buy.id}</b> · ${fmtDate(buy.decision_date)} · ${fmtPrice(buy.price_at_decision)}</span>
+          <button class="btn-ghost sm" style="margin-left:auto" onclick="jumpToDecision(${buy.id})">View entry →</button>
+        </div>
+      </div>
+    ` : (r.linked_buy_id ? `<div class="field"><div class="field-lbl">Linked entry decision</div><div class="field-val" style="color:var(--gray-mid)">Decision #${r.linked_buy_id} (not in current view)</div></div>` : '')}
+
+    <div class="field">
+      <div class="field-lbl">Realized P&L</div>
+      <div id="sell-pnl-${id}" class="field-val" style="color:var(--gray-mid)">Calculating from trade log…</div>
+    </div>
+
+    ${r.triggered_failure_mode_id ? `
+      <div class="field">
+        <div class="field-lbl">Triggered failure mode</div>
+        <div id="sell-fm-${id}" class="field-val" style="color:var(--gray-mid)">Loading…</div>
+      </div>
+    ` : ''}
+
+    <div class="field">
+      <div class="field-lbl">Exit thesis (why now)</div>
+      <div class="field-val">${escapeHtml(r.thesis || '')}</div>
+    </div>
+
+    ${r.lesson_learned ? `<div class="field"><div class="field-lbl">Lesson learned</div><div class="field-val" style="background:#fdf6ec;border-left:2px solid var(--gold);padding:10px 12px">${escapeHtml(r.lesson_learned)}</div></div>` : ''}
+
+    <div class="exec-section" id="exec-section-${id}">
+      <div class="exec-head">
+        <h3>Exit executions</h3>
+        ${adminAvailable() ? `<button class="btn-ghost sm" onclick="toggleExecForm(${id})" id="exec-toggle-${id}">+ Log execution</button>` : ''}
+      </div>
+      <div id="exec-list-${id}" class="exec-empty">Loading…</div>
+      ${adminAvailable() ? renderExecForm(id, r) : ''}
+    </div>
+  `;
+  // Load executions for this SELL
+  loadTradesForDecision(id);
+  // Compute P&L from trades on linked BUY + this SELL
+  computeSellPnl(id, r);
+  // Load failure mode label if needed
+  if (r.triggered_failure_mode_id) loadTriggeredFailureMode(id, r);
+}
+
+function jumpToDecision(buyId) {
+  // Expand the linked BUY row if not already, then scroll into view
+  if (typeof _expandedDecisions !== 'undefined' && !_expandedDecisions.has(buyId)) {
+    toggleDecisionRow(buyId);
+  }
+  const el = document.querySelector('tr.row-decision[data-id="' + buyId + '"]');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+async function computeSellPnl(sellId, sellRow) {
+  const host = document.getElementById('sell-pnl-' + sellId);
+  if (!host) return;
+  try {
+    // Fetch trades for SELL decision (exit fills)
+    const sellRes = await fetch('/api/trades?decision_id=' + sellId);
+    const sellData = sellRes.ok ? await sellRes.json() : { trades: [] };
+    const sellTrades = sellData.trades || [];
+    let entryTrades = [];
+    if (sellRow.linked_buy_id) {
+      const buyRes = await fetch('/api/trades?decision_id=' + sellRow.linked_buy_id);
+      const buyData = buyRes.ok ? await buyRes.json() : { trades: [] };
+      entryTrades = buyData.trades || [];
+    }
+    const sumQty = arr => arr.reduce((s, t) => s + Number(t.shares || 0), 0);
+    const sumCost = arr => arr.reduce((s, t) => s + Number(t.shares || 0) * Number(t.price || 0) + Number(t.fees || 0), 0);
+    const buyShares = sumQty(entryTrades);
+    const buyCost = sumCost(entryTrades);
+    const avgEntry = buyShares > 0 ? (buyCost / buyShares) : null;
+    const sellShares = sumQty(sellTrades);
+    const sellProceeds = sellTrades.reduce((s, t) => s + Number(t.shares || 0) * Number(t.price || 0) - Number(t.fees || 0), 0);
+    const avgExit = sellShares > 0 ? (sellProceeds / sellShares) : null;
+    if (sellShares === 0 && buyShares === 0) {
+      host.innerHTML = '<span style="color:var(--gray-mid)">No trade fills logged yet.</span>';
+      return;
+    }
+    const matched = Math.min(buyShares, sellShares);
+    let pnl = null, pnlPct = null;
+    if (matched > 0 && avgEntry !== null && avgExit !== null) {
+      pnl = matched * (avgExit - avgEntry);
+      pnlPct = (avgExit / avgEntry - 1) * 100;
+    }
+    const pnlColor = pnl === null ? 'var(--gray-mid)' : (pnl >= 0 ? '#2f7a3f' : '#b8443c');
+    const pnlSign = pnl !== null && pnl >= 0 ? '+' : '';
+    host.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;font-size:12px">
+        <div><div class="k" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.1em;text-transform:uppercase">Entry</div><div style="font-weight:600">${buyShares} sh @ ${avgEntry !== null ? '$' + avgEntry.toFixed(2) : '—'}</div></div>
+        <div><div class="k" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.1em;text-transform:uppercase">Exit</div><div style="font-weight:600">${sellShares} sh @ ${avgExit !== null ? '$' + avgExit.toFixed(2) : '—'}</div></div>
+        <div><div class="k" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.1em;text-transform:uppercase">Realized P&L</div><div style="font-weight:700;color:${pnlColor}">${pnl !== null ? pnlSign + '$' + Math.abs(pnl).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/^/, pnl < 0 ? '-' : '') : '—'}</div></div>
+        <div><div class="k" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.1em;text-transform:uppercase">Return</div><div style="font-weight:700;color:${pnlColor}">${pnlPct !== null ? (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(1) + '%' : '—'}</div></div>
+      </div>
+      ${buyShares !== sellShares ? `<div style="font-size:11px;color:var(--gray-mid);margin-top:8px">Note: entry shares (${buyShares}) and exit shares (${sellShares}) differ. P&L computed on matched ${matched} shares.</div>` : ''}
+    `;
+  } catch (e) {
+    host.innerHTML = '<span style="color:var(--red)">Error loading P&L: ' + escapeHtml(e.message) + '</span>';
+  }
+}
+
+async function loadTriggeredFailureMode(sellId, sellRow) {
+  const host = document.getElementById('sell-fm-' + sellId);
+  if (!host) return;
+  try {
+    const r = await fetch('/api/premortems?ticker=' + encodeURIComponent(sellRow.ticker) + '&include_archived=1');
+    if (!r.ok) { host.innerHTML = ''; return; }
+    const j = await r.json();
+    let fmRow = null;
+    for (const pm of j.premortems || []) {
+      const found = (pm.failure_modes || []).find(fm => fm.id === sellRow.triggered_failure_mode_id);
+      if (found) { fmRow = found; break; }
+    }
+    if (!fmRow) { host.innerHTML = '<span style="color:var(--gray-mid)">Failure mode #' + sellRow.triggered_failure_mode_id + ' (not found)</span>'; return; }
+    host.innerHTML = `
+      <div style="padding:10px 12px;background:#fcf0ee;border-left:2px solid #b8443c">
+        <div style="font-weight:600;font-size:13px">${escapeHtml(fmRow.failure_mode)}</div>
+        ${fmRow.category ? `<div style="font-size:11px;color:var(--gray-mid);margin-top:2px;letter-spacing:0.06em;text-transform:uppercase">${escapeHtml(fmRow.category)}</div>` : ''}
+        ${fmRow.notes ? `<div style="font-size:12px;margin-top:6px;color:#5a5a5a">${escapeHtml(fmRow.notes)}</div>` : ''}
+      </div>
+    `;
+  } catch (e) {
+    host.innerHTML = '';
+  }
 }
 
 function renderExecForm(id, r) {

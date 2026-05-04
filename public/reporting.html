@@ -352,7 +352,7 @@
         <div id="jr-admin-list" style="margin-bottom:18px"><div class="loading-files">Sign in to manage decisions</div></div>
 
         <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:18px 0 10px">Add new decision</h4>
-        <form onsubmit="return addJournalEntry(event)" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;font-size:12px">
+        <form id="jr-form" onsubmit="return addJournalEntry(event)" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;font-size:12px">
           <input type="text" name="ticker" required placeholder="Ticker" maxlength="12" style="padding:8px;border:1px solid var(--rule);font-family:inherit;text-transform:uppercase">
           <select name="decision_type" required style="padding:8px;border:1px solid var(--rule);font-family:inherit">
             <option value="BUY">BUY</option>
@@ -365,15 +365,50 @@
           <input type="date" name="decision_date" required style="padding:8px;border:1px solid var(--rule);font-family:inherit">
           <input type="number" name="price_at_decision" step="0.01" placeholder="Price (optional)" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
           <textarea name="thesis" rows="4" required placeholder="Thesis (~150-300 words: why this decision, what edge, valuation)" style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 4;resize:vertical"></textarea>
-          <input type="text" name="catalysts" placeholder="Catalysts (comma-separated)" style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 2">
-          <input type="text" name="linked_holding" placeholder="Linked holding label (optional)" style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 2">
-          <textarea name="pre_mortem" rows="3" placeholder="Pre-mortem: what would change my mind / falsify this thesis?" style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 4;resize:vertical"></textarea>
+
+          <!-- Standard fields (BUY/ADD/HOLD/TRIM/PASS) -->
+          <div id="jr-standard-fields" style="grid-column:span 4;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+            <input type="text" name="catalysts" placeholder="Catalysts (comma-separated)" style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 2">
+            <input type="text" name="linked_holding" placeholder="Linked holding label (optional)" style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 2">
+            <textarea name="pre_mortem" rows="3" placeholder="Pre-mortem: what would change my mind / falsify this thesis?" style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 4;resize:vertical"></textarea>
+          </div>
+
+          <!-- SELL post-mortem fields -->
+          <div id="jr-sell-fields" style="grid-column:span 4;display:none;grid-template-columns:1fr 1fr;gap:10px;background:#fdf6ec;border:1px solid var(--gold);padding:12px">
+            <div style="grid-column:span 2;font-size:11px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--navy)">SELL post-mortem</div>
+            <div style="grid-column:span 2;font-size:11px;color:var(--gray-mid);margin-top:-6px">Closing the position auto-archives the pre-mortem for this ticker. Reactivates if you delete or change the SELL.</div>
+
+            <div style="grid-column:span 1">
+              <label style="font-size:11px;color:var(--gray-mid);display:block;margin-bottom:4px">Linked BUY decision</label>
+              <select name="linked_buy_id" id="jr-linked-buy" style="padding:8px;border:1px solid var(--rule);font-family:inherit;width:100%">
+                <option value="">— select a prior BUY/ADD —</option>
+              </select>
+            </div>
+            <div style="grid-column:span 1">
+              <label style="font-size:11px;color:var(--gray-mid);display:block;margin-bottom:4px">Triggered failure mode (optional)</label>
+              <select name="triggered_failure_mode_id" id="jr-triggered-fm" style="padding:8px;border:1px solid var(--rule);font-family:inherit;width:100%">
+                <option value="">— none / other —</option>
+              </select>
+            </div>
+
+            <div style="grid-column:span 2">
+              <label style="font-size:11px;color:var(--gray-mid);display:block;margin-bottom:6px">Thesis outcome</label>
+              <div style="display:flex;gap:14px;font-size:12px">
+                <label style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="radio" name="thesis_outcome" value="played_out"> Played out</label>
+                <label style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="radio" name="thesis_outcome" value="partially"> Partially</label>
+                <label style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="radio" name="thesis_outcome" value="failed"> Failed</label>
+              </div>
+            </div>
+
+            <textarea name="lesson_learned" id="jr-lesson" rows="4" placeholder="Lesson learned (≥50 chars). What did this teach me about the business, the thesis, or my process?" style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 2;resize:vertical"></textarea>
+          </div>
+
           <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end;grid-column:span 4">
             <span id="jr-add-status" style="font-size:11px;font-style:italic"></span>
             <button class="btn" type="submit">Add decision</button>
           </div>
         </form>
-        <p style="font-size:11px;color:var(--gray-mid);margin-top:8px">Reviews scheduled automatically at 3 / 6 / 12 months from decision date.</p>
+        <p style="font-size:11px;color:var(--gray-mid);margin-top:8px">Reviews scheduled automatically at 3 / 6 / 12 months from decision date (skipped for SELL).</p>
       </div>
     </div>
   </div><!-- /tab-panel journal -->
@@ -1249,17 +1284,38 @@ async function loadJournalAdmin() {
 async function addJournalEntry(ev) {
   ev.preventDefault();
   const f = ev.target;
-  const catalysts = (f.catalysts.value || '').split(',').map(t => t.trim()).filter(Boolean);
+  const dtype = f.decision_type.value;
+  const isSell = dtype === 'SELL';
   const body = {
     ticker: f.ticker.value.trim().toUpperCase(),
-    decision_type: f.decision_type.value,
+    decision_type: dtype,
     decision_date: f.decision_date.value,
     price_at_decision: f.price_at_decision.value || null,
     thesis: f.thesis.value.trim(),
-    catalysts,
-    pre_mortem: f.pre_mortem.value.trim() || null,
-    linked_holding: f.linked_holding.value.trim() || null,
   };
+  if (isSell) {
+    const outcomeRadio = f.querySelector('input[name="thesis_outcome"]:checked');
+    body.thesis_outcome = outcomeRadio ? outcomeRadio.value : null;
+    body.lesson_learned = (f.lesson_learned.value || '').trim();
+    body.linked_buy_id = f.linked_buy_id.value ? Number(f.linked_buy_id.value) : null;
+    body.triggered_failure_mode_id = f.triggered_failure_mode_id.value ? Number(f.triggered_failure_mode_id.value) : null;
+    if (!body.thesis_outcome) {
+      const status = document.getElementById('jr-add-status');
+      status.textContent = 'Thesis outcome is required for SELL.';
+      status.style.color = 'var(--red)';
+      return false;
+    }
+    if (!body.lesson_learned || body.lesson_learned.length < 50) {
+      const status = document.getElementById('jr-add-status');
+      status.textContent = 'Lesson learned must be at least 50 characters.';
+      status.style.color = 'var(--red)';
+      return false;
+    }
+  } else {
+    body.catalysts = (f.catalysts.value || '').split(',').map(t => t.trim()).filter(Boolean);
+    body.pre_mortem = f.pre_mortem.value.trim() || null;
+    body.linked_holding = f.linked_holding.value.trim() || null;
+  }
   const status = document.getElementById('jr-add-status');
   status.textContent = 'Saving…'; status.style.color = 'var(--gray-mid)';
   const token = localStorage.getItem(TOKEN_KEY);
@@ -1271,8 +1327,13 @@ async function addJournalEntry(ev) {
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Error');
-    status.textContent = 'Added.'; status.style.color = 'var(--green)';
+    let msg = 'Added.';
+    if (data.archive && data.archive.archived_premortem_id) {
+      msg += ` Pre-mortem #${data.archive.archived_premortem_id} archived (${data.archive.invalidated_failure_modes || 0} failure modes invalidated).`;
+    }
+    status.textContent = msg; status.style.color = 'var(--green)';
     f.reset();
+    _jrToggleSellFields();
     loadJournalAdmin();
   } catch (e) {
     status.textContent = 'Error: ' + e.message;
@@ -1280,6 +1341,84 @@ async function addJournalEntry(ev) {
   }
   return false;
 }
+
+// Show/hide SELL fields based on decision_type + ticker
+function _jrToggleSellFields() {
+  const f = document.getElementById('jr-form');
+  if (!f) return;
+  const isSell = f.decision_type.value === 'SELL';
+  const stdBlock = document.getElementById('jr-standard-fields');
+  const sellBlock = document.getElementById('jr-sell-fields');
+  if (isSell) {
+    stdBlock.style.display = 'none';
+    sellBlock.style.display = 'grid';
+    _jrLoadSellSelectors(f.ticker.value.trim().toUpperCase());
+  } else {
+    stdBlock.style.display = 'grid';
+    sellBlock.style.display = 'none';
+  }
+}
+
+async function _jrLoadSellSelectors(ticker) {
+  const buySel = document.getElementById('jr-linked-buy');
+  const fmSel = document.getElementById('jr-triggered-fm');
+  if (!buySel || !fmSel) return;
+  buySel.innerHTML = '<option value="">— select a prior BUY/ADD —</option>';
+  fmSel.innerHTML = '<option value="">— none / other —</option>';
+  if (!ticker) return;
+  // Load decisions for this ticker (BUY/ADD active, no prior SELL closing them)
+  try {
+    const r = await fetch('/api/journal');
+    if (r.ok) {
+      const j = await r.json();
+      const items = (j.items || []).filter(it =>
+        (it.ticker || '').toUpperCase() === ticker &&
+        (it.decision_type === 'BUY' || it.decision_type === 'ADD') &&
+        it.active !== false
+      );
+      for (const it of items) {
+        const opt = document.createElement('option');
+        opt.value = it.id;
+        const px = it.price_at_decision ? ` @ $${Number(it.price_at_decision).toFixed(2)}` : '';
+        opt.textContent = `#${it.id} · ${it.decision_type} · ${it.decision_date}${px}`;
+        buySel.appendChild(opt);
+      }
+    }
+  } catch (e) { /* silent */ }
+  // Load failure modes from active premortem of this ticker
+  try {
+    const r = await fetch(`/api/premortems?ticker=${encodeURIComponent(ticker)}`);
+    if (r.ok) {
+      const j = await r.json();
+      const pm = (j.premortems || [])[0];
+      if (pm && pm.failure_modes) {
+        for (const fm of pm.failure_modes) {
+          const opt = document.createElement('option');
+          opt.value = fm.id;
+          const cat = fm.category ? ` [${fm.category}]` : '';
+          opt.textContent = `${fm.failure_mode}${cat}`;
+          fmSel.appendChild(opt);
+        }
+      }
+    }
+  } catch (e) { /* silent */ }
+}
+
+// Wire up form change listeners
+document.addEventListener('DOMContentLoaded', () => {
+  const f = document.getElementById('jr-form');
+  if (!f) return;
+  f.decision_type.addEventListener('change', _jrToggleSellFields);
+  let _tickerTimer = null;
+  f.ticker.addEventListener('input', () => {
+    clearTimeout(_tickerTimer);
+    _tickerTimer = setTimeout(() => {
+      if (f.decision_type.value === 'SELL') {
+        _jrLoadSellSelectors(f.ticker.value.trim().toUpperCase());
+      }
+    }, 350);
+  });
+});
 
 async function toggleJournalActive(id, active) {
   const token = localStorage.getItem(TOKEN_KEY);
