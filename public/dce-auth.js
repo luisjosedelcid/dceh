@@ -134,15 +134,20 @@
   function _injectStyles() {
     if (document.getElementById('dce-auth-styles')) return;
     const css = `
-      .dce-admin-btn{position:fixed;top:14px;right:18px;z-index:9998;
-        font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;
+      .dce-admin-btn{font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;
         letter-spacing:0.14em;text-transform:uppercase;padding:6px 12px;
         border:1px solid rgba(255,255,255,0.45);background:transparent;color:#fff;
         cursor:pointer;border-radius:2px;transition:all .2s;line-height:1.2}
       .dce-admin-btn:hover{background:rgba(255,255,255,0.12);border-color:#fff}
       .dce-admin-btn.is-admin{background:#b88b47;color:#1b2642;border-color:#b88b47}
       .dce-admin-btn.is-admin:hover{background:#d4aa6a;border-color:#d4aa6a}
-      @media (max-width: 720px){ .dce-admin-btn{top:10px;right:12px;padding:5px 10px;font-size:9px} }
+      /* Inline placement (preferred): inside nav */
+      .hnav .dce-admin-btn,header .dce-admin-btn{margin-left:8px}
+      /* Allow nav to wrap so Search + Sign Out don't overflow on narrow viewports */
+      .hnav{flex-wrap:wrap !important;row-gap:6px}
+      /* Fixed fallback: only when not mounted inside the header */
+      .dce-admin-btn.dce-floating{position:fixed;top:14px;right:18px;z-index:9998}
+      @media (max-width: 720px){ .dce-admin-btn.dce-floating{top:10px;right:12px;padding:5px 10px;font-size:9px} }
       .dce-auth-modal{display:none;position:fixed;inset:0;background:rgba(13,13,13,0.55);
         z-index:9999;align-items:center;justify-content:center;font-family:'Inter',sans-serif}
       .dce-auth-modal.show{display:flex}
@@ -287,9 +292,42 @@
   }
 
   // ── Auto-mount button on every page (unless opt-out) ─────────────────
+  function _findNavTarget() {
+    // 1. Standard nav (.hnav on most pages)
+    const hnav = document.querySelector('.hnav');
+    if (hnav) return hnav;
+    // 2. Home page: container that holds links to /research.html or /reporting.html
+    const header = document.querySelector('header');
+    if (header) {
+      const divs = header.querySelectorAll('div');
+      for (const div of divs) {
+        if (div.querySelector('a[href="/reporting.html"]') || div.querySelector('a[href="/research.html"]')) {
+          return div;
+        }
+      }
+    }
+    return null;
+  }
+
   function _autoMount() {
     if (document.body.dataset.dceAuth === 'manual') return;
-    mountAdminButton();
+    const target = _findNavTarget();
+    if (target) {
+      mountAdminButton(target);
+      // search.js may run after us and append its trigger AFTER the sign-out button.
+      // Re-anchor to the end on the next tick so order is: [links] [Search] [Sign Out].
+      const reorderToEnd = () => {
+        if (_btnEl && _btnEl.parentElement) {
+          _btnEl.parentElement.appendChild(_btnEl);
+        }
+      };
+      setTimeout(reorderToEnd, 0);
+      setTimeout(reorderToEnd, 200);
+    } else {
+      // Fallback: floating top-right (legacy behavior)
+      const btn = mountAdminButton();
+      if (btn) btn.classList.add('dce-floating');
+    }
     _applyRoleVisibility();
   }
 
