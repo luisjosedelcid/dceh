@@ -149,15 +149,15 @@
       .hnav a, .hnav .dce-group-trigger{padding:8px 13px !important;letter-spacing:0.14em !important}
       /* ===== Dropdown nav groups (Monitor / Pipeline / Decisions / Intel) ===== */
       .dce-group{position:relative;display:inline-flex;align-items:center}
-      .dce-group-trigger{font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;
-        letter-spacing:0.14em;text-transform:uppercase;color:#fff;background:transparent;
-        border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;line-height:1.4;
+      .dce-group-trigger{font-family:inherit;font-size:inherit;font-weight:inherit;
+        letter-spacing:0.14em;text-transform:uppercase;color:inherit;background:transparent;
+        border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;line-height:inherit;
         padding:8px 13px;border-radius:2px;transition:color .15s, background .15s}
-      .dce-group-trigger:hover{color:#b88b47;background:rgba(255,255,255,0.05)}
+      .dce-group-trigger:hover{color:#b88b47 !important;background:rgba(255,255,255,0.05)}
       .dce-group-trigger .dce-caret{font-size:8px;opacity:0.7;transform:translateY(1px);transition:transform .15s}
       .dce-group.open .dce-group-trigger .dce-caret{transform:translateY(1px) rotate(180deg)}
       /* Active group (current page belongs to this group) */
-      .dce-group.is-active .dce-group-trigger{color:#b88b47;border:1px solid #b88b47;padding:7px 12px}
+      .dce-group.is-active .dce-group-trigger{color:#b88b47 !important;border:1px solid #b88b47;padding:7px 12px}
       .dce-dropdown{display:none;position:absolute;top:calc(100% + 6px);left:0;
         background:#fff;color:#1b2642;min-width:240px;
         border:1px solid #d8d8d8;border-radius:3px;
@@ -368,8 +368,8 @@
       { href:'/calendar.html',    label:'Calendar', desc:'Earnings dates de la cobertura' },
       { href:'/study.html',       label:'Study',    desc:'Sector deep-dives + megatrends' },
     ]},
-    { id:'dataroom',  label:'Data Room', href:'/dataroom.html',  single:true },
     { id:'reporting', label:'Reporting', href:'/reporting.html', single:true },
+    { id:'dataroom',  label:'Data Room', href:'/dataroom.html',  single:true },
   ];
 
   function _normalizePath(p) {
@@ -442,10 +442,36 @@
       frag.appendChild(wrap);
     });
 
+    // Before replacing, capture the typography of an existing <a> so the new
+    // <button> triggers can match it exactly (each page defines its own .hnav a).
+    // Prefer a non-active <a> as sample so we don't inherit gold/active styles.
+    const sample = hnav.querySelector('a:not(.active):not([aria-current="page"])') || hnav.querySelector('a');
+    let sampleStyle = null;
+    if (sample) {
+      const cs = getComputedStyle(sample);
+      sampleStyle = {
+        color: cs.color,
+        fontSize: cs.fontSize,
+        fontWeight: cs.fontWeight,
+        fontFamily: cs.fontFamily,
+      };
+    }
+
     // Replace the existing flat links (keep any non-<a> children like Search trigger or Sign Out — they're appended later).
     Array.from(hnav.querySelectorAll('a, .dce-group')).forEach(el => el.remove());
     hnav.insertBefore(frag, hnav.firstChild);
     hnav.dataset.dceGrouped = '1';
+
+    // Apply captured typography to all new <button> triggers so they match
+    // the exact look of the surrounding <a> links (color, weight, size, family).
+    if (sampleStyle) {
+      hnav.querySelectorAll('.dce-group-trigger').forEach(btn => {
+        btn.style.color = sampleStyle.color;
+        btn.style.fontSize = sampleStyle.fontSize;
+        btn.style.fontWeight = sampleStyle.fontWeight;
+        btn.style.fontFamily = sampleStyle.fontFamily;
+      });
+    }
 
     // Click outside closes any open dropdown
     if (!document.body.dataset.dceNavGlobalListener) {
