@@ -12,11 +12,51 @@
       "description": "Charter, IPS, Governance, Operations Manual, Provider Directory y versiones historicas.",
       "access": "Read-only para Analyst",
       "files": [
-        { "name": "Investment Charter v3.1.3", "filename": "DCE_Holdings_Investment_Charter_v3-1-3.pdf", "type": "pdf", "detail": "Marco constitucional del holding", "url": "#", "uploaded": "2026-04-15", "version": "v3.1.3" },
-        { "name": "Investment Policy Statement v9.2", "filename": "DCE_Holdings_IPS_v9-2.pdf", "type": "pdf", "detail": "Politicas, bandas, hurdles, criterios de calidad", "url": "#", "uploaded": "2026-04-15", "version": "v9.2" },
-        { "name": "Governance & Succession Framework v4.4", "filename": "DCE_Holdings_Governance_v4-4.pdf", "type": "pdf", "detail": "Comite de Inversiones, sucesion, resolucion de conflictos", "url": "#", "uploaded": "2026-04-15", "version": "v4.4" },
-        { "name": "Operations Manual v3", "filename": "DCE_Holdings_Operations_Manual_v3.pdf", "type": "pdf", "detail": "Cadencia operativa, roles, controles documentales", "url": "#", "uploaded": "2026-02-15", "version": "v3.0" },
-        { "name": "Provider Directory v4", "filename": "DCE_Holdings_Provider_Directory_v4.pdf", "type": "pdf", "detail": "Custodios, brokers, asesores, tecnologia", "url": "#", "uploaded": "2026-04-15", "version": "v4.0" }
+        {
+          "name": "Investment Charter v3.1.3",
+          "filename": "DCE_Holdings_Investment_Charter_v3-1-3.pdf",
+          "type": "pdf",
+          "detail": "Marco constitucional del holding",
+          "url": "#",
+          "uploaded": "2026-04-15",
+          "version": "v3.1.3"
+        },
+        {
+          "name": "Investment Policy Statement v9.2",
+          "filename": "DCE_Holdings_IPS_v9-2.pdf",
+          "type": "pdf",
+          "detail": "Politicas, bandas, hurdles, criterios de calidad",
+          "url": "#",
+          "uploaded": "2026-04-15",
+          "version": "v9.2"
+        },
+        {
+          "name": "Governance & Succession Framework v4.4",
+          "filename": "DCE_Holdings_Governance_v4-4.pdf",
+          "type": "pdf",
+          "detail": "Comite de Inversiones, sucesion, resolucion de conflictos",
+          "url": "#",
+          "uploaded": "2026-04-15",
+          "version": "v4.4"
+        },
+        {
+          "name": "Operations Manual v3",
+          "filename": "DCE_Holdings_Operations_Manual_v3.pdf",
+          "type": "pdf",
+          "detail": "Cadencia operativa, roles, controles documentales",
+          "url": "#",
+          "uploaded": "2026-02-15",
+          "version": "v3.0"
+        },
+        {
+          "name": "Provider Directory v4",
+          "filename": "DCE_Holdings_Provider_Directory_v4.pdf",
+          "type": "pdf",
+          "detail": "Custodios, brokers, asesores, tecnologia",
+          "url": "#",
+          "uploaded": "2026-04-15",
+          "version": "v4.0"
+        }
       ]
     },
     "02_portafolio": {
@@ -31,9 +71,42 @@
           "company": "Microsoft Corp",
           "classification": "Core Compounder",
           "files": [
-            { "name": "2026-05 - Investment Memo - Microsoft (MSFT)", "filename": "DCE_MSFT_Valuation_Report.pdf", "type": "pdf", "detail": "Investment Memo aprobado", "url": "/docs/DCE_MSFT_Valuation_Report.pdf", "uploaded": "2026-05-04", "doc_type": "Investment Memo" },
-            { "name": "2026-05 - Thesis Breaker - Microsoft (MSFT)", "filename": "DCE_MSFT_Thesis_Breaker.pdf", "type": "pdf", "detail": "Stress test cuantitativo", "url": "/docs/DCE_MSFT_Thesis_Breaker.pdf", "uploaded": "2026-05-04", "doc_type": "Thesis Breaker" },
-            { "name": "2026-05 - Munger Digital - Microsoft (MSFT)", "filename": "DCE_MSFT_Munger_Digital.pdf", "type": "pdf", "detail": "Evaluacion conductual y narrativa", "url": "/docs/DCE_MSFT_Munger_Digital.pdf", "uploaded": "2026-05-04", "doc_type": "Munger Digital" }
+            {
+              "name": "2026-05 - Investment Memo - Microsoft (MSFT)",
+              "filename": "DCE_MSFT_Valuation_Report.pdf",
+              "type": "pdf",
+              "detail": "Investment Memo aprobado",
+              "url": "/docs/DCE_MSFT_Valuation_Report.pdf",
+              "uploaded": "2026-05-04",
+              "doc_type": "Investment Memo"
+            },
+            {
+              "name": "2026-05 - Thesis Breaker - Microsoft (MSFT)",
+              "filename": "DCE_MSFT_Thesis_Breaker.pdf",
+              "type": "pdf",
+              "detail": "Stress test cuantitativo",
+              "url": "/docs/DCE_MSFT_Thesis_Breaker.pdf",
+              "uploaded": "2026-05-04",
+              "doc_type": "Thesis Breaker"
+            },
+            {
+              "name": "2026-05 - Munger Digital - Microsoft (MSFT)",
+              "filename": "DCE_MSFT_Munger_Digital.pdf",
+              "type": "pdf",
+              "detail": "Evaluacion conductual y narrativa",
+              "url": "/docs/DCE_MSFT_Munger_Digital.pdf",
+              "uploaded": "2026-05-04",
+              "doc_type": "Munger Digital"
+            },
+            {
+              "name": "2026-05 - Columbia Model - Microsoft (MSFT)",
+              "filename": "2026-05_Columbia_Model_Microsoft_MSFT.xlsx",
+              "type": "xlsx",
+              "detail": "Modelo Columbia 14-sheet",
+              "url": "/docs/MSFT/2026-05_Columbia_Model_Microsoft_MSFT.xlsx",
+              "uploaded": "2026-05-04",
+              "doc_type": "Columbia Model"
+            }
           ]
         },
         "LULU": {
@@ -42,9 +115,33 @@
           "company": "Lululemon Athletica",
           "classification": "Core Compounder",
           "files": [
-            { "name": "2026-05 - Investment Memo - Lululemon (LULU)", "filename": "DCE_LULU_Valuation_Report.pdf", "type": "pdf", "detail": "Investment Memo aprobado", "url": "/docs/DCE_LULU_Valuation_Report.pdf", "uploaded": "2026-05-04", "doc_type": "Investment Memo" },
-            { "name": "2026-05 - Thesis Breaker - Lululemon (LULU)", "filename": "DCE_LULU_Thesis_Breaker.pdf", "type": "pdf", "detail": "Stress test cuantitativo", "url": "/docs/DCE_LULU_Thesis_Breaker.pdf", "uploaded": "2026-05-04", "doc_type": "Thesis Breaker" },
-            { "name": "2026-05 - Munger Digital - Lululemon (LULU)", "filename": "DCE_LULU_Munger_Digital.pdf", "type": "pdf", "detail": "Evaluacion conductual y narrativa", "url": "/docs/DCE_LULU_Munger_Digital.pdf", "uploaded": "2026-05-04", "doc_type": "Munger Digital" }
+            {
+              "name": "2026-05 - Investment Memo - Lululemon (LULU)",
+              "filename": "DCE_LULU_Valuation_Report.pdf",
+              "type": "pdf",
+              "detail": "Investment Memo aprobado",
+              "url": "/docs/DCE_LULU_Valuation_Report.pdf",
+              "uploaded": "2026-05-04",
+              "doc_type": "Investment Memo"
+            },
+            {
+              "name": "2026-05 - Thesis Breaker - Lululemon (LULU)",
+              "filename": "DCE_LULU_Thesis_Breaker.pdf",
+              "type": "pdf",
+              "detail": "Stress test cuantitativo",
+              "url": "/docs/DCE_LULU_Thesis_Breaker.pdf",
+              "uploaded": "2026-05-04",
+              "doc_type": "Thesis Breaker"
+            },
+            {
+              "name": "2026-05 - Munger Digital - Lululemon (LULU)",
+              "filename": "DCE_LULU_Munger_Digital.pdf",
+              "type": "pdf",
+              "detail": "Evaluacion conductual y narrativa",
+              "url": "/docs/DCE_LULU_Munger_Digital.pdf",
+              "uploaded": "2026-05-04",
+              "doc_type": "Munger Digital"
+            }
           ]
         }
       }
@@ -82,9 +179,33 @@
           "company": "Booking Holdings",
           "status": "rejected",
           "files": [
-            { "name": "2026-04 - Investment Memo - Booking (BKNG)", "filename": "DCE_BKNG_Valuation_Report.pdf", "type": "pdf", "detail": "Memo de valoracion (rechazado en stage decision)", "url": "/docs/DCE_BKNG_Valuation_Report.pdf", "uploaded": "2026-04-28", "doc_type": "Investment Memo" },
-            { "name": "2026-04 - Thesis Breaker - Booking (BKNG)", "filename": "DCE_BKNG_Thesis_Breaker.pdf", "type": "pdf", "detail": "Stress test cuantitativo", "url": "/docs/DCE_BKNG_Thesis_Breaker.pdf", "uploaded": "2026-04-28", "doc_type": "Thesis Breaker" },
-            { "name": "2026-04 - Munger Digital - Booking (BKNG)", "filename": "DCE_BKNG_Munger_Digital.pdf", "type": "pdf", "detail": "Evaluacion conductual", "url": "/docs/DCE_BKNG_Munger_Digital.pdf", "uploaded": "2026-04-28", "doc_type": "Munger Digital" }
+            {
+              "name": "2026-04 - Investment Memo - Booking (BKNG)",
+              "filename": "DCE_BKNG_Valuation_Report.pdf",
+              "type": "pdf",
+              "detail": "Memo de valoracion (rechazado en stage decision)",
+              "url": "/docs/DCE_BKNG_Valuation_Report.pdf",
+              "uploaded": "2026-04-28",
+              "doc_type": "Investment Memo"
+            },
+            {
+              "name": "2026-04 - Thesis Breaker - Booking (BKNG)",
+              "filename": "DCE_BKNG_Thesis_Breaker.pdf",
+              "type": "pdf",
+              "detail": "Stress test cuantitativo",
+              "url": "/docs/DCE_BKNG_Thesis_Breaker.pdf",
+              "uploaded": "2026-04-28",
+              "doc_type": "Thesis Breaker"
+            },
+            {
+              "name": "2026-04 - Munger Digital - Booking (BKNG)",
+              "filename": "DCE_BKNG_Munger_Digital.pdf",
+              "type": "pdf",
+              "detail": "Evaluacion conductual",
+              "url": "/docs/DCE_BKNG_Munger_Digital.pdf",
+              "uploaded": "2026-04-28",
+              "doc_type": "Munger Digital"
+            }
           ]
         },
         "SAP": {
@@ -93,9 +214,33 @@
           "company": "SAP SE",
           "status": "analysis",
           "files": [
-            { "name": "2026-04 - Investment Memo - SAP (SAP)", "filename": "DCE_SAP_Valuation_Report.pdf", "type": "pdf", "detail": "Memo de valoracion en analysis", "url": "/docs/DCE_SAP_Valuation_Report.pdf", "uploaded": "2026-04-28", "doc_type": "Investment Memo" },
-            { "name": "2026-04 - Thesis Breaker - SAP (SAP)", "filename": "DCE_SAP_Thesis_Breaker.pdf", "type": "pdf", "detail": "Stress test cuantitativo", "url": "/docs/DCE_SAP_Thesis_Breaker.pdf", "uploaded": "2026-04-28", "doc_type": "Thesis Breaker" },
-            { "name": "2026-04 - Munger Digital - SAP (SAP)", "filename": "DCE_SAP_Munger_Digital.pdf", "type": "pdf", "detail": "Evaluacion conductual", "url": "/docs/DCE_SAP_Munger_Digital.pdf", "uploaded": "2026-04-28", "doc_type": "Munger Digital" }
+            {
+              "name": "2026-04 - Investment Memo - SAP (SAP)",
+              "filename": "DCE_SAP_Valuation_Report.pdf",
+              "type": "pdf",
+              "detail": "Memo de valoracion en analysis",
+              "url": "/docs/DCE_SAP_Valuation_Report.pdf",
+              "uploaded": "2026-04-28",
+              "doc_type": "Investment Memo"
+            },
+            {
+              "name": "2026-04 - Thesis Breaker - SAP (SAP)",
+              "filename": "DCE_SAP_Thesis_Breaker.pdf",
+              "type": "pdf",
+              "detail": "Stress test cuantitativo",
+              "url": "/docs/DCE_SAP_Thesis_Breaker.pdf",
+              "uploaded": "2026-04-28",
+              "doc_type": "Thesis Breaker"
+            },
+            {
+              "name": "2026-04 - Munger Digital - SAP (SAP)",
+              "filename": "DCE_SAP_Munger_Digital.pdf",
+              "type": "pdf",
+              "detail": "Evaluacion conductual",
+              "url": "/docs/DCE_SAP_Munger_Digital.pdf",
+              "uploaded": "2026-04-28",
+              "doc_type": "Munger Digital"
+            }
           ]
         }
       },
