@@ -117,12 +117,12 @@
       8400.0
     ],
     "totalDebt": [
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
     ],
     "cashSti": [
       1094.0,
@@ -241,12 +241,12 @@
         "t": "normal",
         "neg": true,
         "v": [
-          -0.0,
-          -0.0,
-          -0.0,
+          0,
+          0,
+          0,
           -408.0,
-          -0.0,
-          -0.0
+          0,
+          0
         ]
       },
       {
@@ -490,10 +490,10 @@
         "l": "Intangible Assets, net",
         "t": "normal",
         "v": [
-          0.0,
+          0,
           80.0,
           71.0,
-          0.0,
+          0,
           14.0,
           9.0
         ]
@@ -606,12 +606,12 @@
         "l": "Total Debt (LT)",
         "t": "normal",
         "v": [
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
         ]
       },
       {
@@ -664,12 +664,12 @@
         "l": "Impairments",
         "t": "normal",
         "v": [
-          0.0,
-          0.0,
-          0.0,
+          0,
+          0,
+          0,
           408.0,
-          0.0,
-          0.0
+          0,
+          0
         ]
       },
       {
@@ -743,11 +743,11 @@
         "t": "normal",
         "v": [
           4.0,
-          0.0,
-          0.0,
+          0,
+          0,
           10.0,
           2.0,
-          0.0
+          0
         ]
       },
       {
@@ -842,12 +842,13 @@
     ],
     "intangibleAssets": [
       {
-        "label": "Brand Equity (acumulado mktg 7yr × 60%)",
-        "bookValue": 0,
-        "adjustable": false,
+        "label": "Brand / Customer Asset (reconstruction)",
+        "bookValue": 927.0,
+        "adjustable": true,
         "defaultAdj": 100,
-        "reproValue": 0,
-        "method": "Brand no en BS; reconstruir vía 7yr mktg × 60% efficiency"
+        "reproValue": 927.0,
+        "method": "Brand no en BS; reconstruir vía 7yr mktg × 60% efficiency",
+        "dataKey": "brand"
       },
       {
         "label": "S&M Asset (Unamortized)",
@@ -863,7 +864,7 @@
         "bookValue": 173.0,
         "adjustable": true,
         "defaultAdj": 0.0,
-        "reproValue": 0.0,
+        "reproValue": 0,
         "method": "DP12: 0% — se reconstruye via S&M Asset (doble conteo)",
         "dataKey": "gw"
       },
@@ -1471,7 +1472,7 @@
   },
   "thesisSummary": {
     "verdict": "WATCHLIST",
-    "epvRvRatio": 3.195,
+    "epvRvRatio": 3.194,
     "priceEpvRatio": 0.974,
     "impliedIrr": 46.61,
     "marginOfSafety": 2.62,
