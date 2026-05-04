@@ -1,15 +1,17 @@
 {
   "fund_name": "DCE Holdings",
   "currency": "USD",
-  "inception_date": "2025-09-18",
-  "benchmark": "^GSPC",
-  "benchmark_label": "S&P 500",
-  "cash": 0,
+  "inception_date": "2025-09-11",
+  "benchmark": "IWQU.L",
+  "benchmark_label": "MSCI World Quality NR (IWQU.L, IPS §4.8)",
+  "total_contributed_usd": 400000,
+  "cash": 76350.66,
   "positions": [
     {
       "ticker": "MSFT",
       "name": "Microsoft Corp",
       "sector": "NASDAQ · Technology",
+      "asset_class": "Equity Quality",
       "shares": 250,
       "avg_cost": 401.115,
       "buy_date": "2026-02-18",
@@ -23,6 +25,7 @@
       "ticker": "LULU",
       "name": "Lululemon Athletica",
       "sector": "NASDAQ · Consumer Discretionary",
+      "asset_class": "Equity Quality",
       "shares": 590,
       "avg_cost": 167.835,
       "buy_date": "2025-09-18",
@@ -31,7 +34,21 @@
       "hurdle_real": 0.08,
       "color": "#1b2642",
       "link": null
+    },
+    {
+      "ticker": "SGOV",
+      "name": "iShares 0-3 Month Treasury Bond ETF",
+      "sector": "NYSE · Fixed Income",
+      "asset_class": "Fixed Income (high quality, IPS §3.1)",
+      "shares": 1245,
+      "avg_cost": 100.5891,
+      "buy_date": "2026-01-14",
+      "classification": "Fixed Income",
+      "classification_code": "FI",
+      "hurdle_real": 0.0,
+      "color": "#2A7A56",
+      "link": null
     }
   ],
-  "_notes": "Single source of truth for portfolio.html and Daily Report PDF. Edit and commit to update both. inception_date = earliest buy_date; benchmark inception value is auto-fetched from Yahoo at buy_date. classification per IPS §4.2 (CORE / OPPORTUNISTIC / VSS); hurdle_real is midpoint of bucket range from ips_parameters.json."
+  "_notes": "Single source of truth for portfolio.html and Daily Report PDF. Datos reales reconstruidos del custodio (Schwab) — transactions: LULU 18-sep-25, T-Bill 91282CBT7 13-ene-26 (matured 31-mar al par), SGOV 14-ene + 23-mar, MSFT 18-feb-26. SGOV clasificado como Fixed Income alta calidad (IPS §3.1), no cash equivalent — genera dividend income recurrente. inception_date = 2025-09-11 (primera contribución $1k). Total contribuido $400k. Bandas IPS 30-abr-26: Cash 19.8% (en banda 15-25), Equity 47.6% (under piso 60), FI 32.6% (sobre techo 10) — régimen transitorio §3.7."
 }
