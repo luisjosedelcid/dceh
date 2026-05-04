@@ -606,7 +606,10 @@ async function loadFolder(folder) {
   const container = document.querySelector(`.section-files[data-folder="${folder}"]`);
   container.innerHTML = '<div class="loading-files">Loading…</div>';
   try {
-    const r = await fetch(`/api/list-reports?folder=${folder}`);
+    const token = localStorage.getItem(TOKEN_KEY);
+    const r = await fetch(`/api/list-reports?folder=${folder}`, {
+      headers: token ? { 'x-admin-token': token } : {},
+    });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'Error');
     const files = data.files || [];
