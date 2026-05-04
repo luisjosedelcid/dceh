@@ -1279,7 +1279,8 @@ async function loadIdeaFeed() {
         </div>
         <div style="font-size:14px;line-height:1.4;margin-bottom:8px">${titleHtml}${methodBadge}</div>
         ${tickers ? `<div style="margin-bottom:8px">${tickers}</div>` : ''}
-        ${it.snippet ? `<div style="font-size:12px;color:var(--gray-mid);line-height:1.5">${_ifEscape(it.snippet.slice(0, 240))}${it.snippet.length > 240 ? '…' : ''}</div>` : ''}
+        ${it.snippet ? `<div style="font-size:12px;color:var(--gray-mid);line-height:1.5;margin-bottom:8px">${_ifEscape(it.snippet.slice(0, 240))}${it.snippet.length > 240 ? '…' : ''}</div>` : ''}
+        ${(it.tickers || []).length > 0 ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed var(--rule)">${(it.tickers || []).map(tk => `<button onclick="sendToWorkflow(this)" data-tk="${_ifEscape(tk)}" data-nm="${_ifEscape(it.title)}" data-url="${_ifEscape(it.url || '')}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:4px 9px;cursor:pointer;font-family:inherit" title="Add ${_ifEscape(tk)} to Workflow">${_ifEscape(tk)} → Workflow</button>`).join('')}</div>` : ''}
       </div>`;
     }
     html += '</div>';
@@ -1347,8 +1348,9 @@ async function renderIdeaFeedTickers(items, status, cont) {
                 ? _ifEscape(r.thesisItem.thesis)
                 : '<span style="color:var(--gray-mid);font-style:italic">Pending next refresh…</span>'}
             </td>
-            <td>
-              <a href="/company.html?ticker=${encodeURIComponent(r.ticker)}" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px">Open →</a>
+            <td style="white-space:nowrap">
+              <a href="/company.html?ticker=${encodeURIComponent(r.ticker)}" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px;margin-right:4px">Open →</a>
+              <button onclick="sendToWorkflow(this)" data-tk="${_ifEscape(r.ticker)}" data-nm="${_ifEscape(r.thesisItem?.title || '')}" data-url="${_ifEscape(r.mentions[0].url || '')}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:5px 10px;cursor:pointer;font-family:inherit" title="Add to Workflow kanban (backlog)">→ Workflow</button>
             </td>
           </tr>`).join('')}
         </tbody>
@@ -1390,6 +1392,60 @@ document.addEventListener('DOMContentLoaded', () => {
   const t = document.getElementById('if-ticker');
   if (t) t.addEventListener('keydown', e => { if (e.key === 'Enter') loadIdeaFeed(); });
 });
+
+// ─── Idea Feed → Workflow handoff ─────────────────────────────────────
+// Click "→ Workflow" button to push the idea to the kanban as a backlog card.
+// Uses /api/admin/pipeline-cards (requires admin login). Falls back to navigating
+// to /research.html with prefill query string if not logged in.
+async function sendToWorkflow(btn) {
+  const ticker = (btn.dataset.tk || '').toUpperCase().trim();
+  const title  = (btn.dataset.nm  || '').trim();
+  const url    = (btn.dataset.url || '').trim();
+  if (!ticker) { alert('Ticker missing'); return; }
+
+  // Note body combines title + source URL
+  let note = '';
+  if (title) note += title;
+  if (url)   note += (note ? '\n' : '') + url;
+
+  // Prefer admin-token API (rapid add, stays on current page).
+  const tk = (window.dceAuth && window.dceAuth.token) ? window.dceAuth.token() : null;
+  if (!tk) {
+    // Not logged in: send user to /research.html with prefill
+    const qs = new URLSearchParams({ ticker, name: ticker, note });
+    window.location.href = '/research.html?' + qs.toString();
+    return;
+  }
+
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Adding…';
+  try {
+    // Use ticker as initial 'name' since we don't always know company name here.
+    // User can rename inside Workflow.
+    const r = await fetch('/api/admin/pipeline-cards', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': tk },
+      body: JSON.stringify({ ticker, name: ticker, stage: 'backlog', note: note || null }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+    btn.textContent = '✓ Added';
+    btn.style.background = 'var(--green, #2a7a56)';
+    btn.style.borderColor = 'var(--green, #2a7a56)';
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.style.background = 'var(--navy)';
+      btn.style.borderColor = 'var(--navy)';
+      btn.disabled = false;
+    }, 2500);
+  } catch (e) {
+    btn.textContent = original;
+    btn.disabled = false;
+    alert('Could not add to Workflow: ' + e.message);
+  }
+}
+window.sendToWorkflow = sendToWorkflow;
 </script>
 <script src="/search.js" defer></script>
 </body>

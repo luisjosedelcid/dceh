@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DCE Holdings — Workflow</title>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --navy:#1b2642;--gold:#b88b47;--gold-lt:#d4aa6a;--gold-dim:rgba(184,139,71,0.10);--gold-rule:rgba(184,139,71,0.30);
@@ -22,11 +21,6 @@
   .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
   .hnav a.active{color:var(--gold);border-color:var(--gold)}
 
-  .auth-pill{display:flex;align-items:center;gap:10px;padding:6px 12px;border:1px solid var(--gold-rule);border-radius:20px;color:rgba(255,255,255,0.85);font-size:11px;letter-spacing:0.05em}
-  .auth-pill img{width:22px;height:22px;border-radius:50%;border:1px solid var(--gold-rule)}
-  .auth-pill button{background:none;border:none;color:var(--gold);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;font-family:inherit;padding:0 0 0 8px;border-left:1px solid var(--gold-rule)}
-  .auth-pill button:hover{color:var(--gold-lt)}
-
   main{padding:28px 36px 60px}
   .slbl{font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:10px}
   .slbl::before{content:'';width:24px;height:1px;background:var(--gold)}
@@ -38,8 +32,12 @@
   .gate p{color:var(--gray-txt);font-size:13px;margin-bottom:24px;line-height:1.6}
   .gate .gh-btn{display:inline-flex;align-items:center;gap:10px;padding:12px 24px;background:var(--navy);color:var(--white);border:none;font-family:inherit;font-size:12px;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;transition:all .2s}
   .gate .gh-btn:hover{background:#0d1428}
-  .gate .gh-btn svg{width:18px;height:18px;fill:currentColor}
-  .gate .denied{padding:14px 18px;background:#fef2f2;border:1px solid #fecaca;color:var(--red);font-size:12px;margin-bottom:20px;text-align:left}
+
+  /* PRE-FILL BANNER (when coming from Idea Feed) */
+  .prefill-banner{background:var(--gold-dim);border:1px solid var(--gold-rule);border-left:3px solid var(--gold);padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink)}
+  .prefill-banner strong{color:var(--gold);letter-spacing:0.05em}
+  .prefill-banner .pf-close{background:none;border:none;color:var(--gray-mid);font-size:18px;cursor:pointer;line-height:1}
+  .prefill-banner .pf-close:hover{color:var(--ink)}
 
   /* ADD ROW */
   .add-row{display:grid;grid-template-columns:120px 1fr 2fr 110px;gap:10px;margin-bottom:18px;background:var(--white);padding:10px;border:1px solid var(--rule)}
@@ -73,7 +71,7 @@
   .b.q{background:rgba(42,122,86,0.1);color:var(--green)}
   .b.v{background:rgba(184,134,11,0.12);color:var(--amber)}
   .b.irr{background:var(--gold-dim);color:var(--gold)}
-  .card-nt{font-size:11px;color:var(--gray-txt);line-height:1.45;margin-bottom:8px;font-style:italic}
+  .card-nt{font-size:11px;color:var(--gray-txt);line-height:1.45;margin-bottom:8px;font-style:italic;white-space:pre-wrap;word-break:break-word}
   .card-meta{display:flex;justify-content:space-between;align-items:center;font-size:9px;color:var(--gray-mid);letter-spacing:0.03em;border-top:1px dashed var(--rule);padding-top:6px}
   .card-meta .comments-cnt{display:inline-flex;align-items:center;gap:3px;color:var(--gold);font-weight:500}
   .card-x{position:absolute;top:6px;right:6px;background:none;border:none;cursor:pointer;color:var(--gray-mid);font-size:14px;padding:2px 6px;line-height:1;opacity:0;transition:.2s}
@@ -83,7 +81,7 @@
   /* MODAL */
   .modal-bg{position:fixed;inset:0;background:rgba(27,38,66,0.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
   .modal-bg.show{display:flex}
-  .modal{background:var(--white);max-width:640px;width:100%;max-height:88vh;display:flex;flex-direction:column;border-top:3px solid var(--gold)}
+  .modal{background:var(--white);max-width:640px;width:100%;max-height:88vh;display:flex;flex-direction:column;border-top:3px solid var(--gold);overflow-y:auto}
   .modal-h{padding:20px 24px 16px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:flex-start}
   .modal-h .tkr{font-size:22px;font-weight:700;letter-spacing:0.02em;margin-bottom:1px}
   .modal-h .nm{font-size:12px;color:var(--gray-txt);margin-bottom:8px}
@@ -100,9 +98,9 @@
   .save-note:hover{background:#0d1428}
   .save-note.saved{background:var(--green)}
 
-  .comments-list{display:flex;flex-direction:column;gap:14px;max-height:280px;overflow-y:auto;padding-right:4px}
+  .comments-list{display:flex;flex-direction:column;gap:14px;max-height:320px;overflow-y:auto;padding-right:4px}
   .comment{display:flex;gap:10px;align-items:flex-start}
-  .comment img{width:28px;height:28px;border-radius:50%;flex-shrink:0;border:1px solid var(--rule)}
+  .comment .avatar-circle{width:28px;height:28px;border-radius:50%;flex-shrink:0;background:var(--navy);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;letter-spacing:0.02em}
   .comment-body{flex:1;background:var(--cream);padding:10px 12px;border:1px solid var(--rule);border-radius:2px}
   .comment-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
   .comment-h .auth{font-size:11px;font-weight:600;color:var(--ink)}
@@ -152,7 +150,7 @@
 
 <footer>
   <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
-  <span>Workflow · Supabase + GitHub Auth</span>
+  <span>Workflow · Pipeline kanban</span>
 </footer>
 
 <!-- MODAL -->
@@ -162,12 +160,8 @@
 
 <script>
 // ============================================================
-// SUPABASE CLIENT
+// CONFIG
 // ============================================================
-const SUPABASE_URL  = 'https://mlmmcciknvydlekztqtj.supabase.co';
-const SUPABASE_KEY  = 'sb_publishable_WAITOSJUnJR_iM5YuFq2QA_S2wPZCJd';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 const COLUMNS = [
   { id: 'backlog',  title: 'Backlog',          desc: 'On the radar' },
   { id: 'analysis', title: 'Analysis',         desc: 'Active research' },
@@ -177,111 +171,104 @@ const COLUMNS = [
   { id: 'rejected', title: 'Rejected',         desc: 'Not pursuing' },
 ];
 
-let currentUser = null;
-let isAuthorized = false;
+let currentUser = null;   // { username, name }
 let pipeline = [];
 let commentsByCard = {};
 let dragId = null;
 let openCardId = null;
+let prefill = null;       // { ticker, name, note } from query string
 
 // ============================================================
-// AUTH FLOW
+// AUTH HELPERS (uses window.dceAuth from /dce-auth.js)
 // ============================================================
-async function checkAuth() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { renderGate(); return; }
+function authToken() { return window.dceAuth ? window.dceAuth.token() : null; }
+function authUser()  { return window.dceAuth ? window.dceAuth.user()  : null; }
 
-  const meta = session.user.user_metadata || {};
-  currentUser = {
-    id:       session.user.id,
-    username: meta.user_name || meta.preferred_username,
-    name:     meta.full_name || meta.name || meta.user_name,
-    avatar:   meta.avatar_url,
-    email:    session.user.email,
-  };
+async function api(path, opts = {}) {
+  const tk = authToken();
+  if (!tk) throw new Error('Not authenticated');
+  const headers = Object.assign(
+    { 'Content-Type': 'application/json', 'x-admin-token': tk },
+    opts.headers || {}
+  );
+  const r = await fetch(path, Object.assign({}, opts, { headers }));
+  const ct = r.headers.get('content-type') || '';
+  const data = ct.includes('application/json') ? await r.json().catch(() => ({})) : {};
+  if (!r.ok) {
+    const err = new Error(data.error || `HTTP ${r.status}`);
+    err.status = r.status; err.payload = data;
+    throw err;
+  }
+  return data;
+}
 
-  // Check whitelist (RLS will return empty if not authorized,
-  // but we test explicitly to show a clean "not authorized" message)
-  const { data: whitelist, error } = await sb
-    .from('allowed_users')
-    .select('github_username')
-    .eq('github_username', currentUser.username);
-
-  if (error || !whitelist || whitelist.length === 0) {
-    isAuthorized = false;
-    renderGate(true);
+// ============================================================
+// BOOT
+// ============================================================
+async function boot() {
+  // Wait for dce-auth.js (defer) to be ready
+  if (!window.dceAuth) {
+    setTimeout(boot, 50);
     return;
   }
 
-  isAuthorized = true;
-  await loadPipeline();
-  renderApp();
+  // Read pre-fill query string (from Idea Feed)
+  const qs = new URLSearchParams(window.location.search);
+  if (qs.get('ticker') || qs.get('name')) {
+    prefill = {
+      ticker: (qs.get('ticker') || '').toUpperCase().slice(0, 8),
+      name:   qs.get('name') || '',
+      note:   qs.get('note') || '',
+    };
+  }
+
+  // Auth gate
+  if (!window.dceAuth.isAdmin()) {
+    renderGate();
+    // When user logs in via the global modal, re-boot
+    window.dceAuth.onChange((adm) => { if (adm) boot(); });
+    return;
+  }
+
+  const u = authUser();
+  currentUser = {
+    username: (u && u.email) || 'admin',
+    name:     (u && (u.displayName || u.name)) || (u && u.email) || 'Admin',
+  };
+
+  try {
+    await loadPipeline();
+    renderApp();
+  } catch (e) {
+    console.error(e);
+    document.getElementById('main-content').innerHTML =
+      `<div class="loading">Error cargando workflow: ${esc(e.message)}</div>`;
+  }
 }
 
-function renderGate(deniedAccess = false) {
+function renderGate() {
   const main = document.getElementById('main-content');
-  const auth = document.getElementById('auth-area');
-  auth.innerHTML = '';
-
   main.innerHTML = `
     <div class="gate">
       <div class="slbl" style="justify-content:center">DCE Holdings — Investment Office</div>
       <h2>Workflow</h2>
-      <p>Acceso restringido a usuarios autorizados de DCE Holdings.<br>Inicia sesión con tu cuenta de GitHub para continuar.</p>
-      ${deniedAccess ? `
-        <div class="denied">
-          <strong>Acceso denegado.</strong> Tu cuenta de GitHub
-          (${currentUser?.username ? '@' + currentUser.username : 'desconocida'})
-          no está autorizada. Contacta al administrador.
-        </div>
-        <button class="gh-btn" onclick="signOut()">Cerrar sesión</button>
-      ` : `
-        <button class="gh-btn" onclick="signInGitHub()">
-          <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-          Iniciar sesión con GitHub
-        </button>
-      `}
+      <p>Acceso restringido. Inicia sesión con tu cuenta DCE para acceder al pipeline.</p>
+      <button class="gh-btn" onclick="window.dceAuth.openLoginModal()">Iniciar sesión</button>
     </div>
   `;
-}
-
-async function signInGitHub() {
-  await sb.auth.signInWithOAuth({
-    provider: 'github',
-    options: {
-      redirectTo: window.location.origin + '/research.html',
-      scopes: 'read:user user:email'
-    }
-  });
-}
-
-async function signOut() {
-  await sb.auth.signOut();
-  window.location.reload();
 }
 
 // ============================================================
 // DATA LOADING
 // ============================================================
 async function loadPipeline() {
-  const { data: cards, error: cErr } = await sb
-    .from('pipeline_cards')
-    .select('*')
-    .order('moved_at', { ascending: false });
+  const cardsResp = await api('/api/admin/pipeline-cards');
+  pipeline = Array.isArray(cardsResp) ? cardsResp : (cardsResp.items || []);
 
-  if (cErr) { console.error('Cards load error:', cErr); pipeline = []; return; }
-  pipeline = cards || [];
-
-  // Bulk load all comments
-  const { data: comments, error: comErr } = await sb
-    .from('comments')
-    .select('*')
-    .order('created_at', { ascending: true });
-
-  if (comErr) { console.error('Comments load error:', comErr); commentsByCard = {}; return; }
-
+  const commentsResp = await api('/api/admin/pipeline-comments');
+  const list = Array.isArray(commentsResp) ? commentsResp : (commentsResp.items || []);
   commentsByCard = {};
-  (comments || []).forEach(c => {
+  list.forEach(c => {
     if (!commentsByCard[c.card_id]) commentsByCard[c.card_id] = [];
     commentsByCard[c.card_id].push(c);
   });
@@ -291,27 +278,18 @@ async function loadPipeline() {
 // MAIN APP RENDER
 // ============================================================
 function renderApp() {
-  // Auth pill in header
-  const auth = document.getElementById('auth-area');
-  auth.innerHTML = `
-    <div class="auth-pill">
-      ${currentUser.avatar ? `<img src="${esc(currentUser.avatar)}" alt="">` : ''}
-      <span>${esc(currentUser.username)}</span>
-      <button onclick="signOut()">Salir</button>
-    </div>
-  `;
-
-  // Main content
   const main = document.getElementById('main-content');
   main.innerHTML = `
     <div class="slbl">DCE Holdings — Investment Office</div>
     <h1>Workflow</h1>
     <p class="subtitle">Drag cards between stages. Click a card to view notes and comments. Sync vía Supabase — multi-usuario en tiempo real.</p>
 
+    <div id="prefill-slot"></div>
+
     <div class="add-row">
-      <input class="add-inp ticker" id="add-ticker" placeholder="TICKER" maxlength="8">
-      <input class="add-inp name" id="add-name" placeholder="Company name">
-      <input class="add-inp note" id="add-note" placeholder="Initial note (optional)">
+      <input class="add-inp ticker" id="add-ticker" placeholder="TICKER" maxlength="8" value="${esc(prefill?.ticker || '')}">
+      <input class="add-inp name" id="add-name" placeholder="Company name" value="${esc(prefill?.name || '')}">
+      <input class="add-inp note" id="add-note" placeholder="Initial note (optional)" value="${esc(prefill?.note || '')}">
       <button class="add-btn" onclick="addCard()">+ Add</button>
     </div>
 
@@ -319,11 +297,33 @@ function renderApp() {
     <div class="kanban" id="kanban"></div>
   `;
 
+  // Pre-fill banner if coming from Idea Feed
+  if (prefill && (prefill.ticker || prefill.name)) {
+    const slot = document.getElementById('prefill-slot');
+    slot.innerHTML = `
+      <div class="prefill-banner">
+        <span><strong>Idea desde feed:</strong> ${esc(prefill.ticker || '')}${prefill.name ? ' · ' + esc(prefill.name) : ''} — revisa y pulsa <em>+ Add</em>.</span>
+        <button class="pf-close" onclick="dismissPrefill()" title="Descartar">×</button>
+      </div>
+    `;
+  }
+
   renderBoard();
 }
 
+function dismissPrefill() {
+  prefill = null;
+  // Clean URL
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+  document.getElementById('prefill-slot').innerHTML = '';
+  document.getElementById('add-ticker').value = '';
+  document.getElementById('add-name').value = '';
+  document.getElementById('add-note').value = '';
+}
+
 function renderBoard() {
-  // Stats
   const total = pipeline.length;
   const inPipe = pipeline.filter(c => !['approved','rejected'].includes(c.stage)).length;
   const approved = pipeline.filter(c => c.stage === 'approved').length;
@@ -332,7 +332,6 @@ function renderBoard() {
      <span><strong>${inPipe}</strong>in pipeline</span>
      <span><strong>${approved}</strong>approved</span>`;
 
-  // Columns
   const k = document.getElementById('kanban');
   k.innerHTML = COLUMNS.map(col => {
     const cards = pipeline.filter(c => c.stage === col.id);
@@ -360,6 +359,10 @@ function cardHTML(c) {
   if (c.valuation != null) badges.push(`<span class="b v">V ${c.valuation}</span>`);
   if (c.irr)               badges.push(`<span class="b irr">IRR ${esc(c.irr)}</span>`);
 
+  const created = c.created_at ? fmtDate(c.created_at) : '';
+  const moved   = c.moved_at   ? fmtDate(c.moved_at)   : '';
+  const movedShown = (moved && moved !== created) ? ' · Moved ' + moved : '';
+
   return `
     <div class="card" draggable="true" data-id="${c.id}"
          ondragstart="dragStart(event,'${c.id}')"
@@ -371,7 +374,7 @@ function cardHTML(c) {
       ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
       ${c.note ? `<div class="card-nt">${esc(c.note)}</div>` : ''}
       <div class="card-meta">
-        <span>Added ${fmtDate(c.created_at)}${c.moved_at && c.moved_at.slice(0,10) !== c.created_at.slice(0,10) ? ' · Moved ' + fmtDate(c.moved_at) : ''}</span>
+        <span>${created ? 'Added ' + created + movedShown : ''}</span>
         ${cmtCount > 0 ? `<span class="comments-cnt">[${cmtCount}]</span>` : ''}
       </div>
     </div>
@@ -387,20 +390,21 @@ async function addCard() {
   const nt = document.getElementById('add-note').value.trim();
   if (!tk || !nm) { alert('Ticker y nombre requeridos'); return; }
 
-  const { data, error } = await sb.from('pipeline_cards').insert({
-    ticker: tk, name: nm, stage: 'backlog',
-    note: nt || null,
-    created_by: currentUser.username,
-    updated_by: currentUser.username,
-  }).select().single();
-
-  if (error) { alert('Error: ' + error.message); return; }
-
-  pipeline.unshift(data);
-  document.getElementById('add-ticker').value = '';
-  document.getElementById('add-name').value = '';
-  document.getElementById('add-note').value = '';
-  renderBoard();
+  try {
+    const resp = await api('/api/admin/pipeline-cards', {
+      method: 'POST',
+      body: JSON.stringify({ ticker: tk, name: nm, stage: 'backlog', note: nt || null }),
+    });
+    const data = resp.item || resp;
+    pipeline.unshift(data);
+    document.getElementById('add-ticker').value = '';
+    document.getElementById('add-name').value = '';
+    document.getElementById('add-note').value = '';
+    if (prefill) dismissPrefill();
+    renderBoard();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
 }
 
 async function deleteCard(id) {
@@ -408,12 +412,14 @@ async function deleteCard(id) {
   if (!c) return;
   if (!confirm(`¿Eliminar ${c.ticker} del pipeline?`)) return;
 
-  const { error } = await sb.from('pipeline_cards').delete().eq('id', id);
-  if (error) { alert('Error: ' + error.message); return; }
-
-  pipeline = pipeline.filter(x => x.id !== id);
-  delete commentsByCard[id];
-  renderBoard();
+  try {
+    await api(`/api/admin/pipeline-cards?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    pipeline = pipeline.filter(x => x.id !== id);
+    delete commentsByCard[id];
+    renderBoard();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
 }
 
 async function moveCard(id, newStage) {
@@ -421,14 +427,20 @@ async function moveCard(id, newStage) {
   if (!c || c.stage === newStage) return;
 
   const moved_at = new Date().toISOString();
-  const { error } = await sb.from('pipeline_cards')
-    .update({ stage: newStage, moved_at, updated_by: currentUser.username })
-    .eq('id', id);
-
-  if (error) { alert('Error: ' + error.message); return; }
-  c.stage = newStage;
-  c.moved_at = moved_at;
-  renderBoard();
+  try {
+    const resp = await api(`/api/admin/pipeline-cards?id=${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ stage: newStage, moved_at }),
+    });
+    const data = resp.item || resp;
+    c.stage    = data.stage    || newStage;
+    c.moved_at = data.moved_at || moved_at;
+    renderBoard();
+  } catch (e) {
+    alert('Error: ' + e.message);
+    // Revert visual state by reloading
+    await loadPipeline(); renderBoard();
+  }
 }
 
 // ============================================================
@@ -511,10 +523,11 @@ function renderModal() {
 }
 
 function commentHTML(c) {
-  const canDelete = c.author_username === currentUser.username;
+  const canDelete = (c.author_username || '').toLowerCase() === (currentUser.username || '').toLowerCase();
+  const initials  = String(c.author_name || c.author_username || '?').trim().split(/\s+/).map(s => s[0]).slice(0,2).join('').toUpperCase();
   return `
     <div class="comment">
-      ${c.author_avatar ? `<img src="${esc(c.author_avatar)}" alt="">` : `<div style="width:28px;height:28px;border-radius:50%;background:var(--gold-dim)"></div>`}
+      <div class="avatar-circle">${esc(initials)}</div>
       <div class="comment-body">
         <div class="comment-h">
           <span class="auth">${esc(c.author_name || c.author_username)}</span>
@@ -532,19 +545,22 @@ async function saveNote() {
   const c = pipeline.find(x => x.id === openCardId);
   if (!c) return;
 
-  const { error } = await sb.from('pipeline_cards')
-    .update({ note: newNote || null, updated_by: currentUser.username })
-    .eq('id', c.id);
+  try {
+    const resp = await api(`/api/admin/pipeline-cards?id=${encodeURIComponent(c.id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ note: newNote || null }),
+    });
+    const data = resp.item || resp;
+    c.note = (data && data.note !== undefined) ? data.note : (newNote || null);
 
-  if (error) { alert('Error: ' + error.message); return; }
-  c.note = newNote || null;
-
-  const btn = document.getElementById('save-note-btn');
-  btn.textContent = '✓ Guardado';
-  btn.classList.add('saved');
-  setTimeout(() => { btn.textContent = 'Guardar nota'; btn.classList.remove('saved'); }, 1500);
-
-  renderBoard();
+    const btn = document.getElementById('save-note-btn');
+    btn.textContent = '✓ Guardado';
+    btn.classList.add('saved');
+    setTimeout(() => { btn.textContent = 'Guardar nota'; btn.classList.remove('saved'); }, 1500);
+    renderBoard();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
 }
 
 async function addComment() {
@@ -552,32 +568,32 @@ async function addComment() {
   const body = ta.value.trim();
   if (!body) return;
 
-  const { data, error } = await sb.from('comments').insert({
-    card_id: openCardId,
-    author_username: currentUser.username,
-    author_name: currentUser.name,
-    author_avatar: currentUser.avatar,
-    body,
-  }).select().single();
-
-  if (error) { alert('Error: ' + error.message); return; }
-
-  if (!commentsByCard[openCardId]) commentsByCard[openCardId] = [];
-  commentsByCard[openCardId].push(data);
-  ta.value = '';
-  renderModal();
-  renderBoard();
+  try {
+    const resp = await api('/api/admin/pipeline-comments', {
+      method: 'POST',
+      body: JSON.stringify({ card_id: openCardId, body }),
+    });
+    const data = resp.item || resp;
+    if (!commentsByCard[openCardId]) commentsByCard[openCardId] = [];
+    commentsByCard[openCardId].push(data);
+    ta.value = '';
+    renderModal();
+    renderBoard();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
 }
 
 async function deleteComment(id) {
   if (!confirm('¿Eliminar este comentario?')) return;
-
-  const { error } = await sb.from('comments').delete().eq('id', id);
-  if (error) { alert('Error: ' + error.message); return; }
-
-  commentsByCard[openCardId] = (commentsByCard[openCardId] || []).filter(c => c.id !== id);
-  renderModal();
-  renderBoard();
+  try {
+    await api(`/api/admin/pipeline-comments?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    commentsByCard[openCardId] = (commentsByCard[openCardId] || []).filter(c => c.id !== id);
+    renderModal();
+    renderBoard();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
 }
 
 // ============================================================
@@ -602,16 +618,9 @@ function stageLabel(id) {
 }
 
 // ============================================================
-// BOOT
+// LIFT-OFF
 // ============================================================
-checkAuth();
-
-// Listen to auth state changes (e.g. after OAuth callback)
-sb.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-    checkAuth();
-  }
-});
+boot();
 </script>
 <script src="/search.js" defer></script>
 </body>
