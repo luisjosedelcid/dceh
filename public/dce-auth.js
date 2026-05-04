@@ -145,6 +145,8 @@
       .hnav .dce-admin-btn,header .dce-admin-btn{margin-left:8px}
       /* Allow nav to wrap so Search + Sign Out don't overflow on narrow viewports */
       .hnav{flex-wrap:wrap !important;row-gap:6px}
+      /* Tighten link padding so the full 13-item nav fits in one line at ≥ 1280 */
+      .hnav a{padding:7px 11px !important;letter-spacing:0.14em !important}
       /* Fixed fallback: only when not mounted inside the header */
       .dce-admin-btn.dce-floating{position:fixed;top:14px;right:18px;z-index:9998}
       @media (max-width: 720px){ .dce-admin-btn.dce-floating{top:10px;right:12px;padding:5px 10px;font-size:9px} }
@@ -310,6 +312,10 @@
   }
 
   function _autoMount() {
+    // Always inject shared CSS (nav padding override, modal styles), even in 'manual' mode.
+    // Manual mode only opts out of mounting the Sign Out button — pages that handle auth
+    // themselves (e.g. reporting.html) still need the canonical nav styling.
+    _injectStyles();
     if (document.body.dataset.dceAuth === 'manual') return;
     const target = _findNavTarget();
     if (target) {
