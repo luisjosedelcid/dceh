@@ -92,6 +92,20 @@
   .kpi-sub{font-size:11px;color:var(--gray-txt);font-variant-numeric:tabular-nums}
   .kpi-value.pos{color:var(--green)}
   .kpi-value.neg{color:var(--red)}
+
+  /* ── IPS Bands card ── */
+  .ips-card{background:var(--white);border:1px solid var(--rule);margin-top:20px;margin-bottom:0}
+  .ips-card .ips-head{background:var(--navy);color:var(--white);padding:10px 18px;font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--gold-rule)}
+  .ips-card .ips-note{font-size:10px;color:var(--gray-mid);padding:8px 18px;border-bottom:1px solid var(--rule);background:var(--row-alt)}
+  .ips-bands-table{width:100%;border-collapse:collapse;font-size:12px}
+  .ips-bands-table th{background:var(--cream);color:var(--gray-txt);font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:8px 12px;text-align:left;border-bottom:1px solid var(--rule)}
+  .ips-bands-table th.right{text-align:right}
+  .ips-bands-table td{padding:10px 12px;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums;color:var(--ink)}
+  .ips-bands-table td.right{text-align:right}
+  .ips-bands-table tr:last-child td{border-bottom:none}
+  .ips-badge{display:inline-block;padding:2px 9px;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase}
+  .ips-badge.ok{background:rgba(42,122,86,0.12);color:var(--green)}
+  .ips-badge.out{background:rgba(155,35,53,0.12);color:var(--red)}
   .mini-stat{background:var(--cream);border:1px solid var(--rule);padding:12px 14px;border-left:3px solid var(--navy)}
   .mini-label{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:4px}
   .mini-value{font-size:15px;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums}
@@ -168,6 +182,26 @@
         <div class="kpi"><div class="kpi-label">Max drawdown</div><div class="kpi-value" id="kpi-dd">—</div><div class="kpi-sub" id="kpi-dd-sub">peak-to-trough</div></div>
         <div class="kpi"><div class="kpi-label">Total P&amp;L</div><div class="kpi-value" id="kpi-pnl">—</div><div class="kpi-sub" id="kpi-pnl-sub">realized + unrealized</div></div>
         <div class="kpi"><div class="kpi-label">Net invested</div><div class="kpi-value" id="kpi-inv">—</div><div class="kpi-sub" id="kpi-inv-sub">contrib. − withdr.</div></div>
+      </div>
+
+      <!-- IPS Bandas panel -->
+      <div class="ips-card" id="ips-bands-card" style="display:none">
+        <div class="ips-head">
+          Bandas IPS — Asignación táctica (§3.5–3.7)
+          <span style="font-size:9px;font-weight:400;opacity:0.7">Lectura al último NAV</span>
+        </div>
+        <div class="ips-note">Benchmark IPS §4.8: MSCI World Quality NR (proxy IWQU.L). Régimen transitorio reconocido por IPS §3.7.</div>
+        <table class="ips-bands-table">
+          <thead>
+            <tr>
+              <th>Componente</th>
+              <th class="right">Banda</th>
+              <th class="right">Lectura</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="ips-bands-tbody"></tbody>
+        </table>
       </div>
 
       <!-- Equity curve -->
@@ -693,7 +727,52 @@ function renderDashboard(j){
 
   // Equity curve
   renderEquityChart(j.series);
+
+  // IPS Bands panel
+  renderIpsBands(j);
 }
+
+function renderIpsBands(j) {
+  // Tactical bands per IPS §3.5-3.7
+  const BANDS = [
+    { label: 'Cash / equivalentes',   min: 0.15, max: 0.25, getValue: (nav, cash, mv, holdings) => nav > 0 ? cash / nav : 0 },
+    { label: 'Equity — quality',       min: 0.60, max: 0.80, getValue: (nav, cash, mv, holdings) => nav > 0 ? mv / nav : 0 },
+    { label: 'Equity — special sit',   min: 0.00, max: 0.15, getValue: (nav, cash, mv, holdings) => 0 },
+    { label: 'Renta fija / coberturas', min: 0.00, max: 0.10, getValue: (nav, cash, mv, holdings) => 0 },
+  ];
+
+  const k = j.kpis;
+  const nav  = k ? (k.nav || 0) : 0;
+  const cash = k ? (k.cash_usd || 0) : 0;
+  const mv   = k ? (k.market_value_usd || 0) : 0;
+  const holdings = j.holdings || [];
+
+  const tbody = document.getElementById('ips-bands-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  BANDS.forEach(b => {
+    const reading = b.getValue(nav, cash, mv, holdings);
+    const pct = (reading * 100).toFixed(1) + '%';
+    const bandLabel = b.min === b.max ? (b.min * 100).toFixed(0) + '%'
+                    : (b.min * 100).toFixed(0) + '–' + (b.max * 100).toFixed(0) + '%';
+    const inBand = reading >= b.min && reading <= b.max;
+    const badgeCls = inBand ? 'ok' : 'out';
+    const badgeTxt = inBand ? 'En banda' : 'FUERA';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escHtml(b.label)}</td>
+      <td class="right" style="color:var(--gray-txt)">${bandLabel}</td>
+      <td class="right" style="font-weight:600">${pct}</td>
+      <td><span class="ips-badge ${badgeCls}">${badgeTxt}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('ips-bands-card').style.display = '';
+}
+
+function escHtml(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 async function fetchPremortemRisk(){
   // Returns {TICKER: {triggered, total}} — empty object on any error.
