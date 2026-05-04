@@ -158,9 +158,19 @@
   <!-- MODE 2: WATCHLIST                                             -->
   <!-- ════════════════════════════════════════════════════════════ -->
   <div class="mode-pane" id="mode-watchlist">
-    <div class="meta">Names on the radar — quick view, no Columbia model required. Source: <code style="font-family:Menlo,monospace;font-size:11px">/data/watchlist.json</code> + Finnhub live data.</div>
+    <div class="meta">Names on the radar — quick view, no Columbia model required. Synced live to Supabase (table <code style="font-family:Menlo,monospace;font-size:11px">radar</code>) + Finnhub quotes.</div>
 
-    <div style="overflow-x:auto;margin-top:18px">
+    <!-- ADD ROW (admin only) -->
+    <div id="wl-add-row" style="margin-top:14px;background:var(--white);border:1px solid var(--rule);padding:10px;grid-template-columns:90px 1.4fr 2.2fr 1.4fr 100px;gap:8px;display:none">
+      <input id="wl-add-ticker" placeholder="TICKER" maxlength="8" style="padding:9px 10px;border:1px solid var(--rule);font-family:inherit;font-size:12px;background:var(--cream);outline:none;font-weight:600;letter-spacing:0.05em;text-transform:uppercase">
+      <input id="wl-add-name" placeholder="Company name" style="padding:9px 10px;border:1px solid var(--rule);font-family:inherit;font-size:12px;background:var(--cream);outline:none">
+      <input id="wl-add-thesis" placeholder="Thesis (optional)" style="padding:9px 10px;border:1px solid var(--rule);font-family:inherit;font-size:12px;background:var(--cream);outline:none">
+      <input id="wl-add-link" placeholder="Link URL (optional)" style="padding:9px 10px;border:1px solid var(--rule);font-family:inherit;font-size:12px;background:var(--cream);outline:none">
+      <button onclick="addToRadar()" style="padding:9px;background:var(--navy);color:var(--white);border:none;font-family:inherit;font-size:10px;letter-spacing:0.15em;font-weight:500;text-transform:uppercase;cursor:pointer">+ Add</button>
+    </div>
+    <div id="wl-add-msg" style="min-height:14px;font-size:11px;margin-top:4px"></div>
+
+    <div style="overflow-x:auto;margin-top:8px">
       <table class="stbl">
         <thead><tr>
           <th style="text-align:left">Ticker</th>
@@ -639,16 +649,63 @@ function escapeHtmlW(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-async function loadWatchlist() {
-  const tbody = document.getElementById('watchlist-body');
+// ─── Watchlist (Radar) ─── backed by Supabase `radar` table via /api/admin/radar
+// Public read uses ADBE-only fallback to /data/watchlist.json if API fails (e.g. logged out).
+
+function _wlAuthToken() {
+  return (window.dceAuth && window.dceAuth.token) ? window.dceAuth.token() : null;
+}
+
+function _wlToggleAddRow() {
+  const row = document.getElementById('wl-add-row');
+  if (!row) return;
+  // Show only if logged in (admin token present)
+  row.style.display = _wlAuthToken() ? 'grid' : 'none';
+}
+
+async function _wlFetchItems() {
+  const tk = _wlAuthToken();
+  if (tk) {
+    const r = await fetch('/api/admin/radar', { headers: { 'x-admin-token': tk } });
+    if (r.ok) {
+      const data = await r.json();
+      return (data.items || []).map(it => ({
+        id: it.id,
+        ticker: it.ticker,
+        name: it.name,
+        thesis: it.thesis || '',
+        link: it.link,
+        added: it.added_at,
+      }));
+    }
+  }
+  // Fallback: legacy static file (read-only). Used when not authenticated.
   try {
     const r = await fetch('/data/watchlist.json', { cache: 'no-store' });
     const data = await r.json();
-    const items = data.items || [];
+    return (data.items || []).map(it => ({
+      id: null,
+      ticker: it.ticker,
+      name: it.name,
+      thesis: it.thesis || '',
+      link: it.link,
+      added: it.added,
+    }));
+  } catch { return []; }
+}
+
+async function loadWatchlist() {
+  const tbody = document.getElementById('watchlist-body');
+  _wlToggleAddRow();
+  try {
+    const items = await _wlFetchItems();
     document.getElementById('watchlist-count').textContent = items.length;
 
     if (items.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--gray-mid);font-style:italic;padding:24px">No tickers in watchlist yet. Edit <code>public/data/watchlist.json</code> to add.</td></tr>`;
+      const msg = _wlAuthToken()
+        ? 'No names on the radar yet. Use the form above to add one.'
+        : 'No names on the radar yet. Log in to add.';
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--gray-mid);font-style:italic;padding:24px">${msg}</td></tr>`;
       return;
     }
 
@@ -660,6 +717,7 @@ async function loadWatchlist() {
       return { ...it, quote, profile };
     }));
 
+    const isAdmin = !!_wlAuthToken();
     tbody.innerHTML = enriched.map(it => {
       const price = it.quote?.c;
       const dp = it.quote?.dp;
@@ -668,9 +726,18 @@ async function loadWatchlist() {
       const sector = it.profile?.finnhubIndustry || '—';
       const mktCap = fmtMktCap(it.profile?.marketCapitalization);
       const company = it.name || it.profile?.name || it.ticker;
-      const action = it.link
-        ? `<a href="${escapeHtmlW(it.link)}" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px">Open →</a>`
-        : '';
+
+      const actions = [];
+      if (it.link) {
+        actions.push(`<a href="${escapeHtmlW(it.link)}" target="_blank" rel="noopener" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px">Open →</a>`);
+      }
+      if (isAdmin) {
+        actions.push(`<button onclick="sendToWorkflow(this)" data-tk="${escapeHtmlW(it.ticker)}" data-nm="${escapeHtmlW(company)}" data-url="${escapeHtmlW(it.link || '')}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:5px 10px;cursor:pointer;font-family:inherit" title="Add to Workflow kanban">→ Workflow</button>`);
+        if (it.id) {
+          actions.push(`<button onclick="deleteFromRadar('${it.id}','${escapeHtmlW(it.ticker)}')" style="font-size:9px;font-weight:700;color:var(--gray-mid);background:none;letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--rule);padding:5px 10px;cursor:pointer;font-family:inherit" title="Remove from radar">×</button>`);
+        }
+      }
+
       return `<tr>
         <td class="ticker-cell" style="text-align:left">${escapeHtmlW(it.ticker)}</td>
         <td style="text-align:left">${escapeHtmlW(company)}</td>
@@ -680,7 +747,7 @@ async function loadWatchlist() {
         <td>${mktCap}</td>
         <td style="text-align:left;color:var(--gray-mid);font-size:11px;max-width:240px">${escapeHtmlW(it.thesis || '')}</td>
         <td style="color:var(--gray-mid);font-size:11px">${escapeHtmlW(it.added || '')}</td>
-        <td>${action}</td>
+        <td style="white-space:nowrap;display:flex;gap:4px">${actions.join('')}</td>
       </tr>`;
     }).join('');
   } catch (e) {
@@ -688,6 +755,75 @@ async function loadWatchlist() {
     tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);padding:24px">Error loading watchlist</td></tr>`;
   }
 }
+
+async function addToRadar() {
+  const tk = _wlAuthToken();
+  const msgEl = document.getElementById('wl-add-msg');
+  msgEl.textContent = '';
+  msgEl.style.color = '';
+  if (!tk) { msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Log in to add tickers.'; return; }
+
+  const ticker = document.getElementById('wl-add-ticker').value.trim().toUpperCase();
+  const name   = document.getElementById('wl-add-name').value.trim();
+  const thesis = document.getElementById('wl-add-thesis').value.trim();
+  const link   = document.getElementById('wl-add-link').value.trim() || null;
+
+  if (!ticker) { msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Ticker required.'; return; }
+
+  msgEl.style.color = 'var(--gray-mid)'; msgEl.textContent = 'Adding…';
+  try {
+    const r = await fetch('/api/admin/radar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': tk },
+      body: JSON.stringify({ ticker, name, thesis, link }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+    document.getElementById('wl-add-ticker').value = '';
+    document.getElementById('wl-add-name').value = '';
+    document.getElementById('wl-add-thesis').value = '';
+    document.getElementById('wl-add-link').value = '';
+    msgEl.style.color = 'var(--green, #2a7a56)';
+    msgEl.textContent = '✓ ' + ticker + ' added to radar';
+    setTimeout(() => { msgEl.textContent = ''; }, 2500);
+    await loadWatchlist();
+  } catch (e) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = 'Error: ' + e.message;
+  }
+}
+window.addToRadar = addToRadar;
+
+async function deleteFromRadar(id, ticker) {
+  const tk = _wlAuthToken();
+  if (!tk) return;
+  if (!confirm(`Remove ${ticker} from the radar?`)) return;
+  try {
+    const r = await fetch('/api/admin/radar?id=' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: { 'x-admin-token': tk },
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    await loadWatchlist();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+window.deleteFromRadar = deleteFromRadar;
+
+// Re-run when admin login state changes (so the form appears after login).
+// dce-auth.js loads with `defer`, so it may not be ready when this script runs;
+// poll briefly for it.
+(function _wlHookAuth() {
+  if (window.dceAuth && window.dceAuth.onChange) {
+    window.dceAuth.onChange(() => { loadWatchlist(); });
+    // Re-render once dceAuth is available (login state may already be true)
+    loadWatchlist();
+  } else {
+    setTimeout(_wlHookAuth, 100);
+  }
+})();
+
 loadWatchlist();
 // Auto-load Idea Feed (default tab on page load)
 if (typeof loadIdeaFeed === 'function') { loadIdeaFeed(); window._ifLoaded = true; }
