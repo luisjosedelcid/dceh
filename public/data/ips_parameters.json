@@ -75,5 +75,105 @@
     ]
   },
 
-  "_NOTE_TIER1_METRICS": "IPS §4.7 'Monitoreo de posiciones y disciplina conductual' define las métricas Tier 1 con umbrales de semáforo (verde/amarillo/rojo). Esta sección debe extraerse del documento IPS v9.2 y añadirse a este archivo antes de construir las skills dce-quarterly-scorecard y dce-disconfirmation. Marcado como TODO."
+  "monitoring_system": {
+    "description": "IPS §4.7 — Sistema de monitoreo y disciplina conductual. Define la ESTRUCTURA del monitoreo. Los valores numéricos de umbrales NO son universales: se calibran por posición al momento de la inversión y viven en monitoring_{ticker}.json (validados contra position_monitoring_schema.json).",
+    "reference_section": "IPS §4.7",
+
+    "tiers": {
+      "tier_1": {
+        "name": "Validación de tesis",
+        "metric_count_range": [4, 5],
+        "calibration": "Por posición, al momento de la inversión",
+        "universal_metric": {
+          "id": "ROIC_MARGINAL",
+          "name": "ROIC marginal",
+          "description": "Retorno sobre capital incremental. Métrica universal obligatoria en todas las posiciones, conforme a IPS §4.4 (criterio MARGINAL_ROIC) y §4.7.",
+          "required": true
+        },
+        "description": "4-5 métricas por posición calibradas al arquetipo del negocio, incluyendo SIEMPRE el ROIC marginal."
+      },
+      "tier_2": {
+        "name": "Contexto competitivo",
+        "description": "Métricas sectoriales y de posicionamiento relativo (cuota, márgenes vs peers, NPS, etc.). No tienen umbrales formales pero se reportan en el Scorecard trimestral."
+      },
+      "tier_3": {
+        "name": "Macro y exógenas",
+        "description": "Variables macroeconómicas y regulatorias relevantes para la tesis. Se monitorean cualitativamente."
+      }
+    },
+
+    "traffic_light_protocol": {
+      "description": "Cada métrica Tier 1 tiene dos umbrales cuantitativos definidos al momento de la inversión.",
+      "levels": [
+        {
+          "code": "GREEN",
+          "label": "Verde",
+          "trigger": "Métrica dentro de rango esperado de la tesis",
+          "action": "Continuar monitoreo trimestral estándar"
+        },
+        {
+          "code": "YELLOW",
+          "label": "Amarillo - Alerta",
+          "trigger": "Métrica cruza umbral de alerta",
+          "action": "Activa revisión profunda de la métrica y su impacto en la tesis. Documentar en Scorecard del trimestre y en la Desconfirmación."
+        },
+        {
+          "code": "RED",
+          "label": "Rojo - Acción",
+          "trigger": "Métrica cruza umbral de acción",
+          "action": "Activa protocolo de decisión predefinido: trim, salida parcial o revisión de tesis completa. Toda acción de trim derivada de un semáforo rojo debe documentarse mediante Position Adjustment Memo (IPS §4.6)."
+        }
+      ]
+    },
+
+    "threshold_modification_rules": {
+      "description": "Reglas de gobernanza para modificar umbrales ya establecidos.",
+      "rules": [
+        "Los umbrales se definen al momento de la inversión y se documentan en el Investment Memo aprobado.",
+        "Cualquier modificación requiere justificación documentada basada en un cambio estructural del negocio o del sector.",
+        "La modificación debe ser aprobada por el CIO con justificación escrita.",
+        "NO se permite modificar un umbral como respuesta a que la métrica se aproxime o alcance dicho umbral. Esta es una regla anti-rationalización conductual."
+      ]
+    },
+
+    "deliverables": {
+      "description": "Entregables del sistema de monitoreo (cadencia en Operations Manual §1.3).",
+      "items": [
+        {
+          "name": "Investment Fact Sheet (IFS)",
+          "cadence": "Trimestral",
+          "owner": "Analyst (borrador) → Director of Research (validación)",
+          "content": "Identidad, valoración, semáforo Tier 1, desconfirmación, próxima acción"
+        },
+        {
+          "name": "Scorecard de posición",
+          "cadence": "Trimestral",
+          "owner": "Analyst",
+          "content": "Métricas Tier 1, status de semáforo, tendencia"
+        },
+        {
+          "name": "Desconfirmación",
+          "cadence": "Trimestral",
+          "owner": "Analyst (borrador) → Director of Research (validación)",
+          "content": "Qué evidencia existe de que la tesis está equivocada. Evaluada por CI conforme a Charter §3.1."
+        },
+        {
+          "name": "Dashboard agregado",
+          "cadence": "Trimestral",
+          "owner": "Analyst",
+          "content": "Vista consolidada del portafolio con métricas ponderadas y alertas"
+        }
+      ]
+    },
+
+    "per_position_files": {
+      "description": "Los umbrales calibrados por posición viven en archivos separados, validados contra position_monitoring_schema.json.",
+      "location": "/data/monitoring_{ticker_lower}.json",
+      "schema": "/data/position_monitoring_schema.json",
+      "current_positions": [
+        { "ticker": "MSFT", "file": "/data/monitoring_msft.json", "classification": "Core Compounder" },
+        { "ticker": "LULU", "file": "/data/monitoring_lulu.json", "classification": "Core Compounder" }
+      ]
+    }
+  }
 }
