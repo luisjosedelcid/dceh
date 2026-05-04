@@ -186,6 +186,26 @@
   }
   .h-logo strong { color: var(--gold); }
 
+  /* Canonical nav (grouped by /dce-auth.js into 7 items) */
+  .hnav { display:flex; align-items:center; gap:0; }
+  .hnav a {
+    font-family:'Archivo',sans-serif;
+    font-size:10px; font-weight:500;
+    letter-spacing:0.14em; text-transform:uppercase;
+    color:rgba(255,255,255,0.65);
+    text-decoration:none;
+    padding:8px 13px;
+    border:1px solid transparent;
+    border-radius:2px;
+    transition: all .2s;
+  }
+  .hnav a:hover { color:var(--gold); border-color:rgba(184,139,71,0.3); }
+  .hnav a.active {
+    color:var(--gold);
+    border-color:rgba(184,139,71,0.4);
+    font-weight:600;
+  }
+
   .h-divider {
     width: 1px; height: 28px;
     background: rgba(184,139,71,0.3);
@@ -620,19 +640,22 @@
         Columbia Model — Quality Growth
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <a href="/cockpit.html" style="font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:var(--gold);text-decoration:none;border:1px solid rgba(184,139,71,0.4);transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.borderColor='var(--gold)';this.style.background='rgba(184,139,71,0.08)'" onmouseout="this.style.borderColor='rgba(184,139,71,0.4)';this.style.background='transparent'">Cockpit</a>
-      <a href="/research.html" style="font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(184,139,71,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='transparent'">Research</a>
-      <a href="/study.html" style="font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(184,139,71,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='transparent'">Study</a>
-      <a href="/journal.html" style="font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(184,139,71,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='transparent'">Journal</a>
-      <a href="/news.html" style="font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(184,139,71,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='transparent'">News</a>
-      <a href="/reporting.html" style="font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(184,139,71,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='transparent'">Reporting</a>
-      <a href="/performance.html" style="font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(184,139,71,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='transparent'">Performance</a>
-      <a href="/dataroom.html" style="font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(184,139,71,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='transparent'">Data Room</a>
-      <a href="/calendar.html" style="font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:7px 14px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid transparent;transition:all .2s;font-family:'Archivo',sans-serif" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(184,139,71,0.3)'" onmouseout="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='transparent'">Calendar</a>
-      <div style="width:1px;height:20px;background:rgba(184,139,71,0.2);margin:0 8px"></div>
-      <div class="h-date" id="hdr-date" style="font-size:9px;letter-spacing:0.15em;color:rgba(255,255,255,0.3)"></div>
-    </div>
+    <nav class="hnav">
+      <a href="/" class="active">Home</a>
+      <a href="/cockpit.html">Cockpit</a>
+      <a href="/universe.html">Universe</a>
+      <a href="/screener.html">Find</a>
+      <a href="/study.html">Study</a>
+      <a href="/journal.html">Journal</a>
+      <a href="/portfolio.html">Portfolio</a>
+      <a href="/news.html">News</a>
+      <a href="/dataroom.html">Data Room</a>
+      <a href="/reporting.html">Reporting</a>
+      <a href="/performance.html">Performance</a>
+      <a href="/research.html">Research</a>
+      <a href="/calendar.html">Calendar</a>
+      <div class="h-date" id="hdr-date" style="font-size:9px;letter-spacing:0.15em;color:rgba(255,255,255,0.3);margin-left:8px"></div>
+    </nav>
   </header>
 
   <div class="hero">
