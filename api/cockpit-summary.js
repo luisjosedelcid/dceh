@@ -11,15 +11,40 @@ const { sbSelect } = require('./_supabase');
 const { requireRole } = require('./_require-role');
 const { loadAndCompute } = require('./_perf-load');
 
-// ── Discipline gate thresholds (hardcoded MVP — promote to DB later) ───────
-const GATES = {
-  RE_UNDERWRITING_DAYS: 5,         // re-underwriting must be done within N days of 10-Q
-  POSITION_REVIEW_DAYS: 90,        // every position reviewed within last N days
-  PM_TRIGGER_DAYS: 5,              // pre-mortem trigger unaddressed for >N days = FAIL
-  CASH_MIN_PCT: 0.10,              // cash must be ≥ 10%
-  CONCENTRATION_WARN_PCT: 0.35,    // any position >35% = WARN
-  CONCENTRATION_FAIL_PCT: 0.45,    // any position >45% = FAIL
+// ── Discipline gate thresholds (sourced from discipline_rules table) ──────
+// Defaults used as fallback if DB read fails or row is missing.
+const GATE_DEFAULTS = {
+  RE_UNDERWRITING_DAYS: 5,
+  POSITION_REVIEW_DAYS: 90,
+  PM_TRIGGER_DAYS: 5,
+  CASH_MIN_PCT: 0.10,
+  CONCENTRATION_WARN_PCT: 0.35,
+  CONCENTRATION_FAIL_PCT: 0.45,
 };
+
+const RULE_KEY_MAP = {
+  re_underwriting_days: 'RE_UNDERWRITING_DAYS',
+  position_review_days: 'POSITION_REVIEW_DAYS',
+  pm_trigger_days: 'PM_TRIGGER_DAYS',
+  cash_min_pct: 'CASH_MIN_PCT',
+  concentration_warn_pct: 'CONCENTRATION_WARN_PCT',
+  concentration_fail_pct: 'CONCENTRATION_FAIL_PCT',
+};
+
+async function loadDisciplineRules() {
+  try {
+    const rows = await sbSelect('discipline_rules', 'select=rule_key,value');
+    const out = { ...GATE_DEFAULTS };
+    for (const r of rows) {
+      const target = RULE_KEY_MAP[r.rule_key];
+      if (target) out[target] = Number(r.value);
+    }
+    return out;
+  } catch (e) {
+    console.error('cockpit-summary: failed to load discipline_rules, using defaults:', e.message);
+    return { ...GATE_DEFAULTS };
+  }
+}
 
 // Resolve current MoS anchor (RV or EPV) per ticker by reading the most recent
 // premortem/note. For MVP we read latest reunderwriting_entry's kill_criteria_snapshot
@@ -57,6 +82,9 @@ module.exports = async (req, res) => {
     const today = new Date();
     const todayStr = today.toISOString().slice(0, 10);
     const daysAgo = (d) => Math.floor((today - new Date(d)) / 86400000);
+
+    // Load discipline thresholds from DB (with hardcoded fallback)
+    const GATES = await loadDisciplineRules();
 
     // ── 1) Performance: NAV, holdings, cash, vs URTH ──────────────────────
     const perf = await loadAndCompute({});

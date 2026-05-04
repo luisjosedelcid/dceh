@@ -177,6 +177,7 @@
     <button class="tab" data-tab="ideafeed" type="button" id="tab-ideafeed">Idea Feed sources</button>
     <button class="tab" data-tab="study" type="button" id="tab-study">Study articles</button>
     <button class="tab" data-tab="journal" type="button" id="tab-journal">Decision Journal</button>
+    <button class="tab" data-tab="discipline" type="button" id="tab-discipline">Discipline rules</button>
   </div>
 
   <!-- TAB: REPORTS -->
@@ -427,6 +428,24 @@
     <div style="display:flex;justify-content:center;margin-top:14px">
       <button class="btn ghost" type="button" id="btn-audit-loadmore" style="display:none">Load more</button>
     </div>
+  </div>
+
+  <!-- TAB: DISCIPLINE RULES -->
+  <div class="tab-panel" data-panel="discipline">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;gap:12px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:13px;color:var(--ink);font-weight:600;margin-bottom:4px">Discipline gate thresholds</div>
+        <div style="font-size:11px;color:var(--gray-mid);max-width:680px;line-height:1.5">
+          Estos valores controlan los 5 gates del Cockpit. Cambios aplican inmediatamente al próximo refresh del Cockpit.
+          Porcentajes en formato decimal (0.10 = 10%). Días en números enteros.
+        </div>
+      </div>
+      <button class="btn ghost" type="button" id="btn-discipline-refresh" style="font-size:11px">Refresh</button>
+    </div>
+    <div id="discipline-body" style="background:var(--white);border:1px solid var(--rule)">
+      <div class="loading-files" style="padding:24px;text-align:center;color:var(--gray-mid)">Sign in as admin to view rules</div>
+    </div>
+    <div id="discipline-msg" style="margin-top:12px;font-size:12px;min-height:18px"></div>
   </div>
 
 </main>
@@ -711,6 +730,7 @@ document.querySelectorAll('.tab').forEach(t => {
     if (t.dataset.tab === 'ideafeed') loadIdeaFeedSources();
     if (t.dataset.tab === 'study') loadStudyAdmin();
     if (t.dataset.tab === 'journal') loadJournalAdmin();
+    if (t.dataset.tab === 'discipline') loadDisciplineRules();
   });
 });
 
@@ -1306,6 +1326,104 @@ document.getElementById('jr-review-submit').addEventListener('click', async () =
     loadJournalAdmin();
   } catch (e) { err.textContent = 'Error: ' + e.message; }
 });
+
+// ─────────────────────────────────────────────────────────────────
+// DISCIPLINE RULES (admin tab)
+// ─────────────────────────────────────────────────────────────────
+async function loadDisciplineRules() {
+  const body = document.getElementById('discipline-body');
+  const msg = document.getElementById('discipline-msg');
+  msg.textContent = '';
+  msg.style.color = 'var(--gray-mid)';
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) {
+    body.innerHTML = '<div class="loading-files" style="padding:24px;text-align:center;color:var(--gray-mid)">Sign in as admin to view rules</div>';
+    return;
+  }
+  body.innerHTML = '<div class="loading-files" style="padding:24px;text-align:center;color:var(--gray-mid)">Loading rules…</div>';
+  try {
+    const r = await fetch('/api/discipline-rules', { headers: { 'x-admin-token': token } });
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'Failed to load');
+    renderDisciplineRules(data.rules || []);
+  } catch (e) {
+    body.innerHTML = '<div class="loading-files" style="padding:24px;text-align:center;color:#a93226">Error: ' + (e.message || e) + '</div>';
+  }
+}
+
+function renderDisciplineRules(rules) {
+  const body = document.getElementById('discipline-body');
+  if (!rules.length) {
+    body.innerHTML = '<div class="loading-files" style="padding:24px;text-align:center;color:var(--gray-mid)">No rules found</div>';
+    return;
+  }
+  const rows = rules.map(rule => {
+    const isPct = rule.unit === 'pct';
+    const isDays = rule.unit === 'days';
+    const step = isPct ? '0.01' : '1';
+    const min = isPct ? '0.01' : '1';
+    const max = isPct ? '1' : '3650';
+    const placeholder = isPct ? '0.10 = 10%' : (isDays ? 'días' : '');
+    const updatedBy = rule.updated_by ? '<div style="font-size:10px;color:var(--gray-mid);margin-top:2px">Updated by ' + escapeHtml(rule.updated_by) + ' · ' + new Date(rule.updated_at).toLocaleDateString() + '</div>' : '';
+    return (
+      '<div style="display:grid;grid-template-columns:1fr 140px 80px 100px;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--rule)">' +
+        '<div>' +
+          '<div style="font-size:12px;font-weight:600;color:var(--ink)">' + escapeHtml(rule.label || rule.rule_key) + '</div>' +
+          '<div style="font-size:11px;color:var(--gray-mid);line-height:1.4;margin-top:2px">' + escapeHtml(rule.description || '') + '</div>' +
+          '<div style="font-size:10px;color:var(--gray-mid);margin-top:2px;font-family:monospace">' + escapeHtml(rule.rule_key) + '</div>' +
+          updatedBy +
+        '</div>' +
+        '<input type="number" data-rule-key="' + escapeHtml(rule.rule_key) + '" value="' + Number(rule.value) + '" step="' + step + '" min="' + min + '" max="' + max + '" placeholder="' + placeholder + '" style="font-size:12px;padding:6px 8px;border:1px solid var(--rule);background:#fafaf7;font-family:monospace">' +
+        '<div style="font-size:11px;color:var(--gray-mid)">' + escapeHtml(rule.unit || '') + '</div>' +
+        '<button class="btn" type="button" data-save-key="' + escapeHtml(rule.rule_key) + '" style="font-size:11px;padding:6px 10px">Save</button>' +
+      '</div>'
+    );
+  }).join('');
+  body.innerHTML = rows;
+  body.querySelectorAll('button[data-save-key]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-save-key');
+      const input = body.querySelector('input[data-rule-key="' + key + '"]');
+      if (!input) return;
+      saveDisciplineRule(key, input.value);
+    });
+  });
+}
+
+async function saveDisciplineRule(ruleKey, rawValue) {
+  const msg = document.getElementById('discipline-msg');
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) {
+    msg.style.color = '#a93226';
+    msg.textContent = 'Not signed in as admin';
+    return;
+  }
+  const value = Number(rawValue);
+  if (!Number.isFinite(value)) {
+    msg.style.color = '#a93226';
+    msg.textContent = 'Invalid value for ' + ruleKey;
+    return;
+  }
+  msg.style.color = 'var(--gray-mid)';
+  msg.textContent = 'Saving ' + ruleKey + '…';
+  try {
+    const r = await fetch('/api/admin-discipline-rules', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-admin-token': token },
+      body: JSON.stringify({ rule_key: ruleKey, value })
+    });
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'Save failed');
+    msg.style.color = '#1e6e3a';
+    msg.textContent = '✓ Saved ' + ruleKey + ' = ' + value;
+    loadDisciplineRules();
+  } catch (e) {
+    msg.style.color = '#a93226';
+    msg.textContent = 'Error: ' + (e.message || e);
+  }
+}
+
+document.getElementById('btn-discipline-refresh')?.addEventListener('click', loadDisciplineRules);
 
 // INIT
 refreshAdminUI();
