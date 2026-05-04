@@ -261,6 +261,23 @@
               "doc_type": "Munger Digital"
             }
           ]
+        },
+        "SECTOR": {
+          "name": "SECTOR - Auto Parts",
+          "ticker": "SECTOR",
+          "company": "Auto Parts",
+          "files": [
+            {
+              "name": "2026-04 - Screening Brief - Auto Parts (SECTOR)",
+              "filename": "2026-04_Screening_Brief_Auto_Parts_SECTOR.xlsx",
+              "type": "xlsx",
+              "detail": "Brief de screening",
+              "url": "/docs/SECTOR/2026-04_Screening_Brief_Auto_Parts_SECTOR.xlsx",
+              "uploaded": "2026-04-29",
+              "doc_type": "Screening Brief"
+            }
+          ],
+          "status": "screening"
         }
       },
       "files": []
