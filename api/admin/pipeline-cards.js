@@ -18,6 +18,7 @@
 
 const { verifyAdminToken } = require('../_admin-auth');
 const { sbSelect, sbInsert, sbUpdate, sbDelete } = require('../_supabase');
+const { sendStageChangeAlert } = require('../_notify');
 
 const VALID_STAGES = ['backlog', 'analysis', 'review', 'decision', 'approved', 'rejected'];
 
@@ -127,12 +128,34 @@ module.exports = async (req, res) => {
       }
       if (body.irr !== undefined) patch.irr = body.irr ? String(body.irr).trim() : null;
 
+      // Capture pre-update state if stage is changing (for email alert + diff).
+      let prevCard = null;
+      if (patch.stage !== undefined) {
+        try {
+          const prev = await sbSelect('pipeline_cards', `select=stage,ticker,name&id=eq.${id}&limit=1`);
+          prevCard = Array.isArray(prev) && prev[0] ? prev[0] : null;
+        } catch {}
+      }
+
       const result = await sbUpdate('pipeline_cards', `id=eq.${id}`, patch);
       const item = Array.isArray(result) ? result[0] : result;
       if (!item) {
         res.status(404).json({ error: 'Card not found' });
         return;
       }
+
+      // Fire-and-forget email alert when stage actually changes.
+      if (prevCard && patch.stage && prevCard.stage !== patch.stage) {
+        sendStageChangeAlert({
+          ticker: item.ticker || prevCard.ticker,
+          name: item.name || prevCard.name,
+          oldStage: prevCard.stage,
+          newStage: patch.stage,
+          actor,
+          note: patch.note !== undefined ? patch.note : item.note,
+        }).catch(err => console.error('[stage-alert]', err));
+      }
+
       res.status(200).json({ item });
       return;
     }

@@ -356,4 +356,88 @@ async function sendWatchlistTriggerAlert({ items }) {
   }
 }
 
-module.exports = { sendUploadEmail, sendPremortemAlert, sendReunderwritingDueAlert, sendWatchlistTriggerAlert };
+// ============================================================================
+// Pipeline stage change alerts — sends email when a card moves between stages.
+// ============================================================================
+async function sendStageChangeAlert({ ticker, name, oldStage, newStage, actor, note }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const to = (process.env.ALERT_EMAIL_TO || '').split(',').map(s => s.trim()).filter(Boolean);
+  const from = process.env.ALERT_EMAIL_FROM || 'DCE Pipeline <onboarding@resend.dev>';
+
+  if (!apiKey || to.length === 0) {
+    return { skipped: true, reason: 'RESEND_API_KEY or ALERT_EMAIL_TO not set' };
+  }
+
+  const STAGE_LABELS = {
+    backlog: 'Backlog',
+    analysis: 'Analysis',
+    review: 'Review',
+    decision: 'Decision Pending',
+    approved: 'Approved',
+    rejected: 'Rejected',
+  };
+  const oldLabel = STAGE_LABELS[oldStage] || oldStage || '—';
+  const newLabel = STAGE_LABELS[newStage] || newStage;
+
+  const ts = new Date().toLocaleString('en-US', {
+    timeZone: 'America/New_York',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+
+  const subject = `[DCE Pipeline] ${ticker} → ${newLabel}`;
+
+  const noteHtml = note ? `
+            <tr><td style="color:#606060;vertical-align:top">Note</td><td>${escapeHtml(note)}</td></tr>` : '';
+
+  const html = `
+<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Helvetica,Arial,sans-serif;color:#0d0d0d">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:24px 0">
+    <tr><td align="center">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e6e6e6">
+        <tr><td style="background:#1b2642;padding:18px 24px;color:#ffffff">
+          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#b88b47">DCE Holdings · Research Pipeline</div>
+          <div style="font-size:18px;font-weight:bold;margin-top:4px">${escapeHtml(ticker)} moved to ${escapeHtml(newLabel)}</div>
+        </td></tr>
+        <tr><td style="padding:24px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;line-height:1.6">
+            <tr><td style="color:#606060;width:120px">Ticker</td><td><strong>${escapeHtml(ticker)}</strong></td></tr>
+            <tr><td style="color:#606060">Company</td><td>${escapeHtml(name || '—')}</td></tr>
+            <tr><td style="color:#606060">Transition</td><td><span style="color:#606060">${escapeHtml(oldLabel)}</span> → <strong style="color:#1b2642">${escapeHtml(newLabel)}</strong></td></tr>
+            <tr><td style="color:#606060">Moved by</td><td>${escapeHtml(actor || 'Unknown')}</td></tr>
+            <tr><td style="color:#606060">Timestamp</td><td>${escapeHtml(ts)} ET</td></tr>${noteHtml}
+          </table>
+          <div style="margin-top:24px">
+            <a href="https://www.dceholdings.app/research" style="display:inline-block;background:#1b2642;color:#ffffff;padding:10px 20px;text-decoration:none;font-size:13px;font-weight:bold;letter-spacing:0.04em">Open Research Pipeline →</a>
+          </div>
+        </td></tr>
+        <tr><td style="background:#f5f5f5;border-top:2px solid #b88b47;padding:14px 24px;font-size:11px;color:#606060">
+          DCE Holdings — Investment Office · Confidential · Internal use only
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const text = `DCE Pipeline — ${ticker} moved to ${newLabel}\n\n` +
+    `Company: ${name || '—'}\nTransition: ${oldLabel} → ${newLabel}\n` +
+    `Moved by: ${actor || 'Unknown'}\nTimestamp: ${ts} ET\n` +
+    (note ? `Note: ${note}\n` : '') +
+    `\nOpen: https://www.dceholdings.app/research`;
+
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, to, subject, html, text }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return { ok: false, status: r.status, error: data };
+    return { ok: true, id: data.id };
+  } catch (e) {
+    return { ok: false, error: String(e).slice(0, 200) };
+  }
+}
+
+module.exports = { sendUploadEmail, sendPremortemAlert, sendReunderwritingDueAlert, sendWatchlistTriggerAlert, sendStageChangeAlert };
