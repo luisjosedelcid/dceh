@@ -10,6 +10,8 @@
   "ticker": "LULU",
   "company": "Lululemon Athletica Inc.",
   "classification": "Core Compounder",
+  "q1_2026_status": "YELLOW",
+  "q1_2026_status_note": "Precio caído materialmente desde cost basis. Tesis bajo presión: comps NA débiles, gross margin bajo observación. Earnings Q1 FY2026 pendientes.",
   "tesis_resumen": "Lululemon compone capital vía (1) brand premium con pricing power en athleisure, (2) expansión internacional (China + Europa) sosteniendo crecimiento, (3) ROIC alto sin apalancamiento, (4) gross margin estructuralmente >55% reflejando moat de marca. Posición Core con horizonte 10+ años, riesgo principal: saturación de mercado norteamericano.",
   "tier_1_metrics": [
     {

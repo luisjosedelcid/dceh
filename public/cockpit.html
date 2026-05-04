@@ -129,6 +129,13 @@
   .mos-pill.warn { background: rgba(184,139,71,0.12); color: var(--gold); }
   .mos-pill.bad { background: rgba(139,0,0,0.12); color: var(--red); }
   .mos-pill.none { background: rgba(96,96,96,0.10); color: var(--gray-txt); }
+  /* Tesis Q1 badges */
+  .tesis-badge { display:inline-block; padding:2px 8px; font-size:9px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; }
+  .tesis-badge.GREEN  { background:rgba(42,122,86,0.12); color:var(--green); }
+  .tesis-badge.YELLOW { background:rgba(193,149,52,0.14); color:#7a5a00; }
+  .tesis-badge.RED    { background:rgba(155,35,53,0.12); color:var(--red); }
+  .tesis-badge.PENDING { background:rgba(96,96,96,0.10); color:var(--gray-txt); }
+  .tier1-stat { font-size:10px; color:var(--gray-mid); white-space:nowrap; }
 
   /* ── Decisions ── */
   .decision {
@@ -416,43 +423,86 @@
     return `${p.anchor_type} · ${sign}${(p.mos_pct * 100).toFixed(0)}% MoS`;
   }
 
+  // Monitoring data cache: loaded async after positions render
+  const _monitoringCache = {};
+  const MONITORING_FILES = { MSFT: '/data/monitoring_msft.json', LULU: '/data/monitoring_lulu.json' };
+
+  async function loadMonitoringData() {
+    const tickers = Object.keys(MONITORING_FILES);
+    await Promise.all(tickers.map(async ticker => {
+      try {
+        const r = await fetch(MONITORING_FILES[ticker]);
+        if (r.ok) _monitoringCache[ticker] = await r.json();
+      } catch { /* ignore */ }
+    }));
+  }
+
+  function getTesisQ1(ticker) {
+    const m = _monitoringCache[ticker];
+    if (!m) return { status: 'PENDING', note: 'Sin datos', tier1Total: 0 };
+    return {
+      status: m.q1_2026_status || 'PENDING',
+      note: m.q1_2026_status_note || '',
+      tier1Total: Array.isArray(m.tier_1_metrics) ? m.tier_1_metrics.length : 0,
+    };
+  }
+
   function renderPositions(d) {
     const body = document.getElementById('positions-body');
     if (!d.positions.length) {
       body.innerHTML = '<div class="empty">Sin posiciones de equity.</div>';
       return;
     }
-    let html = `
-      <table class="pos-table">
-        <thead>
-          <tr>
-            <th>Ticker</th>
-            <th class="right">Peso</th>
-            <th class="right">P&amp;L</th>
-            <th>MoS vs ancla</th>
-            <th>Última revisión</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-    for (const p of d.positions) {
-      const reviewTxt = p.days_since_review == null
-        ? '<span style="color:var(--red)">sin revisión</span>'
-        : (p.days_since_review > 90
-          ? `<span style="color:var(--red);font-weight:600">${p.days_since_review}d ⚠</span>`
-          : `${p.days_since_review}d`);
-      html += `
-        <tr>
-          <td class="tk">${escapeHtml(p.ticker)}</td>
-          <td class="right">${p.weight_pct != null ? (p.weight_pct * 100).toFixed(1) + '%' : '—'}</td>
-          <td class="right ${cls(p.unrealized_pct)}">${fmtPct(p.unrealized_pct)}</td>
-          <td><span class="mos-pill ${mosClass(p)}">${escapeHtml(mosLabel(p))}</span></td>
-          <td>${reviewTxt}</td>
-        </tr>
+    const buildTable = () => {
+      let html = `
+        <table class="pos-table">
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th class="right">Peso</th>
+              <th class="right">P&amp;L</th>
+              <th>MoS vs ancla</th>
+              <th>Tesis Q1</th>
+              <th>Última revisión</th>
+            </tr>
+          </thead>
+          <tbody>
       `;
+      for (const p of d.positions) {
+        const reviewTxt = p.days_since_review == null
+          ? '<span style="color:var(--red)">sin revisión</span>'
+          : (p.days_since_review > 90
+            ? `<span style="color:var(--red);font-weight:600">${p.days_since_review}d</span>`
+            : `${p.days_since_review}d`);
+        const tq = getTesisQ1(p.ticker);
+        const statusLabel = tq.status === 'GREEN'  ? 'Tesis intacta'
+                          : tq.status === 'YELLOW' ? 'Bajo presión'
+                          : tq.status === 'RED'    ? 'ALERTA'
+                          : tq.status;
+        const tier1Stat = tq.tier1Total > 0
+          ? `<div class="tier1-stat">${tq.tier1Total}/${tq.tier1Total} Tier 1 PENDING</div>`
+          : '';
+        const titleAttr = tq.note ? ` title="${escapeHtml(tq.note)}"` : '';
+        html += `
+          <tr>
+            <td class="tk">${escapeHtml(p.ticker)}</td>
+            <td class="right">${p.weight_pct != null ? (p.weight_pct * 100).toFixed(1) + '%' : '—'}</td>
+            <td class="right ${cls(p.unrealized_pct)}">${fmtPct(p.unrealized_pct)}</td>
+            <td><span class="mos-pill ${mosClass(p)}">${escapeHtml(mosLabel(p))}</span></td>
+            <td><span class="tesis-badge ${escapeHtml(tq.status)}"${titleAttr}>${escapeHtml(statusLabel)}</span>${tier1Stat}</td>
+            <td>${reviewTxt}</td>
+          </tr>
+        `;
+      }
+      html += '</tbody></table>';
+      body.innerHTML = html;
+    };
+
+    // Render immediately with available data, then refresh once monitoring loads
+    buildTable();
+    if (Object.keys(_monitoringCache).length === 0) {
+      loadMonitoringData().then(buildTable);
     }
-    html += '</tbody></table>';
-    body.innerHTML = html;
   }
 
   function renderDecisions(d) {

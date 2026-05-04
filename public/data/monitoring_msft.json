@@ -10,6 +10,8 @@
   "ticker": "MSFT",
   "company": "Microsoft Corporation",
   "classification": "Core Compounder",
+  "q1_2026_status": "GREEN",
+  "q1_2026_status_note": "Tesis intacta. Azure growth, Copilot monetization, FCF conversion en rango esperado. Earnings Q1 FY2026 pendientes.",
   "tesis_resumen": "Microsoft compone capital sosteniblemente vía (1) Azure capturando share secular en cloud enterprise, (2) Office/Productivity con pricing power y monetización de Copilot, (3) ROIC marginal sobre capex de IA superior al WACC. Posición Core con horizonte 10+ años.",
   "tier_1_metrics": [
     {
