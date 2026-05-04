@@ -4,6 +4,7 @@
     { "source": "/bkng", "destination": "/company.html?ticker=BKNG" },
     { "source": "/sap", "destination": "/company.html?ticker=SAP" },
     { "source": "/lulu", "destination": "/company.html?ticker=LULU" },
+    { "source": "/msft", "destination": "/company.html?ticker=MSFT" },
     { "source": "/universe", "destination": "/universe.html" },
     { "source": "/screener", "destination": "/screener.html" },
     { "source": "/portfolio", "destination": "/portfolio.html" },

@@ -390,6 +390,32 @@ const UNIVERSE = [
     rvPerShare: 44.27,
     badge: 'Conditional',
   },
+  {
+    ticker: 'MSFT',
+    name: 'Microsoft Corporation',
+    sector: 'NASDAQ · Software & Cloud',
+    link: '/msft',
+    currency: '$',
+    finnhubSymbol: 'MSFT',
+    shares: 7464,                        // M diluted
+    debt: 43151 + 17437,                 // Total Debt + Leases ($M)
+    cash: 94565,                         // Cash + STI ($M)
+    defaultPrice: 414.44,
+    nopatNorm: 86630,                    // Normalized NOPAT ($M)
+    wacc: 0.0894,
+    excessCash: 89000,                   // ($M, post 2% rev buffer)
+    bridgeAdj: 89000 + 15405 - 43151 - 17437,  // excess + non-op - debt - leases
+    distYield: 0.0135,
+    reinvGrowth: 0.2136,
+    organicGrowth: 0.020,
+    exitMult: 24,
+    horizon: 5,
+    hurdle: 0.12,
+    de: 0.0196,
+    netBorrowCost: 0.0191,
+    rvPerShare: 58.90,
+    badge: 'Conditional',
+  },
 ];
 
 function fmt(v, dec) { return v.toLocaleString('en-US', { minimumFractionDigits: dec||0, maximumFractionDigits: dec||0 }); }

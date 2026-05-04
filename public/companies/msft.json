@@ -1,0 +1,1490 @@
+{
+  "ticker": "MSFT",
+  "name": "Microsoft Corporation",
+  "exchange": "NASDAQ",
+  "industry": "Software & Cloud Computing",
+  "fiscalYear": "FY2025",
+  "valuationDate": "05-May-2026",
+  "currency": "USD",
+  "currencySymbol": "$",
+  "overview": {
+    "marketCap": 3093380.0,
+    "ev": 3059403.0,
+    "shares": 7464.0,
+    "debt": 43151.0,
+    "leases": 17437.0,
+    "cash": 94565.0,
+    "stockPrice": 414.44,
+    "nopatNorm": 86630.0,
+    "fcfLatest": 71611.0,
+    "revenue": 281724.0,
+    "operMargin": 0.4562,
+    "netMargin": 0.3615,
+    "fcfMargin": 0.2542,
+    "taxRate": 0.18,
+    "wacc": 0.0894,
+    "roic3yr": 0.4,
+    "roicLatest": 0.3992,
+    "hurdle": 0.12,
+    "ceo": "Satya Nadella",
+    "headquarters": "Redmond, WA, USA",
+    "employees": 228000,
+    "evNopat": 35.3,
+    "revenueCagr3yr": 0.1242,
+    "fcfCagr3yr": 0.0639,
+    "ebitda": 162681.0,
+    "netIncome": 101832.0
+  },
+  "financials": {
+    "years": [
+      "FY2020",
+      "FY2021",
+      "FY2022",
+      "FY2023",
+      "FY2024",
+      "FY2025"
+    ],
+    "revenue": [
+      143015.0,
+      168088.0,
+      198270.0,
+      211915.0,
+      245122.0,
+      281724.0
+    ],
+    "operIncome": [
+      52959.0,
+      69916.0,
+      83383.0,
+      88675.0,
+      109433.0,
+      128124.0
+    ],
+    "netIncome": [
+      44281.0,
+      61271.0,
+      72738.0,
+      72361.0,
+      88136.0,
+      101832.0
+    ],
+    "ebitda": [
+      72228.0,
+      90632.0,
+      107895.0,
+      115870.0,
+      138943.0,
+      160828.0
+    ],
+    "fcf": [
+      129372.0,
+      153680.0,
+      188122.0,
+      186828.0,
+      175187.0,
+      264897.0
+    ],
+    "cfo": [
+      131893.0,
+      162589.0,
+      188122.0,
+      188498.0,
+      244319.0,
+      270875.0
+    ],
+    "buybacks": [
+      15137.0,
+      27385.0,
+      32696.0,
+      17563.0,
+      16729.0,
+      17700.0
+    ],
+    "dividends": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "totalAssets": [
+      292068.0,
+      318190.0,
+      334366.0,
+      445699.0,
+      449682.0,
+      552715.0
+    ],
+    "totalDebt": [
+      10885.0,
+      11726.0,
+      12728.0,
+      14346.0,
+      15497.0,
+      17437.0
+    ],
+    "cashSti": [
+      17749.0,
+      14224.0,
+      13931.0,
+      34704.0,
+      18315.0,
+      30242.0
+    ],
+    "equity": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "nopatAdjusted": [
+      88614.5,
+      100061.43,
+      110582.1,
+      111580.8,
+      126167.27,
+      138388.0
+    ],
+    "operMarginPct": [
+      37.03,
+      41.59,
+      42.06,
+      41.84,
+      44.64,
+      45.48
+    ],
+    "netMarginPct": [
+      30.96,
+      36.45,
+      36.69,
+      34.15,
+      35.96,
+      36.15
+    ],
+    "isRows": [
+      {
+        "l": "REVENUES",
+        "t": "section"
+      },
+      {
+        "l": "Net Revenue",
+        "t": "subtotal",
+        "v": [
+          143015.0,
+          168088.0,
+          198270.0,
+          211915.0,
+          245122.0,
+          281724.0
+        ]
+      },
+      {
+        "l": "Cost of Goods Sold",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -46078.0,
+          -52232.0,
+          -62650.0,
+          -65711.0,
+          -74114.0,
+          -87831.0
+        ]
+      },
+      {
+        "l": "Gross Profit",
+        "t": "subtotal",
+        "v": [
+          96937.0,
+          115856.0,
+          135620.0,
+          146204.0,
+          171008.0,
+          193893.0
+        ]
+      },
+      {
+        "l": "OPERATING EXPENSES",
+        "t": "section"
+      },
+      {
+        "l": "Depreciation & Amortization",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -19269.0,
+          -20716.0,
+          -24512.0,
+          -27195.0,
+          -29510.0,
+          -32704.0
+        ]
+      },
+      {
+        "l": "Selling, General & Admin (ex D&A)",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -19598.0,
+          -20117.0,
+          -21825.0,
+          -22759.0,
+          -24456.0,
+          -25798.0
+        ]
+      },
+      {
+        "l": "Impairments & Restructuring",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -5111.0,
+          -5107.0,
+          -5900.0,
+          -7575.0,
+          -7609.0,
+          -7267.0
+        ]
+      },
+      {
+        "l": "Operating Income",
+        "t": "subtotal",
+        "v": [
+          52959.0,
+          69916.0,
+          83383.0,
+          88675.0,
+          109433.0,
+          128124.0
+        ]
+      },
+      {
+        "l": "BELOW THE LINE",
+        "t": "section"
+      },
+      {
+        "l": "Provision for Income Taxes",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -2669.0,
+          -3332.0,
+          -2396.0,
+          -1073.0,
+          2210.0,
+          3488.0
+        ]
+      },
+      {
+        "l": "Net Income",
+        "t": "subtotal",
+        "v": [
+          44281.0,
+          61271.0,
+          72738.0,
+          72361.0,
+          88136.0,
+          101832.0
+        ]
+      },
+      {
+        "l": "DERIVED METRICS",
+        "t": "section"
+      },
+      {
+        "l": "EBITDA",
+        "t": "normal",
+        "v": [
+          72228.0,
+          90632.0,
+          107895.0,
+          115870.0,
+          138943.0,
+          160828.0
+        ]
+      },
+      {
+        "l": "Operating Margin %",
+        "t": "normal",
+        "v": [
+          37.03,
+          41.59,
+          42.06,
+          41.84,
+          44.64,
+          45.48
+        ],
+        "isPct": true
+      },
+      {
+        "l": "Net Margin %",
+        "t": "normal",
+        "v": [
+          30.96,
+          36.45,
+          36.69,
+          34.15,
+          35.96,
+          36.15
+        ],
+        "isPct": true
+      },
+      {
+        "l": "EPS Diluted ($)",
+        "t": "normal",
+        "v": [
+          6.0,
+          8.0,
+          10.0,
+          10.0,
+          12.0,
+          14.0
+        ]
+      },
+      {
+        "l": "Diluted Shares (M)",
+        "t": "normal",
+        "v": [
+          7683.0,
+          7608.0,
+          7540.0,
+          7472.0,
+          7469.0,
+          7464.0
+        ]
+      },
+      {
+        "l": "Stock-Based Compensation",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "Marketing/Brand Spend (est.)",
+        "t": "normal",
+        "v": [
+          5289.0,
+          6118.0,
+          7502.0,
+          9611.0,
+          10734.0,
+          11974.0
+        ]
+      }
+    ],
+    "bsRows": [
+      {
+        "l": "CURRENT ASSETS",
+        "t": "section"
+      },
+      {
+        "l": "Cash & Equivalents",
+        "t": "normal",
+        "v": [
+          17749.0,
+          14224.0,
+          13931.0,
+          34704.0,
+          18315.0,
+          30242.0
+        ]
+      },
+      {
+        "l": "Accounts Receivable",
+        "t": "normal",
+        "v": [
+          122951.0,
+          116110.0,
+          90826.0,
+          76558.0,
+          57228.0,
+          64323.0
+        ]
+      },
+      {
+        "l": "Inventories",
+        "t": "normal",
+        "v": [
+          32011.0,
+          38043.0,
+          44261.0,
+          48688.0,
+          56924.0,
+          69905.0
+        ]
+      },
+      {
+        "l": "Other Current Assets",
+        "t": "normal",
+        "v": [
+          669.0,
+          728.0,
+          3742.0,
+          2500.0,
+          1246.0,
+          938.0
+        ]
+      },
+      {
+        "l": "Total Current Assets",
+        "t": "subtotal",
+        "v": [
+          173380.0,
+          169105.0,
+          152760.0,
+          162450.0,
+          133713.0,
+          165408.0
+        ]
+      },
+      {
+        "l": "NON-CURRENT ASSETS",
+        "t": "section"
+      },
+      {
+        "l": "Property & Equipment, net",
+        "t": "normal",
+        "v": [
+          44151.0,
+          59715.0,
+          74398.0,
+          104440.0,
+          135591.0,
+          204966.0
+        ]
+      },
+      {
+        "l": "Right-of-Use Lease Assets",
+        "t": "normal",
+        "v": [
+          11628.0,
+          13148.0,
+          14346.0,
+          16911.0,
+          18961.0,
+          24823.0
+        ]
+      },
+      {
+        "l": "Goodwill",
+        "t": "normal",
+        "v": [
+          12520.0,
+          10026.0,
+          15691.0,
+          13652.0,
+          14600.0,
+          15405.0
+        ]
+      },
+      {
+        "l": "Intangible Assets, net",
+        "t": "normal",
+        "v": [
+          43351.0,
+          56830.0,
+          67524.0,
+          119776.0,
+          119220.0,
+          119509.0
+        ]
+      },
+      {
+        "l": "Other Non-Current Assets",
+        "t": "normal",
+        "v": [
+          7038.0,
+          9366.0,
+          9647.0,
+          28470.0,
+          27597.0,
+          22604.0
+        ]
+      },
+      {
+        "l": "Total Assets",
+        "t": "subtotal",
+        "v": [
+          292068.0,
+          318190.0,
+          334366.0,
+          445699.0,
+          449682.0,
+          552715.0
+        ]
+      },
+      {
+        "l": "CURRENT LIABILITIES",
+        "t": "section"
+      },
+      {
+        "l": "Accounts Payable",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "Lease Liabilities (Current)",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "Other Current Liabilities",
+        "t": "normal",
+        "v": [
+          12530.0,
+          15163.0,
+          19000.0,
+          19000.0,
+          21996.0,
+          27724.0
+        ]
+      },
+      {
+        "l": "Total Current Liabilities",
+        "t": "subtotal",
+        "v": [
+          12530.0,
+          15163.0,
+          19000.0,
+          19000.0,
+          21996.0,
+          27724.0
+        ]
+      },
+      {
+        "l": "NON-CURRENT LIABILITIES",
+        "t": "section"
+      },
+      {
+        "l": "Lease Liabilities (Non-Current)",
+        "t": "normal",
+        "v": [
+          2130.0,
+          3116.0,
+          4067.0,
+          4152.0,
+          5017.0,
+          7211.0
+        ]
+      },
+      {
+        "l": "Other Non-Current Liabilities",
+        "t": "normal",
+        "v": [
+          45538.0,
+          50901.0,
+          56811.0,
+          56948.0,
+          57582.0,
+          64555.0
+        ]
+      },
+      {
+        "l": "Total Debt (LT)",
+        "t": "normal",
+        "v": [
+          10885.0,
+          11726.0,
+          12728.0,
+          14346.0,
+          15497.0,
+          17437.0
+        ]
+      },
+      {
+        "l": "EQUITY",
+        "t": "section"
+      },
+      {
+        "l": "Total Stockholders Equity",
+        "t": "subtotal",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "cfRows": [
+      {
+        "l": "OPERATING ACTIVITIES (CFO)",
+        "t": "section"
+      },
+      {
+        "l": "Net Income",
+        "t": "normal",
+        "v": [
+          44281.0,
+          61271.0,
+          72738.0,
+          72361.0,
+          88136.0,
+          101832.0
+        ]
+      },
+      {
+        "l": "Depreciation & Amortization",
+        "t": "normal",
+        "v": [
+          19269.0,
+          20716.0,
+          24512.0,
+          27195.0,
+          29510.0,
+          32704.0
+        ]
+      },
+      {
+        "l": "Impairments",
+        "t": "normal",
+        "v": [
+          5289.0,
+          6118.0,
+          7502.0,
+          9611.0,
+          10734.0,
+          11974.0
+        ]
+      },
+      {
+        "l": "Stock-Based Compensation",
+        "t": "normal",
+        "v": [
+          -2000.0,
+          -3000.0,
+          -5000.0,
+          8000.0,
+          12000.0,
+          6000.0
+        ]
+      },
+      {
+        "l": "Other Adjustments",
+        "t": "normal",
+        "v": [
+          4379.0,
+          744.0,
+          -665.0,
+          -16251.0,
+          -14609.0,
+          -17797.0
+        ]
+      },
+      {
+        "l": "Changes in Working Capital",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          60675.0,
+          76740.0,
+          89035.0,
+          87582.0,
+          118548.0,
+          136162.0
+        ]
+      },
+      {
+        "l": "Cash from Operations (CFO)",
+        "t": "subtotal",
+        "v": [
+          131893.0,
+          162589.0,
+          188122.0,
+          188498.0,
+          244319.0,
+          270875.0
+        ]
+      },
+      {
+        "l": "INVESTING ACTIVITIES",
+        "t": "section"
+      },
+      {
+        "l": "Capital Expenditures",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -2521.0,
+          -8909.0,
+          0,
+          -1670.0,
+          -69132.0,
+          -5978.0
+        ]
+      },
+      {
+        "l": "Other Investing",
+        "t": "normal",
+        "v": [
+          4741.0,
+          9957.0,
+          -4948.0,
+          7097.0,
+          16639.0,
+          -2070.0
+        ]
+      },
+      {
+        "l": "FINANCING ACTIVITIES",
+        "t": "section"
+      },
+      {
+        "l": "Repurchases of Common Stock",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -15137.0,
+          -27385.0,
+          -32696.0,
+          -17563.0,
+          -16729.0,
+          -17700.0
+        ]
+      },
+      {
+        "l": "Other Financing",
+        "t": "normal",
+        "v": [
+          -15137.0,
+          -16521.0,
+          -18135.0,
+          -18563.0,
+          -21161.0,
+          -22340.0
+        ]
+      },
+      {
+        "l": "FREE CASH FLOW",
+        "t": "section"
+      },
+      {
+        "l": "Free Cash Flow (CFO − CapEx)",
+        "t": "subtotal",
+        "v": [
+          129372.0,
+          153680.0,
+          188122.0,
+          186828.0,
+          175187.0,
+          264897.0
+        ]
+      }
+    ]
+  },
+  "rv": {
+    "tangibleAssets": [
+      {
+        "label": "Cash and Cash Equivalents",
+        "bookValue": 30242.0,
+        "adjustable": true,
+        "defaultAdj": 100.0,
+        "reproValue": 30242.0,
+        "method": "100% — líquido, face value"
+      },
+      {
+        "label": "Accounts Receivable",
+        "bookValue": 64323.0,
+        "adjustable": true,
+        "defaultAdj": 100.0,
+        "reproValue": 64323.0,
+        "method": "100% — marked to market"
+      },
+      {
+        "label": "Inventories",
+        "bookValue": 69905.0,
+        "adjustable": true,
+        "defaultAdj": 97.0,
+        "reproValue": 67808.0,
+        "method": "97% — 3% bad debt haircut on enterprise AR"
+      },
+      {
+        "label": "Other Current Assets",
+        "bookValue": 938.0,
+        "adjustable": true,
+        "defaultAdj": 85.0,
+        "reproValue": 797.0,
+        "method": "85% — hardware/device inventory"
+      },
+      {
+        "label": "Property and Equipment, net",
+        "bookValue": 204966.0,
+        "adjustable": true,
+        "defaultAdj": 110.0,
+        "reproValue": 225463.0,
+        "method": "110% — AI/cloud infra: replacement cost > book (inflation, new build costs)"
+      }
+    ],
+    "intangibleAssets": [
+      {
+        "label": "Brand / Customer Asset (reconstruction)",
+        "bookValue": 443233.0,
+        "adjustable": true,
+        "defaultAdj": 100,
+        "reproValue": 443233.0,
+        "method": "",
+        "dataKey": "brand"
+      },
+      {
+        "label": "S&M Asset (Unamortized)",
+        "bookValue": 0,
+        "adjustable": true,
+        "defaultAdj": 100,
+        "reproValue": 0,
+        "method": "",
+        "dataKey": "sm"
+      },
+      {
+        "label": "Goodwill",
+        "bookValue": 0,
+        "adjustable": true,
+        "defaultAdj": 100,
+        "reproValue": 0,
+        "method": "",
+        "dataKey": "gw"
+      },
+      {
+        "label": "Intangible Assets, net (BS)",
+        "bookValue": 48781.0,
+        "adjustable": true,
+        "defaultAdj": 100.0,
+        "reproValue": 48781.0,
+        "method": "100% — S&M capitalizado (5yr cohort model); proxy CAC × enterprise base"
+      }
+    ],
+    "otherAssets": [
+      {
+        "label": "Right-of-Use Lease Assets",
+        "bookValue": 22604.0,
+        "adjustable": true,
+        "defaultAdj": 70.0,
+        "reproValue": 15823.0,
+        "method": "DP13: 70% — customer relationships, tech, content from Activision/LinkedIn"
+      },
+      {
+        "label": "Other Non-Current Assets (incl. DTA)",
+        "bookValue": 245104.0,
+        "adjustable": true,
+        "defaultAdj": 100,
+        "reproValue": 245104.0,
+        "method": "",
+        "dataKey": "dta"
+      }
+    ],
+    "liabilities": [
+      {
+        "label": "Accounts Payable",
+        "value": 0.0,
+        "method": "100% — Contractual"
+      },
+      {
+        "label": "Lease Liabilities (Total)",
+        "value": 7211.0,
+        "method": "100% — Contractual lease"
+      },
+      {
+        "label": "Other Current Liabilities",
+        "value": 27724.0,
+        "method": "100% — Contractual"
+      },
+      {
+        "label": "Other Non-Current Liabilities",
+        "value": 64555.0,
+        "method": "100% — Contractual"
+      }
+    ],
+    "totalLiabilities": 99490.0,
+    "totalRvEquity": 439609.0,
+    "rvPerShare": 58.9,
+    "note": "El Reproduction Value no captura el moat de plataforma, los efectos de red de M365/Teams/GitHub, ni los switching costs empresariales ($50-100K/empleado). Replicar la infraestructura Azure global (60+ regiones) y la base instalada de M365 (400M+ asientos comerciales) tomaría 15-20 años incluso con capital ilimitado. RV es un piso contable extremo, no un objetivo de mercado."
+  },
+  "epv": {
+    "nopatBase": 86629.85,
+    "waccBase": 8.9403,
+    "taxBase": 18,
+    "excessCash": 89000.0,
+    "ltInv": 0,
+    "debt": -43151.0,
+    "leases": 17437.0,
+    "minorityInterest": 0,
+    "epvOps": 968978.0,
+    "epvEquity": 1012795.0,
+    "epvPerShare": 135.69,
+    "gaapOI": 281724.0,
+    "normEBIT": 105646.16,
+    "da": 34153.0,
+    "maintCapex": 34153.0,
+    "bridgeRows": [
+      {
+        "k": "Normalized EBIT (post normalization)",
+        "v": "$105,646M"
+      },
+      {
+        "k": "× (1 − Tax Rate 18%)",
+        "v": "× 0.82",
+        "dim": true
+      },
+      {
+        "k": "Normalized NOPAT",
+        "v": "$86,630M",
+        "id": "bridge-nopat"
+      },
+      {
+        "k": "(+) D&A (non-cash add-back)",
+        "v": "+$34,153M"
+      },
+      {
+        "k": "(−) Maintenance CapEx (= D&A)",
+        "v": "−$34,153M",
+        "dim": true
+      },
+      {
+        "k": "÷ WACC",
+        "v": "8.94%",
+        "id": "bridge-wacc"
+      },
+      {
+        "k": "EPV Operations",
+        "v": "$968,978M",
+        "id": "bridge-epv-ops",
+        "bold": true,
+        "gold": true
+      },
+      {
+        "k": "(+) Excess Cash (Cash+STI − 2% Rev buffer)",
+        "v": "+$89,000M",
+        "green": true
+      },
+      {
+        "k": "(+) Non-Operating Assets",
+        "v": "$0M",
+        "dim": true
+      },
+      {
+        "k": "(−) Total Debt",
+        "v": "−$43,151M",
+        "red": true
+      },
+      {
+        "k": "(−) Lease Liabilities",
+        "v": "−$17,437M",
+        "red": true
+      },
+      {
+        "k": "EPV Equity",
+        "v": "$1,012,795M",
+        "id": "bridge-epv-eq",
+        "bold": true,
+        "gold": true
+      },
+      {
+        "k": "EPV / Share",
+        "v": "$135.69",
+        "id": "bridge-epv-ps",
+        "bold": true,
+        "gold": true
+      }
+    ]
+  },
+  "wacc": {
+    "rf": 0.0439,
+    "beta": 1.04,
+    "erp": 0.045,
+    "ke": 0.0907,
+    "kdPreTax": 0.048,
+    "kdAfterTax": -0.0019,
+    "weightDebt": 0.014,
+    "weightEquity": 0.986,
+    "waccFinal": 0.0894
+  },
+  "roic": {
+    "investedCapital": [
+      {
+        "label": "Operating WC",
+        "value": 0.0
+      },
+      {
+        "label": "PP&E",
+        "value": -41653.0
+      },
+      {
+        "label": "Other LT Operating Assets (ROU + Other NCA)",
+        "value": 204966.0
+      },
+      {
+        "label": "S&M Asset",
+        "value": 48781.0
+      }
+    ],
+    "roicLatest": 39.92,
+    "roic3yr": 46.72,
+    "roicFY22": 85.46,
+    "roicFY23": 52.01,
+    "roicFY24": 48.23,
+    "roicFY25": 39.92,
+    "roicHistory": [
+      183.11,
+      127.0,
+      85.46,
+      52.01,
+      48.23,
+      39.92
+    ],
+    "marginalRoic": 6973600.0,
+    "growthCapex2y": 78382.0,
+    "growthCapex3y": null,
+    "icHistory": [
+      39683.0,
+      64604.6,
+      106105.2,
+      175916.0,
+      214505.6,
+      284241.6
+    ],
+    "nopatHistory": [
+      "FY2020",
+      "FY2021",
+      "FY2022",
+      "FY2023",
+      "FY2024",
+      "FY2025"
+    ],
+    "icRows": [
+      {
+        "l": "INVESTED CAPITAL BUILD-UP",
+        "t": "section"
+      },
+      {
+        "l": "Working Capital Operating",
+        "t": "normal",
+        "v": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "l": "(+) PP&E, Net",
+        "t": "normal",
+        "v": [
+          -20526.0,
+          -41313.0,
+          -41695.0,
+          -23658.0,
+          -32153.0,
+          -41653.0
+        ]
+      },
+      {
+        "l": "(+) Other LT Operating Assets",
+        "t": "normal",
+        "v": [
+          44151.0,
+          59715.0,
+          74398.0,
+          104440.0,
+          135591.0,
+          204966.0
+        ]
+      },
+      {
+        "l": "(+) S&M Asset (Unamortized)",
+        "t": "normal",
+        "v": [
+          0.0,
+          16094.0,
+          29530.0,
+          39349.0,
+          45974.0,
+          48781.0
+        ]
+      },
+      {
+        "l": "(+) R&D Asset (N/A)",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "Invested Capital",
+        "t": "subtotal",
+        "v": [
+          39683.0,
+          64604.6,
+          106105.2,
+          175916.0,
+          214505.6,
+          284241.6
+        ]
+      },
+      {
+        "l": "RETURN",
+        "t": "section"
+      },
+      {
+        "l": "NOPAT (numerator)",
+        "t": "normal",
+        "v": [
+          "FY2020",
+          "FY2021",
+          "FY2022",
+          "FY2023",
+          "FY2024",
+          "FY2025"
+        ]
+      },
+      {
+        "l": "ROIC %",
+        "t": "subtotal",
+        "v": [
+          183.11,
+          127.0,
+          85.46,
+          52.01,
+          48.23,
+          39.92
+        ],
+        "isPct": true
+      }
+    ]
+  },
+  "irr": {
+    "selectedRoic": 40.0,
+    "organicGrowth": 2.0,
+    "reinvGrowth": 21.36,
+    "exitMultiple": 24,
+    "buybacks": 17700.0,
+    "horizon": 5,
+    "hurdle": 12.0,
+    "distYield": 1.35,
+    "dCapital": 1.96,
+    "netBorrowCost": 1.91,
+    "dividends": 22340.0,
+    "interest": 1413.0,
+    "ev": 3059403.0,
+    "nopat": 86629.85,
+    "reinvRate": 53.4,
+    "deRatio": 1.96,
+    "actualMult": 35.32,
+    "impliedIrr": 17.58,
+    "mos": 5.58,
+    "totalGrowth": 23.36
+  },
+  "healthCheck": {
+    "passCount": 15,
+    "failCount": 0,
+    "monitorCount": 1,
+    "metrics": [
+      {
+        "category": "Financial Strength",
+        "label": "Leverage (Debt / EBITDA)",
+        "value": "0.27×",
+        "threshold": "<2.0×",
+        "status": "pass",
+        "rationale": "Very low leverage at 0.26x"
+      },
+      {
+        "category": "Financial Strength",
+        "label": "Interest Coverage",
+        "value": "90.96×",
+        "threshold": ">10×",
+        "status": "pass",
+        "rationale": "91x — exceptional coverage"
+      },
+      {
+        "category": "Financial Strength",
+        "label": "Current Ratio",
+        "value": "1.35×",
+        "threshold": ">1.0×",
+        "status": "pass",
+        "rationale": "1.35x — comfortable liquidity"
+      },
+      {
+        "category": "Financial Strength",
+        "label": "Net Debt / EBITDA",
+        "value": "-0.21×",
+        "threshold": "<2.0×",
+        "status": "pass",
+        "rationale": "Negative net debt (excess cash > debt)"
+      },
+      {
+        "category": "Financial Strength",
+        "label": "Debt / Equity",
+        "value": "0.13×",
+        "threshold": "<1.0×",
+        "status": "pass",
+        "rationale": "0.13x — equity-dominant capital structure"
+      },
+      {
+        "category": "Profitability",
+        "label": "Operating Margin (FY2025)",
+        "value": "45.6%",
+        "threshold": ">30%",
+        "status": "pass",
+        "rationale": "45.6% FY2025 — top-decile"
+      },
+      {
+        "category": "Profitability",
+        "label": "ROIC (FY2025)",
+        "value": "39.9%",
+        "threshold": ">15%",
+        "status": "pass",
+        "rationale": "~40% — exceptional value creation"
+      },
+      {
+        "category": "Profitability",
+        "label": "FCF Margin",
+        "value": "25.4%",
+        "threshold": ">15%",
+        "status": "pass",
+        "rationale": "25.4% FCF Margin FY2025"
+      },
+      {
+        "category": "Profitability",
+        "label": "ROIC − WACC spread",
+        "value": "30.9%",
+        "threshold": ">10pp",
+        "status": "pass",
+        "rationale": "Spread +30.9pp — strong moat"
+      },
+      {
+        "category": "Growth",
+        "label": "Revenue CAGR (3yr)",
+        "value": "10.0%",
+        "threshold": ">8%",
+        "status": "pass",
+        "rationale": "12.4% 3yr CAGR"
+      },
+      {
+        "category": "Growth",
+        "label": "FCF CAGR (3yr)",
+        "value": "6.4%",
+        "threshold": ">5%",
+        "status": "pass",
+        "rationale": "25.4% FCF 3yr CAGR — AI tailwind"
+      },
+      {
+        "category": "Growth",
+        "label": "EBITDA Growth YoY",
+        "value": "23.5%",
+        "threshold": ">10%",
+        "status": "pass",
+        "rationale": "28.2% YoY"
+      },
+      {
+        "category": "Software/Tech",
+        "label": "Rule of 40",
+        "value": "60.6%",
+        "threshold": ">40%",
+        "status": "pass",
+        "rationale": "60.3% — strongly positive"
+      },
+      {
+        "category": "Software/Tech",
+        "label": "SBC / Revenue",
+        "value": "4.3%",
+        "threshold": "<6%",
+        "status": "pass",
+        "rationale": "4.2% — manageable dilution"
+      },
+      {
+        "category": "Software/Tech",
+        "label": "CapEx / Revenue",
+        "value": "22.9%",
+        "threshold": "<25%",
+        "status": "monitor",
+        "rationale": "22.9% — elevated (AI infra surge FY25)"
+      },
+      {
+        "category": "Software/Tech",
+        "label": "Cloud Revenue Growth",
+        "value": "21.0%",
+        "threshold": ">15%",
+        "status": "pass",
+        "rationale": "Azure ~21% YoY (FY2025 segment)"
+      }
+    ],
+    "radarLabels": [
+      "Financial\\nStrength",
+      "Profitability",
+      "Growth",
+      "Asset-Light",
+      "Capital\\nAllocation",
+      "Brand Power"
+    ],
+    "radarScores": [
+      98,
+      96,
+      88,
+      70,
+      92,
+      98
+    ]
+  },
+  "cioDecisions": [
+    {
+      "id": "1",
+      "decision": "S&M Proxy",
+      "value": "S&M línea directa IS",
+      "rationale": "MSFT reporta S&M separado en 10-K; línea directa es más precisa que proxy SGA"
+    },
+    {
+      "id": "2",
+      "decision": "R&D Capitalización",
+      "value": "SÍ capitalizar",
+      "rationale": "MSFT reporta R&D separado ($32.7B FY25); capitalizar bajo método cohort"
+    },
+    {
+      "id": "3",
+      "decision": "S&M Useful Life",
+      "value": "5 años",
+      "rationale": "Alta retención enterprise (~115% NRR), sticky contracts; 5yr refleja CAC payback"
+    },
+    {
+      "id": "4",
+      "decision": "R&D Useful Life",
+      "value": "6 años",
+      "rationale": "Mix cloud platform (Azure, longer life) + UI/AI (shorter); 6yr = blended útil"
+    },
+    {
+      "id": "5",
+      "decision": "SBC Treatment",
+      "value": "Caso A — NO add-back",
+      "rationale": "SBC embedded en OpEx (COGS, R&D, S&M, G&A) per MSFT 10-K Note 13"
+    },
+    {
+      "id": "6",
+      "decision": "Ventana Normalización",
+      "value": "FY21-FY25 (5 años)",
+      "rationale": "Suficiente historia post-COVID para normalizar; cubre ciclo completo"
+    },
+    {
+      "id": "7",
+      "decision": "Items a Normalizar",
+      "value": "Restructuring FY23 $1.326B, FY24 $0.8B",
+      "rationale": "One-time layoffs + Russia exit; Activision amortiz. tratada como recurrente"
+    },
+    {
+      "id": "8",
+      "decision": "Tax Rate Normalizado",
+      "value": "18.0%",
+      "rationale": "Mediana ETR FY21-FY25 ≈ 18%; consistente con guidance MSFT"
+    },
+    {
+      "id": "9",
+      "decision": "Lease Treatment",
+      "value": "ASC 842 ya capitalizado",
+      "rationale": "MSFT adoptó ASC 842; leases en BS → no ajuste manual necesario"
+    },
+    {
+      "id": "10",
+      "decision": "Non-Op Assets",
+      "value": "Excess Cash $89B + Eq.Inv. $15.4B",
+      "rationale": "Total Cash $94.6B − 2% Rev buffer $5.6B = $89B; Equity investments at MV"
+    },
+    {
+      "id": "11",
+      "decision": "WACC Inputs",
+      "value": "Rf 4.39%, β 1.04, ERP 4.5%, Kd 4.8%",
+      "rationale": "UST 10Y May 2026; GuruFocus beta; Damodaran 2026 ERP; MSFT AAA bond yield"
+    },
+    {
+      "id": "12",
+      "decision": "Goodwill RV",
+      "value": "0%",
+      "rationale": "Estándar Columbia: reconstruir activos individualmente evita doble conteo"
+    },
+    {
+      "id": "13",
+      "decision": "Intangibles RV",
+      "value": "70%",
+      "rationale": "Identified intangibles (Activision, LinkedIn): 70% reproduction DP13"
+    },
+    {
+      "id": "14",
+      "decision": "DTA RV",
+      "value": "50%",
+      "rationale": "MSFT profitable → 50% conservative realization; upside if full utilization"
+    },
+    {
+      "id": "15",
+      "decision": "Exit Multiple IRR",
+      "value": "24x P/E",
+      "rationale": "CIO v2: 24x mean reversion (vs prior 28x); más conservador para ambiente de tasas normalizadas"
+    },
+    {
+      "id": "16",
+      "decision": "Buybacks Sostenibles",
+      "value": "$17.7B (FY2025)",
+      "rationale": "Reported FY2025 buybacks; sustainable given FCF $71.6B"
+    }
+  ],
+  "adj": {
+    "gaapOI": 0.0,
+    "mktTotal": 128528.0,
+    "mkt3yrAvg": 109537.0,
+    "impairment": 88523.0,
+    "transformation": 0,
+    "smLife": 5,
+    "smGrowthPct": -17.89,
+    "taxRate": 18,
+    "smGrowthExp": -22991.0,
+    "smAsset": 0.0,
+    "nrTotal": 128528.0,
+    "nopatFinal": 138388.0,
+    "rdTotal": null,
+    "rdLife": null,
+    "rdGrowthExp": null,
+    "rdAsset": null,
+    "normalizationAdj": 88523.0,
+    "etrHistory": []
+  },
+  "documents": {
+    "valuationReportUrl": "/docs/DCE_MSFT_Valuation_Report.pdf",
+    "thesisBreakerUrl": "/docs/DCE_MSFT_Thesis_Breaker.pdf",
+    "mungerDigitalUrl": "/docs/DCE_MSFT_Munger_Digital.pdf"
+  },
+  "thesisSummary": {
+    "verdict": "OVERVALUED",
+    "epvRvRatio": 2.304,
+    "priceEpvRatio": 3.054,
+    "impliedIrr": 17.58,
+    "marginOfSafety": -205.43,
+    "narrative": "Microsoft cotiza a $414.44 con EPV/share $135.69 (priceEpv 3.05×). El gap se justifica por crecimiento por reinversión a alto ROIC: ROIC FY25 39.9% vs WACC 8.94% (spread +30.9pp), reinvestment rate 53% sostiene crecimiento total ~23.4%. Implied IRR equity 17.58% supera el hurdle 12% (MoS +5.58pp). El moat estructural es triple: switching costs M365/Azure, network effects GitHub/LinkedIn, economías de escala $190B CapEx FY26. Verdict Munger: CONVICCIÓN CONDICIONAL — entrar a 50% sizing, completar tras 2 trimestres de ROIC marginal Azure AI ≥22%. Riesgos clave: (1) ROIC marginal FY24→FY25 (14.4%) muy por debajo del ROIC_SEL del modelo (40%) — depende de lag temporal de 18-24 meses no probado; (2) post-OpenAI restructuring (abr-2026, no exclusividad), el moat AI es ahora opcional, no pilar; (3) pagar 3.05× EPV es heterodoxo vs franja Munger histórica (1-1.5× EPV)."
+  },
+  "finnhubSymbol": "MSFT"
+}
