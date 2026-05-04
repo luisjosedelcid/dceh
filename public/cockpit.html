@@ -136,6 +136,13 @@
   .tesis-badge.RED    { background:rgba(155,35,53,0.12); color:var(--red); }
   .tesis-badge.PENDING { background:rgba(96,96,96,0.10); color:var(--gray-txt); }
   .tier1-stat { font-size:10px; color:var(--gray-mid); white-space:nowrap; }
+  /* Deliverables card */
+  .deliverable-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--rule); }
+  .deliverable-row:last-child { border-bottom:none; }
+  .deliverable-row .dlabel { font-size:12px; color:var(--ink); }
+  .deliverable-row .dtype { font-size:9px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--gold); display:block; margin-bottom:3px; }
+  .deliverable-row .dlink { font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--navy); text-decoration:none; border:1px solid var(--rule); padding:4px 10px; white-space:nowrap; }
+  .deliverable-row .dlink:hover { color:var(--gold); border-color:var(--gold); }
 
   /* ── Decisions ── */
   .decision {
@@ -256,6 +263,16 @@
 
     <!-- ── Right column ── -->
     <div>
+      <!-- Último entregable institucional -->
+      <div class="card" id="deliverables-card">
+        <div class="head">
+          Último entregable institucional
+        </div>
+        <div class="body" id="deliverables-body">
+          <div class="loading">Cargando entregables…</div>
+        </div>
+      </div>
+
       <!-- Outstanding Decisions -->
       <div class="card">
         <div class="head">
@@ -545,6 +562,56 @@
     `).join('');
   }
 
+  // ── Institutional deliverables ──────────────────────────────────────
+  async function loadDeliverables() {
+    const token = localStorage.getItem(TOKEN_KEY) || '';
+    const body = document.getElementById('deliverables-body');
+    if (!body) return;
+    if (!token) {
+      body.innerHTML = '<div class="empty">Inicia sesi\u00f3n para ver entregables.</div>';
+      return;
+    }
+    try {
+      const [monthlyRes, committeeRes] = await Promise.all([
+        fetch('/api/list-reports?folder=monthly',   { headers: { 'x-admin-token': token } }),
+        fetch('/api/list-reports?folder=committee', { headers: { 'x-admin-token': token } }),
+      ]);
+      const [monthlyData, committeeData] = await Promise.all([
+        monthlyRes.ok   ? monthlyRes.json()   : Promise.resolve({ files: [] }),
+        committeeRes.ok ? committeeRes.json() : Promise.resolve({ files: [] }),
+      ]);
+      const monthly   = (monthlyData.files   || []).sort((a, b) => b.name.localeCompare(a.name))[0] || null;
+      const committee = (committeeData.files || []).sort((a, b) => b.name.localeCompare(a.name))[0] || null;
+
+      if (!monthly && !committee) {
+        body.innerHTML = '<div class="empty">Sin entregables en repositorio.</div>';
+        return;
+      }
+
+      const rows = [];
+      if (monthly) {
+        const label = monthly.name.replace(/\.pdf$/i, '').replace(/_/g, ' ');
+        rows.push({ type: 'Monthly Close', label, url: monthly.url });
+      }
+      if (committee) {
+        const label = committee.name.replace(/\.pdf$/i, '').replace(/_/g, ' ');
+        rows.push({ type: 'CI Pack', label, url: committee.url });
+      }
+
+      body.innerHTML = rows.map(r => `
+        <div class="deliverable-row">
+          <div class="dlabel">
+            <span class="dtype">${escapeHtml(r.type)}</span>
+            ${escapeHtml(r.label)}
+          </div>
+          <a class="dlink" href="${escapeHtml(r.url)}" target="_blank" rel="noopener">Abrir</a>
+        </div>
+      `).join('');
+    } catch (e) {
+      body.innerHTML = '<div class="empty">Error cargando entregables.</div>';
+    }
+  }
+
   async function load() {
     const data = await fetchSummary();
     if (!data) return;
@@ -560,6 +627,7 @@
   }
 
   load();
+  loadDeliverables();
 })();
 </script>
 
