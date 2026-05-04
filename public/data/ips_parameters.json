@@ -1,0 +1,79 @@
+{
+  "_meta": {
+    "source_document": "DCE_Holdings_IPS_v9-2.docx",
+    "ips_version": "v9.2",
+    "extracted_date": "2026-05-04",
+    "description": "Single source of truth para parámetros operativos del IPS. Usado por skills DCE para validación, semáforos y reporting. Si el IPS cambia, actualizar este archivo.",
+    "owner": "CIO",
+    "review_cadence": "Cuando el IPS sea modificado"
+  },
+
+  "currency": "USD",
+  "horizon": "perpetual",
+  "benchmark": "^GSPC",
+
+  "strategic_bands": {
+    "description": "IPS §3.1 — Bandas estratégicas de asignación de activos",
+    "bands": [
+      { "asset_class": "Equities públicos (quality-value)", "code": "EQUITY", "min": 0.50, "max": 0.80, "notes": "Núcleo del portafolio." },
+      { "asset_class": "Private equity (minorías o control)", "code": "PE", "min": 0.00, "max": 0.20, "notes": "Solo bajo estructuras claras de gobernanza." },
+      { "asset_class": "Real estate (core, core+)", "code": "RE", "min": 0.00, "max": 0.20, "notes": "Open ended NAV based funds." },
+      { "asset_class": "Fixed income (alta calidad crediticia)", "code": "FI", "min": 0.05, "max": 0.15, "notes": "Bonos IG, T-Bills u otros conservadores." },
+      { "asset_class": "Cash estratégico", "code": "CASH", "min": 0.15, "max": 0.25, "notes": "Reservas para liquidez y oportunidades." },
+      { "asset_class": "Alternativos (incluye cripto)", "code": "ALT", "min": 0.00, "max": 0.15, "notes": "Cripto institucional; opciones simples." },
+      { "asset_class": "Iliquidez consolidada (max)", "code": "ILLIQUID_TOTAL", "min": null, "max": 0.50, "notes": "Activos no realizables en menos de 90 días." }
+    ]
+  },
+
+  "position_classification": {
+    "description": "IPS §4.2 — Clasificación estructural de posiciones de equity. Define hurdle de retorno real anual por bucket.",
+    "buckets": [
+      {
+        "name": "Core Compounder",
+        "code": "CORE",
+        "hurdle_real_min": 0.07,
+        "hurdle_real_max": 0.09,
+        "description": "Negocios de alta calidad económica con compounding sostenible y bajo riesgo estructural. Holdings de largo plazo.",
+        "expected_holding_period_years": "10+"
+      },
+      {
+        "name": "Opportunistic Compounder",
+        "code": "OPPORTUNISTIC",
+        "hurdle_real_min": 0.11,
+        "hurdle_real_max": 0.15,
+        "description": "Negocios de calidad con catalizador de valor o mispricing identificable. Compounding con menor visibilidad.",
+        "expected_holding_period_years": "3-7"
+      },
+      {
+        "name": "Value & Special Situation",
+        "code": "VSS",
+        "hurdle_real_min": 0.17,
+        "hurdle_real_max": null,
+        "description": "Situaciones especiales, deep value, eventos, descuentos materiales. Holding hasta cierre del gap.",
+        "expected_holding_period_years": "1-3"
+      }
+    ]
+  },
+
+  "portfolio_return_targets": {
+    "description": "IPS §4.8 — Objetivos de retorno del portafolio agregado",
+    "weighted_target_real": 0.08,
+    "aspirational_range_real": [0.08, 0.12],
+    "currency_basis": "USD real"
+  },
+
+  "minimum_quality_criteria": {
+    "description": "IPS §4.4 — Criterios de calidad mínima. TODOS deben cumplirse para considerar inversión.",
+    "criteria": [
+      { "id": "ROIC_GT_WACC", "name": "Retorno sobre capital superior al costo de capital", "required": true, "rationale": "Fundamento clave para creación de valor." },
+      { "id": "PRUDENT_LEVERAGE", "name": "Estructura de endeudamiento prudente", "required": true, "rationale": "Acorde a su industria y estable." },
+      { "id": "MOAT", "name": "Ventaja competitiva sostenible", "required": true, "rationale": "Identificable y durable." },
+      { "id": "PREDICTABLE_FCF", "name": "Flujo de caja predecible", "required": true, "rationale": "Estabilidad razonable." },
+      { "id": "LOW_CONCENTRATION", "name": "Baja dependencia de clientes/proveedores concentrados", "required": true, "rationale": "Reduce riesgo estructural." },
+      { "id": "ALIGNED_MGMT", "name": "Alineación económica del equipo directivo", "required": true, "rationale": "Participación económica significativa en el negocio." },
+      { "id": "MARGINAL_ROIC", "name": "Evidencia de ROIC marginal positivo o en normalización", "required": true, "rationale": "Capital incremental debe generar retornos superiores al costo de capital." }
+    ]
+  },
+
+  "_NOTE_TIER1_METRICS": "IPS §4.7 'Monitoreo de posiciones y disciplina conductual' define las métricas Tier 1 con umbrales de semáforo (verde/amarillo/rojo). Esta sección debe extraerse del documento IPS v9.2 y añadirse a este archivo antes de construir las skills dce-quarterly-scorecard y dce-disconfirmation. Marcado como TODO."
+}

@@ -1,0 +1,119 @@
+{
+  "_meta": {
+    "description": "Single source of truth para el Data Room de dceholdings.app. Se actualiza automaticamente por las skills DCE al generar nuevos entregables. Estructura alineada con Operations Manual v3 seccion 3.4.",
+    "last_updated": "2026-05-04",
+    "naming_convention": "AAAA-MM - Tipo - Detalle.ext (Operations Manual v3 §3.4)",
+    "owner": "CIO"
+  },
+  "folders": {
+    "01_marco_normativo": {
+      "name": "01 Marco Normativo",
+      "order": 1,
+      "description": "Charter, IPS, Governance, Operations Manual, Provider Directory y versiones historicas.",
+      "access": "Read-only para Analyst",
+      "files": [
+        { "name": "Investment Charter v3.1.3", "filename": "DCE_Holdings_Investment_Charter_v3-1-3.pdf", "type": "pdf", "detail": "Marco constitucional del holding", "url": "#", "uploaded": "2026-04-15", "version": "v3.1.3" },
+        { "name": "Investment Policy Statement v9.2", "filename": "DCE_Holdings_IPS_v9-2.pdf", "type": "pdf", "detail": "Politicas, bandas, hurdles, criterios de calidad", "url": "#", "uploaded": "2026-04-15", "version": "v9.2" },
+        { "name": "Governance & Succession Framework v4.4", "filename": "DCE_Holdings_Governance_v4-4.pdf", "type": "pdf", "detail": "Comite de Inversiones, sucesion, resolucion de conflictos", "url": "#", "uploaded": "2026-04-15", "version": "v4.4" },
+        { "name": "Operations Manual v3", "filename": "DCE_Holdings_Operations_Manual_v3.pdf", "type": "pdf", "detail": "Cadencia operativa, roles, controles documentales", "url": "#", "uploaded": "2026-02-15", "version": "v3.0" },
+        { "name": "Provider Directory v4", "filename": "DCE_Holdings_Provider_Directory_v4.pdf", "type": "pdf", "detail": "Custodios, brokers, asesores, tecnologia", "url": "#", "uploaded": "2026-04-15", "version": "v4.0" }
+      ]
+    },
+    "02_portafolio": {
+      "name": "02 Portafolio",
+      "order": 2,
+      "description": "Subcarpeta por posicion: Investment Memo, Columbia Model, Thesis Breaker, Munger Digital, Scorecards trimestrales, IFS, Desconfirmaciones.",
+      "access": "Read-write para Analyst",
+      "subfolders": {
+        "MSFT": {
+          "name": "MSFT - Microsoft",
+          "ticker": "MSFT",
+          "company": "Microsoft Corp",
+          "classification": "Core Compounder",
+          "files": [
+            { "name": "2026-05 - Investment Memo - Microsoft (MSFT)", "filename": "DCE_MSFT_Valuation_Report.pdf", "type": "pdf", "detail": "Investment Memo aprobado", "url": "/docs/DCE_MSFT_Valuation_Report.pdf", "uploaded": "2026-05-04", "doc_type": "Investment Memo" },
+            { "name": "2026-05 - Thesis Breaker - Microsoft (MSFT)", "filename": "DCE_MSFT_Thesis_Breaker.pdf", "type": "pdf", "detail": "Stress test cuantitativo", "url": "/docs/DCE_MSFT_Thesis_Breaker.pdf", "uploaded": "2026-05-04", "doc_type": "Thesis Breaker" },
+            { "name": "2026-05 - Munger Digital - Microsoft (MSFT)", "filename": "DCE_MSFT_Munger_Digital.pdf", "type": "pdf", "detail": "Evaluacion conductual y narrativa", "url": "/docs/DCE_MSFT_Munger_Digital.pdf", "uploaded": "2026-05-04", "doc_type": "Munger Digital" }
+          ]
+        },
+        "LULU": {
+          "name": "LULU - Lululemon",
+          "ticker": "LULU",
+          "company": "Lululemon Athletica",
+          "classification": "Core Compounder",
+          "files": [
+            { "name": "2026-05 - Investment Memo - Lululemon (LULU)", "filename": "DCE_LULU_Valuation_Report.pdf", "type": "pdf", "detail": "Investment Memo aprobado", "url": "/docs/DCE_LULU_Valuation_Report.pdf", "uploaded": "2026-05-04", "doc_type": "Investment Memo" },
+            { "name": "2026-05 - Thesis Breaker - Lululemon (LULU)", "filename": "DCE_LULU_Thesis_Breaker.pdf", "type": "pdf", "detail": "Stress test cuantitativo", "url": "/docs/DCE_LULU_Thesis_Breaker.pdf", "uploaded": "2026-05-04", "doc_type": "Thesis Breaker" },
+            { "name": "2026-05 - Munger Digital - Lululemon (LULU)", "filename": "DCE_LULU_Munger_Digital.pdf", "type": "pdf", "detail": "Evaluacion conductual y narrativa", "url": "/docs/DCE_LULU_Munger_Digital.pdf", "uploaded": "2026-05-04", "doc_type": "Munger Digital" }
+          ]
+        }
+      }
+    },
+    "03_monthly_close": {
+      "name": "03 Monthly Close",
+      "order": 3,
+      "description": "Cierre mensual: NAV, retorno YTD, liquidez, FX, movimientos, riesgos emergentes, tesis activas.",
+      "access": "Read-write para Analyst",
+      "files": []
+    },
+    "04_ci_pack_actas": {
+      "name": "04 CI Pack y Actas",
+      "order": 4,
+      "description": "CI Pack trimestral (performance, riesgos, scorecards, IFS, desconfirmaciones) y Actas del Comite de Inversiones.",
+      "access": "Read-write para Analyst, firma CIO",
+      "files": []
+    },
+    "05_annual_close": {
+      "name": "05 Annual Close y Carta Anual",
+      "order": 5,
+      "description": "Cierre anual consolidado y carta institucional del CIO.",
+      "access": "Read para Analyst, write CIO",
+      "files": []
+    },
+    "06_pipeline": {
+      "name": "06 Pipeline",
+      "order": 6,
+      "description": "Research preliminar, pre-memos, screens y ideas descartadas en stage temprano.",
+      "access": "Read-write para Analyst",
+      "subfolders": {
+        "BKNG": {
+          "name": "BKNG - Booking Holdings",
+          "ticker": "BKNG",
+          "company": "Booking Holdings",
+          "status": "rejected",
+          "files": [
+            { "name": "2026-04 - Investment Memo - Booking (BKNG)", "filename": "DCE_BKNG_Valuation_Report.pdf", "type": "pdf", "detail": "Memo de valoracion (rechazado en stage decision)", "url": "/docs/DCE_BKNG_Valuation_Report.pdf", "uploaded": "2026-04-28", "doc_type": "Investment Memo" },
+            { "name": "2026-04 - Thesis Breaker - Booking (BKNG)", "filename": "DCE_BKNG_Thesis_Breaker.pdf", "type": "pdf", "detail": "Stress test cuantitativo", "url": "/docs/DCE_BKNG_Thesis_Breaker.pdf", "uploaded": "2026-04-28", "doc_type": "Thesis Breaker" },
+            { "name": "2026-04 - Munger Digital - Booking (BKNG)", "filename": "DCE_BKNG_Munger_Digital.pdf", "type": "pdf", "detail": "Evaluacion conductual", "url": "/docs/DCE_BKNG_Munger_Digital.pdf", "uploaded": "2026-04-28", "doc_type": "Munger Digital" }
+          ]
+        },
+        "SAP": {
+          "name": "SAP - SAP SE",
+          "ticker": "SAP",
+          "company": "SAP SE",
+          "status": "analysis",
+          "files": [
+            { "name": "2026-04 - Investment Memo - SAP (SAP)", "filename": "DCE_SAP_Valuation_Report.pdf", "type": "pdf", "detail": "Memo de valoracion en analysis", "url": "/docs/DCE_SAP_Valuation_Report.pdf", "uploaded": "2026-04-28", "doc_type": "Investment Memo" },
+            { "name": "2026-04 - Thesis Breaker - SAP (SAP)", "filename": "DCE_SAP_Thesis_Breaker.pdf", "type": "pdf", "detail": "Stress test cuantitativo", "url": "/docs/DCE_SAP_Thesis_Breaker.pdf", "uploaded": "2026-04-28", "doc_type": "Thesis Breaker" },
+            { "name": "2026-04 - Munger Digital - SAP (SAP)", "filename": "DCE_SAP_Munger_Digital.pdf", "type": "pdf", "detail": "Evaluacion conductual", "url": "/docs/DCE_SAP_Munger_Digital.pdf", "uploaded": "2026-04-28", "doc_type": "Munger Digital" }
+          ]
+        }
+      },
+      "files": []
+    },
+    "07_legal": {
+      "name": "07 Nombramientos y Legal",
+      "order": 7,
+      "description": "Nombramientos del CI, Successor, contratos relevantes.",
+      "access": "Read CIO only",
+      "files": []
+    },
+    "08_administracion": {
+      "name": "08 Administracion",
+      "order": 8,
+      "description": "Conciliaciones, correspondencia con custodios y bancos.",
+      "access": "Read-write CIO",
+      "files": []
+    }
+  }
+}

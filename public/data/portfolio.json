@@ -13,6 +13,9 @@
       "shares": 250,
       "avg_cost": 401.115,
       "buy_date": "2026-02-18",
+      "classification": "Core Compounder",
+      "classification_code": "CORE",
+      "hurdle_real": 0.08,
       "color": "#b88b47",
       "link": null
     },
@@ -23,9 +26,12 @@
       "shares": 590,
       "avg_cost": 167.835,
       "buy_date": "2025-09-18",
+      "classification": "Core Compounder",
+      "classification_code": "CORE",
+      "hurdle_real": 0.08,
       "color": "#1b2642",
       "link": null
     }
   ],
-  "_notes": "Single source of truth for portfolio.html and Daily Report PDF. Edit and commit to update both. inception_date = earliest buy_date; benchmark inception value is auto-fetched from Yahoo at buy_date."
+  "_notes": "Single source of truth for portfolio.html and Daily Report PDF. Edit and commit to update both. inception_date = earliest buy_date; benchmark inception value is auto-fetched from Yahoo at buy_date. classification per IPS §4.2 (CORE / OPPORTUNISTIC / VSS); hurdle_real is midpoint of bucket range from ips_parameters.json."
 }
