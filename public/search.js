@@ -466,10 +466,15 @@
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', injectTrigger);
-  } else {
+  function init() {
+    injectStyles();
     injectTrigger();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
 
   // Expose for debugging
