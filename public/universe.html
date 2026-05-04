@@ -556,7 +556,7 @@ renderTable();
 loadAlerts().then(() => renderTable());
 
 // ═══ LIVE PRICE FETCH (Finnhub) ═══
-const FH_KEY = 'd6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg';
+// Finnhub quotes go through /api/finnhub-quote (server-side, key in env var)
 
 async function fetchLivePrices() {
   const note = document.getElementById('live-note');
@@ -564,7 +564,7 @@ async function fetchLivePrices() {
 
   try {
     const fetches = UNIVERSE.filter(c => c.finnhubSymbol).map(c =>
-      fetch(`https://finnhub.io/api/v1/quote?symbol=${c.finnhubSymbol}&token=${FH_KEY}`)
+      fetch(`/api/finnhub-quote?symbol=${encodeURIComponent(c.finnhubSymbol)}`)
         .then(r => r.json())
         .then(d => ({ ticker: c.ticker, price: d.c }))
         .catch(() => ({ ticker: c.ticker, price: null }))

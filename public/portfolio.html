@@ -149,7 +149,7 @@
 </footer>
 
 <script>
-const FH_KEY = 'd6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg';
+// Finnhub quotes go through /api/finnhub-quote (server-side, key in env var)
 
 // Single source of truth: /data/portfolio.json (also used by Daily Report)
 let HOLDINGS = [];
@@ -363,7 +363,7 @@ async function fetchPrices() {
   try {
     const tickers = HOLDINGS.map(h => h.ticker);
     const fetches = tickers.map(t =>
-      fetch(`https://finnhub.io/api/v1/quote?symbol=${t}&token=${FH_KEY}`)
+      fetch(`/api/finnhub-quote?symbol=${encodeURIComponent(t)}`)
         .then(r => r.json())
         .then(d => [t, d.c])
         .catch(() => [t, null])

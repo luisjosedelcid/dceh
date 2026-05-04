@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import PDFDocument from 'pdfkit';
 
-const FH_KEY = 'd6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg';
+const FH_KEY = process.env.FINNHUB_KEY;
 
 // Brand colors
 const NAVY = '#1b2642';

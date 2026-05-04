@@ -281,7 +281,7 @@ function showMode(mode, btn) {
 // To add a new sector: drop a JSON file in /public/data/sectors/ and
 // register it in /public/data/sectors/index.json — UI updates automatically.
 // ═══════════════════════════════════════════════════════════════════
-const FH_KEY = 'd6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg';
+// Finnhub quotes go through /api/finnhub-quote (server-side, key in env var)
 const _sectorCache = {};       // slug -> json
 let   _activeSector = null;
 
@@ -511,7 +511,7 @@ async function fetchScreenerPrices(tickers) {
   if (!tickers || !tickers.length) return;
   try {
     const fetches = tickers.map(t =>
-      fetch(`https://finnhub.io/api/v1/quote?symbol=${t}&token=${FH_KEY}`)
+      fetch(`/api/finnhub-quote?symbol=${encodeURIComponent(t)}`)
         .then(r => r.json())
         .then(d => ({ ticker: t, price: d.c }))
         .catch(() => ({ ticker: t, price: null }))
@@ -654,8 +654,8 @@ async function loadWatchlist() {
 
     const enriched = await Promise.all(items.map(async it => {
       const [quote, profile] = await Promise.all([
-        fetch(`https://finnhub.io/api/v1/quote?symbol=${it.ticker}&token=${FH_KEY}`).then(r => r.json()).catch(() => ({})),
-        fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${it.ticker}&token=${FH_KEY}`).then(r => r.json()).catch(() => ({})),
+        fetch(`/api/finnhub-quote?symbol=${encodeURIComponent(it.ticker)}`).then(r => r.json()).catch(() => ({})),
+        fetch(`/api/finnhub-quote?profile=1&symbol=${encodeURIComponent(it.ticker)}`).then(r => r.json()).catch(() => ({})),
       ]);
       return { ...it, quote, profile };
     }));
@@ -1361,8 +1361,8 @@ async function renderIdeaFeedTickers(items, status, cont) {
     await new Promise(res => setTimeout(res, i * 35)); // gentle throttle
     try {
       const [quote, profile] = await Promise.all([
-        fetch(`https://finnhub.io/api/v1/quote?symbol=${r.ticker}&token=${FH_KEY}`).then(x => x.json()).catch(() => ({})),
-        fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${r.ticker}&token=${FH_KEY}`).then(x => x.json()).catch(() => ({})),
+        fetch(`/api/finnhub-quote?symbol=${encodeURIComponent(r.ticker)}`).then(x => x.json()).catch(() => ({})),
+        fetch(`/api/finnhub-quote?profile=1&symbol=${encodeURIComponent(r.ticker)}`).then(x => x.json()).catch(() => ({})),
       ]);
       const tr = tbody.querySelector(`tr[data-tk="${r.ticker}"]`);
       if (!tr) return;

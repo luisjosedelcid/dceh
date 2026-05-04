@@ -123,7 +123,8 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const fhKey = process.env.FINNHUB_API_KEY || 'd6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg';
+  const fhKey = process.env.FINNHUB_KEY || process.env.FINNHUB_API_KEY;
+  if (!fhKey) throw new Error('FINNHUB_KEY env var not set');
 
   try {
     const alerts = await sbSelect('price_alerts',

@@ -111,7 +111,8 @@ module.exports = async (req, res) => {
 
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const fhKey = process.env.FINNHUB_API_KEY || 'd6pi2h1r01qo88ajadq0d6pi2h1r01qo88ajadqg';
+  const fhKey = process.env.FINNHUB_KEY || process.env.FINNHUB_API_KEY;
+  if (!fhKey) throw new Error('FINNHUB_KEY env var not set');
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
     res.status(500).json({ error: 'Server not configured' });
     return;
