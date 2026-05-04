@@ -40,13 +40,25 @@
           "version": "v4.4"
         },
         {
-          "name": "Operations Manual v3",
+          "name": "2026-05 - Operations Manual v3.1",
+          "filename": "2026-05_Operations_Manual_v3-1.docx",
+          "type": "docx",
+          "detail": "Cadencia operativa, roles, controles documentales (vigente). Incluye Thesis Breaker + Munger Digital en flujo de tesis.",
+          "url": "/docs/2026-05_Operations_Manual_v3-1.docx",
+          "uploaded": "2026-05-04",
+          "version": "v3.1",
+          "doc_type": "Operations Manual"
+        },
+        {
+          "name": "Operations Manual v3.0 (historico)",
           "filename": "DCE_Holdings_Operations_Manual_v3.pdf",
           "type": "pdf",
-          "detail": "Cadencia operativa, roles, controles documentales",
+          "detail": "Version historica reemplazada por v3.1",
           "url": "#",
           "uploaded": "2026-02-15",
-          "version": "v3.0"
+          "version": "v3.0",
+          "doc_type": "Operations Manual",
+          "historico": true
         },
         {
           "name": "Provider Directory v4",
