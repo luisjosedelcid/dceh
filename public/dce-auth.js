@@ -356,14 +356,14 @@
     ]},
     { id:'pipeline', label:'Pipeline', items:[
       { href:'/screener.html',    label:'Find',     desc:'Idea generation — superinvestors, sector screener' },
-      { href:'/research.html',    label:'Research', desc:'Kanban de tesis en investigación' },
+      { href:'/research.html',    label:'Workflow', desc:'Kanban de tesis en investigación' },
       { href:'/universe.html',    label:'Universe', desc:'Columbia framework — EPV, IRR, MoS' },
     ]},
     { id:'decisions', label:'Decisions', items:[
       { href:'/journal.html',     label:'Journal',     desc:'Decision journal — buy/sell con thesis' },
       { href:'/premortem.html',   label:'Pre-mortem',  desc:'Watch failure modes · manage' },
     ]},
-    { id:'intel', label:'Intel', items:[
+    { id:'research', label:'Research', items:[
       { href:'/news.html',        label:'News',     desc:'AI news scanner (Claude)' },
       { href:'/calendar.html',    label:'Calendar', desc:'Earnings dates de la cobertura' },
       { href:'/study.html',       label:'Study',    desc:'Sector deep-dives + megatrends' },

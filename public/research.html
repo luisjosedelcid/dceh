@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DCE Holdings — Research Pipeline</title>
+<title>DCE Holdings — Workflow</title>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -152,7 +152,7 @@
 
 <footer>
   <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
-  <span>Research Pipeline · Supabase + GitHub Auth</span>
+  <span>Workflow · Supabase + GitHub Auth</span>
 </footer>
 
 <!-- MODAL -->
@@ -226,7 +226,7 @@ function renderGate(deniedAccess = false) {
   main.innerHTML = `
     <div class="gate">
       <div class="slbl" style="justify-content:center">DCE Holdings — Investment Office</div>
-      <h2>Research Pipeline</h2>
+      <h2>Workflow</h2>
       <p>Acceso restringido a usuarios autorizados de DCE Holdings.<br>Inicia sesión con tu cuenta de GitHub para continuar.</p>
       ${deniedAccess ? `
         <div class="denied">
@@ -305,7 +305,7 @@ function renderApp() {
   const main = document.getElementById('main-content');
   main.innerHTML = `
     <div class="slbl">DCE Holdings — Investment Office</div>
-    <h1>Research Pipeline</h1>
+    <h1>Workflow</h1>
     <p class="subtitle">Drag cards between stages. Click a card to view notes and comments. Sync vía Supabase — multi-usuario en tiempo real.</p>
 
     <div class="add-row">
