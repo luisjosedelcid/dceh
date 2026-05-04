@@ -116,6 +116,26 @@
   table.tbl td{padding:10px;border-bottom:1px solid var(--rule);vertical-align:top}
   table.tbl tr:nth-child(even) td{background:var(--row-alt)}
 
+  /* Compact watch table */
+  .watch-tbl-wrap{background:var(--white);border:1px solid var(--rule);overflow:hidden}
+  table.watch-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+  table.watch-tbl thead th{background:var(--navy);color:var(--white);font-weight:500;text-transform:uppercase;letter-spacing:0.1em;font-size:10px;padding:12px 14px;text-align:left}
+  table.watch-tbl tbody tr{cursor:pointer;transition:background .12s}
+  table.watch-tbl tbody tr:hover{background:var(--row-alt)}
+  table.watch-tbl tbody tr.expanded{background:#f0ece4}
+  table.watch-tbl tbody td{padding:14px;border-bottom:1px solid var(--rule);vertical-align:top}
+  .watch-tk{font-size:15px;font-weight:700;color:var(--navy);letter-spacing:-0.01em}
+  .watch-th{color:var(--gray-txt);max-width:520px;font-size:12.5px;line-height:1.5}
+  .watch-trig{font-weight:600;font-size:14px}
+  .watch-trig.danger{color:var(--red)}
+  .watch-trig.ok{color:var(--green)}
+  .watch-caret{display:inline-block;width:10px;color:var(--gray-mid);transition:transform .18s;font-size:10px}
+  tr.expanded .watch-caret{transform:rotate(90deg);color:var(--gold)}
+  .pm-detail-row td{padding:0!important;background:var(--cream)!important;border-bottom:2px solid var(--gold-rule)!important}
+  .pm-detail-inner{padding:0;background:var(--cream)}
+  .pm-detail-head{padding:14px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--white);border-bottom:1px solid var(--rule)}
+  .pm-detail-meta{font-size:11px;color:var(--gray-mid)}
+
   details.eval-log{margin-top:6px}
   details.eval-log summary{font-size:10px;color:var(--gray-mid);cursor:pointer;letter-spacing:0.08em;text-transform:uppercase}
   .eval-log pre{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--cream);padding:10px;margin-top:6px;white-space:pre-wrap;color:var(--ink);max-height:200px;overflow:auto}
@@ -349,6 +369,18 @@
     document.getElementById('v-last-sub').textContent = lastEval ? 'Latest cron run' : 'Awaiting first run';
   }
 
+  // Track which tickers are currently expanded so re-renders preserve state
+  const _expandedTickers = new Set();
+  // Track which tickers have already had their detail panel rendered + docs fetched
+  const _detailLoaded = new Set();
+
+  function truncateThesis(s, n=140) {
+    if (!s) return '';
+    const t = String(s).trim();
+    if (t.length <= n) return t;
+    return t.slice(0, n).replace(/\s+\S*$/, '') + '…';
+  }
+
   function renderWatch(pms) {
     const root = document.getElementById('watch-content');
     document.getElementById('watch-loading').classList.add('hide');
@@ -359,68 +391,125 @@
       return;
     }
 
-    root.innerHTML = pms.map(pm => {
-      const fms = pm.failure_modes || [];
+    // Reset detail-loaded cache on every render so data refreshes correctly
+    _detailLoaded.clear();
+
+    const rowsHtml = pms.map(pm => {
       const triggeredCount = pm.triggered_count || 0;
       const total = pm.total_count || 0;
-
-      const fmCards = fms.map(fm => {
-        const isTrig = fm.status === 'triggered';
-        const isResolved = fm.status === 'resolved' || fm.status === 'invalidated';
-        const ev = fm.last_evaluation;
-        const evidence = ev ? ev.evidence_text : (fm.trigger_type === 'qualitative_llm' ? 'Awaiting LLM ingestion (Capa 4).' : (fm.trigger_type === 'qualitative_manual' ? 'Manual review — flip status from Manage tab when you observe this trigger.' : 'No evaluation recorded yet.'));
-        const evDanger = isTrig;
-        return `
-          <div class="fm-card ${isTrig?'triggered':''} ${isResolved?'resolved':''}">
-            <div class="fm-top">
-              <div>
-                <div class="fm-cat">${escHtml(categoryLabel(fm.category))}</div>
-                <div class="fm-title">${escHtml(fm.failure_mode)}</div>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
-                ${statusPill(fm.status)}
-                ${triggerTypePill(fm.trigger_type)}
-              </div>
-            </div>
-            <div class="fm-evidence ${evDanger?'danger':''}">${escHtml(evidence)}</div>
-            <div class="fm-meta">
-              <span>P ${fm.probability_pct ?? '—'}%</span>
-              <span>S ${fm.severity_pct ?? '—'}%</span>
-              <span>Last eval: ${fmtDt(fm.last_evaluated_at)}</span>
-              ${fm.triggered_at ? `<span style="color:var(--red)">Triggered ${fmtDt(fm.triggered_at)}</span>` : ''}
-            </div>
-          </div>`;
-      }).join('');
-
+      const trigClass = triggeredCount > 0 ? 'danger' : 'ok';
+      const isExp = _expandedTickers.has(pm.ticker);
+      const safeTk = escHtml(pm.ticker);
       return `
-        <div class="pm-block">
-          <div class="pm-head">
-            <div style="flex:1;min-width:260px">
-              <div class="pm-ticker">${escHtml(pm.ticker)}</div>
-              <div class="pm-meta">${escHtml(pm.status)} · created ${fmtDt(pm.created_at)} ${pm.created_by ? '· by ' + escHtml(pm.created_by) : ''}</div>
-              ${pm.thesis_summary ? `<div class="pm-thesis">${escHtml(pm.thesis_summary)}</div>` : ''}
+        <tr class="watch-row ${isExp?'expanded':''}" data-ticker="${safeTk}">
+          <td><span class="watch-caret">▶</span> <span class="watch-tk">${safeTk}</span></td>
+          <td><span class="pill ${escHtml(pm.status)}">${escHtml(pm.status.charAt(0).toUpperCase()+pm.status.slice(1))}</span></td>
+          <td class="watch-th">${pm.thesis_summary ? escHtml(truncateThesis(pm.thesis_summary)) : '<span class="muted">No thesis summary.</span>'}</td>
+          <td><span class="watch-trig ${trigClass}">${triggeredCount}/${total}</span></td>
+          <td style="font-size:11px;color:var(--gray-mid)">${fmtDt(pm.created_at)}</td>
+        </tr>
+        <tr class="pm-detail-row ${isExp?'':'hide'}" data-detail-for="${safeTk}">
+          <td colspan="5"><div class="pm-detail-inner" id="detail-${safeTk}"></div></td>
+        </tr>`;
+    }).join('');
+
+    root.innerHTML = `
+      <div class="watch-tbl-wrap">
+        <table class="watch-tbl">
+          <thead><tr>
+            <th style="width:140px">Ticker</th>
+            <th style="width:110px">Status</th>
+            <th>Thesis</th>
+            <th style="width:100px">Triggered</th>
+            <th style="width:160px">Created</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>`;
+
+    // Wire row toggles
+    root.querySelectorAll('tr.watch-row').forEach(tr => {
+      tr.addEventListener('click', () => {
+        const ticker = tr.dataset.ticker;
+        const detailRow = root.querySelector(`tr.pm-detail-row[data-detail-for="${ticker}"]`);
+        if (!detailRow) return;
+        const willExpand = !tr.classList.contains('expanded');
+        tr.classList.toggle('expanded', willExpand);
+        detailRow.classList.toggle('hide', !willExpand);
+        if (willExpand) {
+          _expandedTickers.add(ticker);
+          if (!_detailLoaded.has(ticker)) {
+            const pm = _premortems.find(p => p.ticker === ticker);
+            if (pm) {
+              renderDetailPanel(pm);
+              _detailLoaded.add(ticker);
+              loadDocsForTicker(ticker);
+            }
+          }
+        } else {
+          _expandedTickers.delete(ticker);
+        }
+      });
+    });
+
+    // Auto-render any pre-expanded panels (e.g. after a refresh)
+    for (const ticker of _expandedTickers) {
+      const pm = _premortems.find(p => p.ticker === ticker);
+      if (pm) {
+        renderDetailPanel(pm);
+        _detailLoaded.add(ticker);
+        loadDocsForTicker(ticker);
+      }
+    }
+  }
+
+  function renderDetailPanel(pm) {
+    const host = document.getElementById('detail-' + pm.ticker);
+    if (!host) return;
+    const fms = pm.failure_modes || [];
+    const fmCards = fms.map(fm => {
+      const isTrig = fm.status === 'triggered';
+      const isResolved = fm.status === 'resolved' || fm.status === 'invalidated';
+      const ev = fm.last_evaluation;
+      const evidence = ev ? ev.evidence_text : (fm.trigger_type === 'qualitative_llm' ? 'Awaiting LLM ingestion (Capa 4).' : (fm.trigger_type === 'qualitative_manual' ? 'Manual review — flip status from Manage tab when you observe this trigger.' : 'No evaluation recorded yet.'));
+      const evDanger = isTrig;
+      return `
+        <div class="fm-card ${isTrig?'triggered':''} ${isResolved?'resolved':''}">
+          <div class="fm-top">
+            <div>
+              <div class="fm-cat">${escHtml(categoryLabel(fm.category))}</div>
+              <div class="fm-title">${escHtml(fm.failure_mode)}</div>
             </div>
-            <div class="pm-stats">
-              <div class="pm-stat">
-                <div class="pm-stat-lbl">Triggered</div>
-                <div class="pm-stat-val ${triggeredCount>0?'danger':''}">${triggeredCount}/${total}</div>
-              </div>
+            <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+              ${statusPill(fm.status)}
+              ${triggerTypePill(fm.trigger_type)}
             </div>
           </div>
-          <div class="fm-grid">
-            ${fmCards || '<div class="nodata" style="grid-column:1/-1">No failure modes defined.</div>'}
-          </div>
-          <div class="docs-panel" id="docs-${escHtml(pm.ticker)}">
-            <div class="docs-panel-title">Source documents (SEC EDGAR)</div>
-            <div id="docs-body-${escHtml(pm.ticker)}" style="font-size:12px;color:var(--gray-mid)">Loading…</div>
+          <div class="fm-evidence ${evDanger?'danger':''}">${escHtml(evidence)}</div>
+          <div class="fm-meta">
+            <span>P ${fm.probability_pct ?? '—'}%</span>
+            <span>S ${fm.severity_pct ?? '—'}%</span>
+            <span>Last eval: ${fmtDt(fm.last_evaluated_at)}</span>
+            ${fm.triggered_at ? `<span style="color:var(--red)">Triggered ${fmtDt(fm.triggered_at)}</span>` : ''}
           </div>
         </div>`;
     }).join('');
 
-    // After cards rendered, fetch source_documents per ticker (parallel, best-effort)
-    for (const pm of pms) {
-      loadDocsForTicker(pm.ticker);
-    }
+    host.innerHTML = `
+      <div class="pm-detail-head">
+        <div>
+          <div class="pm-ticker">${escHtml(pm.ticker)}</div>
+          <div class="pm-detail-meta">created ${fmtDt(pm.created_at)} ${pm.created_by ? '· by ' + escHtml(pm.created_by) : ''}</div>
+          ${pm.thesis_summary ? `<div class="pm-thesis" style="margin-top:8px">${escHtml(pm.thesis_summary)}</div>` : ''}
+        </div>
+      </div>
+      <div class="fm-grid">
+        ${fmCards || '<div class="nodata" style="grid-column:1/-1">No failure modes defined.</div>'}
+      </div>
+      <div class="docs-panel" id="docs-${escHtml(pm.ticker)}">
+        <div class="docs-panel-title">Source documents (SEC EDGAR)</div>
+        <div id="docs-body-${escHtml(pm.ticker)}" style="font-size:12px;color:var(--gray-mid)">Loading…</div>
+      </div>`;
   }
 
   async function loadDocsForTicker(ticker) {
