@@ -1,13 +1,22 @@
 // GET /api/performance — returns KPIs + holdings + equity curve.
+// Header: x-admin-token: <token>
 //
 // Reads from portfolio_snapshots if populated; otherwise computes on-the-fly.
 // Query params:
 //   - source=db (default if snapshots exist) | live (always recompute)
+//
+// Restricted: exposes NAV, holdings, contributions and equity curve.
 const { sbSelect } = require('./_supabase');
 const { loadAndCompute } = require('./_perf-load');
+const { requireRole } = require('./_require-role');
 
 module.exports = async (req, res) => {
   try {
+    const auth = await requireRole(req, ['any']);
+    if (!auth.ok) {
+      res.status(auth.status || 401).json({ ok: false, error: auth.error || 'Unauthorized' });
+      return;
+    }
     const url = new URL(req.url, 'http://x');
     const source = url.searchParams.get('source') || 'auto';
 

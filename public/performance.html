@@ -671,7 +671,8 @@ async function loadDashboard(){
   document.getElementById('dash-loading').classList.remove('hide');
   document.getElementById('dash-content').classList.add('hide');
   try{
-    const r = await fetch('/api/performance');
+    const tok = adminToken();
+    const r = await fetch('/api/performance', tok ? { headers: { 'x-admin-token': tok } } : {});
     const j = await r.json();
     if(!r.ok || !j.ok) throw new Error(j.error || ('HTTP '+r.status));
     if(!j.kpis){

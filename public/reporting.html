@@ -1371,7 +1371,8 @@ async function _jrLoadSellSelectors(ticker) {
   if (!ticker) return;
   // Load decisions for this ticker (BUY/ADD active, no prior SELL closing them)
   try {
-    const r = await fetch('/api/journal');
+    const tok = localStorage.getItem(TOKEN_KEY);
+    const r = await fetch('/api/journal', tok ? { headers: { 'x-admin-token': tok } } : {});
     if (r.ok) {
       const j = await r.json();
       const items = (j.items || []).filter(it =>

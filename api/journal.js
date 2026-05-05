@@ -1,11 +1,21 @@
-// DCE Holdings — Decision Journal public read API
+// DCE Holdings — Decision Journal read API (authenticated)
 // GET /api/journal?ticker=XYZ&type=BUY&year=2026
+// Header: x-admin-token: <token>
 // Returns { items: [...], stats: {...}, pending_reviews: [...] }
+//
+// Restricted: decision_journal contains proprietary investment thesis,
+// failure modes and lessons learned — never expose without auth.
 
 const { sbSelect } = require('./_supabase');
+const { requireRole } = require('./_require-role');
 
 module.exports = async (req, res) => {
   try {
+    const auth = await requireRole(req, ['any']);
+    if (!auth.ok) {
+      res.status(auth.status || 401).json({ error: auth.error || 'Unauthorized' });
+      return;
+    }
     const ticker = (req.query.ticker || '').toString().toUpperCase().trim();
     const type = (req.query.type || '').toString().toUpperCase().trim();
     const year = parseInt(req.query.year || '', 10);

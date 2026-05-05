@@ -390,7 +390,8 @@ async function fetchPrices() {
 
 async function loadDecisionsMap() {
   try {
-    const r = await fetch('/api/journal');
+    const tok = adminToken();
+    const r = await fetch('/api/journal', tok ? { headers: { 'x-admin-token': tok } } : {});
     if (!r.ok) return;
     const data = await r.json();
     const map = {};

@@ -839,7 +839,8 @@ async function loadJournal() {
     const params = new URLSearchParams(window.location.search);
     const tk = (params.get('ticker') || '').toUpperCase().trim();
     if (tk) document.getElementById('filter-ticker').value = tk;
-    const r = await fetch('/api/journal');
+    const tok = adminToken();
+    const r = await fetch('/api/journal', tok ? { headers: { 'x-admin-token': tok } } : {});
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     state.items = data.items || [];
