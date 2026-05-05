@@ -222,7 +222,7 @@ Lista en GitHub repo settings (para el workflow de backup):
 | `SUPABASE_DB_URL` | Supabase Dashboard → Settings → Database → Connection string (Session pooler) |
 | `SUPABASE_URL` | Igual que en Vercel |
 | `SUPABASE_SERVICE_ROLE_KEY` | Igual que en Vercel |
-| `BACKUP_REPO_TOKEN` | GitHub PAT con scope `repo` para el repo `dceh-backups` |
+| `BACKUP_REPO_DEPLOY_KEY` | SSH private key registrada como deploy key con write en `dceh-backups` |
 
 ---
 
