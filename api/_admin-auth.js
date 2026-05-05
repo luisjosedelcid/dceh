@@ -1,9 +1,8 @@
 // Shared helpers for admin auth.
 // Token format: "admin.<expiresAt>.<emailB64Url>.<sig>"
 //   - sig = HMAC-SHA256( "admin.<expiresAt>.<emailB64Url>", ADMIN_TOKEN_SECRET )
-// Backward-compat: legacy 3-part tokens "admin.<expiresAt>.<sig>" are still
-// accepted (verifyAdminToken returns true) but will resolve to email = null.
-// Login always issues 4-part tokens going forward.
+// Legacy 3-part tokens "admin.<expiresAt>.<sig>" (no email) are NO LONGER accepted.
+// Any 3-part token submitted will be rejected.
 
 const crypto = require('crypto');
 
@@ -30,7 +29,8 @@ function signToken(email, secret) {
 function verifyAdminToken(token, secret) {
   if (!token || typeof token !== 'string') return null;
   const parts = token.split('.');
-  if (parts.length !== 3 && parts.length !== 4) return null;
+  // Only 4-part tokens (with embedded email) are accepted.
+  if (parts.length !== 4) return null;
 
   const scope = parts[0];
   const expStr = parts[1];
@@ -38,15 +38,12 @@ function verifyAdminToken(token, secret) {
   const exp = parseInt(expStr, 10);
   if (!Number.isFinite(exp) || exp < Math.floor(Date.now() / 1000)) return null;
 
-  let payload, sig, email = null;
-  if (parts.length === 4) {
-    email = (() => { try { return b64urlDecode(parts[2]); } catch { return null; } })();
-    payload = `${scope}.${expStr}.${parts[2]}`;
-    sig = parts[3];
-  } else {
-    payload = `${scope}.${expStr}`;
-    sig = parts[2];
-  }
+  let email;
+  try { email = b64urlDecode(parts[2]); } catch { return null; }
+  if (!email) return null;
+
+  const payload = `${scope}.${expStr}.${parts[2]}`;
+  const sig = parts[3];
 
   const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
   if (sig.length !== expected.length) return null;
