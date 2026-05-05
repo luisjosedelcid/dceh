@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — IV Tracking</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#1b2642;--gold:#b88b47;--gold-lt:#d4aa6a;--gold-dim:rgba(184,139,71,0.10);--gold-rule:rgba(184,139,71,0.30);
+    --cream:#f5f1eb;--white:#ffffff;--ink:#1b2642;--gray-mid:#8a9098;--gray-txt:#606060;
+    --rule:rgba(27,38,66,0.09);
+    --green:#2e6b4f;--red:#8b0000;--amber:#b88b47;--gray-bar:#606060;
+    --zone-fat:#1f5f3f;--zone-buy:#3b8a5f;--zone-fair:#8a9098;--zone-exp:#a85f3a;--zone-bub:#7a1010;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+  header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
+  .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
+  .hnav{display:flex;gap:8px;flex-wrap:wrap}
+  .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
+  .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
+  .hnav a.active{color:var(--gold);border-color:var(--gold)}
+
+  main{padding:28px 36px 60px;max-width:1400px;margin:0 auto}
+  .slbl{font-size:10px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+  h1{font-size:32px;font-weight:700;letter-spacing:-0.01em;margin-bottom:6px}
+  .sub{color:var(--gray-mid);font-size:14px;margin-bottom:24px;max-width:780px}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:28px}
+  .kpi{background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:18px 22px;position:relative}
+  .kpi-lbl{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:8px}
+  .kpi-tk{font-size:22px;font-weight:700;color:var(--navy);line-height:1;margin-bottom:6px}
+  .kpi-sub{font-size:12px;color:var(--gray-txt)}
+  .kpi-zone{position:absolute;top:14px;right:18px;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;padding:4px 10px;border-radius:2px;color:var(--white)}
+  .zone-fat_pitch{background:var(--zone-fat)}
+  .zone-buy_hold{background:var(--zone-buy)}
+  .zone-fair{background:var(--zone-fair)}
+  .zone-expensive{background:var(--zone-exp)}
+  .zone-bubble{background:var(--zone-bub)}
+  .kpi-method{display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:2px 8px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-rule);margin-left:8px}
+  .kpi-thesis-broken{color:var(--red);font-size:11px;font-weight:600;margin-top:6px}
+
+  .legend{background:var(--white);border:1px solid var(--rule);padding:14px 18px;margin-bottom:24px;font-size:12px;color:var(--gray-txt);line-height:1.7}
+  .legend strong{color:var(--navy)}
+  .legend .pill{display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:2px 8px;color:var(--white);margin-right:4px;border-radius:2px}
+
+  .section-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;gap:12px}
+  .section-head h2{font-size:18px;font-weight:600;letter-spacing:-0.01em;color:var(--navy)}
+  .filters{display:flex;gap:8px;align-items:center}
+  .chip{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:6px 12px;background:var(--white);border:1px solid var(--rule);color:var(--gray-txt);cursor:pointer;transition:all .15s}
+  .chip:hover{border-color:var(--gold-rule);color:var(--navy)}
+  .chip.active{background:var(--navy);color:var(--white);border-color:var(--navy)}
+
+  .table-wrap{background:var(--white);border:1px solid var(--rule);overflow:hidden;margin-bottom:32px}
+  table{width:100%;border-collapse:collapse}
+  thead{background:var(--navy)}
+  thead th{color:var(--white);font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:11px 14px;text-align:left;border-bottom:1px solid var(--gold-rule)}
+  thead th.right{text-align:right}
+  tbody tr{border-bottom:1px solid var(--rule)}
+  tbody tr:hover{background:rgba(184,139,71,0.05)}
+  tbody td{padding:12px 14px;font-size:13px;vertical-align:top;font-variant-numeric:tabular-nums}
+  tbody td.right{text-align:right}
+  .ticker{font-weight:700;color:var(--navy);letter-spacing:0.04em}
+  .badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:3px 9px;border-radius:2px;color:var(--white)}
+  .pos{color:var(--green);font-weight:600}
+  .neg{color:var(--red);font-weight:600}
+  .meth{font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:2px 8px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-rule);border-radius:2px}
+  .empty{padding:40px 20px;text-align:center;color:var(--gray-mid);font-style:italic}
+
+  /* Admin form */
+  .admin-section{background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:22px 26px}
+  .admin-section h3{font-size:14px;font-weight:700;letter-spacing:0.04em;color:var(--navy);margin-bottom:6px}
+  .admin-section .sub-form{font-size:12px;color:var(--gray-mid);margin-bottom:18px}
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 16px;margin-bottom:14px}
+  .form-grid label{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);display:block;margin-bottom:4px}
+  .form-grid input,.form-grid select,.form-grid textarea{width:100%;padding:8px 11px;border:1px solid var(--rule);background:var(--cream);font-family:inherit;font-size:13px;color:var(--ink);outline:none}
+  .form-grid input:focus,.form-grid select:focus,.form-grid textarea:focus{border-color:var(--gold);background:var(--white)}
+  .form-grid .full{grid-column:1/-1}
+  .form-grid textarea{resize:vertical;min-height:64px;font-family:inherit}
+  .form-actions{display:flex;align-items:center;gap:14px}
+  .btn-primary{background:var(--navy);color:var(--white);border:none;padding:10px 22px;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600;font-family:inherit}
+  .btn-primary:hover{background:var(--gold)}
+  .btn-primary:disabled{opacity:0.4;cursor:not-allowed}
+  .form-msg{font-size:12px;flex:1}
+  .form-msg.ok{color:var(--green)}
+  .form-msg.err{color:var(--red)}
+
+  .non-admin{padding:18px 22px;background:var(--white);border:1px dashed var(--gold-rule);font-size:13px;color:var(--gray-txt);text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">DCE <span>Holdings</span></div>
+  <nav class="hnav">
+    <a href="/">Home</a>
+    <a href="/cockpit.html">Cockpit</a>
+    <a href="/universe.html">Universe</a>
+    <a href="/screener.html">Find</a>
+    <a href="/study.html">Study</a>
+    <a href="/journal.html">Journal</a>
+    <a href="/iv-tracking.html" class="active">IV Tracking</a>
+    <a href="/portfolio.html">Portfolio</a>
+    <a href="/news.html">News</a>
+    <a href="/dataroom.html">Data Room</a>
+    <a href="/reporting.html">Reporting</a>
+    <a href="/performance.html">Performance</a>
+    <a href="/research.html">Research</a>
+    <a href="/calendar.html">Calendar</a>
+  </nav>
+</header>
+
+<main>
+  <div class="slbl">Buffett-Style Tracking</div>
+  <h1>Intrinsic Value Tracking</h1>
+  <p class="sub">Métrica institucional — el price-vs-IV gap es lo que determina si una posición es atractiva, no el TWRR. Cada entry post-earnings actualiza EPV o IRR del modelo Columbia y registra el signal zone resultante.</p>
+
+  <!-- KPI cards: latest entry per ticker -->
+  <div id="kpi-row" class="kpi-row"></div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <strong>Signal Zones — EPV-driven</strong> (gap = (EPV − Price) / Price):
+    <span class="pill zone-fat_pitch">Fat Pitch</span> &gt;+30% &nbsp;
+    <span class="pill zone-buy_hold">Buy/Hold</span> +10 a +30% &nbsp;
+    <span class="pill zone-fair">Fair</span> ±10% &nbsp;
+    <span class="pill zone-expensive">Expensive</span> −10 a −30% &nbsp;
+    <span class="pill zone-bubble">Bubble</span> &lt;−30%
+    <br><br>
+    <strong>Signal Zones — IRR-driven</strong> (gap = IRR − hurdle 12%):
+    <span class="pill zone-fat_pitch">Fat Pitch</span> &gt;+5pp &nbsp;
+    <span class="pill zone-buy_hold">Buy/Hold</span> 0 a +5pp &nbsp;
+    <span class="pill zone-fair">Fair</span> −2 a 0pp &nbsp;
+    <span class="pill zone-expensive">Expensive</span> −5 a −2pp &nbsp;
+    <span class="pill zone-bubble">Bubble</span> &lt;−5pp
+  </div>
+
+  <!-- Filters + history table -->
+  <div class="section-head">
+    <h2>Historial trimestral</h2>
+    <div class="filters">
+      <button class="chip active" data-filter="all">Todos</button>
+      <button class="chip" data-filter="MSFT">MSFT</button>
+      <button class="chip" data-filter="LULU">LULU</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="iv-table">
+      <thead>
+        <tr>
+          <th>Ticker</th>
+          <th>Quarter</th>
+          <th>As Of</th>
+          <th>Method</th>
+          <th class="right">EPV / Sh</th>
+          <th class="right">IRR 5y</th>
+          <th class="right">Hurdle</th>
+          <th class="right">Price</th>
+          <th class="right">Gap</th>
+          <th>Signal</th>
+          <th>Thesis</th>
+          <th class="right">QoQ Δ IV</th>
+        </tr>
+      </thead>
+      <tbody id="iv-tbody">
+        <tr><td colspan="12" class="empty">Cargando…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Admin form (only visible for admin) -->
+  <section id="admin-section" class="admin-section" style="display:none">
+    <h3>Nueva entry trimestral</h3>
+    <p class="sub-form">Tras earnings, actualizar EPV o IRR del modelo Columbia y registrar aquí. Signal zone se calcula automáticamente.</p>
+    <form id="iv-form">
+      <div class="form-grid">
+        <div>
+          <label>Ticker</label>
+          <input type="text" name="ticker" required maxlength="12" placeholder="MSFT">
+        </div>
+        <div>
+          <label>Quarter</label>
+          <input type="text" name="quarter" required maxlength="16" placeholder="Q2-2026">
+        </div>
+        <div>
+          <label>As of date</label>
+          <input type="date" name="as_of_date" required>
+        </div>
+        <div>
+          <label>Method</label>
+          <select name="method" id="method-select" required>
+            <option value="">—</option>
+            <option value="EPV">EPV (zero-growth)</option>
+            <option value="IRR">IRR (5y enterprise)</option>
+            <option value="HYBRID">HYBRID (both)</option>
+          </select>
+        </div>
+        <div>
+          <label>Current price</label>
+          <input type="number" step="0.01" name="current_price" required placeholder="413.62">
+        </div>
+        <div>
+          <label>EPV / share <span style="color:var(--gray-mid);text-transform:none;letter-spacing:0">(EPV/HYBRID)</span></label>
+          <input type="number" step="0.01" name="epv_per_share" placeholder="134.83">
+        </div>
+        <div>
+          <label>IRR 5y (decimal) <span style="color:var(--gray-mid);text-transform:none;letter-spacing:0">(IRR/HYBRID)</span></label>
+          <input type="number" step="0.0001" name="irr_5y" placeholder="0.1758">
+        </div>
+        <div>
+          <label>Target price 5y <span style="color:var(--gray-mid);text-transform:none;letter-spacing:0">(opcional)</span></label>
+          <input type="number" step="0.01" name="target_price_5y" placeholder="720.00">
+        </div>
+        <div>
+          <label>Hurdle</label>
+          <input type="number" step="0.001" name="hurdle_rate" value="0.12">
+        </div>
+        <div>
+          <label>Thesis intact</label>
+          <select name="thesis_intact">
+            <option value="true" selected>Sí — vigente</option>
+            <option value="false">No — quebrada</option>
+          </select>
+        </div>
+        <div class="full">
+          <label>Method rationale</label>
+          <textarea name="method_rationale" placeholder="Por qué este método para este ticker…"></textarea>
+        </div>
+        <div class="full">
+          <label>Notes</label>
+          <textarea name="notes" placeholder="Comentarios analíticos, drivers principales del cambio…"></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">Guardar entry</button>
+        <span id="form-msg" class="form-msg"></span>
+      </div>
+    </form>
+  </section>
+
+  <div id="non-admin-msg" class="non-admin" style="display:none">
+    Solo administradores pueden añadir nuevas entries. Inicia sesión como admin para registrar nuevos puntos.
+  </div>
+</main>
+
+<script src="/dce-auth.js" defer></script>
+<script>
+  const FMT = {
+    money: (v) => v == null ? '—' : '$' + Number(v).toFixed(2),
+    pct: (v, dp = 2) => v == null ? '—' : (Number(v) * 100).toFixed(dp) + '%',
+    pp: (v, dp = 2) => v == null ? '—' : (Number(v) * 100).toFixed(dp) + 'pp',
+  };
+
+  function tokenAdmin() {
+    try { return localStorage.getItem('dce_admin_token') || ''; } catch (e) { return ''; }
+  }
+  function adminToken() {
+    try { return (window.dceAuth && window.dceAuth.token && window.dceAuth.token()) || tokenAdmin(); }
+    catch (e) { return tokenAdmin(); }
+  }
+  function isAdmin() {
+    try { return window.dceAuth && window.dceAuth.isAdmin && window.dceAuth.isAdmin(); }
+    catch (e) { return !!tokenAdmin(); }
+  }
+
+  const state = { items: [], filter: 'all' };
+
+  function zoneLabel(z) {
+    if (!z) return '—';
+    return z.replace('_', ' ');
+  }
+
+  function gapDisplay(method, gap) {
+    if (gap == null) return '—';
+    const cls = Number(gap) >= 0 ? 'pos' : 'neg';
+    if (method === 'IRR') {
+      // Display as pp
+      return `<span class="${cls}">${(Number(gap) * 100).toFixed(2)}pp</span>`;
+    }
+    return `<span class="${cls}">${(Number(gap) * 100).toFixed(2)}%</span>`;
+  }
+
+  function ivChangeDisplay(method, delta) {
+    if (delta == null) return '—';
+    const cls = Number(delta) >= 0 ? 'pos' : 'neg';
+    if (method === 'IRR') {
+      return `<span class="${cls}">${(Number(delta) * 100).toFixed(2)}pp</span>`;
+    }
+    return `<span class="${cls}">${(Number(delta) * 100).toFixed(2)}%</span>`;
+  }
+
+  function renderKpis(byTicker, latest) {
+    const host = document.getElementById('kpi-row');
+    const tickers = Object.keys(latest);
+    if (tickers.length === 0) {
+      host.innerHTML = '<div class="kpi"><div class="kpi-lbl">Sin entries</div><div class="kpi-tk">—</div><div class="kpi-sub">Aún no se ha registrado IV tracking</div></div>';
+      return;
+    }
+    host.innerHTML = tickers.map(t => {
+      const r = latest[t];
+      const zone = r.signal_zone || 'fair';
+      const ivDisplay = (r.method === 'IRR')
+        ? `IRR ${FMT.pct(r.irr_5y)}`
+        : `EPV ${FMT.money(r.epv_per_share)}`;
+      const thesisFlag = r.thesis_intact === false
+        ? '<div class="kpi-thesis-broken">Tesis quebrada</div>'
+        : '';
+      return `
+        <div class="kpi">
+          <div class="kpi-lbl">${t} <span class="kpi-method">${r.method || '—'}</span></div>
+          <div class="kpi-tk">${ivDisplay}</div>
+          <div class="kpi-sub">Price ${FMT.money(r.current_price)} · ${r.quarter} · gap ${gapDisplay(r.method, r.gap_pct).replace(/<[^>]+>/g, '')}</div>
+          <div class="kpi-zone zone-${zone}">${zoneLabel(zone)}</div>
+          ${thesisFlag}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('iv-tbody');
+    let rows = state.items;
+    if (state.filter !== 'all') {
+      rows = rows.filter(r => r.ticker === state.filter);
+    }
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="12" class="empty">Sin entries para este filtro.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(r => {
+      const zone = r.signal_zone || 'fair';
+      const thesis = r.thesis_intact === false ? '<span class="neg">Quebrada</span>' : 'Vigente';
+      return `
+        <tr>
+          <td><span class="ticker">${r.ticker}</span></td>
+          <td>${r.quarter}</td>
+          <td>${r.as_of_date}</td>
+          <td><span class="meth">${r.method}</span></td>
+          <td class="right">${FMT.money(r.epv_per_share)}</td>
+          <td class="right">${FMT.pct(r.irr_5y)}</td>
+          <td class="right">${FMT.pct(r.hurdle_rate)}</td>
+          <td class="right">${FMT.money(r.current_price)}</td>
+          <td class="right">${gapDisplay(r.method, r.gap_pct)}</td>
+          <td><span class="badge zone-${zone}">${zoneLabel(zone)}</span></td>
+          <td>${thesis}</td>
+          <td class="right">${ivChangeDisplay(r.method, r.iv_change_qoq)}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  async function loadData() {
+    const tk = adminToken();
+    if (!tk) {
+      document.getElementById('iv-tbody').innerHTML =
+        '<tr><td colspan="12" class="empty">Inicia sesión para ver IV tracking.</td></tr>';
+      return;
+    }
+    try {
+      const r = await fetch('/api/iv-tracking', {
+        headers: { 'x-admin-token': tk }
+      });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        document.getElementById('iv-tbody').innerHTML =
+          `<tr><td colspan="12" class="empty">Error: ${err.error || r.status}</td></tr>`;
+        return;
+      }
+      const data = await r.json();
+      state.items = data.items || [];
+      renderKpis(data.by_ticker || {}, data.latest || {});
+      renderTable();
+    } catch (e) {
+      document.getElementById('iv-tbody').innerHTML =
+        `<tr><td colspan="12" class="empty">Error: ${e.message}</td></tr>`;
+    }
+  }
+
+  // Filters
+  document.querySelectorAll('.chip[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.chip[data-filter]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.filter = btn.getAttribute('data-filter');
+      renderTable();
+    });
+  });
+
+  // Admin form
+  function setupAdmin() {
+    const adminSection = document.getElementById('admin-section');
+    const nonAdminMsg = document.getElementById('non-admin-msg');
+    if (isAdmin()) {
+      adminSection.style.display = 'block';
+      nonAdminMsg.style.display = 'none';
+    } else {
+      adminSection.style.display = 'none';
+      // Only show non-admin message if user is logged in (has token but isn't admin)
+      // Otherwise the table empty state covers it
+    }
+  }
+
+  document.getElementById('iv-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('form-msg');
+    msg.className = 'form-msg';
+    msg.textContent = '';
+    const fd = new FormData(e.target);
+    const payload = {
+      ticker: fd.get('ticker'),
+      quarter: fd.get('quarter'),
+      as_of_date: fd.get('as_of_date'),
+      method: fd.get('method'),
+      current_price: fd.get('current_price') ? Number(fd.get('current_price')) : null,
+      epv_per_share: fd.get('epv_per_share') ? Number(fd.get('epv_per_share')) : null,
+      irr_5y: fd.get('irr_5y') ? Number(fd.get('irr_5y')) : null,
+      target_price_5y: fd.get('target_price_5y') ? Number(fd.get('target_price_5y')) : null,
+      hurdle_rate: fd.get('hurdle_rate') ? Number(fd.get('hurdle_rate')) : 0.12,
+      thesis_intact: fd.get('thesis_intact') === 'true',
+      method_rationale: fd.get('method_rationale') || null,
+      notes: fd.get('notes') || null,
+    };
+    const tk = adminToken();
+    if (!tk) {
+      msg.className = 'form-msg err';
+      msg.textContent = 'Inicia sesión como admin primero.';
+      return;
+    }
+    try {
+      const r = await fetch('/api/admin/iv-tracking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': tk },
+        body: JSON.stringify(payload),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        msg.className = 'form-msg err';
+        msg.textContent = 'Error: ' + (data.error || r.status);
+        return;
+      }
+      msg.className = 'form-msg ok';
+      msg.textContent = 'Entry guardada — signal zone: ' + (data.item.signal_zone || '—');
+      e.target.reset();
+      // Restore default hurdle
+      e.target.querySelector('[name="hurdle_rate"]').value = '0.12';
+      await loadData();
+    } catch (err) {
+      msg.className = 'form-msg err';
+      msg.textContent = 'Error: ' + err.message;
+    }
+  });
+
+  // Wait for dce-auth to load
+  setTimeout(() => {
+    setupAdmin();
+    loadData();
+  }, 200);
+</script>
+</body>
+</html>

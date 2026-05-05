@@ -208,6 +208,7 @@
       <a href="/screener.html">Find</a>
       <a href="/study.html">Study</a>
       <a href="/journal.html">Journal</a>
+      <a href="/iv-tracking.html">IV Tracking</a>
       <a href="/portfolio.html">Portfolio</a>
       <a href="/news.html">News</a>
       <a href="/dataroom.html">Data Room</a>
@@ -249,6 +250,17 @@
         </div>
         <div class="body" id="gates-body">
           <div class="loading">Cargando gates…</div>
+        </div>
+      </div>
+
+      <!-- IV Status (Buffett-style) -->
+      <div class="card">
+        <div class="head">
+          IV Status
+          <span class="badge" id="iv-badge">—</span>
+        </div>
+        <div class="body" style="padding: 0;" id="iv-status-body">
+          <div class="loading">Cargando IV status…</div>
         </div>
       </div>
 
@@ -626,8 +638,103 @@
     renderEvents(data);
   }
 
+  // ── IV Status (Buffett-style intrinsic value tracking) ────────────
+  function ivZoneLabel(z) {
+    if (!z) return '—';
+    return z.replace('_', ' ');
+  }
+  function ivGapLabel(method, gap) {
+    if (gap == null) return '—';
+    const sign = Number(gap) >= 0 ? '+' : '';
+    if (method === 'IRR') return sign + (Number(gap) * 100).toFixed(2) + 'pp';
+    return sign + (Number(gap) * 100).toFixed(1) + '%';
+  }
+  function ivValueLabel(r) {
+    if (r.method === 'IRR') return 'IRR ' + ((Number(r.irr_5y) || 0) * 100).toFixed(2) + '%';
+    return 'EPV $' + Number(r.epv_per_share).toFixed(2);
+  }
+  async function loadIvStatus() {
+    const token = localStorage.getItem(TOKEN_KEY) || '';
+    const body = document.getElementById('iv-status-body');
+    const badge = document.getElementById('iv-badge');
+    if (!body) return;
+    if (!token) {
+      body.innerHTML = '<div class="empty">Inicia sesión para ver IV status.</div>';
+      return;
+    }
+    try {
+      const r = await fetch('/api/iv-tracking', { headers: { 'x-admin-token': token } });
+      if (!r.ok) {
+        body.innerHTML = '<div class="empty">Error cargando IV tracking.</div>';
+        return;
+      }
+      const data = await r.json();
+      const latest = data.latest || {};
+      const tickers = Object.keys(latest);
+      if (tickers.length === 0) {
+        body.innerHTML = '<div class="empty">Sin entries de IV tracking.</div>';
+        badge.textContent = '0';
+        return;
+      }
+      // Color zone classes inline (cockpit doesn't have iv-tracking CSS)
+      const zoneColors = {
+        fat_pitch: '#1f5f3f',
+        buy_hold: '#3b8a5f',
+        fair: '#8a9098',
+        expensive: '#a85f3a',
+        bubble: '#7a1010',
+      };
+      let html = '<table class="pos-table"><thead><tr>'
+        + '<th>Ticker</th>'
+        + '<th>Método</th>'
+        + '<th class="right">IV</th>'
+        + '<th class="right">Price</th>'
+        + '<th class="right">Gap</th>'
+        + '<th>Signal</th>'
+        + '<th>Tesis</th>'
+        + '</tr></thead><tbody>';
+      let fatPitchCount = 0;
+      let bubbleCount = 0;
+      let brokenThesis = 0;
+      for (const t of tickers) {
+        const r = latest[t];
+        const zone = r.signal_zone || 'fair';
+        if (zone === 'fat_pitch') fatPitchCount++;
+        if (zone === 'bubble') bubbleCount++;
+        if (r.thesis_intact === false) brokenThesis++;
+        const color = zoneColors[zone] || '#8a9098';
+        const thesis = r.thesis_intact === false
+          ? '<span style="color:var(--red);font-weight:600">Quebrada</span>'
+          : 'Vigente';
+        html += '<tr>'
+          + '<td class="tk">' + escapeHtml(t) + '</td>'
+          + '<td><span style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:2px 8px;background:rgba(184,139,71,0.10);color:var(--gold);border:1px solid rgba(184,139,71,0.30);border-radius:2px">' + escapeHtml(r.method || '—') + '</span></td>'
+          + '<td class="right">' + ivValueLabel(r) + '</td>'
+          + '<td class="right">$' + Number(r.current_price).toFixed(2) + '</td>'
+          + '<td class="right"><span style="color:' + (Number(r.gap_pct) >= 0 ? 'var(--green)' : 'var(--red)') + ';font-weight:600">' + ivGapLabel(r.method, r.gap_pct) + '</span></td>'
+          + '<td><span style="display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:3px 9px;border-radius:2px;color:#fff;background:' + color + '">' + ivZoneLabel(zone) + '</span></td>'
+          + '<td>' + thesis + '</td>'
+          + '</tr>';
+      }
+      html += '</tbody></table>';
+      // Summary line + link
+      html += '<div style="padding:10px 18px;background:var(--cream);border-top:1px solid var(--rule);font-size:11px;color:var(--gray-mid);display:flex;justify-content:space-between;align-items:center">'
+        + '<span>' + fatPitchCount + ' fat pitch · ' + bubbleCount + ' bubble · ' + brokenThesis + ' tesis quebrada</span>'
+        + '<a href="/iv-tracking.html" style="color:var(--gold);text-decoration:none;font-weight:600">Ver historial →</a>'
+        + '</div>';
+      body.innerHTML = html;
+      const badgeText = fatPitchCount > 0
+        ? fatPitchCount + ' fat pitch'
+        : (bubbleCount > 0 ? bubbleCount + ' bubble' : tickers.length + ' tracked');
+      badge.textContent = badgeText;
+    } catch (e) {
+      body.innerHTML = '<div class="empty">Error: ' + escapeHtml(e.message) + '</div>';
+    }
+  }
+
   load();
   loadDeliverables();
+  loadIvStatus();
 })();
 </script>
 
