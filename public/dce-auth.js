@@ -352,6 +352,7 @@
     { id:'monitor', label:'Monitor', items:[
       { href:'/cockpit.html',     label:'Cockpit',     desc:'Daily CIO screen — gates, decisiones, eventos' },
       { href:'/portfolio.html',   label:'Portfolio',   desc:'P&L live, posiciones, allocation' },
+      { href:'/iv-tracking.html', label:'IV Tracking', desc:'Intrinsic value vs price — signal zones por ticker' },
       { href:'/performance.html', label:'Performance', desc:'NAV histórico vs IWQU.L, transactions' },
     ]},
     { id:'pipeline', label:'Pipeline', items:[
