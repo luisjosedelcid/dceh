@@ -103,6 +103,8 @@
   footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
 
   @media(max-width:1100px){main{padding:20px 16px}header{padding:0 16px}.stbl{font-size:11px}.stbl th,.stbl td{padding:7px 8px}.mode-tab{padding:12px 16px;font-size:10px}}
+  /* Mobile/tablet: hide thesis column and force horizontal scroll on idea-feed table for legibility */
+  @media(max-width:900px){.col-thesis{display:none !important}.stbl{font-size:11px}.stbl th,.stbl td{padding:6px 8px;white-space:nowrap}}
 </style>
 <link rel="stylesheet" href="/responsive.css"><script src="/dce-auth.js" defer></script>
 </head>
@@ -1464,7 +1466,7 @@ async function renderIdeaFeedTickers(items, status, cont) {
           <th>Mkt Cap</th>
           <th>Mentions</th>
           <th style="text-align:left">Latest mention</th>
-          <th style="text-align:left">Thesis (≈100w)</th>
+          <th class="col-thesis" style="text-align:left">Thesis (≈100w)</th>
           <th></th>
         </tr></thead>
         <tbody id="if-tbl-body">
@@ -1480,7 +1482,7 @@ async function renderIdeaFeedTickers(items, status, cont) {
               <a href="${_ifEscape(r.mentions[0].url || '#')}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:none">${_ifEscape(r.mentions[0].title)}</a>
               <div style="color:var(--gray-mid);font-size:10px;margin-top:3px;letter-spacing:0.04em">${_ifEscape([...r.sources].join(' · '))} — ${_ifFmtDate(r.mentions[0].published_at || r.mentions[0].fetched_at)}</div>
             </td>
-            <td style="text-align:justify;font-size:11px;max-width:420px;line-height:1.45;color:var(--navy);hyphens:auto">
+            <td class="col-thesis" style="text-align:justify;font-size:11px;max-width:420px;line-height:1.45;color:var(--navy);hyphens:auto">
               ${r.thesisItem && r.thesisItem.thesis
                 ? _ifEscape(r.thesisItem.thesis)
                 : '<span style="color:var(--gray-mid);font-style:italic">Pending next refresh…</span>'}

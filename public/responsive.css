@@ -216,6 +216,24 @@
   }
   .hnav a {
     font-size: 9px !important;
-    padding: 7px 12px !important;
+    padding: 7px 10px !important;
+    letter-spacing: 0.10em !important;
   }
+  .hnav {
+    gap: 4px !important;
+    flex-wrap: nowrap !important;
+  }
+  /* Header logo a touch smaller so it doesn't push nav into a second row */
+  header .logo, header .brand {
+    font-size: 16px !important;
+  }
+}
+
+/* iPad mini portrait & narrow tablets — extra-tight nav so all 7 grouped items fit one row */
+@media (min-width: 721px) and (max-width: 820px) {
+  header { padding: 10px 16px !important; }
+  .hnav a { font-size: 8.5px !important; padding: 6px 8px !important; letter-spacing: 0.08em !important; }
+  .hnav { gap: 2px !important; }
+  /* Hide the search box on narrow tablets — it's also accessible via Ctrl+K and the menu */
+  header .search-box, header [class*="search" i] { display: none !important; }
 }
