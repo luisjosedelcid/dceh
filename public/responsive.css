@@ -239,3 +239,51 @@
   /* Slightly smaller logo so it doesn't compete for header width */
   header .logo, header .brand { font-size: 16px !important; }
 }
+
+/* ─────────────────────────────────────────────────────
+   IPHONE — narrow viewports (≤480px)
+   Page-specific overflow fixes
+   ───────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Prevent body horizontal scroll globally */
+  html, body { overflow-x: hidden !important; max-width: 100vw !important; }
+
+  /* COCKPIT: collapse the 1.3fr 1fr grid into single column */
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* SCREENER: mode-tabs scroll horizontally instead of overflow */
+  .mode-tabs {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+  .mode-tabs::-webkit-scrollbar { display: none !important; }
+  .mode-tab {
+    flex: 0 0 auto !important;
+    padding: 10px 14px !important;
+    font-size: 9.5px !important;
+    letter-spacing: 0.10em !important;
+    white-space: nowrap !important;
+  }
+
+  /* PERFORMANCE: ips-bands-table needs scroll wrapper behavior */
+  .ips-bands-table {
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    max-width: 100% !important;
+  }
+
+  /* Catch-all: any card/section that uses inline 2-col grid → single col */
+  div[style*="grid-template-columns:1.3fr 1fr"],
+  div[style*="grid-template-columns: 1.3fr 1fr"],
+  div[style*="grid-template-columns:repeat(2"],
+  div[style*="grid-template-columns: repeat(2"] {
+    grid-template-columns: 1fr !important;
+  }
+}
