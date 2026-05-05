@@ -1,0 +1,215 @@
+name: Weekly Database + Storage Backup
+
+on:
+  schedule:
+    # Cada domingo 04:00 UTC (06:00 Madrid invierno / 05:00 Madrid verano / 23:00 Lima sábado)
+    - cron: "0 4 * * 0"
+  workflow_dispatch: {} # permite trigger manual desde GitHub UI
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout main repo (for migration files)
+        uses: actions/checkout@v4
+        with:
+          path: dceh
+          sparse-checkout: |
+            supabase
+            migrations
+            RUNBOOK_DR.md
+
+      - name: Checkout backups repo
+        uses: actions/checkout@v4
+        with:
+          repository: luisjosedelcid/dceh-backups
+          token: ${{ secrets.BACKUP_REPO_TOKEN }}
+          path: backups
+
+      - name: Install Postgres 16 client (matches Supabase server)
+        run: |
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-16
+          pg_dump --version
+
+      - name: Set backup paths
+        id: paths
+        run: |
+          STAMP=$(date -u +"%Y-%m-%d_%H%M")
+          ISO_WEEK=$(date -u +"%G-W%V")
+          BACKUP_DIR="backups/${ISO_WEEK}"
+          mkdir -p "${BACKUP_DIR}"
+          echo "stamp=${STAMP}" >> $GITHUB_OUTPUT
+          echo "iso_week=${ISO_WEEK}" >> $GITHUB_OUTPUT
+          echo "dir=${BACKUP_DIR}" >> $GITHUB_OUTPUT
+
+      - name: Dump database (schema + data, public schema only)
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          DUMP_FILE="${{ steps.paths.outputs.dir }}/db_${{ steps.paths.outputs.stamp }}.sql"
+          # Schema + data, sólo schema public, sin owner/privileges para que sea portable
+          pg_dump "$DB_URL" \
+            --schema=public \
+            --no-owner \
+            --no-privileges \
+            --no-comments \
+            --quote-all-identifiers \
+            --format=plain \
+            --file="$DUMP_FILE"
+          gzip -9 "$DUMP_FILE"
+          ls -lh "${DUMP_FILE}.gz"
+          echo "DUMP_FILE=${DUMP_FILE}.gz" >> $GITHUB_ENV
+
+      - name: Backup Supabase Storage manifests
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          MANIFEST_FILE="${{ steps.paths.outputs.dir }}/storage_manifest_${{ steps.paths.outputs.stamp }}.json"
+
+          # Lista todos los buckets primero
+          curl -sf -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            "$SUPABASE_URL/storage/v1/bucket" > buckets.json
+          cat buckets.json
+
+          # Manifest = lista recursiva de objetos en cada bucket
+          echo "{" > "$MANIFEST_FILE"
+          echo "  \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"," >> "$MANIFEST_FILE"
+          echo "  \"buckets\": $(cat buckets.json)," >> "$MANIFEST_FILE"
+          echo "  \"objects\": {" >> "$MANIFEST_FILE"
+
+          first=1
+          for bucket in reports study; do
+            if [ $first -eq 0 ]; then echo "," >> "$MANIFEST_FILE"; fi
+            first=0
+            echo "    \"$bucket\": " >> "$MANIFEST_FILE"
+            curl -sf -X POST \
+              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"prefix":"","limit":10000,"offset":0,"sortBy":{"column":"name","order":"asc"}}' \
+              "$SUPABASE_URL/storage/v1/object/list/$bucket" >> "$MANIFEST_FILE" || echo "[]" >> "$MANIFEST_FILE"
+          done
+
+          echo "  }" >> "$MANIFEST_FILE"
+          echo "}" >> "$MANIFEST_FILE"
+
+          cat "$MANIFEST_FILE" | python3 -m json.tool > /dev/null && echo "Manifest JSON valid"
+
+      - name: Download storage objects (reports + study buckets)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          STORAGE_DIR="${{ steps.paths.outputs.dir }}/storage_${{ steps.paths.outputs.stamp }}"
+          mkdir -p "$STORAGE_DIR"
+
+          for bucket in reports study; do
+            mkdir -p "$STORAGE_DIR/$bucket"
+            # Lista plana de todos los objetos (recursive via empty prefix)
+            curl -sf -X POST \
+              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"prefix":"","limit":10000,"offset":0,"sortBy":{"column":"name","order":"asc"}}' \
+              "$SUPABASE_URL/storage/v1/object/list/$bucket" \
+              | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+for o in data:
+    if o.get('id'):  # solo archivos, no carpetas vacías
+        print(o['name'])
+" > "/tmp/${bucket}_files.txt" || true
+
+            # Descarga cada archivo
+            while IFS= read -r path; do
+              [ -z "$path" ] && continue
+              # Crea subcarpetas si la ruta tiene /
+              dest="$STORAGE_DIR/$bucket/$path"
+              mkdir -p "$(dirname "$dest")"
+              curl -sf -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+                "$SUPABASE_URL/storage/v1/object/$bucket/$path" \
+                -o "$dest" || echo "FAIL: $bucket/$path"
+            done < "/tmp/${bucket}_files.txt"
+
+            count=$(find "$STORAGE_DIR/$bucket" -type f | wc -l)
+            echo "Bucket $bucket: $count files downloaded"
+          done
+
+          # Tarball comprimido
+          tar -czf "${STORAGE_DIR}.tar.gz" -C "${{ steps.paths.outputs.dir }}" "$(basename $STORAGE_DIR)"
+          rm -rf "$STORAGE_DIR"
+          ls -lh "${STORAGE_DIR}.tar.gz"
+
+      - name: Snapshot migration files (for schema rebuild)
+        run: |
+          MIG_TAR="${{ steps.paths.outputs.dir }}/migrations_${{ steps.paths.outputs.stamp }}.tar.gz"
+          tar -czf "$MIG_TAR" -C dceh supabase migrations 2>/dev/null || tar -czf "$MIG_TAR" -C dceh supabase
+          ls -lh "$MIG_TAR"
+
+      - name: Write README for this snapshot
+        run: |
+          README_FILE="${{ steps.paths.outputs.dir }}/README.md"
+          cat > "$README_FILE" <<EOF
+          # Backup ${{ steps.paths.outputs.iso_week }}
+
+          Generated: ${{ steps.paths.outputs.stamp }} UTC
+          Source: Supabase project mlmmcciknvydlekztqtj (DCE Holdings, eu-west-1)
+          Plan: Pro
+
+          ## Contents
+          - \`db_*.sql.gz\` — pg_dump completo del schema public (data + DDL)
+          - \`storage_*.tar.gz\` — todos los objetos de los buckets reports + study
+          - \`storage_manifest_*.json\` — manifest JSON con metadatos de cada objeto
+          - \`migrations_*.tar.gz\` — snapshot de los archivos de migraciones del repo dceh
+
+          ## Restore
+          Ver RUNBOOK_DR.md en el repo dceh.
+
+          Comando rápido:
+          \`\`\`
+          gunzip -c db_*.sql.gz | psql "\$NEW_DB_URL"
+          \`\`\`
+          EOF
+
+      - name: Purge old backups (keep last 8 weeks)
+        working-directory: backups
+        run: |
+          # Lista carpetas tipo YYYY-WNN ordenadas, borra todas excepto las 8 más recientes
+          dirs=$(ls -d 20*-W* 2>/dev/null | sort -r)
+          count=0
+          for d in $dirs; do
+            count=$((count+1))
+            if [ $count -gt 8 ]; then
+              echo "Purging $d"
+              rm -rf "$d"
+            fi
+          done
+
+      - name: Commit and push to backups repo
+        working-directory: ../backups
+        run: |
+          cd "${{ github.workspace }}/backups"
+          git config user.email "luis@dceholdings.com"
+          git config user.name "DCE Backup Bot"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "backup: ${{ steps.paths.outputs.iso_week }} (${{ steps.paths.outputs.stamp }})"
+            git push
+          fi
+
+      - name: Summary
+        run: |
+          echo "Backup complete for week ${{ steps.paths.outputs.iso_week }}"
+          du -sh backups/${{ steps.paths.outputs.iso_week }}/* 2>/dev/null || true
