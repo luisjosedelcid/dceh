@@ -471,7 +471,7 @@
   <div class="gate-divider"></div>
   <div class="gate-form">
     <label>Email</label>
-    <input type="email" id="email-input" autocomplete="username" placeholder="luis@dceholdings.com" onkeydown="if(event.key==='Enter') document.getElementById('pwd-input').focus()">
+    <input type="email" id="email-input" autocomplete="off" placeholder="Email" onkeydown="if(event.key==='Enter') document.getElementById('pwd-input').focus()">
     <label style="margin-top:18px">Access Password</label>
     <input type="password" id="pwd-input" autocomplete="current-password" placeholder="··········" onkeydown="if(event.key==='Enter') checkPwd()">
     <div id="gate-error"></div>
@@ -622,7 +622,7 @@ async function checkPwd() {
   }
   document.getElementById('gate-error').textContent = 'Verifying…';
   document.getElementById('gate-error').style.color = 'var(--gray-mid)';
-  try { localStorage.setItem('dce_last_email', email); } catch {}
+  // Do NOT store email in localStorage (privacy)
   const res = await window.dceAuth.login(email, val);
   if (res.ok) {
     document.getElementById('gate').classList.add('fade-out');
@@ -659,8 +659,8 @@ window.addEventListener('DOMContentLoaded', () => {
     return false;
   };
   try {
-    const last = localStorage.getItem('dce_last_email');
-    if (last) document.getElementById('email-input').value = last;
+    // Privacy: clear any previously stored email and never pre-fill
+    localStorage.removeItem('dce_last_email');
   } catch {}
 
   const focusFirstEmpty = () => {

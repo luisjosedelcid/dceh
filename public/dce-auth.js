@@ -222,7 +222,7 @@
       <div class="dce-auth-card" role="dialog" aria-modal="true" aria-label="Admin login">
         <h3>Admin Sign-In</h3>
         <label>Email (optional)</label>
-        <input type="email" autocomplete="username" data-dce-email placeholder="luis@dceholdings.com">
+        <input type="email" autocomplete="off" data-dce-email placeholder="Email">
         <label>Password</label>
         <input type="password" autocomplete="current-password" data-dce-pw>
         <div class="err" data-dce-err></div>
