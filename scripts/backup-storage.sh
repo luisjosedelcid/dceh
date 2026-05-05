@@ -64,25 +64,67 @@ done
 # Validacion JSON
 python3 -m json.tool "$MANIFEST_FILE" > /dev/null && echo "[storage] manifest JSON valido"
 
-# Descarga de archivos
-for bucket in "${BUCKETS[@]}"; do
-  mkdir -p "$STORAGE_DIR/$bucket"
+# Descarga de archivos (recursivo)
+# Funcion: lista todos los archivos de un bucket+prefix recursivamente
+list_recursive() {
+  local bucket="$1"
+  local prefix="$2"
+  local response
 
-  # Extrae nombres de archivos (objetos con id != null)
-  python3 -c "
+  response=$(curl -sf -X POST \
+    -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+    -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+    -H "Content-Type: application/json" \
+    -d "{\"prefix\":\"$prefix\",\"limit\":10000,\"offset\":0,\"sortBy\":{\"column\":\"name\",\"order\":\"asc\"}}" \
+    "$SUPABASE_URL/storage/v1/object/list/$bucket" || echo "[]")
+
+  echo "$response" | python3 -c "
 import json, sys
-with open('/tmp/${bucket}_list.json') as f:
-    data = json.load(f)
+data = json.load(sys.stdin)
 if isinstance(data, list):
     for o in data:
+        name = o['name']
+        # id null = carpeta, recursivo
+        # id no null = archivo
         if o.get('id'):
-            print(o['name'])
-" > "/tmp/${bucket}_files.txt"
+            print('FILE\t' + name)
+        else:
+            print('DIR\t' + name)
+"
+}
 
-  count=0
+# Recursivo BFS por bucket
+backup_bucket() {
+  local bucket="$1"
+  local file_list="/tmp/${bucket}_all_files.txt"
+  > "$file_list"
+
+  # Cola de prefijos por procesar
+  local queue=("")
+  while [ ${#queue[@]} -gt 0 ]; do
+    local prefix="${queue[0]}"
+    queue=("${queue[@]:1}")
+
+    while IFS=$'\t' read -r kind name; do
+      [ -z "$kind" ] && continue
+      local full_path
+      if [ -z "$prefix" ]; then
+        full_path="$name"
+      else
+        full_path="${prefix}/${name}"
+      fi
+      if [ "$kind" = "FILE" ]; then
+        echo "$full_path" >> "$file_list"
+      elif [ "$kind" = "DIR" ]; then
+        queue+=("$full_path")
+      fi
+    done < <(list_recursive "$bucket" "$prefix")
+  done
+
+  local count=0
   while IFS= read -r path; do
     [ -z "$path" ] && continue
-    dest="$STORAGE_DIR/$bucket/$path"
+    local dest="$STORAGE_DIR/$bucket/$path"
     mkdir -p "$(dirname "$dest")"
     if curl -sf -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
         "$SUPABASE_URL/storage/v1/object/$bucket/$path" \
@@ -91,9 +133,14 @@ if isinstance(data, list):
     else
       echo "[storage] FAIL: $bucket/$path"
     fi
-  done < "/tmp/${bucket}_files.txt"
+  done < "$file_list"
 
   echo "[storage] bucket $bucket: $count archivos descargados"
+}
+
+for bucket in "${BUCKETS[@]}"; do
+  mkdir -p "$STORAGE_DIR/$bucket"
+  backup_bucket "$bucket"
 done
 
 # Tarball
