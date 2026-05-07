@@ -328,7 +328,10 @@
 <div class="modal-bg" id="new-entry-modal" onclick="if(event.target===this)closeNewEntry()">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="new-entry-title">
     <div class="modal-header">
-      <div class="modal-title" id="new-entry-title">New Decision Entry</div>
+      <div>
+        <div class="modal-title" id="new-entry-title">New Decision Entry</div>
+        <div id="new-entry-subtitle" style="font-size:11px;color:var(--gray-mid);margin-top:2px;letter-spacing:0.02em;display:none"></div>
+      </div>
       <button class="modal-close" onclick="closeNewEntry()" aria-label="Close">×</button>
     </div>
     <form id="new-entry-form" onsubmit="submitNewEntry(event)">
@@ -384,6 +387,10 @@
       <div class="modal-footer">
         <button type="button" class="btn-cancel" onclick="closeNewEntry()">Cancel</button>
         <button type="submit" class="btn-submit" id="ne-submit">Save Entry</button>
+      </div>
+      <!-- Manual reference, only shown for BUY type -->
+      <div id="ne-manual-ref" style="display:none;padding:10px 22px 14px;background:#fafbfc;border-top:1px solid #ececef;font-size:11px;color:var(--gray-mid);line-height:1.55;letter-spacing:0.01em">
+        <strong style="color:var(--navy);font-weight:600">Investment Memo</strong> — A BUY entry constitutes the formal Investment Memo per Operations Manual §1.5 and §3.3. Per §4.6, no execution may occur without an approved and signed Investment Memo. Save and export to PDF for the signed record.
       </div>
     </form>
   </div>
@@ -1067,6 +1074,10 @@ function printDecisionEntry(id) {
   const ticker = r ? r.ticker : '';
   const type = r ? r.decision_type : '';
   const date = r ? fmtDate(r.decision_date) : '';
+  const isBuy = String(type).toUpperCase() === 'BUY';
+  // BUY entries are framed as Investment Memos per Operations Manual §1.5 / §3.3 / §4.6
+  const docLabel = isBuy ? 'Investment Memo' : `${type} Decision`;
+  const trailLabel = isBuy ? 'Investment Memo · per Ops Manual §1.5' : 'Decision Journal';
 
   // Build a print-only host with header + a clone of the detail content.
   const main = document.querySelector('main');
@@ -1075,8 +1086,8 @@ function printDecisionEntry(id) {
   host.className = 'print-host';
   host.innerHTML = `
     <div class="print-header">
-      <div class="ph-title">${escapeHtml(ticker)} — ${escapeHtml(type)} Decision</div>
-      <div class="ph-meta">DCE Holdings · Decision Journal · Entry #${id} · ${escapeHtml(date)}</div>
+      <div class="ph-title">${escapeHtml(ticker)} — ${escapeHtml(docLabel)}</div>
+      <div class="ph-meta">DCE Holdings · ${escapeHtml(trailLabel)} · Entry #${id} · ${escapeHtml(date)}</div>
     </div>
   `;
   // Clone detail content, drop the action bar and exec section to keep PDF clean.
@@ -1102,7 +1113,10 @@ function printDecisionEntry(id) {
   // Suggest filename via document.title (some browsers use this for the
   // default "Save as PDF" filename). Restore it after.
   const prevTitle = document.title;
-  document.title = `DCE_Decision_${ticker}_${type}_${(r && r.decision_date ? r.decision_date : '').replace(/-/g, '')}`;
+  const dateCompact = (r && r.decision_date ? r.decision_date : '').replace(/-/g, '');
+  document.title = isBuy
+    ? `DCE_Investment_Memo_${ticker}_${dateCompact}`
+    : `DCE_Decision_${ticker}_${type}_${dateCompact}`;
   setTimeout(() => {
     try { window.print(); }
     finally {
@@ -1133,6 +1147,13 @@ function openNewEntry(opts) {
     const valid = ['BUY','PASS','SELL','HOLD','TRIM','ADD'];
     const t = String(opts.type).toUpperCase();
     if (valid.includes(t)) sel.value = t;
+  }
+  // React to decision-type changes: BUY → "Investment Memo" framing
+  applyEntryTypeFraming();
+  const typeSel = document.getElementById('ne-type');
+  if (typeSel && !typeSel.dataset.framingBound) {
+    typeSel.addEventListener('change', applyEntryTypeFraming);
+    typeSel.dataset.framingBound = '1';
   }
 
   // Thesis prefill from company dashboard (sessionStorage handoff).
@@ -1170,6 +1191,29 @@ function closeNewEntry() {
   document.body.style.overflow = '';
 }
 window.closeNewEntry = closeNewEntry;
+
+// Switch modal title/subtitle/submit-label/manual-ref based on selected decision type.
+// BUY frames the entry as a formal Investment Memo (per Operations Manual §1.5).
+function applyEntryTypeFraming() {
+  const sel = document.getElementById('ne-type');
+  const titleEl = document.getElementById('new-entry-title');
+  const subEl = document.getElementById('new-entry-subtitle');
+  const submitEl = document.getElementById('ne-submit');
+  const refEl = document.getElementById('ne-manual-ref');
+  if (!sel || !titleEl) return;
+  const t = (sel.value || '').toUpperCase();
+  if (t === 'BUY') {
+    titleEl.textContent = 'New Investment Memo';
+    if (subEl) { subEl.textContent = 'Decision Journal entry · BUY · per Ops Manual §1.5'; subEl.style.display = ''; }
+    if (submitEl) submitEl.textContent = 'Save Investment Memo';
+    if (refEl) refEl.style.display = '';
+  } else {
+    titleEl.textContent = 'New Decision Entry';
+    if (subEl) { subEl.textContent = ''; subEl.style.display = 'none'; }
+    if (submitEl) submitEl.textContent = 'Save Entry';
+    if (refEl) refEl.style.display = 'none';
+  }
+}
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
