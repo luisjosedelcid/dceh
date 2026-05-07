@@ -345,10 +345,11 @@
     return null;
   }
 
-  // ── Nav grouping: 7 top-level items in fixed order ──────────────────────
-  // Order: Home · Research ▾ · Pipeline ▾ · Decisions ▾ · Monitor ▾ · Reporting · Data Room
+  // ── Nav grouping: 8 top-level items in fixed order ──────────────────────
+  // Order: Home · Cockpit · Research ▾ · Pipeline ▾ · Decisions ▾ · Monitor · Reporting · Data Room
   const NAV_GROUPS = [
-    { id:'home', label:'Home', href:'/', single:true },
+    { id:'home',     label:'Home',    href:'/',              single:true },
+    { id:'cockpit',  label:'Cockpit', href:'/cockpit.html',  single:true },
     { id:'research', label:'Research', items:[
       { href:'/study.html',       label:'Study',    desc:'Sector deep-dives + megatrends' },
       { href:'/news.html',        label:'News',     desc:'AI news scanner (Claude)' },
@@ -363,12 +364,8 @@
       { href:'/journal.html',     label:'Journal',     desc:'Decision journal — buy/sell con thesis' },
       // { href:'/premortem.html',   label:'Pre-mortem',  desc:'Watch failure modes · manage' }, // archived 2026-05-07: backend activo, página oculta. Re-underwriting trimestral mantiene la disciplina.
     ]},
-    { id:'monitor', label:'Monitor', items:[
-      { href:'/cockpit.html',     label:'Cockpit',     desc:'Daily CIO screen — gates, decisiones, eventos' },
-      { href:'/portfolio.html',   label:'Portfolio',   desc:'P&L live, posiciones, allocation' },
-      // { href:'/iv-tracking.html', label:'IV Tracking', desc:'Intrinsic value vs price — signal zones por ticker' }, // archived 2026-05-07: backend activo, página oculta. El re-underwriting trimestral refresca el modelo Columbia y captura el Implied IRR — IV Tracking quedaba duplicando esa libreta. Reactivar cuando rehagamos el flujo conectado.
-      { href:'/performance.html', label:'Performance', desc:'NAV histórico vs IWQU.L, transactions' },
-    ]},
+    // Monitor: Portfolio + IV Tracking ocultos (consolidados en Performance / re-underwriting). Cockpit movido a top-level.
+    { id:'monitor',  label:'Monitor', href:'/performance.html', single:true },
     { id:'reporting', label:'Reporting', href:'/reporting.html', single:true },
     { id:'dataroom',  label:'Data Room', href:'/dataroom.html',  single:true },
   ];
