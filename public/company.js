@@ -223,6 +223,7 @@ function buildNav() {
     {id:'roic',        label:'ROIC & Capital'},
     {id:'irr',         label:'Implied IRR'},
     {id:'health',      label:'Health Check'},
+    {id:'thesis',      label:'Thesis Health'},
     {id:'audit',       label:'CIO Decisions'},
     {id:'vr',          label:'Valuation Report', external: D.documents.valuationReportUrl, style:'font-weight:600'},
     {id:'tb',          label:'Thesis Breaker',    external: D.documents.thesisBreakerUrl,  style:'color:var(--red);font-weight:600'},
@@ -284,6 +285,7 @@ function renderTab(id) {
     case 'roic':       renderROIC(); break;
     case 'irr':        renderIrr(); break;
     case 'health':     renderHealth(); break;
+    case 'thesis':     renderThesis(); break;
     case 'audit':      renderAudit(); break;
     case 'summary':    renderSummary(); break;
   }
@@ -972,6 +974,172 @@ function renderHealth() {
       }
     });
   }
+}
+
+/* ════════════════════════════════════════════════════════════
+   8b. THESIS HEALTH (Tier-1 KPI tracker · IPS §4.7)
+   ════════════════════════════════════════════════════════════ */
+async function renderThesis() {
+  const grid    = document.getElementById('th-grid');
+  const meta    = document.getElementById('th-meta');
+  const status  = document.getElementById('th-status');
+  const empty   = document.getElementById('th-empty');
+  if (!grid) return;
+
+  // Reset
+  grid.innerHTML = '';
+  meta.innerHTML = '';
+  status.innerHTML = '';
+  empty.style.display = 'none';
+  grid.style.display = '';
+
+  const ticker = (D && D.ticker) ? D.ticker.toLowerCase() : '';
+  if (!ticker) return;
+
+  let mon;
+  try {
+    const res = await fetch(`/data/monitoring_${ticker}.json`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('not found');
+    mon = await res.json();
+  } catch (e) {
+    grid.style.display = 'none';
+    empty.style.display = '';
+    empty.innerHTML = `<strong>No thesis health data available for ${(D.ticker||'').toUpperCase()}.</strong><br>
+      Once the Investment Memo is published, the Tier-1 KPIs (per IPS §4.7) will appear here and update each quarter via the re-underwriting workflow.`;
+    return;
+  }
+
+  // Meta row
+  const q       = mon.q1_2026_status_quarter || mon._meta?.last_modified || '—';
+  const updated = mon._meta?.last_modified || '—';
+  meta.innerHTML = `As of <strong>${q}</strong> · Updated ${updated} · ${mon.classification || ''} · IPS §4.7`;
+
+  // Status banner
+  const banner = (mon.q1_2026_status || 'PENDING').toLowerCase();
+  const bannerLabel = {
+    green:  'Thesis intact',
+    amber:  'Watch — thresholds drifting',
+    red:    'Thesis at risk',
+    pending:'Awaiting first update'
+  }[banner] || 'Pending';
+  status.className = 'th-status-banner ' + banner;
+  status.innerHTML = `<span class="th-dot"></span>
+    <div class="th-status-text"><strong>${bannerLabel}.</strong> ${mon.q1_2026_status_note || ''}</div>`;
+
+  // KPI cards
+  const metrics = mon.tier_1_metrics || [];
+  if (!metrics.length) {
+    grid.innerHTML = '<div class="th-empty">No Tier-1 metrics defined.</div>';
+    return;
+  }
+
+  const cards = metrics.map(m => buildThesisCard(m));
+  grid.innerHTML = cards.join('');
+}
+
+function thesisStatusOf(m) {
+  if (m.current_value == null || m.current_value === undefined) return 'pending';
+  if (m.current_status) return String(m.current_status).toLowerCase();
+  const v = Number(m.current_value);
+  const dir = m.direction || 'higher_is_better';
+  const yt = m.yellow_threshold, rt = m.red_threshold;
+  if (dir === 'higher_is_better') {
+    if (rt != null && v < rt) return 'red';
+    if (yt != null && v < yt) return 'amber';
+    return 'green';
+  } else {
+    if (rt != null && v > rt) return 'red';
+    if (yt != null && v > yt) return 'amber';
+    return 'green';
+  }
+}
+
+function buildThesisCard(m) {
+  const st = thesisStatusOf(m);
+  const pillLabel = { green:'On track', amber:'Watch', red:'Breach', pending:'Pending' }[st] || 'Pending';
+  const sparkColor = { green:'#15803d', amber:'#b45309', red:'#b91c1c', pending:'#71717a' }[st];
+
+  // Value block
+  let valueBlock;
+  if (m.current_value == null) {
+    valueBlock = `<div class="th-value-row"><div class="th-value pending">Awaiting first update</div></div>`;
+  } else {
+    const v = Number(m.current_value);
+    const unit = m.unit === 'ratio' ? 'x' : (m.unit || '');
+    const display = (Math.abs(v) < 10 && !Number.isInteger(v)) ? v.toFixed(2) : v.toFixed(1);
+    let trendHTML = '';
+    if (Array.isArray(m.history) && m.history.length >= 2) {
+      const prev = Number(m.history[m.history.length - 2].value);
+      const cur  = Number(m.history[m.history.length - 1].value);
+      const delta = cur - prev;
+      const absD = Math.abs(delta);
+      const sym = delta > 0.0001 ? '↑' : (delta < -0.0001 ? '↓' : '→');
+      const cls = (m.direction === 'higher_is_better')
+        ? (delta > 0.0001 ? 'up' : (delta < -0.0001 ? 'down' : 'flat'))
+        : (delta > 0.0001 ? 'down' : (delta < -0.0001 ? 'up' : 'flat'));
+      let label;
+      if (absD < 0.01) label = '→';
+      else if (m.unit === '%') label = `${sym} ${absD.toFixed(1)}pp`;
+      else if (m.unit === 'ratio' || m.unit === 'x') label = `${sym} ${absD.toFixed(2)}x`;
+      else label = `${sym} ${absD.toFixed(2)}`;
+      trendHTML = `<div class="th-trend ${cls}">${label}</div>`;
+    }
+    valueBlock = `<div class="th-value-row">
+      <div class="th-value">${display}</div>
+      <div class="th-unit">${unit}</div>
+      ${trendHTML}
+    </div>`;
+  }
+
+  // Target line
+  const unitTxt = m.unit === 'ratio' ? 'x' : (m.unit || '');
+  let targetLine;
+  if (Array.isArray(m.expected_range) && m.expected_range.length === 2) {
+    const [a, b] = m.expected_range;
+    const fmt = (x) => (Math.abs(x) < 10 && !Number.isInteger(x)) ? Number(x).toFixed(2) : Number(x).toFixed(0);
+    if (m.direction === 'higher_is_better') {
+      targetLine = `Target <strong>${fmt(a)}–${fmt(b)}${unitTxt}</strong>`;
+      if (m.yellow_threshold != null) targetLine += ` · Yellow <strong>&lt; ${fmt(m.yellow_threshold)}${unitTxt}</strong>`;
+      if (m.red_threshold != null)    targetLine += ` · Red <strong>&lt; ${fmt(m.red_threshold)}${unitTxt}</strong>`;
+    } else {
+      targetLine = `Target <strong>${fmt(a)}–${fmt(b)}${unitTxt}</strong>`;
+      if (m.yellow_threshold != null) targetLine += ` · Yellow <strong>&gt; ${fmt(m.yellow_threshold)}${unitTxt}</strong>`;
+      if (m.red_threshold != null)    targetLine += ` · Red <strong>&gt; ${fmt(m.red_threshold)}${unitTxt}</strong>`;
+    }
+  } else {
+    targetLine = '';
+  }
+
+  // Sparkline
+  let sparkSVG = '';
+  if (Array.isArray(m.history) && m.history.length >= 2) {
+    const vals = m.history.map(h => Number(h.value));
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const range = (max - min) || 1;
+    const W = 200, H = 36, pad = 4;
+    const pts = vals.map((v, i) => {
+      const x = (vals.length === 1) ? W/2 : (i / (vals.length - 1)) * W;
+      const y = pad + (1 - (v - min) / range) * (H - 2 * pad);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    const last = pts.split(' ').slice(-1)[0].split(',');
+    sparkSVG = `<svg class="th-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <polyline fill="none" stroke="${sparkColor}" stroke-width="1.6" points="${pts}"/>
+      <circle cx="${last[0]}" cy="${last[1]}" r="2.4" fill="${sparkColor}"/>
+    </svg>`;
+  }
+
+  return `<div class="th-card ${st}">
+    <div class="th-row-top">
+      <div class="th-name">${m.name || m.id}</div>
+      <span class="th-pill">${pillLabel}</span>
+    </div>
+    ${valueBlock}
+    <div class="th-target">${targetLine}</div>
+    ${sparkSVG}
+    <div class="th-thesis"><em>Thesis link.</em> ${m.thesis_link || ''}</div>
+    <div class="th-source">Source · ${m.data_source || '—'}</div>
+  </div>`;
 }
 
 /* ════════════════════════════════════════════════════════════

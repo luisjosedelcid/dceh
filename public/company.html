@@ -197,6 +197,51 @@
   .doc-tile a:hover { background: var(--gold); }
   .doc-tile .coming-soon { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; color: var(--gray-mid); border: 1px solid var(--gray-lt); padding: 10px 22px; display: inline-block; margin-top: 8px; }
 
+  /* Thesis Health */
+  .th-meta-row { font-size: 11px; color: var(--gray-mid); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 16px; }
+  .th-status-banner { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 4px; margin-bottom: 28px; border: 1px solid var(--gray-lt); border-left-width: 4px; font-size: 13px; line-height: 1.55; color: var(--gray-txt); }
+  .th-status-banner .th-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .th-status-banner.green   { background:#f6fef8; border-color:#c8e6cf; border-left-color:#15803d; }
+  .th-status-banner.green   .th-dot { background:#15803d; box-shadow: 0 0 0 3px rgba(21,128,61,0.18); }
+  .th-status-banner.green   strong { color:#14532d; }
+  .th-status-banner.amber   { background:#fffbeb; border-color:#f6e2b3; border-left-color:#b45309; }
+  .th-status-banner.amber   .th-dot { background:#b45309; box-shadow: 0 0 0 3px rgba(180,83,9,0.18); }
+  .th-status-banner.amber   strong { color:#78350f; }
+  .th-status-banner.red     { background:#fef2f2; border-color:#fbcaca; border-left-color:#b91c1c; }
+  .th-status-banner.red     .th-dot { background:#b91c1c; box-shadow: 0 0 0 3px rgba(185,28,28,0.18); }
+  .th-status-banner.red     strong { color:#7f1d1d; }
+  .th-status-banner.pending { background:#f5f5f7; border-color:#d4d4d8; border-left-color:#71717a; }
+  .th-status-banner.pending .th-dot { background:#71717a; box-shadow: 0 0 0 3px rgba(113,113,122,0.18); }
+  .th-status-banner.pending strong { color:#3f3f46; }
+  .th-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  .th-card { background: var(--white); border: 1px solid var(--gray-lt); border-top: 3px solid var(--gray-mid); padding: 18px 20px 16px; border-radius: 4px; display: flex; flex-direction: column; }
+  .th-card.green   { border-top-color:#15803d; }
+  .th-card.amber   { border-top-color:#b45309; }
+  .th-card.red     { border-top-color:#b91c1c; }
+  .th-card.pending { border-top-color:#71717a; }
+  .th-card .th-row-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+  .th-card .th-name { font-size: 13px; font-weight: 600; color: var(--navy); line-height: 1.35; letter-spacing: -0.005em; }
+  .th-card .th-pill { font-size: 9.5px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; padding: 3px 8px; border-radius: 10px; flex-shrink: 0; white-space: nowrap; }
+  .th-card.green   .th-pill { background: rgba(21,128,61,0.10); color: #15803d; }
+  .th-card.amber   .th-pill { background: rgba(180,83,9,0.10); color: #b45309; }
+  .th-card.red     .th-pill { background: rgba(185,28,28,0.10); color: #b91c1c; }
+  .th-card.pending .th-pill { background: rgba(113,113,122,0.10); color: #3f3f46; }
+  .th-card .th-value-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; }
+  .th-card .th-value { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; color: var(--navy); line-height: 1; }
+  .th-card .th-value.pending { font-size: 13px; font-weight: 500; color: var(--gray-mid); font-style: italic; letter-spacing: 0; }
+  .th-card .th-unit { font-size: 14px; font-weight: 500; color: var(--gray-mid); }
+  .th-card .th-trend { font-size: 11px; font-weight: 600; margin-left: 6px; padding: 2px 6px; border-radius: 3px; }
+  .th-card .th-trend.up    { color: #15803d; background: rgba(21,128,61,0.08); }
+  .th-card .th-trend.down  { color: #b45309; background: rgba(180,83,9,0.08); }
+  .th-card .th-trend.flat  { color: #71717a; background: rgba(113,113,122,0.08); }
+  .th-card .th-target { font-size: 11px; color: var(--gray-mid); letter-spacing: 0.02em; margin-bottom: 10px; line-height: 1.5; }
+  .th-card .th-target strong { color: var(--gray-txt); font-weight: 600; }
+  .th-card .th-spark { width: 100%; height: 36px; margin-bottom: 12px; }
+  .th-card .th-thesis { font-size: 11.5px; line-height: 1.55; color: var(--gray-txt); border-top: 1px solid var(--gray-lt); padding-top: 10px; margin-top: auto; }
+  .th-card .th-thesis em { font-style: italic; color: var(--navy); font-weight: 500; }
+  .th-card .th-source { font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gray-mid); margin-top: 8px; }
+  .th-empty { padding: 40px; text-align: center; font-size: 13px; color: var(--gray-mid); border: 1px dashed var(--gray-lt); border-radius: 4px; line-height: 1.6; }
+
   @media print {
     nav, header .hright, .inp-group { display: none !important; }
     .tab-content { display: block !important; }
@@ -747,9 +792,21 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════
-     9. CIO DECISIONS
-     ══════════════════════════════════════════════════════════ -->
+<!-- =========================================================
+     9. THESIS HEALTH (KPI tracker)
+     ========================================================= -->
+<div id="tab-thesis" class="tab-content">
+  <div class="slbl">Thesis Health — Tier-1 KPIs (per IPS §4.7)</div>
+  <div id="th-meta" class="th-meta-row"></div>
+  <div id="th-status"></div>
+  <div id="th-grid" class="th-grid"></div>
+  <div id="th-empty" class="th-empty" style="display:none"></div>
+</div>
+
+<!-- =========================================================
+     10. CIO DECISIONS
+     ========================================================= -->
+
 <div id="tab-audit" class="tab-content">
   <div class="slbl">CIO Decision Points — Model Assumptions Audit Trail</div>
   <div class="card" style="max-width:900px">
@@ -758,7 +815,7 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
-     10. SUMMARY
+     11. SUMMARY
      ══════════════════════════════════════════════════════════ -->
 <div id="tab-summary" class="tab-content">
   <div class="slbl">Summary — Columbia Synthesis</div>
