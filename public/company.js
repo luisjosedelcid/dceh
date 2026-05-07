@@ -62,10 +62,20 @@ async function initDashboard() {
     }
   }
   ticker = (ticker || 'BKNG').toUpperCase();
+  const period = params.get('period');
+  window.__currentTicker = ticker;
+  window.__currentPeriod = period;
 
   try {
-    const res = await fetch(`/companies/${ticker.toLowerCase()}.json`);
-    if (!res.ok) throw new Error(`No data file for ${ticker}`);
+    // Try the versioned API first; fall back to legacy static JSON.
+    let apiUrl = `/api/dashboard?ticker=${encodeURIComponent(ticker)}`;
+    if (period) apiUrl += `&period=${encodeURIComponent(period)}`;
+    let res = await fetch(apiUrl);
+    if (!res.ok) {
+      // Legacy fallback for tickers not yet migrated to Supabase
+      res = await fetch(`/companies/${ticker.toLowerCase()}.json`);
+      if (!res.ok) throw new Error(`No data file for ${ticker}`);
+    }
     D = await res.json();
     window.D = D;  // expose to inline scripts in company.html
     window.fmt = fmt; // expose helpers used by inline slider handlers
@@ -83,8 +93,74 @@ async function initDashboard() {
   buildMeta();
   buildHeader();
   buildNav();
+  // Async — don't block initial render
+  buildVersionControls(ticker).catch(err => console.warn('version controls failed:', err));
   switchTab('overview');
 }
+
+/* ── version controls (selector + banner) ─────────────────── */
+async function buildVersionControls(ticker) {
+  const banner = document.getElementById('version-banner');
+  const selector = document.getElementById('version-selector');
+  if (!banner && !selector) return; // page didn't include the controls
+
+  let versions = [];
+  try {
+    const r = await fetch(`/api/list-dashboard-versions?ticker=${encodeURIComponent(ticker)}`);
+    if (r.ok) {
+      const j = await r.json();
+      versions = Array.isArray(j.versions) ? j.versions : [];
+    }
+  } catch (_) { /* ignore */ }
+
+  // Populate selector
+  if (selector) {
+    if (!versions.length) {
+      selector.style.display = 'none';
+    } else {
+      selector.style.display = '';
+      const current = (D && D.__version && D.__version.fiscal_period) || null;
+      const opts = versions.map(v => {
+        const sel = (current && v.fiscal_period === current) ? ' selected' : '';
+        const tag = v.is_latest ? ' (latest)' : '';
+        return `<option value="${v.fiscal_period}"${sel}>${v.fiscal_period}${tag}</option>`;
+      }).join('');
+      selector.innerHTML = `<label style="font-size:10px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.1em;margin-right:8px">Versión</label>
+        <select id="version-select" onchange="onVersionChange(this.value)"
+          style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.18);color:var(--gold-lt);font-family:Archivo,sans-serif;font-size:12px;padding:4px 8px;border-radius:4px;outline:none;cursor:pointer">
+          ${opts}
+        </select>`;
+    }
+  }
+
+  // Banner if viewing a non-latest version
+  if (banner) {
+    const v = D && D.__version;
+    const showBanner = v && v.is_latest === false;
+    if (showBanner) {
+      const latest = versions.find(x => x.is_latest);
+      const latestPeriod = latest ? latest.fiscal_period : 'la más reciente';
+      const latestUrl = `?ticker=${encodeURIComponent(ticker)}` + (latest ? `&period=${encodeURIComponent(latest.fiscal_period)}` : '');
+      banner.style.display = '';
+      banner.innerHTML = `
+        <strong>Versión histórica:</strong> Estás viendo <code style="background:rgba(0,0,0,0.08);padding:1px 6px;border-radius:3px">${v.fiscal_period}</code>.
+        La versión actual es <a href="/${ticker.toLowerCase()}" style="color:#5b3c0f;text-decoration:underline;font-weight:600">${latestPeriod}</a>.`;
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+}
+
+function onVersionChange(period) {
+  const t = window.__currentTicker;
+  if (!t) return;
+  const url = new URL(window.location.href);
+  url.searchParams.set('ticker', t);
+  if (period) url.searchParams.set('period', period);
+  else url.searchParams.delete('period');
+  window.location.href = url.toString();
+}
+window.onVersionChange = onVersionChange;
 
 /* ── meta ─────────────────────────────────────────────────── */
 function buildMeta() {
