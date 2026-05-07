@@ -996,6 +996,23 @@ function openNewEntry(opts) {
     const t = String(opts.type).toUpperCase();
     if (valid.includes(t)) sel.value = t;
   }
+
+  // Thesis prefill from company dashboard (sessionStorage handoff).
+  // Only consume if it matches the requested ticker and is fresh (≤30 min).
+  try {
+    const raw = sessionStorage.getItem('dce_journal_prefill');
+    if (raw) {
+      const pf = JSON.parse(raw);
+      const sameTicker = !opts.ticker || (pf.ticker && pf.ticker.toUpperCase() === String(opts.ticker).toUpperCase());
+      const fresh = pf.stamped_at && (Date.now() - pf.stamped_at) < 30 * 60 * 1000;
+      if (sameTicker && fresh && pf.thesis) {
+        const ta = document.getElementById('ne-thesis');
+        if (ta && !ta.value) ta.value = String(pf.thesis).slice(0, 8000);
+      }
+      sessionStorage.removeItem('dce_journal_prefill'); // one-shot
+    }
+  } catch (_) { /* ignore malformed prefill */ }
+
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';
   // Focus first empty required field

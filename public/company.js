@@ -1097,6 +1097,35 @@ async function refreshJournalButton() {
   btn.firstChild && (btn.childNodes[0].nodeValue = 'Open Decision Journal ');
   if (label) label.textContent = '';
 
+  // Stage thesis prefill (used by /journal modal when action=new). Stored in
+  // sessionStorage to avoid URL length / encoding issues with multi-paragraph text.
+  // Click handler refreshes the staged value at navigation time.
+  btn.onclick = () => {
+    if (btn.getAttribute('data-mode') !== 'new') return; // view mode — no prefill
+    try {
+      const ts = (D && D.thesisSummary) || {};
+      const narrative = String(ts.narrative || '').trim();
+      const ov = (D && D.overview) || {};
+      const epv = (D && D.epv) || {};
+      const moS = ts.marginOfSafety;
+      const irr = ts.impliedIrr;
+      const peRatio = ts.priceEpvRatio;
+      const stamp = [];
+      if (Number.isFinite(moS))     stamp.push(`MoS ${moS>=0?'+':''}${(moS*100).toFixed(1)}%`);
+      if (Number.isFinite(irr))     stamp.push(`IRR ${(irr*100).toFixed(1)}% (hurdle ${(D.irr.hurdle*100).toFixed(1)}%)`);
+      if (Number.isFinite(peRatio)) stamp.push(`Price/EPV ${peRatio.toFixed(2)}x`);
+      const header = stamp.length ? `[Columbia snapshot @ ${D.valuationDate || 'today'}] ${stamp.join(' · ')}` : '';
+      const body = [header, narrative].filter(Boolean).join('\n\n');
+      if (body) {
+        sessionStorage.setItem('dce_journal_prefill', JSON.stringify({
+          ticker: ticker,
+          thesis: body,
+          stamped_at: Date.now()
+        }));
+      }
+    } catch (_) { /* non-blocking */ }
+  };
+
   try {
     const r = await fetch(`/api/journal-check?ticker=${tkEnc}`);
     if (!r.ok) return;
