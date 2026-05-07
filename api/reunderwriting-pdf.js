@@ -51,13 +51,34 @@ const ACTION_LABELS = { buy_more: 'Buy more', hold: 'Hold', trim: 'Trim', sell: 
 
 module.exports = async (req, res) => {
   try {
-    // Auth: header OR query param
-    const url = new URL(req.url, `http://${req.headers.host || 'x'}`);
-    const token = (req.headers['x-admin-token'] || url.searchParams.get('_tok') || '').toString();
-    const a = verifyAdminToken(token);
-    if (!a.ok) {
+    // Auth: header OR query param (so a plain <a> link from the cockpit drawer works)
+    const ADMIN_TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET;
+    if (!ADMIN_TOKEN_SECRET) {
       res.setHeader('content-type', 'application/json');
-      res.status(401).end(JSON.stringify({ ok: false, error: 'admin auth required' }));
+      res.status(500).end(JSON.stringify({ ok: false, error: 'Server not configured' }));
+      return;
+    }
+    const url = new URL(req.url, `http://${req.headers.host || 'x'}`);
+    const token = ((req.headers['x-admin-token'] || url.searchParams.get('_tok') || '') + '').trim();
+    if (!token) {
+      res.setHeader('content-type', 'application/json');
+      res.status(401).end(JSON.stringify({ ok: false, error: 'Unauthorized: missing token' }));
+      return;
+    }
+    const verified = verifyAdminToken(token, ADMIN_TOKEN_SECRET);
+    if (!verified || !verified.email) {
+      res.setHeader('content-type', 'application/json');
+      res.status(401).end(JSON.stringify({ ok: false, error: 'Unauthorized: invalid token' }));
+      return;
+    }
+    // Lookup user is_active (lightweight check)
+    const users = await sbSelect(
+      'admin_users',
+      `select=email,is_active&email=eq.${encodeURIComponent(verified.email)}&is_active=eq.true&limit=1`
+    );
+    if (!users[0]) {
+      res.setHeader('content-type', 'application/json');
+      res.status(401).end(JSON.stringify({ ok: false, error: 'Unauthorized: user not found or inactive' }));
       return;
     }
 
