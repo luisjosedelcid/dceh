@@ -1122,8 +1122,11 @@ async function renderPremortemHistory() {
   if (!ticker) { target.innerHTML = ''; empty.style.display = 'block'; return; }
 
   try {
+    const tok = (window.dceAuth && window.dceAuth.token && window.dceAuth.token()) || '';
+    const headers = tok ? { 'x-admin-token': tok } : {};
     const r = await fetch(`/api/premortem-history?ticker=${encodeURIComponent(ticker)}`, {
       credentials: 'include',
+      headers,
     });
     const data = await r.json();
     if (!r.ok || !data.ok) throw new Error(data.error || ('HTTP ' + r.status));
