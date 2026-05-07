@@ -1076,6 +1076,13 @@ function renderSummary() {
 
   // Columbia ladder
   renderLadder();
+
+  // Decision Journal handoff buttons (BUY / PASS prefilled)
+  const tk = encodeURIComponent(D.ticker || '');
+  const buyBtn  = document.getElementById('submit-buy-btn');
+  const passBtn = document.getElementById('submit-pass-btn');
+  if (buyBtn)  buyBtn.href  = `/journal?action=new&ticker=${tk}&type=BUY`;
+  if (passBtn) passBtn.href = `/journal?action=new&ticker=${tk}&type=PASS`;
 }
 
 function renderLadder() {
