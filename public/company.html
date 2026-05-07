@@ -758,16 +758,12 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
-     10. INVESTMENT MEMO
+     10. SUMMARY
      ══════════════════════════════════════════════════════════ -->
-<div id="tab-memo" class="tab-content">
-  <div class="slbl">Investment Memo — Columbia Synthesis</div>
+<div id="tab-summary" class="tab-content">
+  <div class="slbl">Summary — Columbia Synthesis</div>
   <div class="g2" style="margin-bottom:20px">
     <div>
-      <div class="card" style="margin-bottom:14px">
-        <div class="clbl">Verdict</div>
-        <div style="font-size:28px;font-weight:700;letter-spacing:-0.02em" id="memo-verdict">—</div>
-      </div>
       <div class="card">
         <div class="clbl">Thesis Narrative</div>
         <div style="font-size:14px;line-height:1.7;color:var(--gray-txt);margin-top:4px" id="memo-narrative">—</div>
@@ -810,10 +806,10 @@ document.addEventListener('DOMContentLoaded', () => {
     populateWACC();
   };
 
-  // Patch: after renderMemo, build doc tiles
-  const origRenderMemo = window.renderMemo;
-  window.renderMemo = function() {
-    if (origRenderMemo) origRenderMemo();
+  // Patch: after renderSummary, build doc tiles
+  const origRenderSummary = window.renderSummary;
+  window.renderSummary = function() {
+    if (origRenderSummary) origRenderSummary();
     renderDocTiles();
   };
 });

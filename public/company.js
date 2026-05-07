@@ -206,8 +206,8 @@ function refreshPriceDependents() {
   // re-render summary/IRR elements that depend on price
   const el = document.querySelector('#tab-irr');
   if (el && el.classList.contains('active')) renderIrr();
-  const elMemo = document.querySelector('#tab-memo');
-  if (elMemo && elMemo.classList.contains('active')) renderMemo();
+  const elSummary = document.querySelector('#tab-summary');
+  if (elSummary && elSummary.classList.contains('active')) renderSummary();
 }
 
 /* ── nav ─────────────────────────────────────────────────── */
@@ -227,7 +227,7 @@ function buildNav() {
     {id:'vr',          label:'Valuation Report', external: D.documents.valuationReportUrl, style:'font-weight:600'},
     {id:'tb',          label:'Thesis Breaker',    external: D.documents.thesisBreakerUrl,  style:'color:var(--red);font-weight:600'},
     {id:'munger',      label:'Munger Digital',    external: D.documents.mungerDigitalUrl,  style:'color:#6b4fa0;font-weight:600'},
-    {id:'memo',        label:'Investment Memo'},
+    {id:'summary',     label:'Summary'},
     {id:'home',        label:'← Home', home: true, style:'margin-left:auto;color:var(--gray-mid)'},
   ];
 
@@ -285,7 +285,7 @@ function renderTab(id) {
     case 'irr':        renderIrr(); break;
     case 'health':     renderHealth(); break;
     case 'audit':      renderAudit(); break;
-    case 'memo':       renderMemo(); break;
+    case 'summary':    renderSummary(); break;
   }
 }
 
@@ -994,16 +994,13 @@ function renderAudit() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   10. INVESTMENT MEMO
+   10. SUMMARY
    ════════════════════════════════════════════════════════════ */
-function renderMemo() {
+function renderSummary() {
   const ts = D.thesisSummary;
   const ov = D.overview;
   const epv = D.epv;
 
-  const verdictColor = ts.verdict === 'OVERVALUED' ? 'var(--red)' :
-                       ts.verdict === 'WATCHLIST'  ? 'var(--gold)' : 'var(--green)';
-  setEl('memo-verdict', `<span style="color:${verdictColor};font-weight:700">${ts.verdict}</span>`);
   setEl('memo-narrative', ts.narrative || '');
 
   // summary table
