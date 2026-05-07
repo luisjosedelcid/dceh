@@ -84,7 +84,7 @@ async function sendAlertEmail(triggers) {
             <tbody>${rows}</tbody>
           </table>
           <div style="margin-top:22px">
-            <a href="https://www.dceholdings.app/portfolio.html" style="display:inline-block;background:#1b2642;color:#ffffff;padding:10px 20px;text-decoration:none;font-size:13px;font-weight:bold">Portfolio →</a>
+            <a href="https://www.dceholdings.app/performance.html" style="display:inline-block;background:#1b2642;color:#ffffff;padding:10px 20px;text-decoration:none;font-size:13px;font-weight:bold">Performance →</a>
             <a href="https://www.dceholdings.app/universe.html" style="display:inline-block;color:#1b2642;padding:10px 12px;text-decoration:none;font-size:13px;border:1px solid #1b2642;margin-left:8px">Covered Universe</a>
           </div>
         </td></tr>
@@ -98,7 +98,7 @@ async function sendAlertEmail(triggers) {
 
   const text = `${triggers.length} price alert(s) triggered:\n\n` +
     triggers.map(t => `${t.ticker} · ${t.alert_type === 'floor' ? '↓ below' : '↑ above'} $${fmtMoney(t.threshold)} (current $${fmtMoney(t.live_price)})`).join('\n') +
-    `\n\nView: https://www.dceholdings.app/portfolio.html`;
+    `\n\nView: https://www.dceholdings.app/performance.html`;
 
   try {
     const r = await fetch('https://api.resend.com/emails', {

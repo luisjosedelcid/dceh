@@ -12,7 +12,7 @@
     { type: 'page', title: 'Home',                 desc: 'Investment Office overview',         url: '/',                 keywords: 'home overview start cockpit' },
     { type: 'page', title: 'Universe',             desc: 'Watchlist of tracked tickers',       url: '/universe.html',    keywords: 'universe watchlist tickers list candidates' },
     { type: 'page', title: 'Find',                 desc: 'Sector screener + superinvestors',    url: '/screener.html',   keywords: 'find screener superinvestors 13F discovery search' },
-    { type: 'page', title: 'Portfolio',            desc: 'Live P&L of active holdings',        url: '/portfolio.html',   keywords: 'portfolio holdings positions pnl live' },
+    { type: 'page', title: 'Performance',          desc: 'Live P&L, holdings, alerts, equity curve', url: '/performance.html', keywords: 'portfolio performance holdings positions pnl live alerts equity curve twr irr' },
     { type: 'page', title: 'News',                 desc: 'Filtered headlines for portfolio',   url: '/news.html',        keywords: 'news headlines press articles' },
     { type: 'page', title: 'Data Room',            desc: 'Reference filings and source data',  url: '/dataroom.html',    keywords: 'data room filings 10-K 10-Q sources documents' },
     { type: 'page', title: 'Reporting Hub',        desc: 'Monthly close, committee, annual',   url: '/reporting.html',   keywords: 'reporting reports monthly close committee annual hub' },

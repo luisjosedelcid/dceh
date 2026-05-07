@@ -1,5 +1,9 @@
 {
   "framework": null,
+  "redirects": [
+    { "source": "/portfolio",      "destination": "/performance.html", "permanent": true },
+    { "source": "/portfolio.html", "destination": "/performance.html", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/bkng", "destination": "/company.html?ticker=BKNG" },
     { "source": "/sap", "destination": "/company.html?ticker=SAP" },
@@ -7,7 +11,6 @@
     { "source": "/msft", "destination": "/company.html?ticker=MSFT" },
     { "source": "/universe", "destination": "/universe.html" },
     { "source": "/screener", "destination": "/screener.html" },
-    { "source": "/portfolio", "destination": "/portfolio.html" },
     { "source": "/news", "destination": "/news.html" },
     { "source": "/dataroom", "destination": "/dataroom.html" },
     { "source": "/reporting", "destination": "/reporting.html" },

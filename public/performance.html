@@ -62,8 +62,30 @@
   table.tbl th{background:var(--navy);color:var(--white);font-weight:500;text-transform:uppercase;letter-spacing:0.1em;font-size:10px;padding:8px 10px;text-align:left}
   table.tbl td{padding:8px 10px;border-bottom:1px solid var(--rule)}
   table.tbl tr:nth-child(even) td{background:var(--row-alt)}
-  table.tbl td.r{text-align:right}
-  table.tbl td.c{text-align:center}
+  table.tbl td.r,table.tbl th.r{text-align:right}
+  table.tbl td.c,table.tbl th.c{text-align:center}
+  /* Per-row P&L colours on tbl tds */
+  table.tbl td.pos{color:var(--green)}
+  table.tbl td.neg{color:var(--red)}
+
+  /* ── Alert cells (migrated from /portfolio.html) ───────────────────────── */
+  .alert-cell{font-size:12px;font-variant-numeric:tabular-nums;cursor:pointer;user-select:none;padding:4px 6px;border-radius:3px;display:inline-flex;align-items:center;gap:5px;min-width:70px;justify-content:flex-end}
+  .alert-cell:hover{background:rgba(184,139,71,0.08)}
+  .alert-cell.empty{color:var(--gray-mid);font-weight:400;opacity:0.5}
+  .alert-cell.empty:hover{opacity:1;color:var(--gold)}
+  .alert-cell.armed{color:var(--navy);font-weight:600}
+  .alert-cell.warn{color:var(--gold);font-weight:600}
+  .alert-cell.broken{color:var(--red);font-weight:700}
+  .alert-cell.fired{color:var(--gray-mid);font-weight:600;text-decoration:line-through}
+  .alert-cell .ico{font-size:11px}
+  .alert-cell.readonly{cursor:default}
+  .alert-cell.readonly:hover{background:transparent}
+  .alert-cell.empty.readonly{opacity:0.6}
+  .alert-cell.empty.readonly:hover{opacity:0.6;color:var(--gray-mid)}
+  .alert-cell.empty:not(.readonly){border:1px dashed transparent;min-width:60px;justify-content:center;padding:4px 10px;color:var(--gray-mid);font-weight:500}
+  .alert-cell.empty:not(.readonly):hover{border-color:var(--gold);opacity:1;color:var(--gold)}
+  .alert-cell.empty:not(.readonly)::before{content:'+ Set';font-size:11px;font-weight:500;letter-spacing:0.04em}
+  .alert-cell.empty:not(.readonly) > *{display:none}
   .pill{display:inline-block;padding:2px 8px;font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase}
   .pill.buy{background:#e8f3ee;color:var(--green)}
   .pill.sell{background:#f7e6e9;color:var(--red)}
@@ -673,7 +695,11 @@ async function loadDashboard(){
   document.getElementById('dash-content').classList.add('hide');
   try{
     const tok = adminToken();
-    const r = await fetch('/api/performance', tok ? { headers: { 'x-admin-token': tok } } : {});
+    // Load alerts in parallel with /api/performance so the holdings render is one pass
+    const [, r] = await Promise.all([
+      loadAlerts(),
+      fetch('/api/performance', tok ? { headers: { 'x-admin-token': tok } } : {}),
+    ]);
     const j = await r.json();
     if(!r.ok || !j.ok) throw new Error(j.error || ('HTTP '+r.status));
     if(!j.kpis){
@@ -776,14 +802,98 @@ function renderIpsBands(j) {
 
 function escHtml(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+// ─── Alerts (price floor / ceiling) ─ migrated from /portfolio.html ──────────
+let ALERTS_BY_TICKER = {};
+
+async function loadAlerts(){
+  try{
+    const r = await fetch('/api/alerts?scope=portfolio');
+    if(!r.ok) return;
+    const data = await r.json();
+    ALERTS_BY_TICKER = data.by_ticker || {};
+  }catch(e){ /* ignore */ }
+}
+
+function renderAlertCell(ticker, type, livePrice){
+  const a = (ALERTS_BY_TICKER[ticker] || {})[type];
+  const admin = isAdmin();
+  const ro = admin ? '' : ' readonly';
+  const onclick = admin ? `onclick="openAlertEditor('${ticker}','${type}', ${livePrice||0})"` : '';
+  if(!a){
+    return `<span class="alert-cell empty${ro}" ${onclick} title="${admin?'Click to set':'Admin only'}">—</span>`;
+  }
+  const th = Number(a.threshold);
+  const fired = !a.active && a.triggered_at;
+  const ico = fired ? '◇' : '◆';
+  let cls = 'armed';
+  if(fired) cls = 'fired';
+  else if(livePrice && th){
+    if(type==='floor'){
+      if(livePrice <= th) cls = 'broken';
+      else if(livePrice <= th*1.05) cls = 'warn';
+    } else {
+      if(livePrice >= th) cls = 'broken';
+      else if(livePrice >= th*0.95) cls = 'warn';
+    }
+  }
+  const titleParts = [];
+  titleParts.push(`${type==='floor'?'↓ Floor':'↑ Ceiling'}: $${th.toFixed(2)}`);
+  if(fired) titleParts.push(`Triggered ${new Date(a.triggered_at).toLocaleString()}`);
+  if(admin) titleParts.push(fired?'Click to re-arm':'Click to edit');
+  return `<span class="alert-cell ${cls}${ro}" ${onclick} title="${titleParts.join(' · ')}">
+    <span class="ico">${ico}</span>$${th.toFixed(2)}
+  </span>`;
+}
+
+async function openAlertEditor(ticker, type, livePrice){
+  if(!isAdmin()){ alert('Admin login required.'); return; }
+  const existing = (ALERTS_BY_TICKER[ticker] || {})[type];
+  const fired = existing && !existing.active && existing.triggered_at;
+  const arrow = type==='floor'?'↓':'↑';
+  const dirLabel = type==='floor'?'floor (alerts when price falls)':'ceiling (alerts when price rises)';
+  let prompt1 = `${ticker} ${arrow} alert ${dirLabel}\n\nLive price: $${(livePrice||0).toFixed(2)}\n`;
+  if(existing) prompt1 += `Current threshold: $${Number(existing.threshold).toFixed(2)}${fired?' (FIRED)':''}\n`;
+  prompt1 += `\nEnter threshold (or empty to delete):`;
+  const val = window.prompt(prompt1, existing?Number(existing.threshold).toFixed(2):(livePrice*(type==='floor'?0.85:1.15)).toFixed(2));
+  if(val===null) return;
+  const trimmed = val.trim();
+  if(trimmed===''){
+    if(!existing) return;
+    if(!confirm(`Delete ${type} alert for ${ticker}?`)) return;
+    const r = await fetch(`/api/admin/alerts?id=${existing.id}`,{method:'DELETE',headers:{'x-admin-token':adminToken()}});
+    if(!r.ok){ alert('Delete failed: '+r.status); return; }
+    await loadAlerts(); loadDashboard(); return;
+  }
+  const num = Number(trimmed);
+  if(!Number.isFinite(num) || num<=0){ alert('Invalid threshold'); return; }
+  const r = await fetch('/api/admin/alerts',{
+    method:'POST',
+    headers:{'x-admin-token':adminToken(),'Content-Type':'application/json'},
+    body:JSON.stringify({ticker,alert_type:type,threshold:num,scope:'portfolio'}),
+  });
+  if(!r.ok){ const d = await r.json().catch(()=>({})); alert('Save failed: '+(d.error||r.status)); return; }
+  await loadAlerts(); loadDashboard();
+}
+window.openAlertEditor = openAlertEditor;
+
+function fmtHoldingPeriod(days){
+  if(days==null) return '—';
+  if(days < 30) return days+'d';
+  const months = Math.floor(days/30);
+  return months+'mo '+(days%30)+'d';
+}
+
 function renderHoldings(holdings){
   const tbl = document.getElementById('tbl-holdings');
   if(!holdings || holdings.length===0){ tbl.innerHTML = '<tbody><tr><td>No open positions.</td></tr></tbody>'; return; }
-  let html = '<thead><tr><th>Ticker</th><th class="r">Quantity</th><th class="r">Avg cost</th><th class="r">Last price</th><th class="r">Cost basis</th><th class="r">Market value</th><th class="r">Unrealized P&L</th><th class="r">Weight</th></tr></thead><tbody>';
+  let html = '<thead><tr><th>Ticker</th><th class="r">Quantity</th><th class="r">Avg cost</th><th class="r">Last price</th><th class="r">Cost basis</th><th class="r">Market value</th><th class="r">Unrealized P&L</th><th class="r">IRR (Ann.)</th><th class="r">Weight</th><th class="r" title="Alert if price falls to or below this floor">Alert ↓</th><th class="r" title="Alert if price rises to or above this ceiling">Alert ↑</th><th class="r">Holding Period</th></tr></thead><tbody>';
   for(const h of holdings){
     const pnl = h.unrealized_pnl;
     const pnlCls = pnl>0?'pos':(pnl<0?'neg':'');
     const ret = (h.cost_basis>0 && pnl!=null) ? (pnl/h.cost_basis) : null;
+    const irr = h.irr_annualized;
+    const irrCls = irr>=0.12?'pos':(irr>=0?'':'neg');
+    const irrTxt = irr!=null ? signedPct(irr) : '—';
     html += `<tr>
       <td><strong>${h.ticker}</strong></td>
       <td class="r">${Number(h.qty).toLocaleString('en-US',{maximumFractionDigits:4})}</td>
@@ -792,7 +902,11 @@ function renderHoldings(holdings){
       <td class="r">${h.cost_basis!=null?'$'+Number(h.cost_basis).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
       <td class="r">${h.market_value!=null?'$'+Number(h.market_value).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
       <td class="r ${pnlCls}" style="font-weight:600">${signedUsd(pnl)}${ret!=null?' <span style="font-weight:400;color:var(--gray-mid)">('+signedPct(ret,1)+')</span>':''}</td>
+      <td class="r ${irrCls}" style="font-weight:600">${irrTxt}</td>
       <td class="r">${h.weight_pct!=null?(h.weight_pct*100).toFixed(2)+'%':'—'}</td>
+      <td class="r">${renderAlertCell(h.ticker,'floor',h.last_price)}</td>
+      <td class="r">${renderAlertCell(h.ticker,'ceiling',h.last_price)}</td>
+      <td class="r">${fmtHoldingPeriod(h.days_held)}</td>
     </tr>`;
   }
   html += '</tbody>';

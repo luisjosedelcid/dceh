@@ -276,6 +276,16 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
 
   // ── Final holdings ─────────────────────────────────────────────────────────
   const lastDate = dates[dates.length - 1];
+
+  // Earliest BUY trade_date per ticker (for holding period + per-position IRR)
+  const firstBuyByTicker = new Map();
+  for (const tx of sortedTx) {
+    if (tx.side !== 'BUY') continue;
+    if (!firstBuyByTicker.has(tx.ticker) || tx.trade_date < firstBuyByTicker.get(tx.ticker)) {
+      firstBuyByTicker.set(tx.ticker, tx.trade_date);
+    }
+  }
+
   const holdings = [];
   let totalMv = 0;
   for (const [ticker, tickerLots] of lots) {
@@ -286,6 +296,17 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
     const px = priceOn(ticker, lastDate);
     const mv = px != null ? totalQty * px : null;
     if (mv != null) totalMv += mv;
+
+    // Per-position annualized IRR: (mv/cost)^(365/days) - 1
+    const fbd = firstBuyByTicker.get(ticker);
+    let irrAnn = null, daysHeld = null;
+    if (fbd && mv != null && cost > 0) {
+      const ms = new Date(lastDate) - new Date(fbd);
+      daysHeld = Math.max(1, Math.floor(ms / 86400000));
+      const years = daysHeld / 365;
+      if (years > 0) irrAnn = round4(Math.pow(mv / cost, 1 / years) - 1);
+    }
+
     holdings.push({
       ticker,
       qty: totalQty,
@@ -294,6 +315,9 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
       last_price: px != null ? round4(px) : null,
       market_value: mv != null ? round2(mv) : null,
       unrealized_pnl: (mv != null) ? round2(mv - cost) : null,
+      first_buy_date: fbd || null,
+      days_held: daysHeld,
+      irr_annualized: irrAnn,
     });
   }
   // weights
