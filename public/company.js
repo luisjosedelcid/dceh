@@ -214,6 +214,7 @@ function refreshPriceDependents() {
 function buildNav() {
   const nav = document.getElementById('main-nav');
   const tabs = [
+    {id:'version',     label:'',  versionSlot: true},
     {id:'overview',    label:'Overview'},
     {id:'financials',  label:'Financials'},
     {id:'adj',         label:'Adjustments'},
@@ -227,13 +228,12 @@ function buildNav() {
     {id:'tb',          label:'Thesis Breaker',    external: D.documents.thesisBreakerUrl,  style:'color:var(--red);font-weight:600'},
     {id:'munger',      label:'Munger Digital',    external: D.documents.mungerDigitalUrl,  style:'color:#6b4fa0;font-weight:600'},
     {id:'memo',        label:'Investment Memo'},
-    {id:'version',     label:'',  versionSlot: true, style:'margin-left:auto'},
-    {id:'home',        label:'← Home', home: true, style:'color:var(--gray-mid)'},
+    {id:'home',        label:'← Home', home: true, style:'margin-left:auto;color:var(--gray-mid)'},
   ];
 
   nav.innerHTML = tabs.map(t => {
     if (t.versionSlot) {
-      return `<div id="version-selector" style="${t.style||''};display:none;align-items:center;gap:8px;padding:0 14px;border-left:1px solid var(--line);border-right:1px solid var(--line);height:100%"></div>`;
+      return `<div id="version-selector" style="display:none;align-items:center;gap:8px;padding:0 14px 0 0;margin-right:8px;border-right:1px solid var(--line)"></div>`;
     }
     if (t.external) {
       if (t.external) {
