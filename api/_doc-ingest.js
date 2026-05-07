@@ -116,6 +116,14 @@ async function ingestTicker(ticker, { limitPerForm = 2, force = false } = {}) {
       // Create reunderwriting_due for 10-K / 10-Q (skip 8-K — those are too
       // frequent and not natural re-underwriting triggers). Idempotent via
       // unique constraint on (ticker, period_end, doc_type).
+      //
+      // Supersede rule: when a NEW filing arrives, mark all PENDING dues for
+      // the same ticker that are now obsolete as 'superseded':
+      //   - new 10-K supersedes any pending 10-K with earlier period_end
+      //     AND any pending 10-Q with period_end <= new 10-K period_end
+      //     (the 10-K covers the full FY).
+      //   - new 10-Q supersedes any pending 10-Q with earlier period_end
+      //     for the same ticker.
       if (docType === '10-K' || docType === '10-Q') {
         try {
           await sbUpsert('reunderwriting_due', [{
@@ -129,6 +137,34 @@ async function ingestTicker(ticker, { limitPerForm = 2, force = false } = {}) {
         } catch (eDue) {
           // Don't fail the ingest if due creation fails
           console.error('reunderwriting_due upsert failed', eDue.message);
+        }
+
+        // Supersede older pending dues for this ticker.
+        try {
+          const { sbUpdate } = require('./_supabase');
+          const reportDate = f.report_date;
+          if (docType === '10-K') {
+            // 10-K supersedes earlier 10-Ks AND any 10-Q within the FY
+            await sbUpdate(
+              'reunderwriting_due',
+              `ticker=eq.${ticker}&status=eq.pending&doc_type=eq.10-K&period_end=lt.${reportDate}`,
+              { status: 'superseded', notes: `auto-superseded by 10-K period ${reportDate}` }
+            );
+            await sbUpdate(
+              'reunderwriting_due',
+              `ticker=eq.${ticker}&status=eq.pending&doc_type=eq.10-Q&period_end=lte.${reportDate}`,
+              { status: 'superseded', notes: `auto-superseded by 10-K period ${reportDate} (covers FY)` }
+            );
+          } else {
+            // 10-Q supersedes only earlier 10-Qs for the same ticker
+            await sbUpdate(
+              'reunderwriting_due',
+              `ticker=eq.${ticker}&status=eq.pending&doc_type=eq.10-Q&period_end=lt.${reportDate}`,
+              { status: 'superseded', notes: `auto-superseded by 10-Q period ${reportDate}` }
+            );
+          }
+        } catch (eSup) {
+          console.error('reunderwriting_due supersede failed', eSup.message);
         }
       }
 
