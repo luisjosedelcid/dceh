@@ -493,6 +493,35 @@
     });
   }
 
+  // Settings gear link — only visible to admins, mounted next to Sign Out.
+  // Hidden on /settings.html itself to avoid self-link clutter.
+  let _settingsLinkEl = null;
+  function _mountSettingsLink(target) {
+    if (!target) return null;
+    if (_settingsLinkEl && _settingsLinkEl.parentElement) return _settingsLinkEl;
+    if (window.location.pathname === '/settings.html' || window.location.pathname === '/settings') return null;
+    const a = document.createElement('a');
+    a.href = '/settings.html';
+    a.className = 'dce-settings-link';
+    a.title = 'Settings';
+    a.setAttribute('aria-label', 'Settings');
+    a.innerHTML = '\u2699';  // gear glyph
+    a.style.cssText = 'display:none;align-items:center;justify-content:center;width:28px;height:28px;font-size:16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;border-radius:3px;margin-left:4px;transition:color .15s, border-color .15s';
+    a.addEventListener('mouseenter', () => { a.style.color = 'var(--gold,#b88b47)'; a.style.borderColor = 'rgba(184,139,71,0.30)'; });
+    a.addEventListener('mouseleave', () => { a.style.color = 'rgba(255,255,255,0.5)'; a.style.borderColor = 'transparent'; });
+    target.appendChild(a);
+    _settingsLinkEl = a;
+    _refreshSettingsLink();
+    return a;
+  }
+  function _refreshSettingsLink() {
+    if (!_settingsLinkEl) return;
+    const u = user();
+    const isAdm = isAdmin && isAdmin();
+    _settingsLinkEl.style.display = (u && isAdm) ? 'inline-flex' : 'none';
+  }
+  onChange(_refreshSettingsLink);
+
   function _autoMount() {
     // Always inject shared CSS (nav padding override, modal styles), even in 'manual' mode.
     // Manual mode only opts out of mounting the Sign Out button — pages that handle auth
@@ -501,15 +530,25 @@
     // Always group the nav (works for both 'manual' and auto-mount pages)
     const hnavForGroup = document.querySelector('.hnav');
     if (hnavForGroup) _groupNav(hnavForGroup);
-    if (document.body.dataset.dceAuth === 'manual') return;
+    // Settings gear: mount even in 'manual' mode (so reporting/performance/settings pages
+    // still expose the gear next to their own Sign Out button)
+    if (document.body.dataset.dceAuth === 'manual') {
+      const t = _findNavTarget();
+      if (t) _mountSettingsLink(t);
+      return;
+    }
     const target = _findNavTarget();
     if (target) {
       mountAdminButton(target);
+      _mountSettingsLink(target);
       // search.js may run after us and append its trigger AFTER the sign-out button.
-      // Re-anchor to the end on the next tick so order is: [links] [Search] [Sign Out].
+      // Re-anchor to the end on the next tick so order is: [links] [Search] [Sign Out] [⚙].
       const reorderToEnd = () => {
         if (_btnEl && _btnEl.parentElement) {
           _btnEl.parentElement.appendChild(_btnEl);
+        }
+        if (_settingsLinkEl && _settingsLinkEl.parentElement) {
+          _settingsLinkEl.parentElement.appendChild(_settingsLinkEl);
         }
       };
       setTimeout(reorderToEnd, 0);
@@ -525,7 +564,7 @@
   // ── Role-based UI hiding ────────────────────────────────────────────
   // Admin-only routes: hidden from nav for non-admin authenticated users.
   // Backwards-compat: sessions without role are treated as admin.
-  const ADMIN_ONLY_HREFS = ['/reporting.html', '/reporting', '/performance.html', '/performance', '/premortem.html', '/premortem'];
+  const ADMIN_ONLY_HREFS = ['/reporting.html', '/reporting', '/performance.html', '/performance', '/premortem.html', '/premortem', '/settings.html', '/settings'];
   function _applyRoleVisibility() {
     const u = user();
     if (!u) return; // not signed in — leave nav alone

@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCE Holdings — Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#1b2642;--gold:#b88b47;--gold-lt:#d4aa6a;--gold-dim:rgba(184,139,71,0.10);--gold-rule:rgba(184,139,71,0.30);
+    --cream:#f5f1eb;--white:#ffffff;--ink:#1b2642;--gray-mid:#8a9098;--gray-txt:#606060;
+    --green:#2a7a56;--red:#9b2335;--rule:rgba(27,38,66,0.09);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+  header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
+  .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
+  .hnav{display:flex;gap:8px;align-items:center}
+  .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
+  .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
+  .hnav a.active{color:var(--gold);border-color:var(--gold)}
+
+  main{max-width:1000px;margin:0 auto;padding:36px 48px 60px}
+  .slbl{font-size:9px;font-weight:500;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+  .slbl::before{content:'';display:block;width:16px;height:1px;background:var(--gold)}
+  h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;color:var(--navy);margin-bottom:4px}
+  .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:24px}
+
+  /* ADMIN BAR */
+  .admin-bar{display:flex;align-items:center;justify-content:space-between;background:var(--white);border:1px solid var(--rule);padding:12px 20px;margin-bottom:20px;font-size:12px}
+  .admin-bar.is-admin{border-color:var(--gold);border-left:3px solid var(--gold)}
+  .admin-status{color:var(--gray-mid);display:flex;align-items:center;gap:10px}
+  .admin-dot{width:8px;height:8px;border-radius:50%;background:var(--gray-mid)}
+  .is-admin .admin-dot{background:var(--gold)}
+  .is-admin .admin-status strong{color:var(--navy)}
+  .btn{font-family:inherit;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:8px 14px;border:1px solid var(--navy);background:var(--navy);color:var(--white);cursor:pointer;transition:all .15s}
+  .btn:hover{background:var(--gold);border-color:var(--gold)}
+  .btn.ghost{background:transparent;color:var(--navy)}
+  .btn.ghost:hover{background:var(--navy);color:var(--white)}
+  .btn.danger{background:transparent;color:var(--red);border-color:var(--red)}
+  .btn.danger:hover{background:var(--red);color:var(--white)}
+  .btn:disabled{opacity:0.5;cursor:not-allowed}
+
+  /* SECTION */
+  .section{background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);margin-bottom:20px;transition:border-color .2s}
+  .section:hover{border-color:var(--gold-rule)}
+  .section-head{padding:24px 24px 12px;display:flex;justify-content:space-between;align-items:center}
+  .section-name{font-size:16px;font-weight:700;letter-spacing:-0.01em;color:var(--navy)}
+  .section-desc{padding:0 24px 20px;font-size:12px;color:var(--gray-mid);line-height:1.5}
+  .section-meta{font-size:10px;color:var(--gray-mid);letter-spacing:0.08em}
+
+  /* FILE LIST INSIDE SECTION */
+  .section-files{border-top:1px solid var(--rule);padding:0}
+  .sfile{display:flex;align-items:center;padding:12px 24px;border-bottom:1px solid rgba(27,38,66,0.04);transition:background .2s;text-decoration:none;color:var(--ink)}
+  .sfile:last-child{border-bottom:none}
+  .sfile:hover{background:rgba(184,139,71,0.03)}
+  .sfile-icon{font-size:16px;margin-right:14px;flex-shrink:0;color:var(--gold)}
+  .sfile-info{flex:1;min-width:0}
+  .sfile-name{font-size:13px;font-weight:600;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sfile-detail{font-size:11px;color:var(--gray-mid);margin-top:1px}
+  .sfile-action{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);flex-shrink:0;text-decoration:none;padding:6px 10px;border:1px solid transparent}
+  .sfile-action:hover{border-color:var(--gold-rule)}
+  .sfile-delete{font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--red);background:transparent;border:1px solid rgba(155,35,53,0.3);cursor:pointer;padding:6px 10px;margin-left:8px;font-family:inherit;flex-shrink:0}
+  .sfile-delete:hover{background:var(--red);color:var(--white);border-color:var(--red)}
+
+  .empty-files{padding:24px;text-align:center;color:var(--gray-mid);font-size:12px;font-style:italic}
+  .loading-files{padding:24px;text-align:center;color:var(--gray-mid);font-size:11px;letter-spacing:0.1em;text-transform:uppercase}
+
+  /* UPLOAD ZONE */
+  .upload-zone{border-top:1px dashed var(--gold-rule);padding:14px 24px;background:rgba(184,139,71,0.02);display:none}
+  .is-admin-mode .upload-zone{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .upload-zone label{font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);cursor:pointer;padding:8px 14px;border:1px dashed var(--gold);transition:all .15s}
+  .upload-zone label:hover{background:var(--gold);color:var(--white);border-style:solid}
+  .upload-zone input[type=file]{display:none}
+  .upload-zone .upload-hint{font-size:10px;color:var(--gray-mid);font-style:italic}
+  .upload-zone .upload-progress{font-size:11px;color:var(--navy);font-weight:600;margin-left:auto}
+
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(27,38,66,0.6);display:none;align-items:center;justify-content:center;z-index:100}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--white);border-top:3px solid var(--gold);padding:32px;width:90%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+  .modal h2{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:6px}
+  .modal p{font-size:12px;color:var(--gray-mid);margin-bottom:18px}
+  .modal input{width:100%;padding:10px 12px;border:1px solid var(--rule);font-family:inherit;font-size:13px;margin-bottom:14px;background:var(--cream)}
+  .modal input:focus{outline:none;border-color:var(--gold)}
+  .modal .modal-actions{display:flex;gap:8px;justify-content:flex-end}
+  .modal .err{font-size:11px;color:var(--red);margin-bottom:10px;min-height:14px}
+
+  footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
+
+  /* TABS */
+  .tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin-bottom:20px}
+  .tab{font-family:inherit;font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--gray-mid);cursor:pointer;padding:12px 18px}
+  .tab:hover{color:var(--navy)}
+  .tab.active{color:var(--navy);border-bottom-color:var(--gold)}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+
+  /* AUDIT LOG */
+  .audit-controls{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .audit-controls select{font-family:inherit;font-size:11px;padding:6px 10px;border:1px solid var(--rule);background:var(--white);color:var(--navy)}
+  .audit-table{background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);overflow:hidden}
+  .audit-row{display:grid;grid-template-columns:140px 90px 200px 1fr 80px;gap:12px;padding:10px 16px;font-size:12px;border-bottom:1px solid rgba(27,38,66,0.04);align-items:center}
+  .audit-row:last-child{border-bottom:none}
+  .audit-row.head{background:var(--navy);color:var(--white);font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase}
+  .audit-row.head a{color:var(--white)}
+  .audit-ts{color:var(--gray-mid);font-size:11px;font-variant-numeric:tabular-nums}
+  .audit-action{display:inline-block;padding:2px 8px;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;border:1px solid var(--rule)}
+  .audit-action.upload{color:#2a7a56;border-color:rgba(42,122,86,0.3);background:rgba(42,122,86,0.05)}
+  .audit-action.delete{color:var(--red);border-color:rgba(155,35,53,0.3);background:rgba(155,35,53,0.05)}
+  .audit-action.archive{color:var(--gold);border-color:var(--gold-rule);background:var(--gold-dim)}
+  .audit-action.login{color:var(--navy);border-color:var(--rule);background:transparent}
+  .audit-actor{font-weight:500;color:var(--navy)}
+  .audit-detail{color:var(--gray-mid);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .audit-folder{font-size:10px;color:var(--gray-mid);letter-spacing:0.08em;text-transform:uppercase;text-align:right}
+  @media (max-width:720px){
+    .audit-row{grid-template-columns:1fr;gap:4px;padding:12px}
+    .audit-row.head{display:none}
+    .audit-folder{text-align:left}
+  }
+
+  /* HISTORY MODAL */
+  .history-modal{max-width:560px}
+  .history-list{margin-top:14px;max-height:50vh;overflow:auto}
+  .history-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--rule);font-size:12px}
+  .history-item:last-child{border-bottom:none}
+  .history-item.current{background:var(--gold-dim);border-left:3px solid var(--gold);padding-left:9px}
+  .history-item-meta{color:var(--gray-mid);font-size:10px;letter-spacing:0.08em;text-transform:uppercase}
+  .history-item-link{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);text-decoration:none;border:1px solid transparent;padding:4px 8px}
+  .history-item-link:hover{border-color:var(--gold-rule)}
+  .sfile-history{font-size:9px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-mid);background:transparent;border:1px solid var(--rule);cursor:pointer;padding:6px 10px;margin-left:8px;font-family:inherit;flex-shrink:0}
+  .sfile-history:hover{color:var(--navy);border-color:var(--navy)}
+</style>
+<link rel="stylesheet" href="/responsive.css"><script src="/dce-auth.js" defer></script>
+</head>
+<body data-dce-auth="manual">
+
+<header>
+  <div class="logo">DCE <span>Holdings</span></div>
+  <nav class="hnav">
+      <a href="/">Home</a>
+      <a href="/cockpit.html">Cockpit</a>
+      <a href="/universe.html">Universe</a>
+      <a href="/screener.html">Find</a>
+      <a href="/study.html">Study</a>
+      <a href="/journal.html">Journal</a>
+      <a href="/iv-tracking.html">IV Tracking</a>
+      <a href="/portfolio.html">Portfolio</a>
+      <a href="/news.html">News</a>
+      <a href="/dataroom.html">Data Room</a>
+      <a href="/reporting.html" class="active">Reporting</a>
+      <a href="/performance.html">Performance</a>
+      <a href="/research.html">Research</a>
+      <a href="/calendar.html">Calendar</a>
+    </nav>
+</header>
+
+<main id="main-root">
+  <div class="slbl">DCE Holdings — Investment Office</div>
+  <h1>Settings</h1>
+  <div class="sub">Activity log, idea-feed sources, study articles and discipline rules.</div>
+
+  <!-- ADMIN BAR -->
+  <div class="admin-bar" id="admin-bar">
+    <div class="admin-status">
+      <span class="admin-dot"></span>
+      <span id="admin-label">Read-only mode</span>
+    </div>
+    <div>
+      <button class="btn ghost" id="btn-admin" type="button">Admin login</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" data-tab="activity" type="button" id="tab-activity">Activity log</button>
+    <button class="tab" data-tab="ideafeed" type="button" id="tab-ideafeed">Idea Feed sources</button>
+    <button class="tab" data-tab="study" type="button" id="tab-study">Study articles</button>
+    <button class="tab" data-tab="discipline" type="button" id="tab-discipline">Discipline rules</button>
+  </div>
+
+  <!-- TAB: IDEA FEED -->
+  <div class="tab-panel" data-panel="ideafeed">
+    <div class="section" style="border-top-color:var(--gold)">
+      <div class="section-head">
+        <div class="section-name">Idea Feed Sources</div>
+        <div class="section-meta">RSS · cron every 6h</div>
+      </div>
+      <div class="section-desc">
+        Manage the blog/Substack/podcast sources monitored by the Idea Feed. Tickers are extracted via regex with an LLM fallback. View results in <a href="/screener#ideafeed" style="color:var(--gold)">Find → Idea Feed</a>.
+      </div>
+      <div style="padding:0 24px 22px">
+        <div id="if-admin-list" style="margin-bottom:18px"><div class="loading-files">Sign in to manage sources</div></div>
+
+        <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:18px 0 10px">Add new source</h4>
+        <form onsubmit="return addIdeaFeedSource(event)" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px">
+          <input type="text" name="name"    required placeholder="Display name"  style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <select name="kind" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+            <option value="blog">Blog</option>
+            <option value="substack">Substack</option>
+            <option value="podcast">Podcast</option>
+            <option value="twitter">Twitter (manual)</option>
+            <option value="other">Other</option>
+          </select>
+          <input type="url"  name="url"     required placeholder="https://example.com"      style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <input type="url"  name="rss_url" required placeholder="https://example.com/feed" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <input type="text" name="notes"            placeholder="Notes (optional)"        style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 2">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray-mid)">
+            <input type="checkbox" name="is_paid"> Paywalled (preview-only)
+          </label>
+          <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end">
+            <span id="if-add-status" style="font-size:11px;font-style:italic"></span>
+            <button class="btn" type="submit">Add source</button>
+          </div>
+        </form>
+
+        <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:24px 0 10px">Manual refresh</h4>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <button class="btn" type="button" id="if-run-now" onclick="runFeedRefreshNow()">Run cron now</button>
+          <span id="if-run-status" style="font-size:11px;font-style:italic"></span>
+        </div>
+      </div>
+    </div>
+  </div><!-- /tab-panel ideafeed -->
+
+  <!-- TAB: STUDY -->
+  <div class="tab-panel" data-panel="study">
+    <div class="section" style="border-top-color:var(--gold)">
+      <div class="section-head">
+        <div class="section-name">Study Articles</div>
+        <div class="section-meta">Sector & Megatrends</div>
+      </div>
+      <div class="section-desc">
+        Manage articles published on <a href="/study.html" style="color:var(--gold)">Study</a>. Each article has metadata + an optional PDF (max 25 MB). Soft-deletes hide articles from the public page.
+      </div>
+      <div style="padding:0 24px 22px">
+        <div id="st-admin-list" style="margin-bottom:18px"><div class="loading-files">Sign in to manage articles</div></div>
+
+        <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:18px 0 10px">Add new article</h4>
+        <form onsubmit="return addStudyArticle(event)" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px">
+          <select name="section" required style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+            <option value="sector">Sector Analysis</option>
+            <option value="megatrends">Megatrends</option>
+          </select>
+          <input type="text" name="cover_emoji" maxlength="4" placeholder="Cover glyph (optional, e.g. ▤)" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <input type="text" name="title" required placeholder="Title" style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 2">
+          <input type="text" name="author" placeholder="Author (optional)" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <input type="text" name="tags" placeholder="Tags, comma-separated" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <textarea name="description" rows="3" placeholder="Short description (max 2000 chars)" style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 2;resize:vertical"></textarea>
+          <input type="url" name="external_url" placeholder="External link (optional)" style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 2">
+          <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end;grid-column:span 2">
+            <span id="st-add-status" style="font-size:11px;font-style:italic"></span>
+            <button class="btn" type="submit">Add article</button>
+          </div>
+        </form>
+        <p style="font-size:11px;color:var(--gray-mid);margin-top:8px">After creating, attach a PDF using the upload button on its row.</p>
+      </div>
+    </div>
+  </div><!-- /tab-panel study -->
+
+
+  <!-- TAB: ACTIVITY -->
+  <div class="tab-panel active" data-panel="activity">
+    <div class="audit-controls" style="flex-wrap:wrap;gap:8px">
+      <span style="font-size:11px;color:var(--gray-mid);letter-spacing:0.08em;text-transform:uppercase">Filter</span>
+      <select id="audit-folder-filter">
+        <option value="">All folders</option>
+        <option value="monthly">Monthly Close</option>
+        <option value="committee">Investment Committee</option>
+        <option value="annual">Annual Report</option>
+      </select>
+      <select id="audit-action-filter">
+        <option value="">All actions</option>
+        <option value="login">Login</option>
+        <option value="upload">Upload</option>
+        <option value="archive">Archive</option>
+        <option value="delete">Delete</option>
+        <option value="purge">Purge</option>
+      </select>
+      <input type="text" id="audit-actor-filter" placeholder="Actor email" style="padding:6px 8px;border:1px solid var(--rule);font-family:inherit;font-size:12px;min-width:180px">
+      <button class="btn ghost" type="button" id="btn-audit-clear" style="font-size:11px">Clear</button>
+      <span id="audit-count" style="font-size:11px;color:var(--gray-mid);margin-left:auto"></span>
+      <button class="btn ghost" type="button" id="btn-audit-refresh">Refresh</button>
+    </div>
+    <div class="audit-table" id="audit-table">
+      <div class="audit-row head">
+        <div>Timestamp</div>
+        <div>Action</div>
+        <div>Actor</div>
+        <div>File</div>
+        <div class="audit-folder">Folder</div>
+      </div>
+      <div id="audit-body"><div class="loading-files">Sign in as admin to view activity</div></div>
+    </div>
+    <div style="display:flex;justify-content:center;margin-top:14px">
+      <button class="btn ghost" type="button" id="btn-audit-loadmore" style="display:none">Load more</button>
+    </div>
+  </div>
+
+  <!-- TAB: DISCIPLINE RULES -->
+  <div class="tab-panel" data-panel="discipline">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;gap:12px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:13px;color:var(--ink);font-weight:600;margin-bottom:4px">Discipline gate thresholds</div>
+        <div style="font-size:11px;color:var(--gray-mid);max-width:680px;line-height:1.5">
+          Estos valores controlan los 5 gates del Cockpit. Cambios aplican inmediatamente al próximo refresh del Cockpit.
+          Porcentajes en formato decimal (0.10 = 10%). Días en números enteros.
+        </div>
+      </div>
+      <button class="btn ghost" type="button" id="btn-discipline-refresh" style="font-size:11px">Refresh</button>
+    </div>
+    <div id="discipline-body" style="background:var(--white);border:1px solid var(--rule)">
+      <div class="loading-files" style="padding:24px;text-align:center;color:var(--gray-mid)">Sign in as admin to view rules</div>
+    </div>
+    <div id="discipline-msg" style="margin-top:12px;font-size:12px;min-height:18px"></div>
+  </div>
+
+</main>
+
+<!-- LOGIN MODAL -->
+<div class="modal-bg" id="login-modal">
+  <div class="modal">
+    <h2>Admin login</h2>
+    <p>Enter your email and password to upload or delete reports.</p>
+    <input type="email" id="admin-email" placeholder="Email" autocomplete="off">
+    <input type="password" id="admin-pw" placeholder="Password" autocomplete="current-password">
+    <div class="err" id="login-err"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" type="button" id="btn-cancel">Cancel</button>
+      <button class="btn" type="button" id="btn-submit">Sign in</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY MODAL -->
+<div class="modal-bg" id="history-modal">
+  <div class="modal history-modal">
+    <h2 id="history-title">Version history</h2>
+    <p id="history-sub" style="font-size:11px">Loading…</p>
+    <div class="history-list" id="history-list"></div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn ghost" type="button" id="btn-history-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
+  <span>Reporting Hub</span>
+</footer>
+
+<script>
+const TOKEN_KEY = 'dce_admin_token';
+const TOKEN_EXP_KEY = 'dce_admin_token_exp';
+const USER_KEY = 'dce_admin_user';
+// FOLDERS removed — Reports panel moved to /reporting.html
+
+// ── Role gate ────────────────────────────────────────────────────────
+// Reporting Hub contains financial reports and the audit log — restricted
+// to role='admin'. Other authenticated roles (analyst, viewer) get redirected.
+(function enforceRoleGate() {
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+    if (!raw) return; // not signed in — page will prompt login as before
+    const u = JSON.parse(raw);
+    // Backwards-compat: legacy sessions without role are treated as admin
+    const role = (u && u.role) ? u.role : 'admin';
+    if (role !== 'admin') {
+      alert('Acceso restringido: el Reporting Hub solo está disponible para administradores.');
+      window.location.href = '/';
+    }
+  } catch (e) { /* ignore */ }
+})();
+
+function isAdmin() {
+  const tok = localStorage.getItem(TOKEN_KEY);
+  const exp = parseInt(localStorage.getItem(TOKEN_EXP_KEY) || '0', 10);
+  if (!tok || !exp) return false;
+  if (exp < Math.floor(Date.now() / 1000)) {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_EXP_KEY);
+    localStorage.removeItem(USER_KEY);
+    return false;
+  }
+  return true;
+}
+function currentUser() {
+  try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch { return null; }
+}
+function fmtTs(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('en-US', { month:'short', day:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  } catch { return iso; }
+}
+
+function fmtSize(bytes) {
+  if (!bytes) return '—';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: '2-digit' });
+  } catch { return ''; }
+}
+
+function refreshAdminUI() {
+  const admin = isAdmin();
+  document.body.classList.toggle('is-admin-mode', admin);
+  const bar = document.getElementById('admin-bar');
+  const label = document.getElementById('admin-label');
+  const btn = document.getElementById('btn-admin');
+  if (admin) {
+    const u = currentUser();
+    const who = u && u.displayName ? u.displayName : (u && u.email) || 'Admin';
+    bar.classList.add('is-admin');
+    label.innerHTML = `<strong>${escapeHtml(who)}</strong> · admin mode · upload &amp; delete enabled`;
+    btn.textContent = 'Sign out';
+    btn.classList.remove('ghost');
+    btn.classList.add('danger');
+  } else {
+    bar.classList.remove('is-admin');
+    label.textContent = 'Read-only mode';
+    btn.textContent = 'Admin login';
+    btn.classList.add('ghost');
+    btn.classList.remove('danger');
+  }
+}
+
+// loadFolder/loadAll removed — Reports panel moved to /reporting.html
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// LOGIN FLOW
+const modal = document.getElementById('login-modal');
+const pwInput = document.getElementById('admin-pw');
+const errEl = document.getElementById('login-err');
+
+document.getElementById('btn-admin').addEventListener('click', () => {
+  if (isAdmin()) {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_EXP_KEY);
+    refreshAdminUI();
+    return;
+  }
+  errEl.textContent = '';
+  pwInput.value = '';
+  modal.classList.add('show');
+  setTimeout(() => pwInput.focus(), 50);
+});
+document.getElementById('btn-cancel').addEventListener('click', () => modal.classList.remove('show'));
+modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('show'); });
+pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-submit').click(); });
+
+const emailInput = document.getElementById('admin-email');
+emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') pwInput.focus(); });
+
+document.getElementById('btn-submit').addEventListener('click', async () => {
+  const pw = pwInput.value;
+  const email = emailInput.value.trim();
+  if (!pw) { errEl.textContent = 'Password required'; return; }
+  errEl.textContent = 'Signing in…';
+  try {
+    const r = await fetch('/api/admin-login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password: pw }),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      errEl.textContent = data.error || 'Invalid email or password';
+      return;
+    }
+    localStorage.setItem(TOKEN_KEY, data.token);
+    localStorage.setItem(TOKEN_EXP_KEY, String(data.expiresAt));
+    if (data.user) localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    modal.classList.remove('show');
+    refreshAdminUI();
+  } catch (e) {
+    errEl.textContent = 'Network error';
+  }
+});
+
+
+// ── TABS ─────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.querySelector(`.tab-panel[data-panel="${t.dataset.tab}"]`).classList.add('active');
+    if (t.dataset.tab === 'activity') loadAudit();
+    if (t.dataset.tab === 'ideafeed') loadIdeaFeedSources();
+    if (t.dataset.tab === 'study') loadStudyAdmin();
+    if (t.dataset.tab === 'discipline') loadDisciplineRules();
+  });
+});
+
+// ── AUDIT LOG ────────────────────────────────────────────
+const AUDIT_PAGE_SIZE = 100;
+const auditBody = document.getElementById('audit-body');
+const auditFolderFilter = document.getElementById('audit-folder-filter');
+const auditActionFilter = document.getElementById('audit-action-filter');
+const auditActorFilter = document.getElementById('audit-actor-filter');
+const auditCountLabel = document.getElementById('audit-count');
+const auditLoadMoreBtn = document.getElementById('btn-audit-loadmore');
+let auditOffset = 0;
+let auditTotal = 0;
+let auditActorDebounce = null;
+
+document.getElementById('btn-audit-refresh').addEventListener('click', () => loadAudit({ reset: true }));
+document.getElementById('btn-audit-clear').addEventListener('click', () => {
+  auditFolderFilter.value = '';
+  auditActionFilter.value = '';
+  auditActorFilter.value = '';
+  loadAudit({ reset: true });
+});
+auditFolderFilter.addEventListener('change', () => loadAudit({ reset: true }));
+auditActionFilter.addEventListener('change', () => loadAudit({ reset: true }));
+auditActorFilter.addEventListener('input', () => {
+  if (auditActorDebounce) clearTimeout(auditActorDebounce);
+  auditActorDebounce = setTimeout(() => loadAudit({ reset: true }), 350);
+});
+auditLoadMoreBtn.addEventListener('click', () => loadAudit({ reset: false }));
+
+function renderAuditRows(entries, append) {
+  const html = entries.map(e => {
+    const folderLbl = e.folder ? e.folder.charAt(0).toUpperCase() + e.folder.slice(1) : '—';
+    const fileLbl = e.filename || (e.action === 'login' ? '(session)' : '—');
+    const detailLbl = e.detail ? ` — ${escapeHtml(e.detail)}` : '';
+    return `
+      <div class="audit-row">
+        <div class="audit-ts">${escapeHtml(fmtTs(e.ts))}</div>
+        <div><span class="audit-action ${escapeHtml(e.action)}">${escapeHtml(e.action)}</span></div>
+        <div class="audit-actor">${escapeHtml(e.actor_email)}</div>
+        <div class="audit-detail">${escapeHtml(fileLbl)}${detailLbl}</div>
+        <div class="audit-folder">${escapeHtml(folderLbl)}</div>
+      </div>
+    `;
+  }).join('');
+  if (append) {
+    auditBody.insertAdjacentHTML('beforeend', html);
+  } else {
+    auditBody.innerHTML = html;
+  }
+}
+
+async function loadAudit({ reset = true } = {}) {
+  if (!isAdmin()) {
+    auditBody.innerHTML = '<div class="loading-files">Sign in as admin to view activity</div>';
+    auditCountLabel.textContent = '';
+    auditLoadMoreBtn.style.display = 'none';
+    return;
+  }
+  if (reset) {
+    auditOffset = 0;
+    auditTotal = 0;
+    auditBody.innerHTML = '<div class="loading-files">Loading…</div>';
+    auditCountLabel.textContent = '';
+    auditLoadMoreBtn.style.display = 'none';
+  } else {
+    auditLoadMoreBtn.disabled = true;
+    auditLoadMoreBtn.textContent = 'Loading…';
+  }
+  try {
+    const folder = auditFolderFilter.value;
+    const action = auditActionFilter.value;
+    const actor = auditActorFilter.value.trim();
+    const qs = new URLSearchParams({ limit: String(AUDIT_PAGE_SIZE), offset: String(auditOffset) });
+    if (folder) qs.set('folder', folder);
+    if (action) qs.set('action', action);
+    if (actor) qs.set('actor', actor);
+    const token = localStorage.getItem(TOKEN_KEY);
+    const r = await fetch(`/api/list-audit?${qs}`, { headers: { 'x-admin-token': token } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    const entries = data.entries || [];
+    auditTotal = Number.isFinite(data.total) ? data.total : entries.length;
+
+    if (reset && entries.length === 0) {
+      auditBody.innerHTML = '<div class="empty-files">No activity matching these filters</div>';
+      auditCountLabel.textContent = '0 entries';
+      auditLoadMoreBtn.style.display = 'none';
+      return;
+    }
+
+    renderAuditRows(entries, !reset);
+    auditOffset += entries.length;
+    auditCountLabel.textContent = `Showing ${auditOffset} of ${auditTotal}`;
+    if (auditOffset < auditTotal) {
+      auditLoadMoreBtn.style.display = 'inline-flex';
+      auditLoadMoreBtn.disabled = false;
+      auditLoadMoreBtn.textContent = 'Load more';
+    } else {
+      auditLoadMoreBtn.style.display = 'none';
+    }
+  } catch (e) {
+    if (reset) {
+      auditBody.innerHTML = `<div class="empty-files">Error: ${escapeHtml(String(e.message || e))}</div>`;
+    } else {
+      auditLoadMoreBtn.disabled = false;
+      auditLoadMoreBtn.textContent = 'Load more';
+      alert('Error loading more: ' + (e.message || e));
+    }
+  }
+}
+
+// ── HISTORY MODAL ────────────────────────────────────────
+const historyModal = document.getElementById('history-modal');
+document.getElementById('btn-history-close').addEventListener('click', () => historyModal.classList.remove('show'));
+historyModal.addEventListener('click', e => { if (e.target === historyModal) historyModal.classList.remove('show'); });
+
+document.addEventListener('click', async e => {
+  const btn = e.target.closest('.sfile-history');
+  if (!btn) return;
+  if (!isAdmin()) { alert('Sign in as admin to view history.'); return; }
+  const folder = btn.dataset.folder;
+  const filename = btn.dataset.filename;
+  document.getElementById('history-title').textContent = filename;
+  document.getElementById('history-sub').textContent = 'Loading…';
+  document.getElementById('history-list').innerHTML = '';
+  historyModal.classList.add('show');
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const r = await fetch(`/api/list-versions?folder=${folder}&filename=${encodeURIComponent(filename)}`, {
+      headers: { 'x-admin-token': token },
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    const versions = data.versions || [];
+    document.getElementById('history-sub').textContent =
+      versions.length === 0 ? 'No previous versions — only the current copy exists.' : `${versions.length} previous version${versions.length === 1 ? '' : 's'}`;
+    const html = [];
+    html.push(`
+      <div class="history-item current">
+        <div>
+          <div style="font-weight:600;color:var(--navy)">Current</div>
+          <div class="history-item-meta">Latest version</div>
+        </div>
+        <a class="history-item-link" href="${data.currentUrl}" target="_blank" rel="noopener">Open</a>
+      </div>
+    `);
+    versions.forEach(v => {
+      const sizeMb = v.sizeBytes ? (v.sizeBytes / 1024 / 1024).toFixed(2) + ' MB' : '—';
+      html.push(`
+        <div class="history-item">
+          <div>
+            <div>${escapeHtml(fmtTs(new Date(v.ts).toISOString()))}</div>
+            <div class="history-item-meta">${escapeHtml(sizeMb)}</div>
+          </div>
+          <a class="history-item-link" href="${v.url}" target="_blank" rel="noopener">Open</a>
+        </div>
+      `);
+    });
+    document.getElementById('history-list').innerHTML = html.join('');
+  } catch (err) {
+    document.getElementById('history-sub').textContent = 'Error: ' + (err.message || err);
+  }
+});
+
+// ── SIGN OUT clears user ─────────────────────────────────
+document.getElementById('btn-admin').addEventListener('click', () => {
+  if (isAdmin()) localStorage.removeItem(USER_KEY);
+});
+
+// ── STUDY ADMIN ──────────────────────────────────────
+function _stEsc(s) { return String(s ?? '').replace(/[<>&"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function loadStudyAdmin() {
+  const cont = document.getElementById('st-admin-list');
+  if (!cont) return;
+  if (!isAdmin()) { cont.innerHTML = '<div class="loading-files">Sign in as admin to manage articles</div>'; return; }
+  cont.innerHTML = '<div class="loading-files">Loading…</div>';
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const r = await fetch('/api/admin/study', { headers: { 'x-admin-token': token } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    const items = data.items || [];
+    if (items.length === 0) { cont.innerHTML = '<div class="loading-files">No articles yet.</div>'; return; }
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--navy);color:var(--white)"><th style="text-align:left;padding:8px 10px">Title</th><th style="text-align:left;padding:8px 10px">Section</th><th style="padding:8px 10px">PDF</th><th style="padding:8px 10px">Active</th><th style="padding:8px 10px"></th></tr></thead><tbody>';
+    for (const a of items) {
+      const pdfBadge = a.storage_path
+        ? '<span style="color:var(--green);font-size:10px">● attached</span>'
+        : '<span style="color:var(--gray-mid);font-size:10px">none</span>';
+      html += `<tr style="border-bottom:1px solid var(--rule)">
+        <td style="padding:8px 10px">
+          <strong>${a.cover_emoji ? a.cover_emoji + ' ' : ''}${_stEsc(a.title)}</strong>
+          <div style="font-size:10px;color:var(--gray-mid)">${_stEsc(a.author || 'DCE Holdings')} · ${(a.tags||[]).map(t => _stEsc(t)).join(', ') || 'no tags'}</div>
+        </td>
+        <td style="padding:8px 10px;text-transform:capitalize">${a.section}</td>
+        <td style="padding:8px 10px;text-align:center">${pdfBadge}</td>
+        <td style="padding:8px 10px;text-align:center">
+          <label style="cursor:pointer"><input type="checkbox" ${a.active?'checked':''} onchange="toggleStudyActive(${a.id}, this.checked)"></label>
+        </td>
+        <td style="padding:8px 10px;text-align:right;white-space:nowrap">
+          <label class="btn" style="font-size:10px;padding:4px 10px;cursor:pointer">
+            ${a.storage_path ? 'Replace PDF' : 'Upload PDF'}
+            <input type="file" accept="application/pdf" style="display:none" onchange="uploadStudyPdf(${a.id}, this)">
+          </label>
+          <button class="btn" style="font-size:10px;padding:4px 10px;background:transparent;color:var(--red);border:1px solid var(--red);margin-left:6px" onclick="deleteStudy(${a.id}, '${(a.title||'').replace(/'/g,"\\'")}')">Delete</button>
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    cont.innerHTML = html;
+  } catch (e) {
+    cont.innerHTML = '<div class="loading-files" style="color:var(--red)">Error: ' + e.message + '</div>';
+  }
+}
+
+async function addStudyArticle(ev) {
+  ev.preventDefault();
+  const f = ev.target;
+  const tags = (f.tags.value || '').split(',').map(t => t.trim()).filter(Boolean);
+  const body = {
+    section: f.section.value,
+    title: f.title.value.trim(),
+    author: f.author.value.trim() || null,
+    description: f.description.value.trim() || null,
+    external_url: f.external_url.value.trim() || null,
+    cover_emoji: f.cover_emoji.value.trim() || null,
+    tags,
+  };
+  const status = document.getElementById('st-add-status');
+  status.textContent = 'Saving…'; status.style.color = 'var(--gray-mid)';
+  const token = localStorage.getItem(TOKEN_KEY);
+  try {
+    const r = await fetch('/api/admin/study', {
+      method: 'POST',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    status.textContent = 'Added.'; status.style.color = 'var(--green)';
+    f.reset();
+    loadStudyAdmin();
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = 'var(--red)';
+  }
+  return false;
+}
+
+async function toggleStudyActive(id, active) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  await fetch('/api/admin/study?id=' + id, {
+    method: 'PATCH',
+    headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ active }),
+  });
+}
+
+async function deleteStudy(id, title) {
+  if (!confirm('Hide article "' + title + '" from public Study page?')) return;
+  const token = localStorage.getItem(TOKEN_KEY);
+  const r = await fetch('/api/admin/study?id=' + id, { method: 'DELETE', headers: { 'x-admin-token': token } });
+  if (r.ok) loadStudyAdmin();
+  else alert('Delete failed');
+}
+
+async function uploadStudyPdf(id, input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 26214400) { alert('Max 25 MB'); input.value = ''; return; }
+  const token = localStorage.getItem(TOKEN_KEY);
+  const filename = file.name.replace(/[^A-Za-z0-9._-]/g, '_');
+  try {
+    const r = await fetch('/api/admin/study?upload=1&id=' + id + '&filename=' + encodeURIComponent(filename), {
+      method: 'POST',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/pdf' },
+      body: file,
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Upload failed');
+    loadStudyAdmin();
+  } catch (e) {
+    alert('Upload error: ' + e.message);
+  } finally {
+    input.value = '';
+  }
+}
+
+
+// ─────────────────────────────────────────────────────────────────
+// DISCIPLINE RULES (admin tab)
+// ─────────────────────────────────────────────────────────────────
+async function loadDisciplineRules() {
+  const body = document.getElementById('discipline-body');
+  const msg = document.getElementById('discipline-msg');
+  msg.textContent = '';
+  msg.style.color = 'var(--gray-mid)';
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) {
+    body.innerHTML = '<div class="loading-files" style="padding:24px;text-align:center;color:var(--gray-mid)">Sign in as admin to view rules</div>';
+    return;
+  }
+  body.innerHTML = '<div class="loading-files" style="padding:24px;text-align:center;color:var(--gray-mid)">Loading rules…</div>';
+  try {
+    const r = await fetch('/api/discipline-rules', { headers: { 'x-admin-token': token } });
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'Failed to load');
+    renderDisciplineRules(data.rules || []);
+  } catch (e) {
+    body.innerHTML = '<div class="loading-files" style="padding:24px;text-align:center;color:#a93226">Error: ' + (e.message || e) + '</div>';
+  }
+}
+
+function renderDisciplineRules(rules) {
+  const body = document.getElementById('discipline-body');
+  if (!rules.length) {
+    body.innerHTML = '<div class="loading-files" style="padding:24px;text-align:center;color:var(--gray-mid)">No rules found</div>';
+    return;
+  }
+  const rows = rules.map(rule => {
+    const isPct = rule.unit === 'pct';
+    const isDays = rule.unit === 'days';
+    const step = isPct ? '0.01' : '1';
+    const min = isPct ? '0.01' : '1';
+    const max = isPct ? '1' : '3650';
+    const placeholder = isPct ? '0.10 = 10%' : (isDays ? 'días' : '');
+    const updatedBy = rule.updated_by ? '<div style="font-size:10px;color:var(--gray-mid);margin-top:2px">Updated by ' + escapeHtml(rule.updated_by) + ' · ' + new Date(rule.updated_at).toLocaleDateString() + '</div>' : '';
+    return (
+      '<div style="display:grid;grid-template-columns:1fr 140px 80px 100px;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--rule)">' +
+        '<div>' +
+          '<div style="font-size:12px;font-weight:600;color:var(--ink)">' + escapeHtml(rule.label || rule.rule_key) + '</div>' +
+          '<div style="font-size:11px;color:var(--gray-mid);line-height:1.4;margin-top:2px">' + escapeHtml(rule.description || '') + '</div>' +
+          '<div style="font-size:10px;color:var(--gray-mid);margin-top:2px;font-family:monospace">' + escapeHtml(rule.rule_key) + '</div>' +
+          updatedBy +
+        '</div>' +
+        '<input type="number" data-rule-key="' + escapeHtml(rule.rule_key) + '" value="' + Number(rule.value) + '" step="' + step + '" min="' + min + '" max="' + max + '" placeholder="' + placeholder + '" style="font-size:12px;padding:6px 8px;border:1px solid var(--rule);background:#fafaf7;font-family:monospace">' +
+        '<div style="font-size:11px;color:var(--gray-mid)">' + escapeHtml(rule.unit || '') + '</div>' +
+        '<button class="btn" type="button" data-save-key="' + escapeHtml(rule.rule_key) + '" style="font-size:11px;padding:6px 10px">Save</button>' +
+      '</div>'
+    );
+  }).join('');
+  body.innerHTML = rows;
+  body.querySelectorAll('button[data-save-key]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-save-key');
+      const input = body.querySelector('input[data-rule-key="' + key + '"]');
+      if (!input) return;
+      saveDisciplineRule(key, input.value);
+    });
+  });
+}
+
+async function saveDisciplineRule(ruleKey, rawValue) {
+  const msg = document.getElementById('discipline-msg');
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) {
+    msg.style.color = '#a93226';
+    msg.textContent = 'Not signed in as admin';
+    return;
+  }
+  const value = Number(rawValue);
+  if (!Number.isFinite(value)) {
+    msg.style.color = '#a93226';
+    msg.textContent = 'Invalid value for ' + ruleKey;
+    return;
+  }
+  msg.style.color = 'var(--gray-mid)';
+  msg.textContent = 'Saving ' + ruleKey + '…';
+  try {
+    const r = await fetch('/api/admin-discipline-rules', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-admin-token': token },
+      body: JSON.stringify({ rule_key: ruleKey, value })
+    });
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'Save failed');
+    msg.style.color = '#1e6e3a';
+    msg.textContent = '✓ Saved ' + ruleKey + ' = ' + value;
+    loadDisciplineRules();
+  } catch (e) {
+    msg.style.color = '#a93226';
+    msg.textContent = 'Error: ' + (e.message || e);
+  }
+}
+
+document.getElementById('btn-discipline-refresh')?.addEventListener('click', loadDisciplineRules);
+
+// INIT
+refreshAdminUI();
+// Settings page: activity tab is active by default — load audit log immediately
+loadAudit({ reset: true });
+</script>
+<script src="/search.js" defer></script>
+</body>
+</html>
