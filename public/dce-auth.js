@@ -362,7 +362,7 @@
     ]},
     { id:'decisions', label:'Decisions', items:[
       { href:'/journal.html',     label:'Journal',     desc:'Decision journal — buy/sell con thesis' },
-      { href:'/premortem.html',   label:'Pre-mortem',  desc:'Watch failure modes · manage' },
+      // { href:'/premortem.html',   label:'Pre-mortem',  desc:'Watch failure modes · manage' }, // archived 2026-05-07: backend activo, página oculta. Re-underwriting trimestral mantiene la disciplina.
     ]},
     { id:'research', label:'Research', items:[
       { href:'/news.html',        label:'News',     desc:'AI news scanner (Claude)' },
