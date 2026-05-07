@@ -964,6 +964,12 @@ async function loadJournal() {
     document.getElementById('kpi-hold').textContent = s.hold ?? 0;
     document.getElementById('kpi-pending').textContent = s.pending_reviews ?? 0;
     applyFilters();
+
+    // Auto-focus a specific entry: ?focus=<id>
+    const focusId = parseInt(params.get('focus') || '', 10);
+    if (focusId && Number.isFinite(focusId)) {
+      setTimeout(() => openDrawer(focusId), 100);
+    }
   } catch (e) {
     document.getElementById('status-all').textContent = 'Error loading: ' + e.message;
   }

@@ -799,14 +799,9 @@
   <div class="ladder" id="columbia-ladder"></div>
 
   <!-- Decision Journal handoff -->
-  <div style="margin:16px 0 24px;padding:18px 20px;border:1px solid #e5e7eb;background:#fafafa">
-    <div style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--navy);font-weight:700;margin-bottom:4px">CIO Decision</div>
-    <div style="font-size:13px;color:#6b7280;margin-bottom:14px">Submit this analysis to the Decision Journal. Choose to elevate the name to Investment Committee (BUY) or formally pass.</div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap">
-      <a id="submit-buy-btn" href="#" style="display:inline-flex;align-items:center;gap:10px;background:var(--gold);color:#fff;padding:12px 22px;text-decoration:none;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;border:1px solid var(--gold);transition:filter .15s" onmouseover="this.style.filter='brightness(0.9)'" onmouseout="this.style.filter='brightness(1)'">Submit BUY <span style="font-size:14px">→</span></a>
-      <a id="submit-pass-btn" href="#" style="display:inline-flex;align-items:center;gap:10px;background:#fff;color:var(--navy);padding:12px 22px;text-decoration:none;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;border:1px solid var(--navy);transition:background .15s,color .15s" onmouseover="this.style.background='var(--navy)';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='var(--navy)'">Submit PASS <span style="font-size:14px">→</span></a>
-      <a href="/journal" style="display:inline-flex;align-items:center;gap:8px;color:#6b7280;padding:12px 8px;text-decoration:none;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;margin-left:auto" onmouseover="this.style.color='var(--navy)'" onmouseout="this.style.color='#6b7280'">View Journal</a>
-    </div>
+  <div style="display:flex;justify-content:flex-end;align-items:center;gap:14px;margin:8px 0 24px">
+    <span id="journal-status-label" style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-mid);font-weight:600"></span>
+    <a id="journal-action-btn" href="/journal" style="display:inline-flex;align-items:center;gap:10px;background:var(--navy);color:#fff;padding:12px 22px;text-decoration:none;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);transition:background .15s,color .15s,border-color .15s" onmouseover="this.style.background='var(--gold)';this.style.borderColor='var(--gold)'" onmouseout="const c=this.getAttribute('data-mode')==='view'?'var(--green-dark, #15803d)':'var(--navy)';this.style.background=c;this.style.borderColor=c">Open Decision Journal <span style="font-size:14px">→</span></a>
   </div>
 
   <!-- Document Links -->

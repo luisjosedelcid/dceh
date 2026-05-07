@@ -1077,12 +1077,44 @@ function renderSummary() {
   // Columbia ladder
   renderLadder();
 
-  // Decision Journal handoff buttons (BUY / PASS prefilled)
-  const tk = encodeURIComponent(D.ticker || '');
-  const buyBtn  = document.getElementById('submit-buy-btn');
-  const passBtn = document.getElementById('submit-pass-btn');
-  if (buyBtn)  buyBtn.href  = `/journal?action=new&ticker=${tk}&type=BUY`;
-  if (passBtn) passBtn.href = `/journal?action=new&ticker=${tk}&type=PASS`;
+  // Decision Journal handoff: smart single button — opens new entry if no
+  // active decision yet for this ticker, otherwise jumps to existing entry.
+  refreshJournalButton();
+}
+
+async function refreshJournalButton() {
+  const btn   = document.getElementById('journal-action-btn');
+  const label = document.getElementById('journal-status-label');
+  if (!btn) return;
+  const ticker = D.ticker || '';
+  const tkEnc = encodeURIComponent(ticker);
+
+  // Default state — assume new entry. Updated below if check finds existing.
+  btn.href = `/journal?action=new&ticker=${tkEnc}`;
+  btn.setAttribute('data-mode', 'new');
+  btn.style.background   = 'var(--navy)';
+  btn.style.borderColor  = 'var(--navy)';
+  btn.firstChild && (btn.childNodes[0].nodeValue = 'Open Decision Journal ');
+  if (label) label.textContent = '';
+
+  try {
+    const r = await fetch(`/api/journal-check?ticker=${tkEnc}`);
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data || !data.exists || !data.item) return;
+
+    const it = data.item;
+    const type = String(it.decision_type || '').toUpperCase();
+    const date = it.decision_date ? String(it.decision_date).slice(0, 10) : '';
+
+    // Existing decision — switch to View mode (green action)
+    btn.href = `/journal?focus=${encodeURIComponent(it.id)}&ticker=${tkEnc}`;
+    btn.setAttribute('data-mode', 'view');
+    btn.style.background  = '#15803d';
+    btn.style.borderColor = '#15803d';
+    btn.childNodes[0].nodeValue = `View Decision: ${type} `;
+    if (label) label.textContent = date ? `Registered ${date}` : 'Registered';
+  } catch (_) { /* silent fallback to new mode */ }
 }
 
 function renderLadder() {
