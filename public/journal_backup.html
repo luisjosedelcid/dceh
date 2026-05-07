@@ -537,12 +537,12 @@ async function computeSellPnl(sellId, sellRow) {
   if (!host) return;
   try {
     // Fetch trades for SELL decision (exit fills)
-    const sellRes = await fetch('http://localhost:8766/api/trades?decision_id=' + sellId);
+    const sellRes = await fetch('/api/trades?decision_id=' + sellId);
     const sellData = sellRes.ok ? await sellRes.json() : { trades: [] };
     const sellTrades = sellData.trades || [];
     let entryTrades = [];
     if (sellRow.linked_buy_id) {
-      const buyRes = await fetch('http://localhost:8766/api/trades?decision_id=' + sellRow.linked_buy_id);
+      const buyRes = await fetch('/api/trades?decision_id=' + sellRow.linked_buy_id);
       const buyData = buyRes.ok ? await buyRes.json() : { trades: [] };
       entryTrades = buyData.trades || [];
     }
@@ -584,7 +584,7 @@ async function loadTriggeredFailureMode(sellId, sellRow) {
   const host = document.getElementById('sell-fm-' + sellId);
   if (!host) return;
   try {
-    const r = await fetch('http://localhost:8766/api/premortems?ticker=' + encodeURIComponent(sellRow.ticker) + '&include_archived=1');
+    const r = await fetch('/api/premortems?ticker=' + encodeURIComponent(sellRow.ticker) + '&include_archived=1');
     if (!r.ok) { host.innerHTML = ''; return; }
     const j = await r.json();
     let fmRow = null;
@@ -673,7 +673,7 @@ async function loadTradesForDecision(id) {
   const target = document.getElementById('exec-list-' + id);
   if (!target) return;
   try {
-    const r = await fetch('http://localhost:8766/api/trades?decision_id=' + id);
+    const r = await fetch('/api/trades?decision_id=' + id);
     const data = await r.json();
     if (!r.ok || !data.ok) throw new Error(data.error || 'HTTP ' + r.status);
     renderTradesList(id, data.items || []);
@@ -750,7 +750,7 @@ async function submitExec(id, ticker) {
   msg.style.color = 'var(--gray-mid)';
   msg.textContent = 'Saving…';
   try {
-    const r = await fetch('http://localhost:8766/api/trades', {
+    const r = await fetch('/api/trades', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-token': tk },
       body: JSON.stringify(payload),
@@ -779,7 +779,7 @@ async function deleteTrade(decisionId, tradeId) {
   if (!confirm('Undo this execution? This permanently deletes the trade record.')) return;
   const tk = adminToken();
   try {
-    const r = await fetch('http://localhost:8766/api/trades?id=' + tradeId, {
+    const r = await fetch('/api/trades?id=' + tradeId, {
       method: 'DELETE',
       headers: { 'x-admin-token': tk },
     });
@@ -854,7 +854,7 @@ async function loadJournal() {
     const tk = (params.get('ticker') || '').toUpperCase().trim();
     if (tk) document.getElementById('filter-ticker').value = tk;
     const tok = adminToken();
-    const r = await fetch('http://localhost:8766/api/journal', tok ? { headers: { 'x-admin-token': tok } } : {});
+    const r = await fetch('/api/journal', tok ? { headers: { 'x-admin-token': tok } } : {});
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     state.items = data.items || [];
@@ -889,8 +889,8 @@ async function loadReunderwriting() {
     const tk = tokenAdmin();
     const headers = tk ? { 'x-admin-token': tk } : {};
     const [rPending, rDone] = await Promise.all([
-      fetch('http://localhost:8766/api/reunderwriting-due?status=pending', { headers }),
-      fetch('http://localhost:8766/api/reunderwriting-due?status=done&limit=20', { headers }),
+      fetch('/api/reunderwriting-due?status=pending', { headers }),
+      fetch('/api/reunderwriting-due?status=done&limit=20', { headers }),
     ]);
     if (!rPending.ok) {
       // Probably auth required
@@ -950,12 +950,11 @@ function renderReunderwriting() {
       const ocBadge = oc && ocStyles[oc]
         ? `<span style="background:${ocStyles[oc].bg};color:${ocStyles[oc].fg};font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600;padding:3px 8px;border-radius:3px;margin-left:8px">${ocStyles[oc].label}</span>`
         : '';
-      return `<div class="review-block done" style="margin-bottom:10px;cursor:pointer" onclick="openReundDetail(${d.id})" title="Ver detalle del re-underwriting firmado">
+      return `<div class="review-block done" style="margin-bottom:10px">
         <div class="review-head">
           <span class="review-label">${escapeHtml(d.ticker)} · ${escapeHtml(d.doc_type)} · period ${fmtDate(d.period_end)}${ocBadge}</span>
           <span class="review-pill done">Done ${fmtDate(d.completed_at)}</span>
         </div>
-        <div class="review-outcome muted" style="margin-top:6px;font-size:11px">Click para ver detalle →</div>
       </div>`;
     }).join('');
   }
@@ -1043,7 +1042,7 @@ async function loadKillCriteriaForReund(ticker) {
   if (!target) return;
   try {
     const tk = tokenAdmin();
-    const r = await fetch('http://localhost:8766/api/premortems?ticker=' + encodeURIComponent(ticker), {
+    const r = await fetch('/api/premortems?ticker=' + encodeURIComponent(ticker), {
       headers: tk ? { 'x-admin-token': tk } : {},
     });
     if (!r.ok) {
@@ -1073,141 +1072,6 @@ async function loadKillCriteriaForReund(ticker) {
     target.textContent = 'Error: ' + e.message;
   }
 }
-
-// Read-only drawer: ver el detalle de un re-underwriting ya firmado
-async function openReundDetail(dueId) {
-  const tk = tokenAdmin();
-  if (!tk) {
-    alert('Sign in as admin para ver el detalle.');
-    return;
-  }
-
-  document.getElementById('drawer-title').textContent = 'Re-underwriting · detalle';
-  const body = document.getElementById('drawer-body');
-  body.innerHTML = '<div class="empty">Loading…</div>';
-  document.getElementById('drawer-bg').classList.add('open');
-  document.getElementById('drawer').classList.add('open');
-
-  try {
-    const r = await fetch('http://localhost:8766/api/reunderwriting-detail?due_id=' + encodeURIComponent(dueId), {
-      headers: { 'x-admin-token': tk },
-    });
-    if (!r.ok) {
-      body.innerHTML = '<div class="empty">Error: HTTP ' + r.status + '</div>';
-      return;
-    }
-    const data = await r.json();
-    if (!data.ok) {
-      body.innerHTML = '<div class="empty">Error: ' + escapeHtml(data.error || 'unknown') + '</div>';
-      return;
-    }
-    renderReundDetail(data);
-  } catch (e) {
-    body.innerHTML = '<div class="empty">Error: ' + escapeHtml(String(e.message || e)) + '</div>';
-  }
-}
-window.openReundDetail = openReundDetail;
-
-function renderReundDetail(data) {
-  const due = data.due || {};
-  const entry = data.entry || null;
-  const rev = data.revision || null;
-  document.getElementById('drawer-title').textContent = (due.ticker || '') + ' · Re-underwriting (firmado)';
-
-  const ocStyles = {
-    thesis_intact:           { bg: '#e3f4ea', fg: '#1e6c3a', label: 'Tesis intacta' },
-    thresholds_recalibrated: { bg: '#fff3cf', fg: '#7c5d10', label: 'Thresholds recalibrados' },
-    thesis_evolved:          { bg: '#fde3cf', fg: '#7a3a08', label: 'Tesis evolucionó' },
-    thesis_broken:           { bg: '#fbd7dd', fg: '#7a1424', label: 'Tesis rota' },
-  };
-  const oc = due.outcome;
-  const ocBadge = oc && ocStyles[oc]
-    ? `<span style="background:${ocStyles[oc].bg};color:${ocStyles[oc].fg};font-size:11px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600;padding:4px 10px;border-radius:3px">${ocStyles[oc].label}</span>`
-    : '<span class="muted">—</span>';
-
-  const actionLabels = { buy_more: 'Buy more', hold: 'Hold', trim: 'Trim', sell: 'Sell' };
-  const actionLabel = entry && actionLabels[entry.action] ? actionLabels[entry.action] : (entry ? entry.action : '—');
-
-  // Kill criteria snapshot (jsonb array on the entry)
-  let killHtml = '<span class="muted">No snapshot.</span>';
-  if (entry && Array.isArray(entry.kill_criteria_snapshot) && entry.kill_criteria_snapshot.length) {
-    killHtml = entry.kill_criteria_snapshot.map(fm => {
-      const cls = fm.status === 'triggered' ? 'due' : (fm.status === 'resolved' ? 'done' : '');
-      return `<div style="margin-bottom:6px;font-size:13px">
-        <span class="review-pill ${cls}" style="min-width:80px;display:inline-block;text-align:center">${escapeHtml(fm.status || '—')}</span>
-        <span style="margin-left:8px">${escapeHtml(fm.failure_mode || '')}</span>
-        <span style="color:var(--gray-mid);font-size:11px;margin-left:6px">P${fm.probability_pct ?? '—'}% · S${fm.severity_pct ?? '—'}%</span>
-      </div>`;
-    }).join('');
-  }
-
-  const body = document.getElementById('drawer-body');
-  body.innerHTML = `
-    <div class="meta-grid">
-      <div><div class="k">Filing</div><div class="v">${escapeHtml(due.doc_type || '')}</div></div>
-      <div><div class="k">Period end</div><div class="v">${fmtDate(due.period_end)}</div></div>
-      <div><div class="k">Filed</div><div class="v" style="font-size:12px">${fmtDate(due.filed_at)}</div></div>
-      <div><div class="k">Cerrado</div><div class="v" style="font-size:12px">${fmtDate(due.completed_at)}</div></div>
-    </div>
-    ${due.source_url ? `<div class="field"><a href="${escapeHtml(due.source_url)}" target="_blank" rel="noopener" style="color:var(--gold);font-size:12px">View filing on EDGAR →</a></div>` : ''}
-
-    <div class="field">
-      <div class="field-lbl">Outcome</div>
-      <div style="margin-top:6px">${ocBadge}</div>
-    </div>
-
-    <div class="field">
-      <div class="field-lbl">Reviewer</div>
-      <div class="field-val">${entry ? escapeHtml(entry.reviewer_email || '—') : '—'}</div>
-    </div>
-
-    <div class="field">
-      <div class="field-lbl">1. Thesis still valid?</div>
-      <div class="field-val" style="white-space:pre-wrap;background:var(--white);padding:10px;border:1px solid var(--rule);font-size:13px">${entry && entry.thesis_still_valid ? escapeHtml(entry.thesis_still_valid) : '<span class="muted">—</span>'}</div>
-    </div>
-
-    <div class="field">
-      <div class="field-lbl">2. Kill criteria concern</div>
-      <div class="field-val" style="white-space:pre-wrap;background:var(--white);padding:10px;border:1px solid var(--rule);font-size:13px">${entry && entry.kill_criteria_concern ? escapeHtml(entry.kill_criteria_concern) : '<span class="muted">(none reported)</span>'}</div>
-    </div>
-
-    <div class="field">
-      <div class="field-lbl">Kill criteria snapshot (al momento de firmar)</div>
-      <div class="field-val">${killHtml}</div>
-    </div>
-
-    <div class="field">
-      <div class="field-lbl">Action</div>
-      <div class="field-val"><strong>${escapeHtml(actionLabel)}</strong></div>
-      ${entry && entry.action_reason ? `<div class="field-val muted" style="margin-top:4px;font-size:13px">${escapeHtml(entry.action_reason)}</div>` : ''}
-    </div>
-
-    ${due.outcome_notes ? `
-    <div class="field">
-      <div class="field-lbl">Justificación del cambio</div>
-      <div class="field-val" style="white-space:pre-wrap;background:#fff8ec;padding:10px;border-left:3px solid var(--gold);font-size:13px">${escapeHtml(due.outcome_notes)}</div>
-    </div>` : ''}
-
-    ${rev ? `
-    <div class="field" style="border-top:1px solid var(--rule);padding-top:14px;margin-top:14px">
-      <div class="slbl" style="margin-bottom:8px">Revisión creada</div>
-      <div class="meta-grid">
-        <div><div class="k">Versión</div><div class="v">V${rev.version_num}</div></div>
-        <div><div class="k">Tipo</div><div class="v" style="font-size:12px">${escapeHtml(rev.change_type || '—')}</div></div>
-        <div><div class="k">Comité</div><div class="v" style="font-size:12px">${rev.ratified_by_committee ? 'Ratificado' : 'Pendiente'}</div></div>
-      </div>
-      ${rev.thesis_summary ? `<div class="field-val" style="white-space:pre-wrap;background:var(--white);padding:10px;border:1px solid var(--rule);font-size:12px;margin-top:8px"><strong>Thesis (snapshot V${rev.version_num}):</strong><br>${escapeHtml(rev.thesis_summary)}</div>` : ''}
-      <div style="margin-top:10px;font-size:11px">
-        <a href="/${(due.ticker || '').toLowerCase()}?tab=premortem" style="color:var(--gold)">Ver historial completo en el dashboard →</a>
-      </div>
-    </div>` : ''}
-
-    <div class="field" style="margin-top:18px">
-      <button onclick="closeDrawer()" style="background:var(--white);color:var(--navy);border:1px solid var(--navy);padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600">Cerrar</button>
-    </div>
-  `;
-}
-window.renderReundDetail = renderReundDetail;
 
 function onOutcomeChange() {
   const outcomeRadio = document.querySelector('input[name="reund-outcome"]:checked');
@@ -1267,7 +1131,7 @@ async function submitReund() {
 
   try {
     const tk = tokenAdmin();
-    const r = await fetch('http://localhost:8766/api/reunderwriting-submit', {
+    const r = await fetch('/api/reunderwriting-submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-token': tk },
       body: JSON.stringify({
