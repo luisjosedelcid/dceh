@@ -1003,41 +1003,76 @@ function renderSummary() {
 
   setEl('memo-narrative', ts.narrative || '');
 
-  // summary table
-  const rows = [
+  // ── KPI Hero strip (6 numbers that matter) ─────────────────
+  const mosRaw = ts.marginOfSafety;
+  const mosColor = mosRaw >= 0 ? 'var(--green)' : 'var(--red)';
+  const irrColor = ts.impliedIrr >= D.irr.hurdle ? 'var(--green)' : 'var(--red)';
+  const peRatio  = ts.priceEpvRatio;
+  const peColor  = peRatio < 1 ? 'var(--green)' : peRatio < 1.2 ? 'var(--gold)' : 'var(--red)';
+  const roicVal  = ov.roic3yr > 2 ? ov.roic3yr*100 : ov.roic3yr;
+  const wacc3    = D.overview.wacc*100;
+  const roicColor = roicVal > wacc3 ? 'var(--green)' : 'var(--gray-mid)';
+
+  const kpis = [
+    { lbl:'Margin of Safety', val:`${mosRaw>=0?'+':''}${Pct(mosRaw)}`, color:mosColor, sub:`vs. hurdle ${Pct(D.irr.hurdle)}` },
+    { lbl:'Implied IRR',      val:Pct(ts.impliedIrr),                  color:irrColor, sub:`Hurdle ${Pct(D.irr.hurdle)}` },
+    { lbl:'Price / EPV',      val:Mul(peRatio),                        color:peColor,  sub:`EPV ${fmtPrice(epv.epvPerShare)}` },
+    { lbl:'EPV / RV',         val:Mul(ts.epvRvRatio),                  color:'var(--navy)', sub:`Quality lens` },
+    { lbl:'ROIC 3yr avg',     val:Pct(roicVal),                        color:roicColor, sub:`WACC ${Pct(wacc3)}` },
+    { lbl:'Market Cap',       val:B(ov.marketCap),                     color:'var(--navy)', sub:`EV ${B(ov.ev)}` },
+  ];
+  const kpiEl = document.getElementById('summary-kpis');
+  if (kpiEl) {
+    kpiEl.innerHTML = kpis.map(k => `
+      <div class="card" style="padding:14px 16px">
+        <div class="clbl" style="font-size:9px">${k.lbl}</div>
+        <div style="font-size:22px;font-weight:700;color:${k.color};letter-spacing:-0.02em;margin-top:4px">${k.val}</div>
+        <div style="font-size:11px;color:var(--gray-mid);margin-top:2px">${k.sub}</div>
+      </div>`).join('');
+  }
+
+  // ── Themed metric tables ──────────────────────────────────
+  const identity = [
     ['Company',        D.name],
     ['Ticker',         D.ticker],
     ['Exchange',       D.exchange],
-    ['Valuation Date', D.valuationDate],
     ['CEO',            ov.ceo],
     ['HQ',             ov.headquarters],
     ['Employees',      fmt(ov.employees)],
-    ['Market Cap',     B(ov.marketCap)],
-    ['EV',             B(ov.ev)],
+    ['Valuation Date', D.valuationDate],
+  ];
+  const valuation = [
     ['Stock Price',    fmtPrice(currentPrice)],
     ['EPV / Share',    fmtPrice(epv.epvPerShare)],
-    ['Price / EPV',    Mul(ts.priceEpvRatio)],
     ['RV / Share',     fmtPrice(D.rv.rvPerShare)],
+    ['Price / EPV',    Mul(ts.priceEpvRatio)],
     ['EPV / RV',       Mul(ts.epvRvRatio)],
     ['Implied IRR',    Pct(ts.impliedIrr)],
     ['Hurdle Rate',    Pct(D.irr.hurdle)],
-    ['MoS',            `${ts.marginOfSafety >= 0 ? '+' : ''}${Pct(ts.marginOfSafety)}`],
-    ['WACC',           Pct(D.overview.wacc*100)],
-    ['ROIC (latest)',  Pct(ov.roicLatest > 2 ? ov.roicLatest*100 : ov.roicLatest)],
-    ['ROIC 3yr avg',   Pct(ov.roic3yr > 2 ? ov.roic3yr*100 : ov.roic3yr)],
+    ['MoS',            `${mosRaw>=0?'+':''}${Pct(mosRaw)}`],
+    ['WACC',           Pct(wacc3)],
+  ];
+  const operations = [
     ['Revenue FY2025', M(ov.revenue)],
     ['Op Margin',      Pct(ov.operMargin*100)],
     ['FCF FY2025',     M(ov.fcfLatest)],
     ['FCF Margin',     Pct(ov.fcfMargin*100)],
+    ['ROIC (latest)',  Pct(ov.roicLatest > 2 ? ov.roicLatest*100 : ov.roicLatest)],
+    ['ROIC 3yr avg',   Pct(roicVal)],
   ];
-  const el = document.getElementById('memo-table');
-  if (el) {
+
+  const fillRows = (id, rows) => {
+    const el = document.getElementById(id);
+    if (!el) return;
     el.innerHTML = rows.map(r => `
       <div class="memo-row">
         <span class="mk">${r[0]}</span>
         <span class="mv">${r[1]}</span>
       </div>`).join('');
-  }
+  };
+  fillRows('summary-identity',   identity);
+  fillRows('summary-valuation',  valuation);
+  fillRows('summary-operations', operations);
 
   // Columbia ladder
   renderLadder();

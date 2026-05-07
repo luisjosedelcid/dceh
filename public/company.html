@@ -762,17 +762,34 @@
      ══════════════════════════════════════════════════════════ -->
 <div id="tab-summary" class="tab-content">
   <div class="slbl">Summary — Columbia Synthesis</div>
-  <div class="g2" style="margin-bottom:20px">
-    <div>
-      <div class="card">
-        <div class="clbl">Thesis Narrative</div>
-        <div style="font-size:14px;line-height:1.7;color:var(--gray-txt);margin-top:4px" id="memo-narrative">—</div>
+
+  <!-- Thesis Narrative full-width banner -->
+  <div class="card" style="margin-bottom:20px;border-left:4px solid var(--gold);padding:22px 26px">
+    <div class="clbl">Thesis Narrative</div>
+    <div style="font-size:15px;line-height:1.75;color:var(--gray-txt);margin-top:8px;max-width:1100px" id="memo-narrative">—</div>
+  </div>
+
+  <!-- KPI Hero strip (6 numbers that matter) -->
+  <div class="g3" style="grid-template-columns:repeat(6,1fr);margin-bottom:22px" id="summary-kpis"></div>
+
+  <!-- Metrics in 3 themed columns -->
+  <div class="g3" style="margin-bottom:24px">
+    <div class="card">
+      <div class="memo-section" style="margin-bottom:0">
+        <h3>Identity</h3>
+        <div id="summary-identity"></div>
       </div>
     </div>
-    <div>
-      <div class="memo-section">
-        <h3>Summary Metrics</h3>
-        <div id="memo-table"></div>
+    <div class="card">
+      <div class="memo-section" style="margin-bottom:0">
+        <h3>Valuation</h3>
+        <div id="summary-valuation"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="memo-section" style="margin-bottom:0">
+        <h3>Operations</h3>
+        <div id="summary-operations"></div>
       </div>
     </div>
   </div>
