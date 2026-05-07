@@ -537,12 +537,12 @@ async function computeSellPnl(sellId, sellRow) {
   if (!host) return;
   try {
     // Fetch trades for SELL decision (exit fills)
-    const sellRes = await fetch('http://localhost:8766/api/trades?decision_id=' + sellId);
+    const sellRes = await fetch('/api/trades?decision_id=' + sellId);
     const sellData = sellRes.ok ? await sellRes.json() : { trades: [] };
     const sellTrades = sellData.trades || [];
     let entryTrades = [];
     if (sellRow.linked_buy_id) {
-      const buyRes = await fetch('http://localhost:8766/api/trades?decision_id=' + sellRow.linked_buy_id);
+      const buyRes = await fetch('/api/trades?decision_id=' + sellRow.linked_buy_id);
       const buyData = buyRes.ok ? await buyRes.json() : { trades: [] };
       entryTrades = buyData.trades || [];
     }
@@ -584,7 +584,7 @@ async function loadTriggeredFailureMode(sellId, sellRow) {
   const host = document.getElementById('sell-fm-' + sellId);
   if (!host) return;
   try {
-    const r = await fetch('http://localhost:8766/api/premortems?ticker=' + encodeURIComponent(sellRow.ticker) + '&include_archived=1');
+    const r = await fetch('/api/premortems?ticker=' + encodeURIComponent(sellRow.ticker) + '&include_archived=1');
     if (!r.ok) { host.innerHTML = ''; return; }
     const j = await r.json();
     let fmRow = null;
@@ -673,7 +673,7 @@ async function loadTradesForDecision(id) {
   const target = document.getElementById('exec-list-' + id);
   if (!target) return;
   try {
-    const r = await fetch('http://localhost:8766/api/trades?decision_id=' + id);
+    const r = await fetch('/api/trades?decision_id=' + id);
     const data = await r.json();
     if (!r.ok || !data.ok) throw new Error(data.error || 'HTTP ' + r.status);
     renderTradesList(id, data.items || []);
@@ -750,7 +750,7 @@ async function submitExec(id, ticker) {
   msg.style.color = 'var(--gray-mid)';
   msg.textContent = 'Saving…';
   try {
-    const r = await fetch('http://localhost:8766/api/trades', {
+    const r = await fetch('/api/trades', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-token': tk },
       body: JSON.stringify(payload),
@@ -779,7 +779,7 @@ async function deleteTrade(decisionId, tradeId) {
   if (!confirm('Undo this execution? This permanently deletes the trade record.')) return;
   const tk = adminToken();
   try {
-    const r = await fetch('http://localhost:8766/api/trades?id=' + tradeId, {
+    const r = await fetch('/api/trades?id=' + tradeId, {
       method: 'DELETE',
       headers: { 'x-admin-token': tk },
     });
@@ -854,7 +854,7 @@ async function loadJournal() {
     const tk = (params.get('ticker') || '').toUpperCase().trim();
     if (tk) document.getElementById('filter-ticker').value = tk;
     const tok = adminToken();
-    const r = await fetch('http://localhost:8766/api/journal', tok ? { headers: { 'x-admin-token': tok } } : {});
+    const r = await fetch('/api/journal', tok ? { headers: { 'x-admin-token': tok } } : {});
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     state.items = data.items || [];
@@ -889,8 +889,8 @@ async function loadReunderwriting() {
     const tk = tokenAdmin();
     const headers = tk ? { 'x-admin-token': tk } : {};
     const [rPending, rDone] = await Promise.all([
-      fetch('http://localhost:8766/api/reunderwriting-due?status=pending', { headers }),
-      fetch('http://localhost:8766/api/reunderwriting-due?status=done&limit=20', { headers }),
+      fetch('/api/reunderwriting-due?status=pending', { headers }),
+      fetch('/api/reunderwriting-due?status=done&limit=20', { headers }),
     ]);
     if (!rPending.ok) {
       // Probably auth required
@@ -1043,7 +1043,7 @@ async function loadKillCriteriaForReund(ticker) {
   if (!target) return;
   try {
     const tk = tokenAdmin();
-    const r = await fetch('http://localhost:8766/api/premortems?ticker=' + encodeURIComponent(ticker), {
+    const r = await fetch('/api/premortems?ticker=' + encodeURIComponent(ticker), {
       headers: tk ? { 'x-admin-token': tk } : {},
     });
     if (!r.ok) {
@@ -1089,7 +1089,7 @@ async function openReundDetail(dueId) {
   document.getElementById('drawer').classList.add('open');
 
   try {
-    const r = await fetch('http://localhost:8766/api/reunderwriting-detail?due_id=' + encodeURIComponent(dueId), {
+    const r = await fetch('/api/reunderwriting-detail?due_id=' + encodeURIComponent(dueId), {
       headers: { 'x-admin-token': tk },
     });
     if (!r.ok) {
@@ -1267,7 +1267,7 @@ async function submitReund() {
 
   try {
     const tk = tokenAdmin();
-    const r = await fetch('http://localhost:8766/api/reunderwriting-submit', {
+    const r = await fetch('/api/reunderwriting-submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-token': tk },
       body: JSON.stringify({
