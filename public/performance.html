@@ -68,6 +68,11 @@
   table.tbl td.pos{color:var(--green)}
   table.tbl td.neg{color:var(--red)}
 
+  /* Ticker link → company dashboard */
+  table.tbl a.ticker-link{color:var(--navy);text-decoration:none;border-bottom:1px dotted transparent;transition:color .15s, border-color .15s}
+  table.tbl a.ticker-link:hover{color:var(--gold);border-bottom-color:var(--gold)}
+  table.tbl a.ticker-link strong{font-weight:700}
+
   /* ── Alert cells (migrated from /portfolio.html) ───────────────────────── */
   .alert-cell{font-size:12px;font-variant-numeric:tabular-nums;cursor:pointer;user-select:none;padding:4px 6px;border-radius:3px;display:inline-flex;align-items:center;gap:5px;min-width:70px;justify-content:flex-end}
   .alert-cell:hover{background:rgba(184,139,71,0.08)}
@@ -883,6 +888,16 @@ function fmtHoldingPeriod(days){
   return months+'mo '+(days%30)+'d';
 }
 
+// Tickers with a Columbia dashboard published on the portal.
+// Source of truth: /companies/<ticker>.json files. Update when a new dashboard ships.
+const DASHBOARD_TICKERS = new Set(['BKNG','LULU','MSFT','SAP']);
+function tickerLinkHtml(ticker){
+  if(DASHBOARD_TICKERS.has(ticker)){
+    return `<a href="/${ticker.toLowerCase()}" class="ticker-link" title="Open ${ticker} dashboard"><strong>${ticker}</strong></a>`;
+  }
+  return `<strong>${ticker}</strong>`;
+}
+
 function renderHoldings(holdings){
   const tbl = document.getElementById('tbl-holdings');
   if(!holdings || holdings.length===0){ tbl.innerHTML = '<tbody><tr><td>No open positions.</td></tr></tbody>'; return; }
@@ -895,7 +910,7 @@ function renderHoldings(holdings){
     const irrCls = irr>=0.12?'pos':(irr>=0?'':'neg');
     const irrTxt = irr!=null ? signedPct(irr) : '—';
     html += `<tr>
-      <td><strong>${h.ticker}</strong></td>
+      <td>${tickerLinkHtml(h.ticker)}</td>
       <td class="r">${Number(h.qty).toLocaleString('en-US',{maximumFractionDigits:4})}</td>
       <td class="r">${h.avg_cost!=null?Number(h.avg_cost).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4}):'—'}</td>
       <td class="r">${h.last_price!=null?Number(h.last_price).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4}):'—'}</td>
