@@ -113,21 +113,22 @@ async function buildVersionControls(ticker) {
     }
   } catch (_) { /* ignore */ }
 
-  // Populate selector
+  // Populate selector (lives inside the nav row)
   if (selector) {
-    if (!versions.length) {
+    if (versions.length < 2) {
+      // Hide selector entirely when there's only 1 version (no choice to make)
       selector.style.display = 'none';
     } else {
-      selector.style.display = '';
+      selector.style.display = 'inline-flex';
       const current = (D && D.__version && D.__version.fiscal_period) || null;
       const opts = versions.map(v => {
         const sel = (current && v.fiscal_period === current) ? ' selected' : '';
         const tag = v.is_latest ? ' (latest)' : '';
         return `<option value="${v.fiscal_period}"${sel}>${v.fiscal_period}${tag}</option>`;
       }).join('');
-      selector.innerHTML = `<label style="font-size:10px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.1em;margin-right:8px">Versión</label>
+      selector.innerHTML = `<span style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:0.12em;font-weight:600">Versión</span>
         <select id="version-select" onchange="onVersionChange(this.value)"
-          style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.18);color:var(--gold-lt);font-family:Archivo,sans-serif;font-size:12px;padding:4px 8px;border-radius:4px;outline:none;cursor:pointer">
+          style="background:#fff;border:1px solid var(--line);color:var(--navy);font-family:Archivo,sans-serif;font-size:12px;font-weight:600;padding:5px 10px;border-radius:4px;outline:none;cursor:pointer">
           ${opts}
         </select>`;
     }
@@ -226,10 +227,14 @@ function buildNav() {
     {id:'tb',          label:'Thesis Breaker',    external: D.documents.thesisBreakerUrl,  style:'color:var(--red);font-weight:600'},
     {id:'munger',      label:'Munger Digital',    external: D.documents.mungerDigitalUrl,  style:'color:#6b4fa0;font-weight:600'},
     {id:'memo',        label:'Investment Memo'},
-    {id:'home',        label:'← Home', home: true, style:'margin-left:auto;color:var(--gray-mid)'},
+    {id:'version',     label:'',  versionSlot: true, style:'margin-left:auto'},
+    {id:'home',        label:'← Home', home: true, style:'color:var(--gray-mid)'},
   ];
 
   nav.innerHTML = tabs.map(t => {
+    if (t.versionSlot) {
+      return `<div id="version-selector" style="${t.style||''};display:none;align-items:center;gap:8px;padding:0 14px;border-left:1px solid var(--line);border-right:1px solid var(--line);height:100%"></div>`;
+    }
     if (t.external) {
       if (t.external) {
         return `<button onclick="window.open('${t.external}','_blank')" style="${t.style||''}">${t.label}</button>`;
