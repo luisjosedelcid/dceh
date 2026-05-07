@@ -224,7 +224,6 @@ function buildNav() {
     {id:'irr',         label:'Implied IRR'},
     {id:'health',      label:'Health Check'},
     {id:'audit',       label:'CIO Decisions'},
-    {id:'premortem',   label:'Pre-mortem'},
     {id:'vr',          label:'Valuation Report', external: D.documents.valuationReportUrl, style:'font-weight:600'},
     {id:'tb',          label:'Thesis Breaker',    external: D.documents.thesisBreakerUrl,  style:'color:var(--red);font-weight:600'},
     {id:'munger',      label:'Munger Digital',    external: D.documents.mungerDigitalUrl,  style:'color:#6b4fa0;font-weight:600'},
@@ -286,7 +285,6 @@ function renderTab(id) {
     case 'irr':        renderIrr(); break;
     case 'health':     renderHealth(); break;
     case 'audit':      renderAudit(); break;
-    case 'premortem':  renderPremortemHistory(); break;
     case 'memo':       renderMemo(); break;
   }
 }
@@ -1110,119 +1108,4 @@ function chartOpts(unit, title) {
 }
 
 /* ── start ─────────────────────────────────────────────────── */
-/* PRE-MORTEM HISTORY (versiones, diff y badges por outcome) */
-async function renderPremortemHistory() {
-  const empty = document.getElementById('pm-history-empty');
-  const target = document.getElementById('pm-history-content');
-  if (!target) return;
-  empty.style.display = 'none';
-  target.innerHTML = '<div style="color:var(--gray-mid);font-size:13px;padding:14px">Cargando historial…</div>';
-
-  const ticker = (D && D.ticker) ? String(D.ticker).toUpperCase() : '';
-  if (!ticker) { target.innerHTML = ''; empty.style.display = 'block'; return; }
-
-  try {
-    const tok = (window.dceAuth && window.dceAuth.token && window.dceAuth.token()) || '';
-    const headers = tok ? { 'x-admin-token': tok } : {};
-    const r = await fetch(`/api/premortem-history?ticker=${encodeURIComponent(ticker)}`, {
-      credentials: 'include',
-      headers,
-    });
-    const data = await r.json();
-    if (!r.ok || !data.ok) throw new Error(data.error || ('HTTP ' + r.status));
-
-    if (!data.premortem || !data.revisions || data.revisions.length === 0) {
-      target.innerHTML = '';
-      empty.style.display = 'block';
-      return;
-    }
-
-    const pm = data.premortem;
-    const revs = data.revisions;
-    const currentVersion = pm.version || revs[revs.length - 1].version_num;
-
-    const outcomeStyle = {
-      initial:                  { color: '#1B2642', label: 'V1 — origen' },
-      thesis_intact:            { color: '#3a8c5b', label: 'Tesis intacta' },
-      thresholds_recalibrated:  { color: '#c9a227', label: 'Thresholds recalibrados' },
-      thesis_evolved:           { color: '#c2641a', label: 'Tesis evolucionó' },
-      thesis_broken:            { color: '#9b2335', label: 'TESIS ROTA' },
-    };
-
-    let html = '';
-    html += `<div class="card" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
-      <div>
-        <div class="clbl">Pre-mortem activo</div>
-        <div style="font-size:22px;font-weight:700;color:var(--navy);margin-top:4px">${escHtml(ticker)} · V${currentVersion}</div>
-        <div style="font-size:12px;color:var(--gray-mid);margin-top:2px">${revs.length} revisión${revs.length===1?'':'es'} · Última: ${fmtDateShort(revs[revs.length-1].created_at)}</div>
-      </div>
-      <a href="/journal" style="display:inline-block;background:var(--navy);color:#fff;padding:8px 16px;text-decoration:none;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase">Decision Journal</a>
-    </div>`;
-
-    html += '<div style="position:relative;padding-left:24px">';
-    html += '<div style="position:absolute;left:7px;top:8px;bottom:8px;width:2px;background:var(--rule)"></div>';
-
-    const revsDesc = [...revs].reverse();
-    revsDesc.forEach((rev, idx) => {
-      const isCurrent = rev.id === pm.current_revision_id || (idx === 0);
-      const style = outcomeStyle[rev.change_type] || outcomeStyle.initial;
-      const diff = rev.diff_vs_prior || {};
-      const fm = diff.failure_modes || { added: [], removed: [], modified: [] };
-
-      html += `<div style="position:relative;margin-bottom:18px">
-        <div style="position:absolute;left:-24px;top:6px;width:16px;height:16px;border-radius:50%;background:${style.color};border:2px solid #fff;box-shadow:0 0 0 2px ${style.color}"></div>
-        <div class="card" style="border-left:4px solid ${style.color}${isCurrent?';background:#fffaf0':''}">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px">
-            <div>
-              <span style="display:inline-block;background:${style.color};color:#fff;padding:3px 10px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-right:8px">V${rev.version_num} · ${escHtml(style.label)}</span>
-              ${isCurrent ? '<span style="display:inline-block;background:var(--gold);color:#fff;padding:3px 8px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase">VIGENTE</span>' : ''}
-              ${rev.ratified_by_committee ? '<span style="display:inline-block;background:#e8eef3;color:var(--navy);padding:3px 8px;font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;margin-left:4px">Comité</span>' : ''}
-            </div>
-            <div style="font-size:11px;color:var(--gray-mid);text-align:right">
-              ${fmtDateShort(rev.created_at)}<br>
-              <span style="font-size:10px">${escHtml(rev.created_by || '—')}</span>
-            </div>
-          </div>
-          ${rev.change_summary ? `<div style="font-size:13px;color:var(--gray-txt);line-height:1.5;margin-bottom:10px;padding:10px;background:#fafafa;border-left:3px solid ${style.color}">${escHtml(rev.change_summary)}</div>` : ''}
-          <details style="margin-top:8px">
-            <summary style="cursor:pointer;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--navy);font-weight:600">Tesis snapshot</summary>
-            <div style="font-size:13px;color:var(--gray-txt);line-height:1.6;margin-top:8px;padding:10px;background:#fafafa">${escHtml(rev.thesis_summary || '—')}</div>
-          </details>
-          ${idx < revsDesc.length - 1 ? renderDiffBlock(diff, fm) : ''}
-        </div>
-      </div>`;
-    });
-
-    html += '</div>';
-    target.innerHTML = html;
-  } catch (e) {
-    target.innerHTML = `<div class="card" style="color:var(--red);font-size:13px">Error: ${escHtml(String(e.message || e))}</div>`;
-  }
-}
-
-function renderDiffBlock(diff, fm) {
-  const total = (fm.added?.length || 0) + (fm.removed?.length || 0) + (fm.modified?.length || 0);
-  if (!diff.thesis_changed && total === 0) return '';
-
-  let inner = '';
-  if (diff.thesis_changed) inner += '<div style="font-size:11px;color:#c2641a;margin-bottom:4px"><strong>Texto de tesis modificado</strong></div>';
-  if (fm.added?.length) inner += `<div style="font-size:11px;color:#3a8c5b;margin-bottom:4px"><strong>+${fm.added.length} failure mode(s) añadido(s):</strong> ${fm.added.map(x=>escHtml(x.failure_mode)).join(', ')}</div>`;
-  if (fm.removed?.length) inner += `<div style="font-size:11px;color:#9b2335;margin-bottom:4px"><strong>−${fm.removed.length} eliminado(s):</strong> ${fm.removed.map(x=>escHtml(x.failure_mode)).join(', ')}</div>`;
-  if (fm.modified?.length) inner += `<div style="font-size:11px;color:#c9a227;margin-bottom:4px"><strong>~${fm.modified.length} modificado(s):</strong> ${fm.modified.map(x=>escHtml(x.failure_mode)).join(', ')}</div>`;
-  return `<details style="margin-top:8px"><summary style="cursor:pointer;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-mid);font-weight:600">Diff vs versión previa</summary><div style="margin-top:8px;padding:10px;background:#fff8e1;border:1px solid #f0e3a8">${inner}</div></details>`;
-}
-
-function escHtml(s) {
-  if (s == null) return '';
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-function fmtDateShort(iso) {
-  if (!iso) return '—';
-  try {
-    const d = new Date(iso);
-    return d.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
-  } catch (e) { return iso; }
-}
-
 document.addEventListener('DOMContentLoaded', initDashboard);
