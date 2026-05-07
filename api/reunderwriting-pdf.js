@@ -141,7 +141,7 @@ module.exports = async (req, res) => {
 
     // Section label
     doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)
-       .text('SIGNED RE-UNDERWRITING', M, y, { characterSpacing: 1.5 });
+       .text('SIGNED RE-UNDERWRITING', M, y);
     y += 14;
 
     // Title
@@ -161,8 +161,8 @@ module.exports = async (req, res) => {
       const x = M + i * (cellW + 4);
       doc.rect(x, y, cellW, 50).fill(CREAM);
       doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(7)
-         .text(c.k, x + 10, y + 8, { characterSpacing: 1.2 });
-      doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(13)
+         .text(c.k, x + 10, y + 8);
+      doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(12)
          .text(c.v || '—', x + 10, y + 22, { width: cellW - 20, ellipsis: true, lineBreak: false });
     });
     y += 60;
@@ -177,9 +177,10 @@ module.exports = async (req, res) => {
     // Outcome badge
     const oc = OUTCOMES[d.outcome] || null;
     doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)
-       .text('OUTCOME', M, y, { characterSpacing: 1.2 });
+       .text('OUTCOME', M, y);
     y += 12;
     if (oc) {
+      doc.font('Helvetica-Bold').fontSize(10);
       const w = doc.widthOfString(oc.label) + 24;
       doc.roundedRect(M, y, w, 22, 3).fill(oc.fill);
       doc.fillColor(oc.text).font('Helvetica-Bold').fontSize(10)
@@ -193,7 +194,7 @@ module.exports = async (req, res) => {
 
     // Reviewer
     doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)
-       .text('REVIEWER', M, y, { characterSpacing: 1.2 });
+       .text('REVIEWER', M, y);
     y += 12;
     doc.fillColor(NEAR_BLACK).font('Helvetica').fontSize(11)
        .text(entry ? (entry.reviewer_email || '—') : '—', M, y);
@@ -208,7 +209,7 @@ module.exports = async (req, res) => {
     if (entry && Array.isArray(entry.kill_criteria_snapshot) && entry.kill_criteria_snapshot.length) {
       y = ensureSpace(doc, y, 60);
       doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)
-         .text('KILL CRITERIA SNAPSHOT (AT TIME OF SIGNING)', M, y, { characterSpacing: 1.2 });
+         .text('KILL CRITERIA SNAPSHOT (AT TIME OF SIGNING)', M, y);
       y += 14;
       // Table header
       doc.rect(M, y, CW, 20).fill(NAVY);
@@ -239,7 +240,7 @@ module.exports = async (req, res) => {
     // Action
     y = ensureSpace(doc, y, 60);
     doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)
-       .text('ACTION', M, y, { characterSpacing: 1.2 });
+       .text('ACTION', M, y);
     y += 12;
     doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(14)
        .text(entry ? (ACTION_LABELS[entry.action] || entry.action) : '—', M, y);
@@ -254,7 +255,7 @@ module.exports = async (req, res) => {
     if (d.outcome_notes) {
       y = ensureSpace(doc, y, 60);
       doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)
-         .text('JUSTIFICATION FOR CHANGE', M, y, { characterSpacing: 1.2 });
+         .text('JUSTIFICATION FOR CHANGE', M, y);
       y += 14;
       const innerW = CW - 16;
       doc.save();
@@ -274,7 +275,7 @@ module.exports = async (req, res) => {
       doc.moveTo(M, y).lineTo(M + CW, y).strokeColor(RULE).lineWidth(1).stroke();
       y += 10;
       doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)
-         .text(`REVISION CREATED  ·  V${revision.version_num}`, M, y, { characterSpacing: 1.2 });
+         .text(`REVISION CREATED  ·  V${revision.version_num}`, M, y);
       y += 14;
 
       const revCells = [
@@ -287,7 +288,7 @@ module.exports = async (req, res) => {
         const x = M + i * (rcW + 4);
         doc.rect(x, y, rcW, 38).fill(CREAM);
         doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(7)
-           .text(c.k, x + 10, y + 6, { characterSpacing: 1.2 });
+           .text(c.k, x + 10, y + 6);
         doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(11)
            .text(c.v, x + 10, y + 18, { width: rcW - 20, lineBreak: false, ellipsis: true });
       });
@@ -296,7 +297,7 @@ module.exports = async (req, res) => {
       if (revision.thesis_summary) {
         y = ensureSpace(doc, y, 60);
         doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)
-           .text(`THESIS (SNAPSHOT V${revision.version_num})`, M, y, { characterSpacing: 1.2 });
+           .text(`THESIS (SNAPSHOT V${revision.version_num})`, M, y);
         y += 14;
         doc.fillColor(NEAR_BLACK).font('Helvetica').fontSize(10)
            .text(revision.thesis_summary, M, y, { width: CW });
@@ -304,13 +305,18 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Footer (last page)
-    const footerY = doc.page.height - 50;
-    doc.moveTo(M, footerY).lineTo(M + CW, footerY).strokeColor(RULE).lineWidth(0.5).stroke();
+    // Footer (positioned at bottom of CURRENT page; if too close to content, push to fresh page)
+    const FOOTER_HEIGHT = 36;
+    const footerLineY = doc.page.height - 50;
+    if (y > footerLineY - FOOTER_HEIGHT) {
+      doc.addPage();
+    }
+    const fY = doc.page.height - 50;
+    doc.moveTo(M, fY).lineTo(M + CW, fY).strokeColor(RULE).lineWidth(0.5).stroke();
     doc.fillColor(GRAY_MID).font('Helvetica').fontSize(7)
-       .text(`Generated ${new Date().toISOString().slice(0, 19).replace('T', ' ')}Z  ·  Due #${d.id}  ·  Entry #${d.entry_id || '—'}  ·  Revision #${d.revision_id || '—'}`, M, footerY + 8, { width: CW });
+       .text(`Generated ${new Date().toISOString().slice(0, 19).replace('T', ' ')}Z  ·  Due #${d.id}  ·  Entry #${d.entry_id || '—'}  ·  Revision #${d.revision_id || '—'}`, M, fY + 8, { width: CW });
     doc.fillColor(GRAY_MID).font('Helvetica-Oblique').fontSize(7)
-       .text('DCE Holdings Investment Office — Confidential · Internal use only', M, footerY + 22, { width: CW });
+       .text('DCE Holdings Investment Office — Confidential · Internal use only', M, fY + 22, { width: CW });
 
     doc.end();
     await done;
