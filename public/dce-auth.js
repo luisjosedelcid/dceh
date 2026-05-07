@@ -366,7 +366,7 @@
     { id:'monitor', label:'Monitor', items:[
       { href:'/cockpit.html',     label:'Cockpit',     desc:'Daily CIO screen — gates, decisiones, eventos' },
       { href:'/portfolio.html',   label:'Portfolio',   desc:'P&L live, posiciones, allocation' },
-      { href:'/iv-tracking.html', label:'IV Tracking', desc:'Intrinsic value vs price — signal zones por ticker' },
+      // { href:'/iv-tracking.html', label:'IV Tracking', desc:'Intrinsic value vs price — signal zones por ticker' }, // archived 2026-05-07: backend activo, página oculta. El re-underwriting trimestral refresca el modelo Columbia y captura el Implied IRR — IV Tracking quedaba duplicando esa libreta. Reactivar cuando rehagamos el flujo conectado.
       { href:'/performance.html', label:'Performance', desc:'NAV histórico vs IWQU.L, transactions' },
     ]},
     { id:'reporting', label:'Reporting', href:'/reporting.html', single:true },
