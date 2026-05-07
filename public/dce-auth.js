@@ -345,31 +345,31 @@
     return null;
   }
 
-  // ── Nav grouping: collapse 13 flat links into 7 items with 4 dropdowns ────
-  // The grouped order is: Home · Monitor ▾ · Pipeline ▾ · Decisions ▾ · Intel ▾ · Data Room · Reporting
+  // ── Nav grouping: 7 top-level items in fixed order ──────────────────────
+  // Order: Home · Research ▾ · Pipeline ▾ · Monitor ▾ · Reporting · Decisions ▾ · Data Room
   const NAV_GROUPS = [
     { id:'home', label:'Home', href:'/', single:true },
-    { id:'monitor', label:'Monitor', items:[
-      { href:'/cockpit.html',     label:'Cockpit',     desc:'Daily CIO screen — gates, decisiones, eventos' },
-      { href:'/portfolio.html',   label:'Portfolio',   desc:'P&L live, posiciones, allocation' },
-      { href:'/iv-tracking.html', label:'IV Tracking', desc:'Intrinsic value vs price — signal zones por ticker' },
-      { href:'/performance.html', label:'Performance', desc:'NAV histórico vs IWQU.L, transactions' },
+    { id:'research', label:'Research', items:[
+      { href:'/news.html',        label:'News',     desc:'AI news scanner (Claude)' },
+      { href:'/calendar.html',    label:'Calendar', desc:'Earnings dates de la cobertura' },
+      { href:'/study.html',       label:'Study',    desc:'Sector deep-dives + megatrends' },
     ]},
     { id:'pipeline', label:'Pipeline', items:[
       { href:'/screener.html',    label:'Find',     desc:'Idea generation — superinvestors, sector screener' },
       { href:'/research.html',    label:'Workflow', desc:'Kanban de tesis en investigación' },
       { href:'/universe.html',    label:'Universe', desc:'Columbia framework — EPV, IRR, MoS' },
     ]},
+    { id:'monitor', label:'Monitor', items:[
+      { href:'/cockpit.html',     label:'Cockpit',     desc:'Daily CIO screen — gates, decisiones, eventos' },
+      { href:'/portfolio.html',   label:'Portfolio',   desc:'P&L live, posiciones, allocation' },
+      { href:'/iv-tracking.html', label:'IV Tracking', desc:'Intrinsic value vs price — signal zones por ticker' },
+      { href:'/performance.html', label:'Performance', desc:'NAV histórico vs IWQU.L, transactions' },
+    ]},
+    { id:'reporting', label:'Reporting', href:'/reporting.html', single:true },
     { id:'decisions', label:'Decisions', items:[
       { href:'/journal.html',     label:'Journal',     desc:'Decision journal — buy/sell con thesis' },
       // { href:'/premortem.html',   label:'Pre-mortem',  desc:'Watch failure modes · manage' }, // archived 2026-05-07: backend activo, página oculta. Re-underwriting trimestral mantiene la disciplina.
     ]},
-    { id:'research', label:'Research', items:[
-      { href:'/news.html',        label:'News',     desc:'AI news scanner (Claude)' },
-      { href:'/calendar.html',    label:'Calendar', desc:'Earnings dates de la cobertura' },
-      { href:'/study.html',       label:'Study',    desc:'Sector deep-dives + megatrends' },
-    ]},
-    { id:'reporting', label:'Reporting', href:'/reporting.html', single:true },
     { id:'dataroom',  label:'Data Room', href:'/dataroom.html',  single:true },
   ];
 
