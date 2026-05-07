@@ -194,6 +194,33 @@
     table{font-size:12px}
     td.thesis{max-width:240px}
   }
+
+  /* Decision entry action bar (Undo / Export PDF) */
+  .entry-actions{display:flex;justify-content:flex-end;gap:8px;margin:0 0 14px 0}
+  .entry-actions .btn-undo{background:#fff;color:#b8443c;border:1px solid #e6c4c0;padding:6px 12px;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;cursor:pointer;font-weight:600;font-family:inherit}
+  .entry-actions .btn-undo:hover{background:#fdf3f1;border-color:#b8443c}
+  .entry-actions .btn-pdf{background:var(--navy);color:#fff;border:1px solid var(--navy);padding:6px 12px;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;cursor:pointer;font-weight:600;font-family:inherit}
+  .entry-actions .btn-pdf:hover{background:var(--gold);border-color:var(--gold)}
+
+  /* Print: isolate the entry being exported */
+  body.printing-entry > *:not(main){display:none !important}
+  body.printing-entry main > *:not(.print-host){display:none !important}
+  body.printing-entry .print-host{display:block !important}
+  @media print {
+    @page { size: A4; margin: 18mm 14mm }
+    body{background:#fff !important;color:#1a1a1a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    header, footer, #main-nav, .filters, .mode-bar, .summary-strip, .entry-actions, .exec-section, .btn-ghost, .modal-bg{display:none !important}
+    main{padding:0 !important;max-width:100% !important}
+    .print-host{display:block !important;border:none !important;padding:0 !important}
+    .print-header{display:block !important;border-bottom:2px solid #1B2642;padding-bottom:10px;margin-bottom:18px}
+    .print-header .ph-title{font-size:18px;font-weight:700;color:#1B2642;letter-spacing:-0.01em}
+    .print-header .ph-meta{font-size:10px;color:#6b7280;letter-spacing:0.08em;text-transform:uppercase;margin-top:4px}
+    .print-footer{display:block !important;margin-top:24px;padding-top:10px;border-top:1px solid #ccc;font-size:9px;color:#6b7280;letter-spacing:0.06em}
+    .field-val{white-space:pre-wrap}
+    .meta-grid{page-break-inside:avoid}
+    .field{page-break-inside:avoid;margin-bottom:14px}
+  }
+  .print-header, .print-footer{display:none}
 </style>
 <link rel="stylesheet" href="/responsive.css">
 <script src="/dce-auth.js" defer></script>
@@ -497,6 +524,16 @@ function adminToken() {
   catch(e) { return tokenAdmin(); }
 }
 
+function entryActionsBar(id) {
+  if (!adminAvailable()) {
+    return `<div class="entry-actions"><button class="btn-pdf" onclick="event.stopPropagation();printDecisionEntry(${id})">Export PDF</button></div>`;
+  }
+  return `<div class="entry-actions">
+    <button class="btn-undo" onclick="event.stopPropagation();undoDecisionEntry(${id})" title="Soft-delete this entry (active=false). Audit trail preserved.">Undo entry</button>
+    <button class="btn-pdf" onclick="event.stopPropagation();printDecisionEntry(${id})">Export PDF</button>
+  </div>`;
+}
+
 function renderDecisionDetail(id) {
   const r = state.items.find(x => x.id === id);
   const host = document.getElementById('decision-detail-' + id);
@@ -520,6 +557,7 @@ function renderDecisionDetail(id) {
     </div>`;
   };
   host.innerHTML = `
+    ${entryActionsBar(id)}
     <div class="meta-grid">
       <div><div class="k">Date</div><div class="v">${fmtDate(r.decision_date)}</div></div>
       <div><div class="k">Price</div><div class="v">${fmtPrice(r.price_at_decision)}</div></div>
@@ -562,6 +600,7 @@ function renderSellDetail(id, r, host) {
   const buy = r.linked_buy_id ? state.items.find(x => x.id === r.linked_buy_id) : null;
   // Find triggered failure mode (loaded async below)
   host.innerHTML = `
+    ${entryActionsBar(id)}
     <div style="background:#fdf6ec;border-left:3px solid var(--gold);padding:12px 14px;margin-bottom:14px">
       <div style="font-size:11px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--navy)">Position closed · Post-mortem</div>
       <div style="font-size:12px;color:#5a5a5a;margin-top:4px">${oc ? oc.desc : 'Thesis outcome not recorded.'}</div>
@@ -975,6 +1014,105 @@ async function loadJournal() {
   }
 }
 loadJournal();
+
+// =================== Entry actions: Undo & Export PDF ===================
+
+async function undoDecisionEntry(id) {
+  const r = state.items.find(x => x.id === id);
+  const label = r ? `${r.ticker} ${r.decision_type} (${fmtDate(r.decision_date)})` : `entry #${id}`;
+  const ok = window.confirm(
+    `Undo entry: ${label}?\n\n` +
+    `This will mark the entry as inactive (active=false) and remove it from the journal view.\n\n` +
+    `It does NOT touch trades, pre-mortems, pipeline cards or portfolio.\n` +
+    `An audit trail is preserved in Supabase. Re-activation is a one-line update if needed.`
+  );
+  if (!ok) return;
+
+  const tok = adminToken();
+  if (!tok) {
+    alert('Admin token missing. Please log in.');
+    return;
+  }
+  try {
+    const r2 = await fetch('/api/journal-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': tok },
+      body: JSON.stringify({ id })
+    });
+    const data = await r2.json().catch(() => ({}));
+    if (!r2.ok) {
+      alert('Could not undo entry: ' + (data.error || ('HTTP ' + r2.status)));
+      return;
+    }
+    // Reload list
+    await loadJournal();
+  } catch (e) {
+    alert('Network error: ' + e.message);
+  }
+}
+window.undoDecisionEntry = undoDecisionEntry;
+
+function printDecisionEntry(id) {
+  const tr = document.querySelector(`tr.row-decision[data-id="${id}"]`);
+  if (!tr) return;
+  // The expanded detail row is the very next sibling (added by toggleDecisionRow).
+  const detailRow = tr.nextElementSibling;
+  const detailContent = document.getElementById('decision-detail-' + id);
+  if (!detailRow || !detailContent) {
+    alert('Expand the entry first, then export.');
+    return;
+  }
+
+  const r = state.items.find(x => x.id === id);
+  const ticker = r ? r.ticker : '';
+  const type = r ? r.decision_type : '';
+  const date = r ? fmtDate(r.decision_date) : '';
+
+  // Build a print-only host with header + a clone of the detail content.
+  const main = document.querySelector('main');
+  if (!main) return;
+  const host = document.createElement('section');
+  host.className = 'print-host';
+  host.innerHTML = `
+    <div class="print-header">
+      <div class="ph-title">${escapeHtml(ticker)} — ${escapeHtml(type)} Decision</div>
+      <div class="ph-meta">DCE Holdings · Decision Journal · Entry #${id} · ${escapeHtml(date)}</div>
+    </div>
+  `;
+  // Clone detail content, drop the action bar and exec section to keep PDF clean.
+  const clone = detailContent.cloneNode(true);
+  clone.querySelectorAll('.entry-actions, .exec-section').forEach(n => n.remove());
+  host.appendChild(clone);
+  host.insertAdjacentHTML('beforeend', `
+    <div class="print-footer">
+      Generated ${new Date().toISOString().slice(0, 10)} · dceholdings.app/journal · For internal use only — not investment advice
+    </div>
+  `);
+
+  main.appendChild(host);
+  document.body.classList.add('printing-entry');
+
+  const cleanup = () => {
+    document.body.classList.remove('printing-entry');
+    if (host.parentNode) host.parentNode.removeChild(host);
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+
+  // Suggest filename via document.title (some browsers use this for the
+  // default "Save as PDF" filename). Restore it after.
+  const prevTitle = document.title;
+  document.title = `DCE_Decision_${ticker}_${type}_${(r && r.decision_date ? r.decision_date : '').replace(/-/g, '')}`;
+  setTimeout(() => {
+    try { window.print(); }
+    finally {
+      document.title = prevTitle;
+      // Safety: if afterprint never fires (some browsers), force cleanup soon.
+      setTimeout(() => { if (document.body.classList.contains('printing-entry')) cleanup(); }, 1500);
+    }
+  }, 50);
+}
+window.printDecisionEntry = printDecisionEntry;
 
 // =================== New Entry modal ===================
 function openNewEntry(opts) {
