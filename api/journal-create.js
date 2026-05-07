@@ -24,6 +24,8 @@
 
 const { sbInsert } = require('./_supabase');
 const { requireRole } = require('./_require-role');
+const pipelineStage = require('./_pipeline-stage');
+const { archivePremortemForTicker } = require('./_premortem-archive');
 
 const VALID_TYPES = new Set(['BUY', 'PASS', 'SELL', 'HOLD', 'TRIM', 'ADD']);
 
@@ -127,7 +129,36 @@ module.exports = async (req, res) => {
     const inserted = await sbInsert('decision_journal', row);
     const item = Array.isArray(inserted) ? inserted[0] : inserted;
 
-    res.status(200).json({ ok: true, item });
+    // ---- Workflow side-effects --------------------------------------------
+    // The journal entry IS the lifecycle event for the position card.
+    //   BUY / ADD  -> invested
+    //   PASS       -> passed
+    //   SELL       -> closed (and pre-mortem is archived, failure modes invalidated)
+    //   HOLD / TRIM -> no transition (informational entries)
+    // All side-effects are best-effort: failures are logged but never break
+    // the primary insert. Detailed status is returned to the client for visibility.
+    let stageSync = null;
+    let archive = null;
+    try {
+      if (decision_type === 'BUY' || decision_type === 'ADD') {
+        stageSync = await pipelineStage.onBuyDecision(ticker);
+      } else if (decision_type === 'PASS') {
+        stageSync = await pipelineStage.onPassDecision(ticker);
+      } else if (decision_type === 'SELL') {
+        stageSync = await pipelineStage.onSellDecision(ticker);
+        try {
+          archive = await archivePremortemForTicker(ticker);
+        } catch (eArc) {
+          console.error('[journal-create] archivePremortem failed:', eArc.message);
+          archive = { error: eArc.message };
+        }
+      }
+    } catch (eSync) {
+      console.warn('[journal-create] pipeline transition failed:', eSync.message);
+      stageSync = { ok: false, error: eSync.message };
+    }
+
+    res.status(200).json({ ok: true, item, stageSync, archive });
   } catch (e) {
     console.error('[journal-create] error:', e);
     res.status(500).json({ error: e.message || 'Internal error' });

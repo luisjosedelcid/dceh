@@ -18,6 +18,8 @@
 
 const { sbUpdate, sbSelect } = require('./_supabase');
 const { requireRole } = require('./_require-role');
+const pipelineStage = require('./_pipeline-stage');
+const { reactivatePremortemForTicker } = require('./_premortem-archive');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -40,15 +42,47 @@ module.exports = async (req, res) => {
     }
 
     // Verify entry exists
-    const existing = await sbSelect('decision_journal', `select=id,active&id=eq.${id}&limit=1`);
+    const existing = await sbSelect('decision_journal', `select=id,active,ticker,decision_type&id=eq.${id}&limit=1`);
     if (!existing || existing.length === 0) {
       return res.status(404).json({ error: 'not_found' });
     }
+    const wasActive = existing[0].active === true;
+    const ticker = existing[0].ticker;
+    const type = (existing[0].decision_type || '').toUpperCase();
 
     // Soft-delete (idempotent)
     await sbUpdate('decision_journal', `id=eq.${id}`, { active: false });
 
-    return res.status(200).json({ ok: true, id });
+    // ---- Workflow revert side-effects -----------------------------------
+    // Only attempt revert if this row was active (otherwise nothing changed).
+    // All revert helpers are guarded: they no-op if other active sources still exist.
+    let stageSync = null;
+    let reactivated = null;
+    if (wasActive && ticker) {
+      try {
+        if (type === 'BUY' || type === 'ADD') {
+          stageSync = await pipelineStage.revertFromInvested(ticker);
+        } else if (type === 'PASS') {
+          stageSync = await pipelineStage.revertFromPassed(ticker);
+        } else if (type === 'SELL') {
+          stageSync = await pipelineStage.revertFromClosed(ticker);
+          // If the SELL revert succeeded, also reactivate the pre-mortem we archived.
+          if (stageSync && stageSync.ok) {
+            try {
+              reactivated = await reactivatePremortemForTicker(ticker);
+            } catch (eRea) {
+              console.error('[journal-delete] reactivatePremortem failed:', eRea.message);
+              reactivated = { error: eRea.message };
+            }
+          }
+        }
+      } catch (eRev) {
+        console.warn('[journal-delete] revert failed:', eRev.message);
+        stageSync = { ok: false, error: eRev.message };
+      }
+    }
+
+    return res.status(200).json({ ok: true, id, stageSync, reactivated });
   } catch (err) {
     console.error('[journal-delete]', err);
     return res.status(500).json({ error: 'internal_error', detail: String(err && err.message || err) });

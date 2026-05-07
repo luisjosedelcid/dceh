@@ -50,6 +50,16 @@ async function setStage(cardId, newStage, reason) {
 
 // === Forward transitions ===
 
+// Triggered when a BUY/ADD decision is registered in the journal UI.
+// Same target as onBuyTrade (→ invested) because per the user's policy the
+// CIO's signed Investment Memo (BUY entry) IS the lifecycle event that moves
+// the position into the portfolio. Subsequent /api/trades calls are for
+// execution audit only and won't double-transition (idempotent: invested is
+// not in `eligible`).
+async function onBuyDecision(ticker) {
+  return onBuyTrade(ticker);
+}
+
 async function onBuyTrade(ticker) {
   const card = await findCardByTicker(ticker);
   if (!card) return { ok: false, reason: 'no_card' };
@@ -88,17 +98,23 @@ async function onPassDecision(ticker) {
 async function revertFromInvested(ticker) {
   const card = await findCardByTicker(ticker);
   if (!card || card.stage !== 'invested') return { ok: false, reason: 'not_invested' };
-  // Only revert if no remaining BUY/ADD trades for this ticker
+  // Only revert if no remaining BUY/ADD trades AND no active BUY/ADD decision for this ticker.
+  // Either source is enough to keep the card in `invested` (decision-driven flow OR trade-driven flow).
   try {
-    const trades = await sbSelect('trades', `select=id&ticker=eq.${encodeURIComponent(card.ticker)}&trade_type=in.(BUY,ADD)&limit=1`);
+    const tEnc = encodeURIComponent(card.ticker);
+    const trades = await sbSelect('trades', `select=id&ticker=eq.${tEnc}&trade_type=in.(BUY,ADD)&limit=1`);
     if (trades && trades.length > 0) {
       return { ok: false, reason: 'still_has_buy_trades' };
+    }
+    const buys = await sbSelect('decision_journal', `select=id&ticker=eq.${tEnc}&decision_type=in.(BUY,ADD)&active=eq.true&limit=1`);
+    if (buys && buys.length > 0) {
+      return { ok: false, reason: 'still_has_active_buy_decision' };
     }
   } catch (e) {
     console.warn('[pipeline-stage] revertFromInvested check failed', e.message);
     return { ok: false, error: e.message };
   }
-  return setStage(card.id, 'approved', `auto: last BUY/ADD trade removed for ${card.ticker}`);
+  return setStage(card.id, 'decision', `auto: last BUY/ADD source removed for ${card.ticker}`);
 }
 
 async function revertFromClosed(ticker) {
@@ -135,6 +151,7 @@ async function revertFromPassed(ticker) {
 module.exports = {
   VALID_STAGES,
   onBuyTrade,
+  onBuyDecision,
   onSellDecision,
   onPassDecision,
   revertFromInvested,
