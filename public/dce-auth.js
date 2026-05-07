@@ -346,7 +346,7 @@
   }
 
   // ── Nav grouping: 8 top-level items in fixed order ──────────────────────
-  // Order: Home · Cockpit · Research ▾ · Pipeline ▾ · Decisions ▾ · Monitor · Reporting · Data Room
+  // Order: Home · Cockpit · Research ▾ · Pipeline ▾ · Decisions ▾ · Performance · Reporting · Data Room
   const NAV_GROUPS = [
     { id:'home',     label:'Home',    href:'/',              single:true },
     { id:'cockpit',  label:'Cockpit', href:'/cockpit.html',  single:true },
@@ -364,8 +364,8 @@
       { href:'/journal.html',     label:'Journal',     desc:'Decision journal — buy/sell con thesis' },
       // { href:'/premortem.html',   label:'Pre-mortem',  desc:'Watch failure modes · manage' }, // archived 2026-05-07: backend activo, página oculta. Re-underwriting trimestral mantiene la disciplina.
     ]},
-    // Monitor: Portfolio + IV Tracking ocultos (consolidados en Performance / re-underwriting). Cockpit movido a top-level.
-    { id:'monitor',  label:'Monitor', href:'/performance.html', single:true },
+    // Performance: absorbe Portfolio (eliminado) + IV Tracking (oculto). Cockpit movido a top-level.
+    { id:'performance', label:'Performance', href:'/performance.html', single:true },
     { id:'reporting', label:'Reporting', href:'/reporting.html', single:true },
     { id:'dataroom',  label:'Data Room', href:'/dataroom.html',  single:true },
   ];
