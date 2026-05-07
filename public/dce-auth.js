@@ -329,10 +329,13 @@
 
   // ── Auto-mount button on every page (unless opt-out) ─────────────────
   function _findNavTarget() {
-    // 1. Standard nav (.hnav on most pages)
+    // 1. Explicit per-page sign-out anchor (e.g. company.html with custom header)
+    const explicit = document.querySelector('[data-dce-mount-signout]');
+    if (explicit) return explicit;
+    // 2. Standard nav (.hnav on most pages)
     const hnav = document.querySelector('.hnav');
     if (hnav) return hnav;
-    // 2. Home page: container that holds links to /research.html or /reporting.html
+    // 3. Home page: container that holds links to /research.html or /reporting.html
     const header = document.querySelector('header');
     if (header) {
       const divs = header.querySelectorAll('div');
