@@ -926,12 +926,24 @@ function renderReunderwriting() {
     doneSection.style.display = 'none';
   } else {
     doneSection.style.display = '';
-    doneList.innerHTML = reundState.done.map(d => `<div class="review-block done" style="margin-bottom:10px">
-      <div class="review-head">
-        <span class="review-label">${escapeHtml(d.ticker)} · ${escapeHtml(d.doc_type)} · period ${fmtDate(d.period_end)}</span>
-        <span class="review-pill done">Done ${fmtDate(d.completed_at)}</span>
-      </div>
-    </div>`).join('');
+    doneList.innerHTML = reundState.done.map(d => {
+      const oc = d.outcome || null;
+      const ocStyles = {
+        thesis_intact:           { bg: '#e3f4ea', fg: '#1e6c3a', label: 'Intact' },
+        thresholds_recalibrated: { bg: '#fff3cf', fg: '#7c5d10', label: 'Recalibrated' },
+        thesis_evolved:          { bg: '#fde3cf', fg: '#7a3a08', label: 'Evolved' },
+        thesis_broken:           { bg: '#fbd7dd', fg: '#7a1424', label: 'BROKEN' },
+      };
+      const ocBadge = oc && ocStyles[oc]
+        ? `<span style="background:${ocStyles[oc].bg};color:${ocStyles[oc].fg};font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600;padding:3px 8px;border-radius:3px;margin-left:8px">${ocStyles[oc].label}</span>`
+        : '';
+      return `<div class="review-block done" style="margin-bottom:10px">
+        <div class="review-head">
+          <span class="review-label">${escapeHtml(d.ticker)} · ${escapeHtml(d.doc_type)} · period ${fmtDate(d.period_end)}${ocBadge}</span>
+          <span class="review-pill done">Done ${fmtDate(d.completed_at)}</span>
+        </div>
+      </div>`;
+    }).join('');
   }
 }
 
@@ -970,7 +982,27 @@ function openReundForm(dueId) {
     </div>
 
     <div class="field">
-      <div class="field-lbl">3. Action *</div>
+      <div class="field-lbl">3. Outcome del re-underwriting *</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
+        <label class="chip" style="cursor:pointer;border-left:3px solid #3a8c5b;padding:8px 10px"><input type="radio" name="reund-outcome" value="thesis_intact" checked onchange="onOutcomeChange()" style="margin-right:6px"><strong>Tesis intacta</strong><div style="font-size:11px;color:var(--gray-mid);margin-top:2px">Sigue todo igual. Solo se firma.</div></label>
+        <label class="chip" style="cursor:pointer;border-left:3px solid #c9a227;padding:8px 10px"><input type="radio" name="reund-outcome" value="thresholds_recalibrated" onchange="onOutcomeChange()" style="margin-right:6px"><strong>Thresholds recalibrados</strong><div style="font-size:11px;color:var(--gray-mid);margin-top:2px">Tesis sigue, ajustamos kill criteria.</div></label>
+        <label class="chip" style="cursor:pointer;border-left:3px solid #c2641a;padding:8px 10px"><input type="radio" name="reund-outcome" value="thesis_evolved" onchange="onOutcomeChange()" style="margin-right:6px"><strong>Tesis evolucionó</strong><div style="font-size:11px;color:var(--gray-mid);margin-top:2px">Cambio material; comité ratifica.</div></label>
+        <label class="chip" style="cursor:pointer;border-left:3px solid #9b2335;padding:8px 10px"><input type="radio" name="reund-outcome" value="thesis_broken" onchange="onOutcomeChange()" style="margin-right:6px"><strong>Tesis rota</strong><div style="font-size:11px;color:var(--gray-mid);margin-top:2px">Comité debe decidir SELL. Alerta automática.</div></label>
+      </div>
+    </div>
+
+    <div class="field" id="reund-changesummary-wrap" style="display:none">
+      <div class="field-lbl">3a. Justificación del cambio *</div>
+      <textarea id="reund-changesummary" rows="3" style="width:100%;padding:10px;border:1px solid var(--rule);background:var(--white);font-family:inherit;font-size:13px;resize:vertical" placeholder="Por qué el contrato original cambia. Esta justificación queda inmutable en el audit trail."></textarea>
+    </div>
+
+    <div class="field" id="reund-newthesis-wrap" style="display:none">
+      <div class="field-lbl">3b. Nueva thesis_summary (solo si tesis evolucionó, opcional)</div>
+      <textarea id="reund-newthesis" rows="3" style="width:100%;padding:10px;border:1px solid var(--rule);background:var(--white);font-family:inherit;font-size:13px;resize:vertical" placeholder="Si la tesis se reformula, escribe la versión nueva aquí (reemplaza la anterior en premortems.thesis_summary)."></textarea>
+    </div>
+
+    <div class="field">
+      <div class="field-lbl">4. Action *</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
         <label class="chip" style="cursor:pointer"><input type="radio" name="reund-action" value="buy_more" style="margin-right:6px">Buy more</label>
         <label class="chip" style="cursor:pointer"><input type="radio" name="reund-action" value="hold" checked style="margin-right:6px">Hold</label>
@@ -1028,6 +1060,16 @@ async function loadKillCriteriaForReund(ticker) {
   }
 }
 
+function onOutcomeChange() {
+  const outcomeRadio = document.querySelector('input[name="reund-outcome"]:checked');
+  const outcome = outcomeRadio ? outcomeRadio.value : 'thesis_intact';
+  const csWrap = document.getElementById('reund-changesummary-wrap');
+  const ntWrap = document.getElementById('reund-newthesis-wrap');
+  if (csWrap) csWrap.style.display = outcome === 'thesis_intact' ? 'none' : '';
+  if (ntWrap) ntWrap.style.display = outcome === 'thesis_evolved' ? '' : 'none';
+}
+window.onOutcomeChange = onOutcomeChange;
+
 async function submitReund() {
   const item = reundState.current;
   if (!item) return;
@@ -1036,6 +1078,10 @@ async function submitReund() {
   const actionRadio = document.querySelector('input[name="reund-action"]:checked');
   const action = actionRadio ? actionRadio.value : '';
   const actionReason = document.getElementById('reund-actionreason').value.trim();
+  const outcomeRadio = document.querySelector('input[name="reund-outcome"]:checked');
+  const outcome = outcomeRadio ? outcomeRadio.value : '';
+  const changeSummary = (document.getElementById('reund-changesummary') || {}).value || '';
+  const newThesisSummary = (document.getElementById('reund-newthesis') || {}).value || '';
   const msg = document.getElementById('reund-msg');
   const btn = document.getElementById('reund-submit');
 
@@ -1048,6 +1094,22 @@ async function submitReund() {
     msg.textContent = 'Pick an action.';
     msg.style.color = 'var(--red)';
     return;
+  }
+  if (!outcome) {
+    msg.textContent = 'Pick an outcome.';
+    msg.style.color = 'var(--red)';
+    return;
+  }
+  if (outcome !== 'thesis_intact' && changeSummary.trim().length < 10) {
+    msg.textContent = 'Justificación del cambio requerida (mín 10 caracteres) cuando el outcome no es "intacta".';
+    msg.style.color = 'var(--red)';
+    return;
+  }
+  if (outcome === 'thesis_broken') {
+    if (!confirm('Vas a marcar la tesis como ROTA.\n\nEsto:\n- Crea una revisión inmutable del pre-mortem\n- Envía alerta a Slack y email al comité\n- NO ejecuta venta automática\n\n¿Confirmas?')) {
+      msg.textContent = '';
+      return;
+    }
   }
 
   btn.disabled = true;
@@ -1065,12 +1127,15 @@ async function submitReund() {
         kill_criteria_concern: killConcern || null,
         action,
         action_reason: actionReason || null,
+        outcome,
+        change_summary: changeSummary || null,
+        new_thesis_summary: newThesisSummary || null,
       }),
     });
     const data = await r.json();
     if (!r.ok || !data.ok) throw new Error(data.error || 'HTTP ' + r.status);
     msg.style.color = 'var(--green)';
-    msg.textContent = 'Saved ✓  Reloading…';
+    msg.textContent = 'Saved. Reloading…';
     setTimeout(() => {
       closeDrawer();
       loadReunderwriting();

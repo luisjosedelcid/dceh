@@ -440,4 +440,117 @@ async function sendStageChangeAlert({ ticker, name, oldStage, newStage, actor, n
   }
 }
 
-module.exports = { sendUploadEmail, sendPremortemAlert, sendReunderwritingDueAlert, sendWatchlistTriggerAlert, sendStageChangeAlert };
+// ============================================================================
+// Thesis broken alert — sent when a re-underwriting outcome is 'thesis_broken'.
+// Calls for committee SELL decision (does NOT auto-execute).
+// ============================================================================
+async function sendThesisBrokenAlert({ ticker, period_end, doc_type, thesis_summary_old, change_summary, reviewer_email, due_id, revision_id }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const to = (process.env.ALERT_EMAIL_TO || '').split(',').map(s => s.trim()).filter(Boolean);
+  const from = process.env.ALERT_EMAIL_FROM || 'DCE Thesis Alert <onboarding@resend.dev>';
+
+  const ts = new Date().toLocaleString('en-US', {
+    timeZone: 'America/New_York',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+
+  const subject = `[DCE TESIS ROTA] ${ticker} — comité debe decidir SELL`;
+
+  const html = `
+<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#f5f5f5;font-family:Helvetica,Arial,sans-serif;color:#0d0d0d">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:24px 0">
+    <tr><td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e6e6e6">
+        <tr><td style="background:#9b2335;padding:18px 24px;color:#ffffff">
+          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#ffd9a3">DCE Holdings · Thesis Broken</div>
+          <div style="font-size:20px;font-weight:bold;margin-top:6px">${escapeHtml(ticker)} — tesis declarada rota</div>
+        </td></tr>
+        <tr><td style="padding:20px 24px;background:#fff4d1;border-bottom:1px solid #e6c97a">
+          <div style="font-size:13px;line-height:1.6;color:#5b3c0f">
+            <strong>El comité debe decidir SELL en la próxima reunión.</strong> Esta alerta NO ejecuta venta automática.
+            Re-underwriting completado por <strong>${escapeHtml(reviewer_email || 'system')}</strong>.
+            <br><span style="color:#606060;font-size:11px">${escapeHtml(ts)} ET</span>
+          </div>
+        </td></tr>
+        <tr><td style="padding:20px 24px">
+          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#9b2335;font-weight:600;margin-bottom:6px">Filing detonante</div>
+          <div style="font-size:14px;color:#1b2642;margin-bottom:16px">${escapeHtml(doc_type)} · period ending ${escapeHtml(period_end)}</div>
+          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#9b2335;font-weight:600;margin-bottom:6px">Tesis original (V<i>n</i>)</div>
+          <div style="font-size:13px;color:#1b2642;line-height:1.5;margin-bottom:16px;background:#fafafa;padding:12px;border-left:3px solid #b88b47">${escapeHtml(thesis_summary_old || '—')}</div>
+          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#9b2335;font-weight:600;margin-bottom:6px">Justificación del comité</div>
+          <div style="font-size:13px;color:#1b2642;line-height:1.5;background:#fafafa;padding:12px;border-left:3px solid #9b2335">${escapeHtml(change_summary || '—')}</div>
+        </td></tr>
+        <tr><td style="padding:0 24px 20px">
+          <a href="https://www.dceholdings.app/journal?ticker=${encodeURIComponent(ticker)}" style="display:inline-block;background:#9b2335;color:#ffffff;padding:10px 20px;text-decoration:none;font-size:13px;font-weight:bold;letter-spacing:0.04em;margin-right:8px">Abrir Decision Journal →</a>
+          <a href="https://www.dceholdings.app/${ticker.toLowerCase()}" style="display:inline-block;background:#1b2642;color:#ffffff;padding:10px 20px;text-decoration:none;font-size:13px;font-weight:bold;letter-spacing:0.04em">Ver dashboard →</a>
+        </td></tr>
+        <tr><td style="background:#f5f5f5;border-top:2px solid #9b2335;padding:14px 24px;font-size:11px;color:#606060">
+          DCE Holdings — Investment Office · Confidential · Internal use only
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const text = [
+    `TESIS ROTA — ${ticker}`,
+    '',
+    `Filing: ${doc_type} · period ${period_end}`,
+    `Reviewer: ${reviewer_email || 'system'}`,
+    `Time: ${ts} ET`,
+    '',
+    `Tesis original: ${thesis_summary_old || '—'}`,
+    '',
+    `Justificación: ${change_summary || '—'}`,
+    '',
+    `Open: https://www.dceholdings.app/journal?ticker=${ticker}`,
+  ].join('\n');
+
+  // Send email via Resend (if configured)
+  let emailRes = { skipped: true, reason: 'RESEND not configured' };
+  if (apiKey && to.length > 0) {
+    try {
+      const r = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from, to, subject, html, text }),
+      });
+      const data = await r.json().catch(() => ({}));
+      emailRes = r.ok ? { ok: true, id: data.id } : { ok: false, status: r.status, error: data };
+    } catch (e) {
+      emailRes = { ok: false, error: String(e).slice(0, 200) };
+    }
+  }
+
+  // Send Slack notification (if configured)
+  let slackRes = { skipped: true, reason: 'SLACK_WEBHOOK not configured' };
+  const slackUrl = process.env.SLACK_ALERT_WEBHOOK || process.env.SLACK_WEBHOOK_URL;
+  if (slackUrl) {
+    try {
+      const blocks = [
+        { type: 'header', text: { type: 'plain_text', text: `TESIS ROTA — ${ticker}` } },
+        { type: 'section', text: { type: 'mrkdwn', text: `*Filing:* ${doc_type} · period ${period_end}\n*Reviewer:* ${reviewer_email || 'system'}\n*El comité debe decidir SELL.* Esta alerta no ejecuta venta automática.` } },
+        { type: 'section', text: { type: 'mrkdwn', text: `*Tesis original:*\n${(thesis_summary_old || '—').slice(0, 800)}` } },
+        { type: 'section', text: { type: 'mrkdwn', text: `*Justificación:*\n${(change_summary || '—').slice(0, 800)}` } },
+        { type: 'actions', elements: [
+          { type: 'button', text: { type: 'plain_text', text: 'Decision Journal' }, url: `https://www.dceholdings.app/journal?ticker=${ticker}`, style: 'danger' },
+          { type: 'button', text: { type: 'plain_text', text: 'Dashboard' }, url: `https://www.dceholdings.app/${ticker.toLowerCase()}` },
+        ]},
+      ];
+      const r = await fetch(slackUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: subject, blocks }),
+      });
+      slackRes = r.ok ? { ok: true } : { ok: false, status: r.status };
+    } catch (e) {
+      slackRes = { ok: false, error: String(e).slice(0, 200) };
+    }
+  }
+
+  return { email: emailRes, slack: slackRes };
+}
+
+module.exports = { sendUploadEmail, sendPremortemAlert, sendReunderwritingDueAlert, sendWatchlistTriggerAlert, sendStageChangeAlert, sendThesisBrokenAlert };
