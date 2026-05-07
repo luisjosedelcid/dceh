@@ -350,9 +350,9 @@
   const NAV_GROUPS = [
     { id:'home', label:'Home', href:'/', single:true },
     { id:'research', label:'Research', items:[
+      { href:'/study.html',       label:'Study',    desc:'Sector deep-dives + megatrends' },
       { href:'/news.html',        label:'News',     desc:'AI news scanner (Claude)' },
       { href:'/calendar.html',    label:'Calendar', desc:'Earnings dates de la cobertura' },
-      { href:'/study.html',       label:'Study',    desc:'Sector deep-dives + megatrends' },
     ]},
     { id:'pipeline', label:'Pipeline', items:[
       { href:'/screener.html',    label:'Find',     desc:'Idea generation — superinvestors, sector screener' },
