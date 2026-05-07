@@ -9,7 +9,10 @@
 //     outcome: 'thesis_intact'|'thresholds_recalibrated'|'thesis_evolved'|'thesis_broken',
 //     change_summary: <text|null>,           // required if outcome != thesis_intact
 //     new_thesis_summary: <text|null>,       // optional, for thesis_evolved
-//     new_failure_modes: <array|null>        // optional, full replacement for failure modes (rare)
+//     new_failure_modes: <array|null>,       // optional, full replacement for failure modes (rare)
+//     quarterly_metrics: [                   // optional, observations for quarterly_metric failure modes
+//       { failure_mode_id, observed_value, notes? }
+//     ]
 //   }
 //
 // Behavior:
@@ -57,6 +60,7 @@ module.exports = async (req, res) => {
     const changeSummary = body.change_summary ? String(body.change_summary).trim() : null;
     const newThesisSummary = body.new_thesis_summary ? String(body.new_thesis_summary).trim() : null;
     const newFailureModes = Array.isArray(body.new_failure_modes) ? body.new_failure_modes : null;
+    const quarterlyMetricsInput = Array.isArray(body.quarterly_metrics) ? body.quarterly_metrics : [];
 
     // Basic validation
     if (!dueId) return res.status(400).end(JSON.stringify({ ok: false, error: 'due_id required' }));
@@ -98,6 +102,115 @@ module.exports = async (req, res) => {
       );
     }
 
+    // 2b. Process quarterly_metric observations (if any)
+    // Build a snapshot to embed in the entry, evaluate triggered/monitoring per metric
+    // and persist trigger_evaluations + failure_modes status updates.
+    const evaluatedAt = new Date().toISOString();
+    const quarterlyMetricsSnapshot = [];
+    if (quarterlyMetricsInput.length > 0) {
+      // Load the failure modes referenced (must belong to the same ticker's active premortem and be quarterly_metric)
+      const ids = quarterlyMetricsInput.map(q => Number(q.failure_mode_id)).filter(Boolean);
+      if (ids.length > 0) {
+        const fms = await sbSelect(
+          'failure_modes',
+          `select=id,premortem_id,failure_mode,trigger_type,trigger_config,probability_pct,severity_pct,status&id=in.(${ids.join(',')})`
+        );
+        // For consecutive-quarter logic, fetch last 4 evaluations per failure_mode_id
+        const evalsByFm = new Map();
+        if (fms.length > 0) {
+          const histRows = await sbSelect(
+            'trigger_evaluations',
+            `select=failure_mode_id,evaluated_at,status,observed_value&failure_mode_id=in.(${fms.map(f => f.id).join(',')})&order=evaluated_at.desc&limit=200`
+          );
+          for (const row of histRows) {
+            if (!evalsByFm.has(row.failure_mode_id)) evalsByFm.set(row.failure_mode_id, []);
+            evalsByFm.get(row.failure_mode_id).push(row);
+          }
+        }
+
+        for (const input of quarterlyMetricsInput) {
+          const fmId = Number(input.failure_mode_id);
+          const fm = fms.find(f => f.id === fmId);
+          if (!fm) continue;
+          if (fm.trigger_type !== 'quarterly_metric') continue;
+          // Validate fm belongs to the ticker's active premortem
+          if (pm && fm.premortem_id !== pm.id) continue;
+          // Allow null observed_value with notes='N/A this quarter' to skip threshold eval
+          const observedRaw = input.observed_value;
+          const isNA = observedRaw == null || observedRaw === '';
+          const observed = isNA ? null : Number(observedRaw);
+          if (!isNA && Number.isNaN(observed)) continue;
+
+          const cfg = fm.trigger_config || {};
+          const operator = cfg.operator || '<';
+          const threshold = cfg.threshold_pct != null ? Number(cfg.threshold_pct) : null;
+          const consecutive = Math.max(1, Number(cfg.consecutive_quarters || 1));
+
+          let newStatus = fm.status; // by default keep prior status if N/A
+          let evidence;
+          if (isNA) {
+            evidence = `${fm.failure_mode}: N/A this quarter${input.notes ? ` (${String(input.notes).slice(0, 200)})` : ''}.`;
+          } else if (threshold == null) {
+            // No threshold defined; treat as monitoring with the observation
+            newStatus = 'monitoring';
+            evidence = `${fm.failure_mode}: observed ${observed}; no threshold_pct configured.`;
+          } else {
+            // Compare current observation
+            const currViolates = compareViolates(observed, operator, threshold);
+            if (consecutive <= 1) {
+              newStatus = currViolates ? 'triggered' : 'monitoring';
+            } else {
+              // Look back at consecutive-1 most recent prior obs (status=='triggered' OR observed value violating)
+              const hist = (evalsByFm.get(fm.id) || []).filter(r => r.observed_value != null);
+              let streak = currViolates ? 1 : 0;
+              if (currViolates) {
+                for (let i = 0; i < hist.length && streak < consecutive; i++) {
+                  const v = Number(hist[i].observed_value);
+                  if (compareViolates(v, operator, threshold)) streak++;
+                  else break;
+                }
+              }
+              newStatus = streak >= consecutive ? 'triggered' : 'monitoring';
+            }
+            evidence = `${fm.failure_mode}: observed ${observed} ${operator} ${threshold} \u2192 ${newStatus}${consecutive > 1 ? ` (consecutive_quarters=${consecutive})` : ''}.`;
+          }
+
+          const evalRow = {
+            failure_mode_id: fm.id,
+            evaluated_at: evaluatedAt,
+            status: newStatus,
+            observed_value: isNA ? null : observed,
+            threshold_value: threshold,
+            evidence_text: evidence,
+            notes: input.notes ? String(input.notes).slice(0, 500) : null,
+          };
+          await sbInsert('trigger_evaluations', evalRow);
+
+          const patch = { last_evaluated_at: evaluatedAt };
+          if (newStatus !== fm.status) {
+            patch.status = newStatus;
+            if (newStatus === 'triggered' && !fm.triggered_at) patch.triggered_at = evaluatedAt;
+          }
+          await sbUpdate('failure_modes', `id=eq.${fm.id}`, patch);
+
+          quarterlyMetricsSnapshot.push({
+            failure_mode_id: fm.id,
+            failure_mode: fm.failure_mode,
+            metric: cfg.metric || null,
+            observed_value: isNA ? null : observed,
+            threshold_value: threshold,
+            operator,
+            consecutive_quarters: consecutive,
+            new_status: newStatus,
+            prior_status: fm.status,
+            na_this_quarter: isNA,
+            notes: input.notes || null,
+            evaluated_at: evaluatedAt,
+          });
+        }
+      }
+    }
+
     // 3. Insert reunderwriting_entries
     const inserted = await sbInsert('reunderwriting_entries', [{
       due_id: due.id,
@@ -106,6 +219,7 @@ module.exports = async (req, res) => {
       thesis_still_valid: thesisText,
       kill_criteria_snapshot: killSnapshot,
       kill_criteria_concern: killConcern,
+      quarterly_metrics_snapshot: quarterlyMetricsSnapshot.length > 0 ? quarterlyMetricsSnapshot : null,
       action,
       action_reason: actionReason,
       price_at_review: priceAtReview,
@@ -197,6 +311,22 @@ module.exports = async (req, res) => {
     res.status(500).end(JSON.stringify({ ok: false, error: String(e.message || e) }));
   }
 };
+
+function compareViolates(observed, operator, threshold) {
+  const o = Number(observed);
+  const t = Number(threshold);
+  if (Number.isNaN(o) || Number.isNaN(t)) return false;
+  switch (operator) {
+    case '<':  return o <  t;
+    case '<=': return o <= t;
+    case '>':  return o >  t;
+    case '>=': return o >= t;
+    case '==':
+    case '=':  return o === t;
+    case '!=': return o !== t;
+    default:   return o < t; // safe default
+  }
+}
 
 function readJsonBody(req) {
   return new Promise((resolve, reject) => {

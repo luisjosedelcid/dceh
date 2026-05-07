@@ -320,6 +320,7 @@
   function triggerTypePill(tt){
     if (tt === 'quantitative') return '<span class="pill type-quant">Quantitative</span>';
     if (tt === 'qualitative_llm') return '<span class="pill type-llm">LLM (auto)</span>';
+    if (tt === 'quarterly_metric') return '<span class="pill type-quant">Quarterly metric</span>';
     return '<span class="pill type-manual">Manual review</span>';
   }
   function statusPill(s){
@@ -472,7 +473,22 @@
       const isTrig = fm.status === 'triggered';
       const isResolved = fm.status === 'resolved' || fm.status === 'invalidated';
       const ev = fm.last_evaluation;
-      const evidence = ev ? ev.evidence_text : (fm.trigger_type === 'qualitative_llm' ? 'Awaiting LLM ingestion (Capa 4).' : (fm.trigger_type === 'qualitative_manual' ? 'Manual review — flip status from Manage tab when you observe this trigger.' : 'No evaluation recorded yet.'));
+      let evidence;
+      if (ev && ev.evidence_text) {
+        evidence = ev.evidence_text;
+      } else if (fm.trigger_type === 'qualitative_llm') {
+        evidence = 'Awaiting LLM ingestion (Capa 4).';
+      } else if (fm.trigger_type === 'qualitative_manual') {
+        evidence = 'Manual review \u2014 flip status from Manage tab when you observe this trigger.';
+      } else if (fm.trigger_type === 'quarterly_metric') {
+        const cfg = fm.trigger_config || {};
+        const metric = cfg.metric || fm.failure_mode;
+        const thr = cfg.threshold_pct != null ? `${cfg.operator || '<'} ${cfg.threshold_pct}` : '\u2014';
+        const consec = cfg.consecutive_quarters > 1 ? ` por ${cfg.consecutive_quarters}Q consecutivos` : '';
+        evidence = `${metric}: aún no se ha capturado este trimestre. Threshold ${thr}${consec}. Se actualiza cuando el comité firma el re-underwriting del próximo 10-K/10-Q.`;
+      } else {
+        evidence = 'No evaluation recorded yet.';
+      }
       const evDanger = isTrig;
       return `
         <div class="fm-card ${isTrig?'triggered':''} ${isResolved?'resolved':''}">

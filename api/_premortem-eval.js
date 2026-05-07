@@ -176,8 +176,10 @@ const QUANT_DISPATCH = {
 async function evaluateOne(fm, ctx, ticker) {
   const tt = fm.trigger_type;
 
-  if (tt === 'qualitative_manual') {
-    return null; // skip; updated only via UI
+  if (tt === 'qualitative_manual' || tt === 'quarterly_metric') {
+    // qualitative_manual: updated via UI
+    // quarterly_metric: updated only by reunderwriting-submit (committee captures observed value when a 10-K/10-Q is signed)
+    return null;
   }
   if (tt === 'qualitative_llm') {
     try {

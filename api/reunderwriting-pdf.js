@@ -237,6 +237,47 @@ module.exports = async (req, res) => {
       y += 8;
     }
 
+    // Quarterly metrics snapshot (committee-captured observations from this filing)
+    if (entry && Array.isArray(entry.quarterly_metrics_snapshot) && entry.quarterly_metrics_snapshot.length) {
+      y = ensureSpace(doc, y, 60);
+      doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)
+         .text('QUARTERLY METRICS SNAPSHOT (FROM THIS FILING)', M, y);
+      y += 14;
+      // Table header
+      doc.rect(M, y, CW, 20).fill(NAVY);
+      doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(8);
+      doc.text('STATUS', M + 8, y + 6, { width: 70, lineBreak: false });
+      doc.text('METRIC', M + 90, y + 6, { width: CW - 90 - 90 - 90, lineBreak: false });
+      doc.text('OBSERVED', M + CW - 180, y + 6, { width: 80, lineBreak: false, align: 'right' });
+      doc.text('THRESHOLD', M + CW - 90, y + 6, { width: 82, lineBreak: false, align: 'right' });
+      y += 20;
+      entry.quarterly_metrics_snapshot.forEach((qm, i) => {
+        const rowH = 22;
+        y = ensureSpace(doc, y, rowH + 2);
+        if (i % 2 === 0) doc.rect(M, y, CW, rowH).fill('#f9f7f3');
+        const statusColor = qm.new_status === 'triggered' ? RED : (qm.new_status === 'resolved' ? GREEN : AMBER);
+        doc.fillColor(statusColor).font('Helvetica-Bold').fontSize(8)
+           .text((qm.new_status || '\u2014').toUpperCase(), M + 8, y + 7, { width: 70, lineBreak: false });
+        doc.fillColor(NEAR_BLACK).font('Helvetica').fontSize(9)
+           .text(qm.metric || qm.failure_mode || '\u2014', M + 90, y + 7, { width: CW - 90 - 180, lineBreak: false, ellipsis: true });
+        const observedTxt = qm.na_this_quarter ? 'N/A' : (qm.observed_value != null ? String(qm.observed_value) : '\u2014');
+        doc.fillColor(NEAR_BLACK).font('Helvetica-Bold').fontSize(9)
+           .text(observedTxt, M + CW - 180, y + 7, { width: 80, align: 'right', lineBreak: false });
+        const thrTxt = qm.threshold_value != null ? `${qm.operator || '<'} ${qm.threshold_value}` : '\u2014';
+        doc.fillColor(GRAY_TXT).font('Helvetica').fontSize(9)
+           .text(thrTxt, M + CW - 90, y + 7, { width: 82, align: 'right', lineBreak: false });
+        y += rowH;
+        // Optional note row
+        if (qm.notes) {
+          y = ensureSpace(doc, y, 16);
+          doc.fillColor(GRAY_MID).font('Helvetica-Oblique').fontSize(8)
+             .text(`Note: ${qm.notes}`, M + 90, y + 2, { width: CW - 100, lineBreak: false, ellipsis: true });
+          y += 14;
+        }
+      });
+      y += 8;
+    }
+
     // Action
     y = ensureSpace(doc, y, 60);
     doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)

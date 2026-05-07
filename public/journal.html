@@ -985,6 +985,12 @@ function openReundForm(dueId) {
       <div class="field-val muted" id="reund-killmodes-body">Loading…</div>
     </div>
 
+    <div id="reund-qmetrics" class="field" style="display:none">
+      <div class="field-lbl">Quarterly metrics snapshot (de este filing)</div>
+      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:6px">Captura el valor observado de cada métrica trimestral. Si no aplica este trimestre, déjalo vacío y anota por qué.</div>
+      <div id="reund-qmetrics-body"></div>
+    </div>
+
     <div class="field">
       <div class="field-lbl">1. Thesis still valid? *</div>
       <textarea id="reund-thesis" rows="4" style="width:100%;padding:10px;border:1px solid var(--rule);background:var(--white);font-family:inherit;font-size:13px;resize:vertical" placeholder="What's still working / what changed since last review…"></textarea>
@@ -1061,18 +1067,66 @@ async function loadKillCriteriaForReund(ticker) {
       target.textContent = 'No failure modes defined.';
       return;
     }
-    target.innerHTML = fms.map(fm => {
-      const cls = fm.status === 'triggered' ? 'due' : (fm.status === 'resolved' ? 'done' : '');
-      return `<div style="margin-bottom:6px;font-size:13px">
-        <span class="review-pill ${cls}" style="min-width:80px;display:inline-block;text-align:center">${escapeHtml(fm.status)}</span>
-        <span style="margin-left:8px">${escapeHtml(fm.failure_mode)}</span>
-        <span style="color:var(--gray-mid);font-size:11px;margin-left:6px">P${fm.probability_pct ?? '—'}% · S${fm.severity_pct ?? '—'}%</span>
-      </div>`;
-    }).join('');
+    // Split failure modes: quarterly_metric goes into the editable section, the rest stays in the auto status list
+    const quarterlyMetrics = fms.filter(fm => fm.trigger_type === 'quarterly_metric');
+    const otherFms = fms.filter(fm => fm.trigger_type !== 'quarterly_metric');
+
+    if (otherFms.length === 0) {
+      target.innerHTML = '<span class="muted" style="font-size:12px">No automatic kill criteria for this position.</span>';
+    } else {
+      target.innerHTML = otherFms.map(fm => {
+        const cls = fm.status === 'triggered' ? 'due' : (fm.status === 'resolved' ? 'done' : '');
+        return `<div style="margin-bottom:6px;font-size:13px">
+          <span class="review-pill ${cls}" style="min-width:80px;display:inline-block;text-align:center">${escapeHtml(fm.status)}</span>
+          <span style="margin-left:8px">${escapeHtml(fm.failure_mode)}</span>
+          <span style="color:var(--gray-mid);font-size:11px;margin-left:6px">P${fm.probability_pct ?? '—'}% · S${fm.severity_pct ?? '—'}%</span>
+        </div>`;
+      }).join('');
+    }
+
+    renderQuarterlyMetricsForm(quarterlyMetrics);
   } catch (e) {
     target.textContent = 'Error: ' + e.message;
   }
 }
+
+// Render editable inputs for quarterly_metric failure modes inside the re-underwriting form
+function renderQuarterlyMetricsForm(fms) {
+  const wrap = document.getElementById('reund-qmetrics');
+  const body = document.getElementById('reund-qmetrics-body');
+  if (!wrap || !body) return;
+  if (!fms || fms.length === 0) {
+    wrap.style.display = 'none';
+    body.innerHTML = '';
+    return;
+  }
+  wrap.style.display = '';
+  body.innerHTML = fms.map(fm => {
+    const cfg = fm.trigger_config || {};
+    const metric = cfg.metric || fm.failure_mode;
+    const operator = cfg.operator || '<';
+    const threshold = cfg.threshold_pct != null ? cfg.threshold_pct : '—';
+    const consecutive = cfg.consecutive_quarters || 1;
+    const cls = fm.status === 'triggered' ? 'due' : (fm.status === 'resolved' ? 'done' : '');
+    return `
+      <div data-qm-fm-id="${fm.id}" style="border:1px solid var(--rule);background:var(--white);padding:10px 12px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+          <div>
+            <div style="font-size:12px;color:var(--navy);font-weight:600">${escapeHtml(metric)}</div>
+            <div style="font-size:11px;color:var(--gray-mid);margin-top:2px">Threshold: ${escapeHtml(operator)} ${escapeHtml(String(threshold))}${consecutive > 1 ? ` &middot; ${consecutive} trimestres consecutivos` : ''} &middot; ${escapeHtml(fm.failure_mode)}</div>
+          </div>
+          <span class="review-pill ${cls}" style="min-width:80px;text-align:center;font-size:10px">${escapeHtml(fm.status)}</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
+          <label style="font-size:11px;color:var(--gray-mid)">Observed:</label>
+          <input type="number" step="any" class="qm-input-value" placeholder="e.g. -2.1" style="width:130px;padding:6px 8px;border:1px solid var(--rule);font-size:13px;font-family:inherit" />
+          <input type="text" class="qm-input-notes" placeholder="Note (or 'N/A this quarter')" style="flex:1;min-width:180px;padding:6px 8px;border:1px solid var(--rule);font-size:12px;font-family:inherit" />
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+window.renderQuarterlyMetricsForm = renderQuarterlyMetricsForm;
 
 // Read-only drawer: ver el detalle de un re-underwriting ya firmado
 async function openReundDetail(dueId) {
@@ -1176,6 +1230,8 @@ function renderReundDetail(data) {
       <div class="field-val">${killHtml}</div>
     </div>
 
+    ${renderQuarterlyMetricsReadonly(entry)}
+
     <div class="field">
       <div class="field-lbl">Action</div>
       <div class="field-val"><strong>${escapeHtml(actionLabel)}</strong></div>
@@ -1211,6 +1267,35 @@ function renderReundDetail(data) {
   `;
 }
 window.renderReundDetail = renderReundDetail;
+
+// Render the quarterly_metrics_snapshot block in the read-only drawer (signed re-underwriting)
+function renderQuarterlyMetricsReadonly(entry) {
+  if (!entry || !Array.isArray(entry.quarterly_metrics_snapshot) || entry.quarterly_metrics_snapshot.length === 0) {
+    return '';
+  }
+  const rows = entry.quarterly_metrics_snapshot.map(qm => {
+    const cls = qm.new_status === 'triggered' ? 'due' : (qm.new_status === 'resolved' ? 'done' : '');
+    const valTxt = qm.na_this_quarter ? 'N/A this quarter' : (qm.observed_value != null ? String(qm.observed_value) : '—');
+    const thrTxt = qm.threshold_value != null ? `${qm.operator || '<'} ${qm.threshold_value}` : '—';
+    const consec = qm.consecutive_quarters > 1 ? ` &middot; ${qm.consecutive_quarters}Q consec.` : '';
+    return `<div style="border:1px solid var(--rule);background:var(--white);padding:10px 12px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div>
+          <div style="font-size:12px;color:var(--navy);font-weight:600">${escapeHtml(qm.metric || qm.failure_mode || '')}</div>
+          <div style="font-size:11px;color:var(--gray-mid);margin-top:2px">Threshold: ${escapeHtml(thrTxt)}${consec}</div>
+        </div>
+        <span class="review-pill ${cls}" style="min-width:80px;text-align:center;font-size:10px">${escapeHtml(qm.new_status || '—')}</span>
+      </div>
+      <div style="font-size:13px;margin-top:6px"><strong>Observed:</strong> ${escapeHtml(valTxt)}</div>
+      ${qm.notes ? `<div style="font-size:12px;color:var(--gray-mid);margin-top:4px;font-style:normal">${escapeHtml(qm.notes)}</div>` : ''}
+    </div>`;
+  }).join('');
+  return `<div class="field">
+    <div class="field-lbl">Quarterly metrics snapshot</div>
+    <div class="field-val">${rows}</div>
+  </div>`;
+}
+window.renderQuarterlyMetricsReadonly = renderQuarterlyMetricsReadonly;
 
 // Export the signed re-underwriting as a branded PDF.
 // We pass the admin token via _tok so a normal browser download works.
@@ -1260,6 +1345,29 @@ async function undoReund(dueId, ticker, docType, periodEnd) {
   }
 }
 window.undoReund = undoReund;
+
+// Read the editable quarterly_metric inputs and build the array sent to the backend
+function collectQuarterlyMetrics() {
+  const items = [];
+  const cards = document.querySelectorAll('[data-qm-fm-id]');
+  for (const card of cards) {
+    const fmId = Number(card.getAttribute('data-qm-fm-id'));
+    if (!fmId) continue;
+    const valueInput = card.querySelector('.qm-input-value');
+    const notesInput = card.querySelector('.qm-input-notes');
+    const rawValue = valueInput ? valueInput.value.trim() : '';
+    const notes = notesInput ? notesInput.value.trim() : '';
+    // Only include if the user typed something
+    if (rawValue === '' && notes === '') continue;
+    items.push({
+      failure_mode_id: fmId,
+      observed_value: rawValue === '' ? null : Number(rawValue),
+      notes: notes || null,
+    });
+  }
+  return items;
+}
+window.collectQuarterlyMetrics = collectQuarterlyMetrics;
 
 function onOutcomeChange() {
   const outcomeRadio = document.querySelector('input[name="reund-outcome"]:checked');
@@ -1331,6 +1439,7 @@ async function submitReund() {
         outcome,
         change_summary: changeSummary || null,
         new_thesis_summary: newThesisSummary || null,
+        quarterly_metrics: collectQuarterlyMetrics(),
       }),
     });
     const data = await r.json();

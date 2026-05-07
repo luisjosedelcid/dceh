@@ -18,6 +18,7 @@
 'use strict';
 
 const { sbSelect, sbDelete, sbUpdate } = require('./_supabase');
+
 const { requireRole } = require('./_require-role');
 
 module.exports = async (req, res) => {
@@ -52,7 +53,44 @@ module.exports = async (req, res) => {
       return res.status(409).end(JSON.stringify({ ok: false, error: `due is ${due.status}, can only undo done dues` }));
     }
 
-    const undone = { entry_deleted: false, revision_deleted: false, premortem_rolled_back: false };
+    const undone = { entry_deleted: false, revision_deleted: false, premortem_rolled_back: false, quarterly_metrics_reverted: 0 };
+
+    // 0. If the entry captured quarterly_metric observations, revert them BEFORE deleting the entry
+    //    (we need the snapshot to know what to undo).
+    if (due.entry_id) {
+      const entryRows = await sbSelect(
+        'reunderwriting_entries',
+        `select=quarterly_metrics_snapshot&id=eq.${due.entry_id}&limit=1`
+      );
+      const snapshot = (entryRows[0] && entryRows[0].quarterly_metrics_snapshot) || null;
+      if (Array.isArray(snapshot) && snapshot.length > 0) {
+        for (const qm of snapshot) {
+          const fmId = qm.failure_mode_id;
+          if (!fmId) continue;
+          // Delete the trigger_evaluations row that this entry inserted (matched by failure_mode_id + evaluated_at)
+          if (qm.evaluated_at) {
+            try {
+              await sbDelete('trigger_evaluations', `failure_mode_id=eq.${fmId}&evaluated_at=eq.${encodeURIComponent(qm.evaluated_at)}`);
+            } catch (e) { /* non-fatal */ }
+          }
+          // Restore failure_modes.status to prior_status; recompute last_evaluated_at from remaining evaluations
+          const remaining = await sbSelect(
+            'trigger_evaluations',
+            `select=evaluated_at,status&failure_mode_id=eq.${fmId}&order=evaluated_at.desc&limit=1`
+          );
+          const patch = {
+            status: qm.prior_status || 'monitoring',
+            last_evaluated_at: remaining[0] ? remaining[0].evaluated_at : null,
+          };
+          // Clear triggered_at if we are reverting away from triggered
+          if (qm.prior_status !== 'triggered' && qm.new_status === 'triggered') {
+            patch.triggered_at = null;
+          }
+          await sbUpdate('failure_modes', `id=eq.${fmId}`, patch);
+          undone.quarterly_metrics_reverted++;
+        }
+      }
+    }
 
     // 2. Roll back the premortem revision if any
     if (due.revision_id) {
