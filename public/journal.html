@@ -1202,12 +1202,64 @@ function renderReundDetail(data) {
       </div>
     </div>` : ''}
 
-    <div class="field" style="margin-top:18px">
+    <div class="field" style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <button onclick="closeDrawer()" style="background:var(--white);color:var(--navy);border:1px solid var(--navy);padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600">Cerrar</button>
+      <button onclick="exportReundPdf(${due.id})" style="background:var(--gold);color:var(--white);border:none;padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600">Exportar PDF</button>
+      <button onclick="undoReund(${due.id}, '${escapeHtml(due.ticker || '')}', '${escapeHtml(due.doc_type || '')}', '${fmtDate(due.period_end)}')" style="background:var(--white);color:var(--red);border:1px solid var(--red);padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600;margin-left:auto">Deshacer</button>
+      <span id="reund-detail-msg" style="font-size:12px;width:100%;margin-top:6px"></span>
     </div>
   `;
 }
 window.renderReundDetail = renderReundDetail;
+
+// Export the signed re-underwriting as a branded PDF.
+// We pass the admin token via _tok so a normal browser download works.
+function exportReundPdf(dueId) {
+  const tk = tokenAdmin();
+  if (!tk) { alert('Sign in as admin para exportar.'); return; }
+  const url = '/api/reunderwriting-pdf?due_id=' + encodeURIComponent(dueId) + '&_tok=' + encodeURIComponent(tk);
+  window.open(url, '_blank');
+}
+window.exportReundPdf = exportReundPdf;
+
+// Undo a signed re-underwriting: deletes entry + revision, rolls back
+// premortem version, returns the due to 'pending'.
+async function undoReund(dueId, ticker, docType, periodEnd) {
+  const tk = tokenAdmin();
+  if (!tk) { alert('Sign in as admin para deshacer.'); return; }
+  const ok = confirm(
+    'DESHACER re-underwriting de ' + ticker + ' \u00b7 ' + docType + ' \u00b7 period ' + periodEnd + '?\n\n' +
+    'Esto va a:\n' +
+    '  \u2022 Borrar el entry firmado (las 3 preguntas + action)\n' +
+    '  \u2022 Si se cre\u00f3 una revisi\u00f3n del pre-mortem, borrarla y revertir la versi\u00f3n\n' +
+    '  \u2022 Devolver el due al estado "pending" para volver a firmarlo\n\n' +
+    'Esta acci\u00f3n no se puede revertir desde el cockpit.'
+  );
+  if (!ok) return;
+
+  const msg = document.getElementById('reund-detail-msg');
+  if (msg) { msg.textContent = 'Deshaciendo\u2026'; msg.style.color = 'var(--gray-mid)'; }
+  try {
+    const r = await fetch('/api/reunderwriting-undo', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-admin-token': tk },
+      body: JSON.stringify({ due_id: dueId, confirm: true }),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.ok) {
+      if (msg) { msg.textContent = 'Error: ' + (data.error || 'HTTP ' + r.status); msg.style.color = 'var(--red)'; }
+      return;
+    }
+    if (msg) { msg.textContent = 'Re-underwriting deshecho. Refrescando\u2026'; msg.style.color = 'var(--green)'; }
+    setTimeout(() => {
+      closeDrawer();
+      loadReunderwriting();
+    }, 700);
+  } catch (e) {
+    if (msg) { msg.textContent = 'Error: ' + (e.message || e); msg.style.color = 'var(--red)'; }
+  }
+}
+window.undoReund = undoReund;
 
 function onOutcomeChange() {
   const outcomeRadio = document.querySelector('input[name="reund-outcome"]:checked');
