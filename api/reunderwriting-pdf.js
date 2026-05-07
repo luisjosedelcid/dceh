@@ -305,18 +305,22 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Footer (positioned at bottom of CURRENT page; if too close to content, push to fresh page)
+    // Footer pinned to bottom of CURRENT page (no auto-paginate).
+    // If we already overflowed past the safe area, push to a fresh page.
     const FOOTER_HEIGHT = 36;
-    const footerLineY = doc.page.height - 50;
+    const footerLineY = doc.page.height - 60;
     if (y > footerLineY - FOOTER_HEIGHT) {
       doc.addPage();
     }
     const fY = doc.page.height - 50;
     doc.moveTo(M, fY).lineTo(M + CW, fY).strokeColor(RULE).lineWidth(0.5).stroke();
+    // lineBreak:false + height to keep text from triggering autoPageBreak.
     doc.fillColor(GRAY_MID).font('Helvetica').fontSize(7)
-       .text(`Generated ${new Date().toISOString().slice(0, 19).replace('T', ' ')}Z  ·  Due #${d.id}  ·  Entry #${d.entry_id || '—'}  ·  Revision #${d.revision_id || '—'}`, M, fY + 8, { width: CW });
+       .text(`Generated ${new Date().toISOString().slice(0, 19).replace('T', ' ')}Z  ·  Due #${d.id}  ·  Entry #${d.entry_id || '—'}  ·  Revision #${d.revision_id || '—'}`,
+              M, fY + 6, { width: CW, lineBreak: false, height: 12 });
     doc.fillColor(GRAY_MID).font('Helvetica-Oblique').fontSize(7)
-       .text('DCE Holdings Investment Office — Confidential · Internal use only', M, fY + 22, { width: CW });
+       .text('DCE Holdings Investment Office — Confidential · Internal use only',
+              M, fY + 18, { width: CW, lineBreak: false, height: 12 });
 
     doc.end();
     await done;
@@ -353,9 +357,9 @@ function fmtDateTime(s) {
 }
 function drawQA(doc, y, M, CW, label, body) {
   y = ensureSpace(doc, y, 60);
-  const NAVY = '#1B2642', GOLD = '#B88B47', RULE = '#e8e6e0', NEAR_BLACK = '#0d0d0d', GRAY_MID = '#8a9098';
+  const GOLD = '#B88B47', RULE = '#e8e6e0', NEAR_BLACK = '#0d0d0d';
   doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)
-     .text(label, M, y, { characterSpacing: 1.2 });
+     .text(label, M, y);
   y += 14;
   const txt = (body && String(body).trim()) || '—';
   const innerW = CW - 16;
