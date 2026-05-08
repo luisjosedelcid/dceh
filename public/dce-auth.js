@@ -348,8 +348,9 @@
     return null;
   }
 
-  // ── Nav grouping: 8 top-level items in fixed order ──────────────────────
-  // Order: Home · Cockpit · Research ▾ · Pipeline ▾ · Decisions ▾ · Performance · Reporting · Data Room
+  // ── Nav grouping: 7 top-level items in fixed order ──────────────────────
+  // Order: Home · Cockpit · Research ▾ · Pipeline ▾ · Performance · Reporting · Data Room
+  // Decisions (Journal) absorbido al final del Pipeline — es parte del proceso
   const NAV_GROUPS = [
     { id:'home',     label:'Home',    href:'/',              single:true },
     { id:'cockpit',  label:'Cockpit', href:'/cockpit.html',  single:true },
@@ -362,9 +363,7 @@
       { href:'/screener.html',    label:'Find',     desc:'Idea generation — superinvestors, sector screener' },
       { href:'/research.html',    label:'Workflow', desc:'Kanban de tesis en investigación' },
       { href:'/universe.html',    label:'Universe', desc:'Columbia framework — EPV, IRR, MoS' },
-    ]},
-    { id:'decisions', label:'Decisions', items:[
-      { href:'/journal.html',     label:'Journal',     desc:'Decision journal — buy/sell con thesis' },
+      { href:'/journal.html',     label:'Decisions', desc:'Decision journal — buy/pass/sell + re-underwriting' },
       // { href:'/premortem.html',   label:'Pre-mortem',  desc:'Watch failure modes · manage' }, // archived 2026-05-07: backend activo, página oculta. Re-underwriting trimestral mantiene la disciplina.
     ]},
     // Performance: absorbe Portfolio (eliminado) + IV Tracking (oculto). Cockpit movido a top-level.
