@@ -1,7 +1,7 @@
 {
   "_meta": {
     "description": "Single source of truth para el Data Room de dceholdings.app. Se actualiza automaticamente por las skills DCE al generar nuevos entregables. Estructura alineada con Operations Manual v3 seccion 3.4.",
-    "last_updated": "2026-05-04",
+    "last_updated": "2026-05-08",
     "naming_convention": "AAAA-MM - Tipo - Detalle.ext (Operations Manual v3 §3.4)",
     "owner": "CIO"
   },
@@ -40,10 +40,20 @@
           "version": "v4.4"
         },
         {
-          "name": "2026-05 - Operations Manual v3.1",
+          "name": "2026-05 - Operations Manual v3.2",
+          "filename": "2026-05_Operations_Manual_v3-2.docx",
+          "type": "docx",
+          "detail": "Version vigente. Consolida monitoreo trimestral en Re-Underwriting unico de 8 secciones; Pre-Mortem absorbido en el Investment Memo §10. Deprecia Scorecard, IFS y Desconfirmacion como entregables separados.",
+          "url": "/docs/2026-05_Operations_Manual_v3-2.docx",
+          "uploaded": "2026-05-08",
+          "version": "v3.2",
+          "doc_type": "Operations Manual"
+        },
+        {
+          "name": "2026-05 - Operations Manual v3.1 (historico)",
           "filename": "2026-05_Operations_Manual_v3-1.docx",
           "type": "docx",
-          "detail": "Cadencia operativa, roles, controles documentales (vigente). Incluye Thesis Breaker + Munger Digital en flujo de tesis.",
+          "detail": "Version anterior reemplazada por v3.2 en Mayo 2026.",
           "url": "/docs/2026-05_Operations_Manual_v3-1.docx",
           "uploaded": "2026-05-04",
           "version": "v3.1",
