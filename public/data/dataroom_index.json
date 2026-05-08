@@ -95,12 +95,23 @@
           "files": [
             {
               "name": "2026-05 - Investment Memo - Microsoft (MSFT)",
-              "filename": "DCE_MSFT_Valuation_Report.pdf",
+              "filename": "2026-05_Investment_Memo_Microsoft_MSFT.pdf",
               "type": "pdf",
-              "detail": "Investment Memo aprobado",
-              "url": "/docs/DCE_MSFT_Valuation_Report.pdf",
-              "uploaded": "2026-05-04",
-              "doc_type": "Investment Memo"
+              "detail": "Investment Memo v3.2 (12 secciones, formato Operations Manual v3.2)",
+              "url": "/docs/MSFT/2026-05_Investment_Memo_Microsoft_MSFT.pdf",
+              "uploaded": "2026-05-08",
+              "doc_type": "Investment Memo",
+              "version": "v3.2"
+            },
+            {
+              "name": "2026-Q1 - Re-Underwriting - Microsoft (MSFT)",
+              "filename": "2026-Q1_Re-Underwriting_Microsoft_MSFT.pdf",
+              "type": "pdf",
+              "detail": "Quarterly Re-Underwriting Q1 2026 (8 secciones, outcome Thesis Intact)",
+              "url": "/docs/MSFT/2026-Q1_Re-Underwriting_Microsoft_MSFT.pdf",
+              "uploaded": "2026-05-08",
+              "doc_type": "Re-Underwriting",
+              "version": "v3.2"
             },
             {
               "name": "2026-05 - Thesis Breaker - Microsoft (MSFT)",
@@ -124,10 +135,29 @@
               "name": "2026-05 - Columbia Model - Microsoft (MSFT)",
               "filename": "2026-05_Columbia_Model_Microsoft_MSFT.xlsx",
               "type": "xlsx",
-              "detail": "Modelo Columbia 14-sheet",
+              "detail": "Modelo Columbia 14-sheet (base)",
               "url": "/docs/MSFT/2026-05_Columbia_Model_Microsoft_MSFT.xlsx",
               "uploaded": "2026-05-04",
               "doc_type": "Columbia Model"
+            },
+            {
+              "name": "2026-05 - Columbia Model LTM 2026Q3 - Microsoft (MSFT)",
+              "filename": "2026-05_Columbia_Model_Microsoft_MSFT_LTM2026Q3.xlsx",
+              "type": "xlsx",
+              "detail": "Modelo Columbia con incremental update LTM 2026Q3",
+              "url": "/docs/MSFT/2026-05_Columbia_Model_Microsoft_MSFT_LTM2026Q3.xlsx",
+              "uploaded": "2026-05-07",
+              "doc_type": "Columbia Model"
+            },
+            {
+              "name": "[Historico pre-v3.2] - Investment Memo - Microsoft (MSFT)",
+              "filename": "DCE_MSFT_Valuation_Report_pre-v3.2.pdf",
+              "type": "pdf",
+              "detail": "Memo original (formato pre-v3.2). Reemplazado por Investment Memo v3.2.",
+              "url": "/docs/MSFT/_Historico_pre-v3.2/DCE_MSFT_Valuation_Report_pre-v3.2.pdf",
+              "uploaded": "2026-05-04",
+              "doc_type": "Investment Memo",
+              "status": "historic"
             }
           ]
         },
