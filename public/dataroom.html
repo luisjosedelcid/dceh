@@ -194,6 +194,25 @@
   </div>
 </div>
 
+<!-- Upload file modal -->
+<div class="modal-bg" id="upload-modal">
+  <div class="modal">
+    <h2>Upload file</h2>
+    <div class="modal-sub">Add a file to <strong id="upload-parent">—</strong></div>
+    <label for="upl-file">File</label>
+    <input type="file" id="upl-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.json,.md,.txt,.png,.jpg,.jpeg,.zip">
+    <label for="upl-name">Display name (optional)</label>
+    <input type="text" id="upl-name" maxlength="200" placeholder="Defaults to filename">
+    <label for="upl-detail">Detail (optional)</label>
+    <input type="text" id="upl-detail" maxlength="300" placeholder="Short context shown next to file">
+    <div class="modal-error" id="upload-error"></div>
+    <div class="row">
+      <button class="btn" onclick="closeUploadModal()">Cancel</button>
+      <button class="btn primary" id="upload-save">Upload</button>
+    </div>
+  </div>
+</div>
+
 <footer>
   <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
   <span>Data Room · Operations Manual v3</span>
@@ -205,6 +224,8 @@
 // ──────────────────────────────────────────────────────────────────
 let FILE_INDEX = null;       // legacy /data/dataroom_index.json (files only)
 let FOLDERS = [];            // flat array of folders from Supabase
+let UPLOADS = [];            // dataroom_files rows (uploaded via UI)
+let UPLOADS_BY_FOLDER = new Map();
 let HIDDEN_FILES = new Set(); // urls of files hidden via tombstone table
 let HIDDEN_BY_FILENAME = new Set(); // fallback match by filename
 let BY_ID = new Map();
@@ -213,6 +234,7 @@ let ROOTS = [];
 
 let currentFolderId = null;  // null = root view
 let modalState = null;       // { mode: 'create'|'edit', parentId, folderId? }
+let uploadState = null;      // { folderId }
 
 // ──────────────────────────────────────────────────────────────────
 // Auth helpers (shared across pages)
@@ -269,6 +291,21 @@ async function loadAll() {
       (j.items || []).forEach(t => {
         if (t.url) HIDDEN_FILES.add(t.url);
         if (t.filename) HIDDEN_BY_FILENAME.add(t.filename);
+      });
+    }
+  } catch {}
+
+  // 4) Uploaded files (admin-managed, supabase storage)
+  UPLOADS = [];
+  UPLOADS_BY_FOLDER = new Map();
+  try {
+    const r4 = await fetch('/api/admin/dataroom-uploaded-files', { headers: authHeaders() });
+    if (r4.ok) {
+      const j = await r4.json();
+      UPLOADS = j.items || [];
+      UPLOADS.forEach(u => {
+        if (!UPLOADS_BY_FOLDER.has(u.folder_id)) UPLOADS_BY_FOLDER.set(u.folder_id, []);
+        UPLOADS_BY_FOLDER.get(u.folder_id).push(u);
       });
     }
   } catch {}
@@ -343,20 +380,43 @@ function fileVisible(f) {
 }
 
 function filesForFolder(folder) {
-  if (!FILE_INDEX || !FILE_INDEX.folders || !folder) return [];
-  const chain = ancestorsOf(folder.id);
-  if (chain.length === 0) return [];
-  const rootSlug = chain[0].slug;
-  const root = FILE_INDEX.folders[rootSlug];
-  if (!root) return [];
-  let files = [];
-  if (chain.length === 1) files = root.files || [];
-  else if (chain.length === 2) {
-    const subSlug = chain[1].slug;
-    const sub = root.subfolders && root.subfolders[subSlug];
-    files = (sub && sub.files) || [];
+  if (!folder) return [];
+  const out = [];
+
+  // a) Legacy files from dataroom_index.json (still source of truth for archived docs)
+  if (FILE_INDEX && FILE_INDEX.folders) {
+    const chain = ancestorsOf(folder.id);
+    if (chain.length > 0) {
+      const rootSlug = chain[0].slug;
+      const root = FILE_INDEX.folders[rootSlug];
+      if (root) {
+        let legacy = [];
+        if (chain.length === 1) legacy = root.files || [];
+        else if (chain.length === 2) {
+          const subSlug = chain[1].slug;
+          const sub = root.subfolders && root.subfolders[subSlug];
+          legacy = (sub && sub.files) || [];
+        }
+        legacy.filter(fileVisible).forEach(f => out.push(f));
+      }
+    }
   }
-  return files.filter(fileVisible);
+
+  // b) Uploaded files from Supabase Storage (admin UI uploads)
+  const uploads = UPLOADS_BY_FOLDER.get(folder.id) || [];
+  uploads.forEach(u => {
+    out.push({
+      name: u.name || u.filename,
+      filename: u.filename,
+      url: u.url,
+      type: (u.filename.match(/\.([a-z0-9]+)$/i) || [])[1] || 'pdf',
+      detail: u.detail || '',
+      uploaded: u.uploaded_at ? u.uploaded_at.slice(0, 10) : '',
+      _uploadId: u.id,
+    });
+  });
+
+  return out;
 }
 
 function countFilesRecursive(folder) {
@@ -380,9 +440,16 @@ function fileItemHTML(file, ctx) {
   const action = isLink ? 'Download ↓' : '— pending';
   const dateStr = file.uploaded || '';
   const admin = isAdmin();
-  const delBtn = admin
-    ? `<button class="file-del-btn" title="Delete file" onclick="event.preventDefault();event.stopPropagation();deleteFile(${JSON.stringify(file.url || '').replace(/"/g,'&quot;')}, ${JSON.stringify(file.filename || '').replace(/"/g,'&quot;')}, ${JSON.stringify(file.name || '').replace(/"/g,'&quot;')}, ${JSON.stringify(ctx && ctx.rootSlug || '').replace(/"/g,'&quot;')}, ${JSON.stringify(ctx && ctx.subSlug || '').replace(/"/g,'&quot;')})">×</button>`
-    : '';
+  // For uploaded files (have _uploadId) we hard-delete via the uploaded-files endpoint;
+  // for legacy files we tombstone via dataroom-files (hide).
+  let delBtn = '';
+  if (admin) {
+    if (file._uploadId) {
+      delBtn = `<button class="file-del-btn" title="Delete file" onclick="event.preventDefault();event.stopPropagation();deleteUploadedFile(${JSON.stringify(file._uploadId).replace(/"/g,'&quot;')}, ${JSON.stringify(file.name || file.filename || '').replace(/"/g,'&quot;')})">×</button>`;
+    } else {
+      delBtn = `<button class="file-del-btn" title="Delete file" onclick="event.preventDefault();event.stopPropagation();deleteFile(${JSON.stringify(file.url || '').replace(/"/g,'&quot;')}, ${JSON.stringify(file.filename || '').replace(/"/g,'&quot;')}, ${JSON.stringify(file.name || '').replace(/"/g,'&quot;')}, ${JSON.stringify(ctx && ctx.rootSlug || '').replace(/"/g,'&quot;')}, ${JSON.stringify(ctx && ctx.subSlug || '').replace(/"/g,'&quot;')})">×</button>`;
+    }
+  }
   return `<a class="file-item" href="${file.url || '#'}"${target}${downloadAttr} ${!isLink ? 'onclick="return false" style="cursor:default;opacity:0.55"' : ''}>
     <div class="file-type ${fileTypeClass(type)}">${type}</div>
     <div class="file-info">
@@ -414,6 +481,10 @@ function renderToolbar() {
   if (admin) {
     html += `<button class="btn primary" onclick="openCreateModal('${currentFolderId || ''}')">+ New folder</button>`;
     if (here) {
+      // Upload only allowed inside a real (non-legacy) folder
+      if (!String(here.id).startsWith('legacy:')) {
+        html += `<button class="btn primary" onclick="openUploadModal('${here.id}')">↑ Upload file</button>`;
+      }
       html += `<button class="btn" onclick="openEditModal('${here.id}')">Rename</button>`;
       html += `<button class="btn danger" onclick="deleteFolder('${here.id}')">Delete</button>`;
     }
@@ -672,6 +743,106 @@ async function deleteFolder(id) {
   }
 }
 
+// ──────────────────────────────────────────────────────────────────
+// Upload modal
+// ──────────────────────────────────────────────────────────────────
+function openUploadModal(folderId) {
+  if (!isAdmin()) return alert('Sign in as admin to upload files.');
+  if (String(folderId).startsWith('legacy:')) {
+    return alert('Cannot upload to legacy folders. Create a new folder first.');
+  }
+  const f = BY_ID.get(folderId);
+  if (!f) return;
+  uploadState = { folderId };
+  document.getElementById('upload-parent').textContent = f.name;
+  document.getElementById('upl-file').value = '';
+  document.getElementById('upl-name').value = '';
+  document.getElementById('upl-detail').value = '';
+  document.getElementById('upload-error').textContent = '';
+  const btn = document.getElementById('upload-save');
+  btn.removeAttribute('disabled');
+  btn.textContent = 'Upload';
+  document.getElementById('upload-modal').classList.add('open');
+  setTimeout(() => document.getElementById('upl-file').focus(), 50);
+}
+
+function closeUploadModal() {
+  document.getElementById('upload-modal').classList.remove('open');
+  uploadState = null;
+}
+
+async function saveUpload() {
+  if (!uploadState) return;
+  const errEl = document.getElementById('upload-error');
+  errEl.textContent = '';
+  const fileEl = document.getElementById('upl-file');
+  if (!fileEl.files || !fileEl.files[0]) { errEl.textContent = 'Select a file'; return; }
+  const file = fileEl.files[0];
+  if (file.size > 25 * 1024 * 1024) { errEl.textContent = 'File too large (max 25 MB)'; return; }
+
+  const displayName = document.getElementById('upl-name').value.trim() || file.name;
+  const detail = document.getElementById('upl-detail').value.trim();
+
+  const btn = document.getElementById('upload-save');
+  btn.setAttribute('disabled', '1');
+  btn.textContent = 'Uploading…';
+
+  try {
+    const params = new URLSearchParams({
+      folder_id: uploadState.folderId,
+      filename: file.name,
+      name: displayName,
+      detail,
+    });
+    const headers = {};
+    const t = adminToken();
+    if (t) headers['x-admin-token'] = t;
+    const r = await fetch('/api/admin/dataroom-upload?' + params.toString(), {
+      method: 'POST',
+      headers,
+      body: file,
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error || `HTTP ${r.status}`);
+    }
+    const { item } = await r.json();
+    UPLOADS.push(item);
+    if (!UPLOADS_BY_FOLDER.has(item.folder_id)) UPLOADS_BY_FOLDER.set(item.folder_id, []);
+    UPLOADS_BY_FOLDER.get(item.folder_id).unshift(item);
+    closeUploadModal();
+    render();
+  } catch (e) {
+    errEl.textContent = e.message || 'Upload failed';
+    btn.removeAttribute('disabled');
+    btn.textContent = 'Upload';
+  }
+}
+
+async function deleteUploadedFile(id, displayName) {
+  if (!isAdmin()) return;
+  if (!confirm(`Delete file "${displayName || id}"?\n\nThis permanently removes the file from storage.`)) return;
+  try {
+    const r = await fetch('/api/admin/dataroom-uploaded-files?id=' + encodeURIComponent(id), {
+      method: 'DELETE', headers: authHeaders(),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      alert('Delete failed: ' + (j.error || `HTTP ${r.status}`));
+      return;
+    }
+    UPLOADS = UPLOADS.filter(u => u.id !== id);
+    UPLOADS_BY_FOLDER = new Map();
+    UPLOADS.forEach(u => {
+      if (!UPLOADS_BY_FOLDER.has(u.folder_id)) UPLOADS_BY_FOLDER.set(u.folder_id, []);
+      UPLOADS_BY_FOLDER.get(u.folder_id).push(u);
+    });
+    render();
+  } catch (e) {
+    alert('Delete failed: ' + e.message);
+  }
+}
+
 async function deleteFile(url, filename, displayName, rootSlug, subSlug) {
   if (!isAdmin()) return;
   const label = displayName || filename || url || 'this file';
@@ -706,9 +877,14 @@ document.getElementById('modal-save').addEventListener('click', saveFolderModal)
 document.getElementById('folder-modal').addEventListener('click', (e) => {
   if (e.target.id === 'folder-modal') closeFolderModal();
 });
+document.getElementById('upload-save').addEventListener('click', saveUpload);
+document.getElementById('upload-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'upload-modal') closeUploadModal();
+});
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && document.getElementById('folder-modal').classList.contains('open')) {
-    closeFolderModal();
+  if (e.key === 'Escape') {
+    if (document.getElementById('folder-modal').classList.contains('open')) closeFolderModal();
+    if (document.getElementById('upload-modal').classList.contains('open')) closeUploadModal();
   }
 });
 
