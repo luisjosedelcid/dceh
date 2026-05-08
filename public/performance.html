@@ -241,7 +241,10 @@
 
       <!-- Holdings -->
       <div style="margin-top:24px">
-        <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin-bottom:10px">Holdings</h3>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;gap:12px">
+          <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:0">Holdings</h3>
+          <span id="holdings-live-badge" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.08em">○ loading…</span>
+        </div>
         <div style="overflow-x:auto;border:1px solid var(--rule)">
           <table class="tbl" id="tbl-holdings"></table>
         </div>
@@ -757,6 +760,8 @@ function renderDashboard(j){
 
   // Holdings table
   renderHoldings(j.holdings);
+  // Layer live Finnhub quotes on top of the static close-of-yesterday snapshot
+  liveOverlay(j.holdings);
 
   // Equity curve
   renderEquityChart(j.series);
@@ -909,16 +914,16 @@ function renderHoldings(holdings){
     const irr = h.irr_annualized;
     const irrCls = irr>=0.12?'pos':(irr>=0?'':'neg');
     const irrTxt = irr!=null ? signedPct(irr) : '—';
-    html += `<tr>
+    html += `<tr data-ticker="${escapeAttr(h.ticker)}">
       <td>${tickerLinkHtml(h.ticker)}</td>
       <td class="r">${Number(h.qty).toLocaleString('en-US',{maximumFractionDigits:4})}</td>
       <td class="r">${h.avg_cost!=null?Number(h.avg_cost).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4}):'—'}</td>
-      <td class="r">${h.last_price!=null?Number(h.last_price).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4}):'—'}</td>
+      <td class="r" data-cell="last_price">${h.last_price!=null?Number(h.last_price).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4}):'—'}</td>
       <td class="r">${h.cost_basis!=null?'$'+Number(h.cost_basis).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
-      <td class="r">${h.market_value!=null?'$'+Number(h.market_value).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
-      <td class="r ${pnlCls}" style="font-weight:600">${signedUsd(pnl)}${ret!=null?' <span style="font-weight:400;color:var(--gray-mid)">('+signedPct(ret,1)+')</span>':''}</td>
-      <td class="r ${irrCls}" style="font-weight:600">${irrTxt}</td>
-      <td class="r">${h.weight_pct!=null?(h.weight_pct*100).toFixed(2)+'%':'—'}</td>
+      <td class="r" data-cell="market_value">${h.market_value!=null?'$'+Number(h.market_value).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
+      <td class="r ${pnlCls}" style="font-weight:600" data-cell="unrealized">${signedUsd(pnl)}${ret!=null?' <span style="font-weight:400;color:var(--gray-mid)">('+signedPct(ret,1)+')</span>':''}</td>
+      <td class="r ${irrCls}" style="font-weight:600" data-cell="irr">${irrTxt}</td>
+      <td class="r" data-cell="weight">${h.weight_pct!=null?(h.weight_pct*100).toFixed(2)+'%':'—'}</td>
       <td class="r">${renderAlertCell(h.ticker,'floor',h.last_price)}</td>
       <td class="r">${renderAlertCell(h.ticker,'ceiling',h.last_price)}</td>
       <td class="r">${fmtHoldingPeriod(h.days_held)}</td>
@@ -926,6 +931,132 @@ function renderHoldings(holdings){
   }
   html += '</tbody>';
   tbl.innerHTML = html;
+  // Cache holdings for the live overlay
+  window.__lastHoldings = holdings;
+}
+
+function escapeAttr(s){ return String(s).replace(/["&<>]/g, c => ({'"':'&quot;','&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+// ── Live price overlay ────────────────────────────────────
+// Supabase prices_daily holds yesterday's official close. While the US market
+// is open today, we layer Finnhub live quotes on top of the holdings table
+// and the Market Value / Unrealized P&L mini-stats. NAV/TWR/IRR (which depend
+// on the historical series) intentionally remain on the official close.
+// Skipped tickers: anything that doesn't look like an equity symbol (e.g.
+// CUSIPs like 91282CBT7), since Finnhub will return c=0 for those.
+async function liveOverlay(holdings){
+  if(!Array.isArray(holdings) || holdings.length === 0) return;
+  const eligible = holdings.filter(h => h.ticker && /^[A-Z][A-Z0-9.\-]{0,9}$/.test(h.ticker));
+  if (eligible.length === 0) return;
+
+  let badge = document.getElementById('holdings-live-badge');
+  if (badge) badge.textContent = '○ fetching live…';
+
+  const results = await Promise.all(eligible.map(async h => {
+    try {
+      const r = await fetch('/api/finnhub-quote?symbol=' + encodeURIComponent(h.ticker));
+      if (!r.ok) return null;
+      const q = await r.json();
+      const px = Number(q && q.c);
+      if (!isFinite(px) || px <= 0) return null;
+      return { ticker: h.ticker, price: px, prev_close: Number(q.pc) || null };
+    } catch (e) { return null; }
+  }));
+
+  // Build live updates per holding and totals
+  let liveTotalMv = 0;
+  let liveTotalCost = 0;
+  let liveTotalUnrealized = 0;
+  let anyUpdated = false;
+  const updates = new Map();
+  for (let i = 0; i < eligible.length; i++) {
+    const h = eligible[i];
+    const live = results[i];
+    if (!live) {
+      // Fall back to whatever the snapshot had
+      if (h.market_value != null) liveTotalMv += h.market_value;
+      if (h.cost_basis != null) liveTotalCost += h.cost_basis;
+      if (h.unrealized_pnl != null) liveTotalUnrealized += h.unrealized_pnl;
+      continue;
+    }
+    anyUpdated = true;
+    const newMv = h.qty * live.price;
+    const newPnl = newMv - (h.cost_basis || 0);
+    liveTotalMv += newMv;
+    liveTotalCost += (h.cost_basis || 0);
+    liveTotalUnrealized += newPnl;
+    // Per-position annualized IRR using new MV
+    let newIrr = h.irr_annualized;
+    if (h.days_held && h.cost_basis > 0 && newMv > 0) {
+      const years = h.days_held / 365;
+      if (years > 0) newIrr = Math.pow(newMv / h.cost_basis, 1/years) - 1;
+    }
+    updates.set(h.ticker, { live, newMv, newPnl, newIrr, h });
+  }
+  // Add MV from non-eligible holdings (CUSIPs etc.) using snapshot values
+  for (const h of holdings) {
+    if (eligible.find(e => e.ticker === h.ticker)) continue;
+    if (h.market_value != null) liveTotalMv += h.market_value;
+  }
+
+  // Apply per-row updates
+  for (const [ticker, u] of updates) {
+    const tr = document.querySelector(`#tbl-holdings tr[data-ticker="${escapeAttr(ticker)}"]`);
+    if (!tr) continue;
+    const lpCell = tr.querySelector('[data-cell="last_price"]');
+    const mvCell = tr.querySelector('[data-cell="market_value"]');
+    const upCell = tr.querySelector('[data-cell="unrealized"]');
+    const irrCell = tr.querySelector('[data-cell="irr"]');
+    const wCell = tr.querySelector('[data-cell="weight"]');
+    if (lpCell) lpCell.textContent = u.live.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4});
+    if (mvCell) mvCell.textContent = '$' + u.newMv.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    if (upCell) {
+      const ret = (u.h.cost_basis > 0) ? u.newPnl / u.h.cost_basis : null;
+      const cls = u.newPnl > 0 ? 'pos' : (u.newPnl < 0 ? 'neg' : '');
+      upCell.className = 'r ' + cls;
+      upCell.style.fontWeight = '600';
+      upCell.innerHTML = signedUsd(u.newPnl) + (ret != null ? ' <span style="font-weight:400;color:var(--gray-mid)">(' + signedPct(ret, 1) + ')</span>' : '');
+    }
+    if (irrCell && u.newIrr != null) {
+      const cls = u.newIrr >= 0.12 ? 'pos' : (u.newIrr >= 0 ? '' : 'neg');
+      irrCell.className = 'r ' + cls;
+      irrCell.style.fontWeight = '600';
+      irrCell.textContent = signedPct(u.newIrr);
+    }
+    if (wCell && liveTotalMv > 0) wCell.textContent = ((u.newMv / liveTotalMv) * 100).toFixed(2) + '%';
+  }
+  // Update weights of non-eligible rows so they stay in sync with the new MV total
+  for (const h of holdings) {
+    if (updates.has(h.ticker)) continue;
+    if (h.market_value == null || liveTotalMv <= 0) continue;
+    const tr = document.querySelector(`#tbl-holdings tr[data-ticker="${escapeAttr(h.ticker)}"]`);
+    if (!tr) continue;
+    const wCell = tr.querySelector('[data-cell="weight"]');
+    if (wCell) wCell.textContent = ((h.market_value / liveTotalMv) * 100).toFixed(2) + '%';
+  }
+
+  if (anyUpdated) {
+    // Update mini-stats: Market Value and Unrealized P&L (and the realized stays as snapshot)
+    const mvEl = document.getElementById('st-mv');
+    if (mvEl) mvEl.textContent = fmtUsdShort(liveTotalMv);
+    // Total unrealized = sum across ALL holdings; for non-eligible we use snapshot value
+    let unrealizedAll = liveTotalUnrealized;
+    for (const h of holdings) {
+      if (eligible.find(e => e.ticker === h.ticker)) continue;
+      if (h.unrealized_pnl != null) unrealizedAll += h.unrealized_pnl;
+    }
+    const upEl = document.getElementById('st-unrealized');
+    if (upEl) { upEl.textContent = signedUsd(unrealizedAll); setSignClass(upEl, unrealizedAll); }
+  }
+
+  if (badge) {
+    if (anyUpdated) {
+      const ts = new Date().toLocaleTimeString('en-US', { hour12:false, hour:'2-digit', minute:'2-digit' });
+      badge.innerHTML = '<span style="color:var(--green)">●</span> Live · ' + ts;
+    } else {
+      badge.textContent = '○ live unavailable';
+    }
+  }
 }
 
 function renderEquityChart(series){
