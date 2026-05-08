@@ -186,6 +186,21 @@
   .pill-list{display:flex;flex-wrap:wrap;gap:6px}
   .pill-list span{font-size:11px;background:var(--gold-dim);color:var(--gold);padding:3px 9px;letter-spacing:0.04em}
 
+  /* v3.2 framework rendering */
+  .v32-banner{display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#fff;background:var(--navy);padding:3px 9px;margin-left:8px;border-radius:2px}
+  .v32-table{width:100%;border-collapse:collapse;margin-top:6px;font-size:12px}
+  .v32-table th{background:var(--navy);color:#fff;text-align:left;padding:8px 10px;font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase}
+  .v32-table td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top;line-height:1.5;color:var(--ink)}
+  .v32-table tbody tr:nth-child(odd) td{background:#fafaf7}
+  .v32-table tbody tr:nth-child(even) td{background:#fff}
+  .sem-cell{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.06em;color:#fff;padding:3px 9px;border-radius:2px;min-width:60px;text-align:center}
+  .sem-Verde,.sem-Validado,.sem-NoActivado,.sem-ThesisIntact{background:#1F5F3F}
+  .sem-Amarillo,.sem-Parcial,.sem-Debilitado,.sem-Watch,.sem-ThresholdsRecalibrated,.sem-ThesisEvolved{background:#B88B47}
+  .sem-Rojo,.sem-Roto,.sem-Activado,.sem-ThesisBroken{background:#7A1010}
+  .v32-pillar-title{font-weight:700;color:var(--navy);font-size:12px}
+  .v32-pillar-evidence{font-size:11px;color:var(--gray-txt);margin-top:3px;line-height:1.5}
+  .v32-section-meta{font-size:11px;color:var(--gray-mid);margin-bottom:6px;font-style:italic}
+
   footer{padding:24px 48px;background:var(--navy);color:rgba(255,255,255,0.55);font-size:11px;letter-spacing:0.04em;display:flex;justify-content:space-between;border-top:2px solid var(--gold)}
 
   @media (max-width: 720px){
@@ -530,6 +545,241 @@ function adminToken() {
   catch(e) { return tokenAdmin(); }
 }
 
+// ============================================================
+// v3.2 Framework rendering — Investment Memo block
+// Reads JSONB columns populated by Supabase migration v32_journal_schema:
+//   thesis_pillars, variant_perception, business_quality, value_drivers,
+//   kpi_framework, expected_return, catalysts_v32, failure_modes,
+//   kill_criteria_v32 — plus scalar fields like target_irr, conviction,
+//   position_target, classification_v32.
+// ============================================================
+function semCell(label) {
+  if (label === null || label === undefined || label === '') return '';
+  const safe = String(label);
+  const cls = 'sem-' + safe.replace(/[^A-Za-z]/g, '');
+  return `<span class="sem-cell ${cls}">${escapeHtml(safe)}</span>`;
+}
+function fmtPctSigned(v) {
+  if (v === null || v === undefined || v === '') return '—';
+  const n = Number(v);
+  if (Number.isNaN(n)) return escapeHtml(String(v));
+  const sign = n > 0 ? '+' : (n < 0 ? '\u2212' : '');
+  return sign + Math.abs(n).toFixed(1) + '%';
+}
+function fmtPct(v, dp) {
+  if (v === null || v === undefined || v === '') return '—';
+  const n = Number(v);
+  if (Number.isNaN(n)) return escapeHtml(String(v));
+  return n.toFixed(dp == null ? 1 : dp) + '%';
+}
+function renderV32Block(r) {
+  if (!r || r.framework_version !== 'v3.2') return '';
+  const pillars = Array.isArray(r.thesis_pillars) ? r.thesis_pillars : [];
+  const variantText = r.variant_perception || '';
+  const variantPoints = Array.isArray(r.variant_evidence) ? r.variant_evidence : [];
+  const bq = r.business_quality || {};
+  const bqLabels = {
+    pricing_power:            'Pricing power',
+    capital_allocation:       'Capital allocation',
+    management_quality:       'Management quality',
+    reinvestment_runway:      'Reinvestment runway',
+    competitive_advantage:    'Competitive advantage',
+    balance_sheet_durability: 'Balance sheet durability',
+    moat_type:                'Moat type',
+    moat_strength:            'Moat strength',
+    capital_intensity:        'Capital intensity',
+    cyclicality:              'Cyclicality',
+    quality_score:            'Quality score'
+  };
+  const bqRows = Object.keys(bq)
+    .filter(k => bq[k] !== null && bq[k] !== undefined && bq[k] !== '')
+    .map(k => [bqLabels[k] || k, bq[k]]);
+  const valueDrivers = Array.isArray(r.value_drivers) ? r.value_drivers : [];
+  const kpis = Array.isArray(r.kpi_framework) ? r.kpi_framework : [];
+  const er = r.expected_return || {};
+  const irr5y     = er.implied_irr_5yr_pct;
+  const earnGrw   = er.earnings_growth_5yr_cagr_pct;
+  const multCh    = er.multiple_change_pct;
+  const capRet    = er.capital_returns_pct;
+  const hurdle    = er.hurdle_core_compounder_pct;
+  const marginBps = er.margin_vs_hurdle_bps;
+  const ivShare   = er.intrinsic_value_per_share_usd;
+  const bearIv    = er.bear_case_iv_usd;
+  const upside    = er.margin_vs_current_price_pct;
+  const asym      = er.asymmetry_ratio;
+  const erObs     = Array.isArray(er.observations) ? er.observations : [];
+  const erRows = [
+    ['Earnings growth (5y CAGR)',  fmtPctSigned(earnGrw)],
+    ['Multiple change',            fmtPctSigned(multCh)],
+    ['Capital returns yield',      fmtPctSigned(capRet)],
+    ['<b>Implied IRR (5y)</b>',    irr5y !== undefined && irr5y !== null ? `<b>${fmtPctSigned(irr5y)}</b>` : '—'],
+    ['Hurdle rate (Core Compounder)', fmtPct(hurdle)],
+    ['Margin vs hurdle',           marginBps !== undefined && marginBps !== null ? (Number(marginBps) >= 0 ? '+' : '\u2212') + Math.abs(Number(marginBps)).toFixed(0) + ' bps' : '—'],
+    ['Intrinsic value / share',    ivShare !== undefined && ivShare !== null ? 'USD ' + Number(ivShare).toFixed(2) : '—'],
+    ['Bear-case IV / share',       bearIv  !== undefined && bearIv  !== null ? 'USD ' + Number(bearIv).toFixed(2)  : '—'],
+    ['Upside vs current price',    fmtPctSigned(upside)],
+    ['Asymmetry ratio',            asym ? escapeHtml(String(asym)) : '—']
+  ].filter(row => row[1] && row[1] !== '—');
+  const cats = Array.isArray(r.catalysts_v32) ? r.catalysts_v32 : [];
+  const fms  = Array.isArray(r.failure_modes) ? r.failure_modes : [];
+  const kcs  = Array.isArray(r.kill_criteria_v32) ? r.kill_criteria_v32 : [];
+
+  // Snapshot meta
+  const metaParts = [];
+  if (r.position_size_band) metaParts.push(escapeHtml(r.position_size_band));
+  if (r.conviction_level) metaParts.push('Convicción: <b>' + escapeHtml(r.conviction_level) + '</b>');
+  if (r.position_size_target_pct !== undefined && r.position_size_target_pct !== null && r.position_size_target_pct !== '') {
+    const pct = Number(r.position_size_target_pct);
+    const pctVal = pct < 1 ? pct * 100 : pct; // stored as fraction (0.060) or percent (6.0)
+    metaParts.push('Position target: <b>' + pctVal.toFixed(1) + '%</b> NAV');
+  }
+  if (irr5y !== undefined && irr5y !== null) {
+    metaParts.push('Target IRR: <b>' + fmtPct(irr5y) + '</b>');
+  }
+  if (r.investment_horizon) metaParts.push('Horizonte: <b>' + escapeHtml(r.investment_horizon) + '</b>');
+  const metaLine = metaParts.length
+    ? `<div class="v32-section-meta">${metaParts.join(' &middot; ')}</div>`
+    : '';
+
+  // Snapshot — financial meta
+  const snapRows = [];
+  if (r.sector || r.industry) snapRows.push(['Sector / Industry', [r.sector, r.industry].filter(Boolean).map(escapeHtml).join(' · ')]);
+  if (r.current_price) snapRows.push(['Current price', 'USD ' + Number(r.current_price).toFixed(2)]);
+  if (r.market_cap_usd_b) snapRows.push(['Market cap', 'USD ' + Number(r.market_cap_usd_b).toFixed(0) + 'B']);
+  if (r.enterprise_value_usd_b) snapRows.push(['Enterprise value', 'USD ' + Number(r.enterprise_value_usd_b).toFixed(0) + 'B']);
+  if (r.reviewer) snapRows.push(['Reviewer', escapeHtml(r.reviewer)]);
+  if (r.decision_owner) snapRows.push(['Decision owner', escapeHtml(r.decision_owner)]);
+  const snapHtml = snapRows.length ? `
+    <div class="field">
+      <div class="field-lbl">Investment Snapshot</div>
+      <table class="v32-table"><tbody>
+        ${snapRows.map(row => `<tr><td style="width:42%;font-weight:600;color:var(--navy)">${row[0]}</td><td>${row[1]}</td></tr>`).join('')}
+      </tbody></table>
+    </div>` : '';
+
+  // Pillars
+  const pillarsHtml = pillars.length ? `
+    <div class="field">
+      <div class="field-lbl">Tesis · ${pillars.length} pilares</div>
+      ${pillars.map((p, i) => `
+        <div style="margin:8px 0 12px">
+          <div class="v32-pillar-title">${i + 1}. ${escapeHtml(p.title || p.pillar || '')}</div>
+          ${p.evidence ? `<div class="v32-pillar-evidence">${escapeHtml(p.evidence)}</div>` : ''}
+        </div>
+      `).join('')}
+    </div>` : '';
+
+  // Variant Perception
+  const variantHtml = (variantText || variantPoints.length) ? `
+    <div class="field">
+      <div class="field-lbl">Variant Perception</div>
+      ${variantText ? `<div style="margin:6px 0;line-height:1.5">${escapeHtml(variantText)}</div>` : ''}
+      ${variantPoints.length ? `<table class="v32-table" style="margin-top:6px">
+        <thead><tr><th style="width:25%">Área</th><th>Nuestra visión</th></tr></thead>
+        <tbody>
+          ${variantPoints.map(e => `<tr><td style="font-weight:600;color:var(--navy)">${escapeHtml(e.area || '')}</td><td>${escapeHtml(e.view || '')}</td></tr>`).join('')}
+        </tbody></table>` : ''}
+    </div>` : '';
+
+  // Business Quality table
+  const bqHtml = bqRows.length ? `
+    <div class="field">
+      <div class="field-lbl">Business Quality</div>
+      <table class="v32-table"><tbody>
+        ${bqRows.map(row => `<tr><td style="width:32%;font-weight:600;color:var(--navy)">${escapeHtml(row[0])}</td><td>${escapeHtml(String(row[1]))}</td></tr>`).join('')}
+      </tbody></table>
+    </div>` : '';
+
+  // Value drivers
+  const vdHtml = valueDrivers.length ? `
+    <div class="field">
+      <div class="field-lbl">Value Drivers</div>
+      <ul style="margin:6px 0 0 18px;padding:0">
+        ${valueDrivers.map(v => `<li style="margin:4px 0;font-size:12px">${escapeHtml(typeof v === 'string' ? v : JSON.stringify(v))}</li>`).join('')}
+      </ul>
+    </div>` : '';
+
+  // KPI Framework
+  const kpiHtml = kpis.length ? `
+    <div class="field">
+      <div class="field-lbl">KPI Framework — semáforos</div>
+      <table class="v32-table">
+        <thead><tr><th>KPI</th><th>Actual</th><th>Target</th><th>Estado</th></tr></thead>
+        <tbody>
+          ${kpis.map(k => `<tr>
+            <td>${escapeHtml(k.kpi || k.metric || '')}</td>
+            <td>${escapeHtml(k.current_value || k.actual || k.value || '')}</td>
+            <td>${escapeHtml(k.target || k.threshold || '')}</td>
+            <td>${semCell(k.semaphore || k.status || '')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : '';
+
+  // Expected Return
+  const erHtml = (erRows.length || erObs.length) ? `
+    <div class="field">
+      <div class="field-lbl">Expected Return — IRR Decomposition</div>
+      ${erRows.length ? `<table class="v32-table"><tbody>
+        ${erRows.map(row => `<tr><td style="width:55%;color:var(--navy)">${row[0]}</td><td>${row[1]}</td></tr>`).join('')}
+      </tbody></table>` : ''}
+      ${erObs.length ? `<ul style="margin:8px 0 0 18px;padding:0">${erObs.map(o => `<li style="margin:3px 0;font-size:11px;color:var(--gray-txt)">${escapeHtml(o)}</li>`).join('')}</ul>` : ''}
+    </div>` : '';
+
+  // Catalysts
+  const catHtml = cats.length ? `
+    <div class="field">
+      <div class="field-lbl">Catalizadores</div>
+      <table class="v32-table">
+        <thead><tr><th>Catalizador</th><th>Timing</th><th>Impacto</th></tr></thead>
+        <tbody>
+          ${cats.map(c => `<tr>
+            <td style="font-weight:600;color:var(--navy)">${escapeHtml(c.catalyst || c.title || '')}</td>
+            <td>${escapeHtml(c.timing || c.horizon || c.time_horizon || '')}</td>
+            <td>${escapeHtml(c.impact || '')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : '';
+
+  // Failure modes
+  const fmHtml = fms.length ? `
+    <div class="field">
+      <div class="field-lbl">Failure Modes (Pre-Mortem)</div>
+      <table class="v32-table">
+        <thead><tr><th>Failure Mode</th><th>Indicador</th><th>Probabilidad</th><th>Severidad</th></tr></thead>
+        <tbody>
+          ${fms.map(f => `<tr>
+            <td style="font-weight:600;color:var(--navy)">${escapeHtml(f.failure_mode || f.title || '')}</td>
+            <td>${escapeHtml(f.indicator || f.trigger || f.signal || '')}</td>
+            <td>${escapeHtml(f.probability || f.prob || '')}</td>
+            <td>${escapeHtml(f.severity || f.impact || '')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : '';
+
+  // Kill criteria
+  const kcHtml = kcs.length ? `
+    <div class="field">
+      <div class="field-lbl">Kill Criteria</div>
+      <ul style="margin:6px 0 0 18px;padding:0">
+        ${kcs.map(k => `<li style="margin:4px 0;font-size:12px">${escapeHtml(typeof k === 'string' ? k : (k.criterion || k.title || JSON.stringify(k)))}</li>`).join('')}
+      </ul>
+    </div>` : '';
+
+  // Final recommendation / executive summary
+  const recHtml = (r.executive_summary || r.final_recommendation || r.position_sizing_rationale) ? `
+    <div class="field">
+      <div class="field-lbl">Executive Summary &amp; Recommendation</div>
+      ${r.executive_summary ? `<div style="margin:6px 0;line-height:1.5">${escapeHtml(r.executive_summary)}</div>` : ''}
+      ${r.final_recommendation ? `<div style="margin:6px 0"><b>Recomendación:</b> ${escapeHtml(r.final_recommendation)}</div>` : ''}
+      ${r.position_sizing_rationale ? `<div style="margin:6px 0;font-size:11px;color:var(--gray-txt)"><b>Position sizing:</b> ${escapeHtml(r.position_sizing_rationale)}</div>` : ''}
+    </div>` : '';
+
+  return metaLine + snapHtml + pillarsHtml + variantHtml + bqHtml + vdHtml + kpiHtml + erHtml + catHtml + fmHtml + kcHtml + recHtml;
+}
+
 function entryActionsBar(id) {
   if (!adminAvailable()) {
     return `<div class="entry-actions"><button class="btn-pdf" onclick="event.stopPropagation();printDecisionEntry(${id})">Export PDF</button></div>`;
@@ -571,11 +821,12 @@ function renderDecisionDetail(id) {
       ${r.linked_holding ? `<div><div class="k">Linked</div><div class="v" style="font-size:12px">${escapeHtml(r.linked_holding)}</div></div>` : ''}
     </div>
     <div class="field">
-      <div class="field-lbl">Thesis</div>
+      <div class="field-lbl">Thesis ${r.framework_version === 'v3.2' ? '<span class="v32-banner">v3.2</span>' : ''}</div>
       <div class="field-val">${escapeHtml(r.thesis || '')}</div>
     </div>
-    ${cats.length ? `<div class="field"><div class="field-lbl">Catalysts</div><div class="pill-list">${cats.map(c => `<span>${escapeHtml(c)}</span>`).join('')}</div></div>` : ''}
-    ${r.pre_mortem ? `<div class="field"><div class="field-lbl">Pre-mortem (what would change my mind)</div><div class="field-val">${escapeHtml(r.pre_mortem)}</div></div>` : ''}
+    ${r.framework_version === 'v3.2' ? renderV32Block(r) : ''}
+    ${(r.framework_version !== 'v3.2' && cats.length) ? `<div class="field"><div class="field-lbl">Catalysts</div><div class="pill-list">${cats.map(c => `<span>${escapeHtml(c)}</span>`).join('')}</div></div>` : ''}
+    ${(r.framework_version !== 'v3.2' && r.pre_mortem) ? `<div class="field"><div class="field-lbl">Pre-mortem (what would change my mind)</div><div class="field-val">${escapeHtml(r.pre_mortem)}</div></div>` : ''}
     <div class="field"><div class="field-lbl">Reviews</div>
       ${reviewBlock('3-month', '3m')}
       ${reviewBlock('6-month', '6m')}
