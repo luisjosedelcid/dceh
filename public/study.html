@@ -81,8 +81,7 @@
       <a href="/portfolio.html">Portfolio</a>
       <a href="/news.html">News</a>
       <a href="/dataroom.html">Data Room</a>
-      <a href="/reporting.html">Reporting</a>
-      <a href="/performance.html">Performance</a>
+            <a href="/performance.html">Performance</a>
       <a href="/research.html">Research</a>
       <a href="/calendar.html">Calendar</a>
     </nav>
@@ -140,7 +139,7 @@ function renderItems(section, items) {
   if (countEl) countEl.textContent = items.length;
   if (items.length === 0) {
     status.textContent = '';
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">No articles yet. Add some via <a href="/reporting.html" style="color:var(--gold)">Reporting</a> → Study tab.</div>`;
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">No articles yet.</div>`;
     return;
   }
   status.textContent = items.length + ' article' + (items.length === 1 ? '' : 's');

@@ -15,7 +15,7 @@
     { type: 'page', title: 'Performance',          desc: 'Live P&L, holdings, alerts, equity curve', url: '/performance.html', keywords: 'portfolio performance holdings positions pnl live alerts equity curve twr irr' },
     { type: 'page', title: 'News',                 desc: 'Filtered headlines for portfolio',   url: '/news.html',        keywords: 'news headlines press articles' },
     { type: 'page', title: 'Data Room',            desc: 'Reference filings and source data',  url: '/dataroom.html',    keywords: 'data room filings 10-K 10-Q sources documents' },
-    { type: 'page', title: 'Reporting Hub',        desc: 'Monthly close, committee, annual',   url: '/reporting.html',   keywords: 'reporting reports monthly close committee annual hub' },
+    // { type: 'page', title: 'Reporting Hub', ... } // archived 2026-05-08: replaced by Data Room
     { type: 'page', title: 'Research Pipeline',    desc: 'Kanban of ideas in progress',        url: '/research.html',    keywords: 'research pipeline kanban ideas backlog supabase' },
     { type: 'page', title: 'Calendar',              desc: 'Earnings dates for covered companies',url: '/calendar.html',    keywords: 'calendar earnings dates schedule events upcoming reports' },
   ];
@@ -442,7 +442,7 @@
         // The links container is the div that contains anchors to /research.html, /news.html, etc.
         const candidates = header.querySelectorAll('div');
         for (const div of candidates) {
-          if (div.querySelector('a[href="/reporting.html"]') || div.querySelector('a[href="/research.html"]')) {
+          if (div.querySelector('a[href="/research.html"]')) {
             nav = div;
             isHomeFallback = true;
             break;

@@ -254,8 +254,7 @@
       <a href="/portfolio.html">Portfolio</a>
       <a href="/news.html">News</a>
       <a href="/dataroom.html">Data Room</a>
-      <a href="/reporting.html">Reporting</a>
-      <a href="/performance.html">Performance</a>
+            <a href="/performance.html">Performance</a>
       <a href="/research.html">Research</a>
       <a href="/calendar.html">Calendar</a>
     </nav>
@@ -492,7 +491,7 @@ function renderTable(rows) {
   document.getElementById('count-all').textContent = state.items.length;
   if (rows.length === 0) {
     status.textContent = '';
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty">No decisions match these filters. Add entries via <a href="/reporting.html" style="color:var(--gold)">Reporting</a> → Decision Journal tab.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty">No decisions match these filters.</div></td></tr>`;
     return;
   }
   status.textContent = rows.length + ' decision' + (rows.length === 1 ? '' : 's');

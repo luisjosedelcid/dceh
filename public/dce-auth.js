@@ -335,12 +335,12 @@
     // 2. Standard nav (.hnav on most pages)
     const hnav = document.querySelector('.hnav');
     if (hnav) return hnav;
-    // 3. Home page: container that holds links to /research.html or /reporting.html
+    // 3. Home page: container that holds links to /research.html
     const header = document.querySelector('header');
     if (header) {
       const divs = header.querySelectorAll('div');
       for (const div of divs) {
-        if (div.querySelector('a[href="/reporting.html"]') || div.querySelector('a[href="/research.html"]')) {
+        if (div.querySelector('a[href="/research.html"]')) {
           return div;
         }
       }
@@ -368,7 +368,7 @@
     ]},
     // Performance: absorbe Portfolio (eliminado) + IV Tracking (oculto). Cockpit movido a top-level.
     { id:'performance', label:'Performance', href:'/performance.html', single:true },
-    { id:'reporting', label:'Reporting', href:'/reporting.html', single:true },
+    // { id:'reporting', label:'Reporting', href:'/reporting.html', single:true }, // archived 2026-05-08: Generate Report movido a /performance.html, monthly close vive en Data Room.
     { id:'dataroom',  label:'Data Room', href:'/dataroom.html',  single:true },
   ];
 
@@ -524,12 +524,12 @@
   function _autoMount() {
     // Always inject shared CSS (nav padding override, modal styles), even in 'manual' mode.
     // Manual mode only opts out of mounting the Sign Out button — pages that handle auth
-    // themselves (e.g. reporting.html) still need the canonical nav styling.
+    // themselves (e.g. settings.html) still need the canonical nav styling.
     _injectStyles();
     // Always group the nav (works for both 'manual' and auto-mount pages)
     const hnavForGroup = document.querySelector('.hnav');
     if (hnavForGroup) _groupNav(hnavForGroup);
-    // Settings gear: mount even in 'manual' mode (so reporting/performance/settings pages
+    // Settings gear: mount even in 'manual' mode (so performance/settings pages
     // still expose the gear next to their own Sign Out button)
     if (document.body.dataset.dceAuth === 'manual') {
       const t = _findNavTarget();
@@ -563,7 +563,7 @@
   // ── Role-based UI hiding ────────────────────────────────────────────
   // Admin-only routes: hidden from nav for non-admin authenticated users.
   // Backwards-compat: sessions without role are treated as admin.
-  const ADMIN_ONLY_HREFS = ['/reporting.html', '/reporting', '/performance.html', '/performance', '/premortem.html', '/premortem', '/settings.html', '/settings'];
+  const ADMIN_ONLY_HREFS = ['/performance.html', '/performance', '/premortem.html', '/premortem', '/settings.html', '/settings'];
   function _applyRoleVisibility() {
     const u = user();
     if (!u) return; // not signed in — leave nav alone
