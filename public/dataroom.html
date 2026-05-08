@@ -69,7 +69,7 @@
   .folder-actions button:hover{background:var(--gold-dim)}
   .folder-actions button.del{color:var(--red);border-color:rgba(155,35,53,0.30)}
   .folder-actions button.del:hover{background:rgba(155,35,53,0.06)}
-  .folder-system-tag{display:inline-block;font-size:8.5px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:1px 6px;background:var(--gold-dim);color:var(--gold);margin-left:6px;vertical-align:middle}
+
 
   /* SUBFOLDER GRID */
   .subfolder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px}
@@ -102,6 +102,9 @@
   .file-detail{font-size:11px;color:var(--gray-mid)}
   .file-uploaded{font-size:10px;color:var(--gray-mid);letter-spacing:0.05em;flex-shrink:0;margin-right:12px}
   .file-action{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);flex-shrink:0}
+  .file-del-btn{font-family:inherit;font-size:14px;line-height:1;width:24px;height:24px;border:1px solid rgba(155,35,53,0.30);background:var(--white);color:var(--red);cursor:pointer;flex-shrink:0;margin-left:8px;padding:0;display:inline-flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s,background .15s}
+  .file-item:hover .file-del-btn{opacity:1}
+  .file-del-btn:hover{background:rgba(155,35,53,0.08)}
 
   .empty{text-align:center;padding:40px 20px;color:var(--gray-mid);font-size:13px;background:var(--white);border:1px dashed var(--rule)}
   .empty-icon{font-size:24px;color:var(--gold);margin-bottom:8px;opacity:0.5}
@@ -203,6 +206,8 @@
 // ──────────────────────────────────────────────────────────────────
 let FILE_INDEX = null;       // legacy /data/dataroom_index.json (files only)
 let FOLDERS = [];            // flat array of folders from Supabase
+let HIDDEN_FILES = new Set(); // urls of files hidden via tombstone table
+let HIDDEN_BY_FILENAME = new Set(); // fallback match by filename
 let BY_ID = new Map();
 let BY_PARENT = new Map();
 let ROOTS = [];
@@ -254,6 +259,20 @@ async function loadAll() {
   } catch {
     FOLDERS = legacyFoldersFromJson();
   }
+
+  // 3) Hidden file tombstones (admin endpoint, public-readable filter)
+  try {
+    const r3 = await fetch('/api/admin/dataroom-files', { headers: authHeaders() });
+    if (r3.ok) {
+      const j = await r3.json();
+      HIDDEN_FILES = new Set();
+      HIDDEN_BY_FILENAME = new Set();
+      (j.items || []).forEach(t => {
+        if (t.url) HIDDEN_FILES.add(t.url);
+        if (t.filename) HIDDEN_BY_FILENAME.add(t.filename);
+      });
+    }
+  } catch {}
 
   buildIndices();
   render();
@@ -317,6 +336,13 @@ function ancestorsOf(id) {
 // ──────────────────────────────────────────────────────────────────
 // Files (still served from JSON, keyed by *root* slug + optional sub-slug)
 // ──────────────────────────────────────────────────────────────────
+function fileVisible(f) {
+  if (!f) return false;
+  if (f.url && HIDDEN_FILES.has(f.url)) return false;
+  if (f.filename && HIDDEN_BY_FILENAME.has(f.filename)) return false;
+  return true;
+}
+
 function filesForFolder(folder) {
   if (!FILE_INDEX || !FILE_INDEX.folders || !folder) return [];
   const chain = ancestorsOf(folder.id);
@@ -324,13 +350,14 @@ function filesForFolder(folder) {
   const rootSlug = chain[0].slug;
   const root = FILE_INDEX.folders[rootSlug];
   if (!root) return [];
-  if (chain.length === 1) return root.files || [];
-  // Sub: match by slug under root.subfolders
-  const subSlug = chain[1].slug;
-  const sub = root.subfolders && root.subfolders[subSlug];
-  if (!sub) return [];
-  // Only return at the leaf the user is looking at; deeper levels (created via UI) currently have 0 files.
-  return chain.length === 2 ? (sub.files || []) : [];
+  let files = [];
+  if (chain.length === 1) files = root.files || [];
+  else if (chain.length === 2) {
+    const subSlug = chain[1].slug;
+    const sub = root.subfolders && root.subfolders[subSlug];
+    files = (sub && sub.files) || [];
+  }
+  return files.filter(fileVisible);
 }
 
 function countFilesRecursive(folder) {
@@ -346,13 +373,17 @@ function fileTypeClass(t) {
   return ['pdf','docx','xlsx','json'].includes(t) ? t : 'pdf';
 }
 
-function fileItemHTML(file) {
+function fileItemHTML(file, ctx) {
   const type = (file.type || 'pdf').toLowerCase();
   const isLink = file.url && file.url !== '#';
   const target = isLink && file.url.startsWith('http') ? ' target="_blank"' : '';
   const downloadAttr = isLink ? ' download' : '';
   const action = isLink ? 'Download ↓' : '— pending';
   const dateStr = file.uploaded || '';
+  const admin = isAdmin();
+  const delBtn = admin
+    ? `<button class="file-del-btn" title="Delete file" onclick="event.preventDefault();event.stopPropagation();deleteFile(${JSON.stringify(file.url || '').replace(/"/g,'&quot;')}, ${JSON.stringify(file.filename || '').replace(/"/g,'&quot;')}, ${JSON.stringify(file.name || '').replace(/"/g,'&quot;')}, ${JSON.stringify(ctx && ctx.rootSlug || '').replace(/"/g,'&quot;')}, ${JSON.stringify(ctx && ctx.subSlug || '').replace(/"/g,'&quot;')})">×</button>`
+    : '';
   return `<a class="file-item" href="${file.url || '#'}"${target}${downloadAttr} ${!isLink ? 'onclick="return false" style="cursor:default;opacity:0.55"' : ''}>
     <div class="file-type ${fileTypeClass(type)}">${type}</div>
     <div class="file-info">
@@ -361,6 +392,7 @@ function fileItemHTML(file) {
     </div>
     <div class="file-uploaded">${dateStr}</div>
     <div class="file-action">${action}</div>
+    ${delBtn}
   </a>`;
 }
 
@@ -382,7 +414,7 @@ function renderToolbar() {
   let html = '';
   if (admin) {
     html += `<button class="btn primary" onclick="openCreateModal('${currentFolderId || ''}')">+ New folder</button>`;
-    if (here && !here.is_system) {
+    if (here) {
       html += `<button class="btn" onclick="openEditModal('${here.id}')">Rename</button>`;
       html += `<button class="btn danger" onclick="deleteFolder('${here.id}')">Delete</button>`;
     }
@@ -420,8 +452,7 @@ function renderRoot() {
     const count = countFilesRecursive(f);
     const subCount = childrenOf(f.id).length;
     const meta = subCount > 0 ? `${count} ${count === 1 ? 'file' : 'files'} · ${subCount} sub` : `${count} ${count === 1 ? 'file' : 'files'}`;
-    const sysTag = f.is_system ? '<span class="folder-system-tag">System</span>' : '';
-    const actions = admin && !f.is_system
+    const actions = admin
       ? `<div class="folder-actions" onclick="event.stopPropagation()">
            <button onclick="openEditModal('${f.id}')">Edit</button>
            <button class="del" onclick="deleteFolder('${f.id}')">×</button>
@@ -430,7 +461,7 @@ function renderRoot() {
     return `<div class="folder" onclick="openFolder('${f.id}')">
       ${actions}
       <div class="folder-num">${num}</div>
-      <div class="folder-name">${escapeHtml(cleanName)}${sysTag}</div>
+      <div class="folder-name">${escapeHtml(cleanName)}</div>
       <div class="folder-desc">${escapeHtml(f.description || '')}</div>
       <div class="folder-meta">
         <span class="folder-count">${meta}</span>
@@ -468,7 +499,7 @@ function renderFolder(id) {
       if (m.status) tags.push(`<span class="subfolder-tag">${escapeHtml(m.status)}</span>`);
       const fcount = countFilesRecursive(sf);
       const detail = m.company || sf.description || '';
-      const actions = admin && !sf.is_system
+      const actions = admin
         ? `<div class="subfolder-actions" onclick="event.stopPropagation()">
              <button onclick="openEditModal('${sf.id}')">Edit</button>
              <button class="del" onclick="deleteFolder('${sf.id}')">×</button>
@@ -486,7 +517,12 @@ function renderFolder(id) {
 
   if (files.length > 0) {
     html += '<div class="section-title">Files</div>';
-    html += files.map(fileItemHTML).join('');
+    const chain = ancestorsOf(folder.id);
+    const ctx = {
+      rootSlug: chain[0] ? chain[0].slug : '',
+      subSlug: chain[1] ? chain[1].slug : '',
+    };
+    html += files.map(f => fileItemHTML(f, ctx)).join('');
   } else if (subs.length === 0) {
     html += `<div class="empty">
       <div class="empty-icon">∅</div>
@@ -533,9 +569,6 @@ function openEditModal(folderId) {
   if (!isAdmin()) return alert('Sign in as admin to manage folders.');
   const f = BY_ID.get(folderId);
   if (!f) return;
-  if (f.is_system) {
-    return alert('System folders cannot be renamed or deleted.');
-  }
   modalState = { mode: 'edit', parentId: f.parent_id, folderId };
   document.getElementById('modal-title').textContent = 'Rename folder';
   const parentName = f.parent_id ? (BY_ID.get(f.parent_id)?.name || '—') : 'Data Room (root)';
@@ -608,12 +641,11 @@ async function deleteFolder(id) {
   if (!isAdmin()) return;
   const f = BY_ID.get(id);
   if (!f) return;
-  if (f.is_system) { alert('System folders cannot be deleted.'); return; }
   const kids = childrenOf(id);
   const fileCount = countFilesRecursive(f);
   let msg = `Delete folder "${f.name}"?`;
   if (kids.length > 0) msg += `\n\nThis will ALSO delete ${kids.length} subfolder${kids.length === 1 ? '' : 's'} and any nested folders.`;
-  if (fileCount > 0) msg += `\n\nNote: ${fileCount} file${fileCount === 1 ? '' : 's'} will become orphaned in the file index until you remove them manually.`;
+  if (fileCount > 0) msg += `\n\nThe ${fileCount} file${fileCount === 1 ? '' : 's'} inside will be hidden from the Data Room.`;
   if (!confirm(msg)) return;
 
   try {
@@ -635,6 +667,33 @@ async function deleteFolder(id) {
     if (currentFolderId && toRemove.has(currentFolderId)) {
       currentFolderId = f.parent_id || null;
     }
+    render();
+  } catch (e) {
+    alert('Delete failed: ' + e.message);
+  }
+}
+
+async function deleteFile(url, filename, displayName, rootSlug, subSlug) {
+  if (!isAdmin()) return;
+  const label = displayName || filename || url || 'this file';
+  if (!confirm(`Delete file "${label}"?\n\nIt will be hidden from the Data Room.`)) return;
+  try {
+    const r = await fetch('/api/admin/dataroom-files', {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({
+        url: url || null,
+        filename: filename || null,
+        folder_slug: rootSlug || null,
+        sub_slug: subSlug || null,
+      }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      alert('Delete failed: ' + (j.error || `HTTP ${r.status}`));
+      return;
+    }
+    if (url) HIDDEN_FILES.add(url);
+    if (filename) HIDDEN_BY_FILENAME.add(filename);
     render();
   } catch (e) {
     alert('Delete failed: ' + e.message);

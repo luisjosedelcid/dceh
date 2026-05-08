@@ -166,10 +166,6 @@ module.exports = async (req, res) => {
         patch.metadata = body.metadata;
       }
       if (body.slug !== undefined) {
-        if (current.is_system) {
-          res.status(403).json({ error: 'cannot rename slug of a system folder' });
-          return;
-        }
         const newSlugBase = slugify(body.slug);
         const newSlug = await ensureUniqueSlug(
           body.parent_id !== undefined ? (body.parent_id || null) : current.parent_id,
@@ -178,10 +174,6 @@ module.exports = async (req, res) => {
         patch.slug = newSlug;
       }
       if (body.parent_id !== undefined) {
-        if (current.is_system) {
-          res.status(403).json({ error: 'cannot move a system folder' });
-          return;
-        }
         const newParent = body.parent_id ? String(body.parent_id) : null;
         if (newParent && !isUuid(newParent)) {
           res.status(400).json({ error: 'invalid parent_id' });
@@ -212,13 +204,9 @@ module.exports = async (req, res) => {
       if (!isUuid(id)) { res.status(400).json({ error: 'invalid id' }); return; }
       const force = req.query.force === '1' || req.query.force === 'true';
 
-      const cur = await sbSelect('dataroom_folders', `select=id,is_system,name&id=eq.${id}&limit=1`);
+      const cur = await sbSelect('dataroom_folders', `select=id,name&id=eq.${id}&limit=1`);
       if (!cur || cur.length === 0) {
         res.status(404).json({ error: 'folder not found' });
-        return;
-      }
-      if (cur[0].is_system) {
-        res.status(403).json({ error: 'cannot delete a system folder' });
         return;
       }
 
