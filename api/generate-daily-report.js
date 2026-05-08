@@ -89,102 +89,103 @@ function drawSectionLabel(doc, y, label) {
      .text(`— ${label.toUpperCase()}`, 54, y, { characterSpacing: 1.4 });
 }
 
-// ─── Equity curve chart (TWR vs IWQU.L) ────────────────────────────
-function drawEquityCurve(doc, x, y, w, h, series) {
-  // series: [{ date, twr_cum, iwqu_norm }]
-  // twr_cum is fraction (0.05 = +5%); iwqu_norm is multiplier (1.05 = +5%)
-  // Normalize both to base 100 for visual equivalence
-  const data = series
-    .map(d => ({
-      date: d.date,
-      portfolio: d.twr_cum != null ? (1 + d.twr_cum) * 100 : null,
-      bench: d.iwqu_norm != null ? d.iwqu_norm * 100 : null,
-    }))
-    .filter(d => d.portfolio != null);
+// ─── IPS tactical bands (§3.5–3.7) ─────────────────────────────────
+function drawIpsBands(doc, x, y, w, h, kpis) {
+  // Same thresholds as the dashboard's renderIpsBands()
+  const nav  = (kpis && kpis.nav) || 0;
+  const cash = (kpis && kpis.cash_usd) || 0;
+  const mv   = (kpis && kpis.market_value_usd) || 0;
 
-  // Background
+  const BANDS = [
+    { label: 'Cash / equivalentes',     min: 0.15, max: 0.25, value: nav > 0 ? cash / nav : 0 },
+    { label: 'Equity — quality',         min: 0.60, max: 0.80, value: nav > 0 ? mv / nav   : 0 },
+    { label: 'Equity — special sit',     min: 0.00, max: 0.15, value: 0 },
+    { label: 'Renta fija / coberturas',  min: 0.00, max: 0.10, value: 0 },
+  ];
+
+  // Frame
   doc.rect(x, y, w, h).fill(WHITE).strokeColor(LIGHT).lineWidth(0.5).stroke();
 
-  if (data.length < 2) {
-    doc.fillColor(GRAY).font('Helvetica-Oblique').fontSize(9)
-       .text('Insufficient data for equity curve.', x + 14, y + h / 2 - 6, { width: w - 28 });
-    return;
-  }
+  // Column layout (relative to x)
+  const padX = 14, padY = 12;
+  const colLabel = x + padX;
+  const colBand  = x + 200;
+  const colReading = x + 280;
+  const colBarStart = x + 340;
+  const colBarEnd = x + w - 90;
+  const colStatus = x + w - 70;
 
-  // Plot area
-  const padL = 36, padR = 12, padT = 14, padB = 26;
-  const px = x + padL, py = y + padT;
-  const pw = w - padL - padR, ph = h - padT - padB;
+  // Header row
+  let yy = y + padY;
+  doc.fillColor(GRAY).font('Helvetica-Bold').fontSize(7)
+     .text('CATEGORÍA', colLabel, yy, { characterSpacing: 1.2, lineBreak: false });
+  doc.text('BANDA', colBand, yy, { characterSpacing: 1.2, lineBreak: false });
+  doc.text('LECTURA', colReading, yy, { characterSpacing: 1.2, lineBreak: false });
+  doc.text('POSICIÓN RELATIVA', colBarStart, yy, { characterSpacing: 1.2, lineBreak: false });
+  doc.text('ESTADO', colStatus, yy, { characterSpacing: 1.2, lineBreak: false });
+  yy += 14;
+  doc.lineWidth(0.5).strokeColor(LIGHT).moveTo(x + padX, yy).lineTo(x + w - padX, yy).stroke();
+  yy += 8;
 
-  const allVals = [];
-  data.forEach(d => {
-    allVals.push(d.portfolio);
-    if (d.bench != null) allVals.push(d.bench);
+  const rowH = (h - padY - 30) / BANDS.length;
+
+  BANDS.forEach((b, idx) => {
+    const reading = b.value;
+    const inBand = reading >= b.min && reading <= b.max;
+    const bandLabel = b.min === b.max
+      ? (b.min * 100).toFixed(0) + '%'
+      : (b.min * 100).toFixed(0) + '–' + (b.max * 100).toFixed(0) + '%';
+    const readingTxt = (reading * 100).toFixed(1) + '%';
+
+    const rowY = yy + idx * rowH;
+    const textY = rowY + 4;
+
+    // Label
+    doc.fillColor(NEAR_BLACK).font('Helvetica').fontSize(9.5)
+       .text(b.label, colLabel, textY, { width: 180, lineBreak: false });
+
+    // Band
+    doc.fillColor(GRAY).font('Helvetica').fontSize(9)
+       .text(bandLabel, colBand, textY, { lineBreak: false });
+
+    // Reading
+    doc.fillColor(NEAR_BLACK).font('Helvetica-Bold').fontSize(10)
+       .text(readingTxt, colReading, textY - 0.5, { lineBreak: false });
+
+    // Range bar
+    const barY = rowY + 10;
+    const barH = 5;
+    const barW = colBarEnd - colBarStart;
+    const domainMax = Math.max(b.max + 0.10, reading + 0.05, 0.30);
+    const xAt = (v) => colBarStart + (v / domainMax) * barW;
+    // Background track
+    doc.rect(colBarStart, barY, barW, barH).fill(LIGHT);
+    // In-band region (pale gold)
+    const bMinX = xAt(b.min);
+    const bMaxX = xAt(b.max);
+    doc.rect(bMinX, barY, bMaxX - bMinX, barH).fill('#e8d9b4');
+    // Reading marker
+    const rX = Math.min(Math.max(xAt(reading), colBarStart), colBarEnd);
+    const markerColor = inBand ? GREEN : RED;
+    doc.rect(rX - 1, barY - 2, 2, barH + 4).fill(markerColor);
+    // 0% / domainMax tick labels
+    doc.fillColor(GRAY).font('Helvetica').fontSize(6.5)
+       .text('0%', colBarStart, barY + barH + 2, { width: 20, lineBreak: false });
+    doc.text((domainMax * 100).toFixed(0) + '%', colBarEnd - 18, barY + barH + 2, { width: 20, align: 'right', lineBreak: false });
+
+    // Status badge
+    const badgeColor = inBand ? GREEN : RED;
+    const badgeTxt = inBand ? 'EN BANDA' : 'FUERA';
+    const badgeW = 56, badgeH = 14;
+    doc.roundedRect(colStatus, textY - 2, badgeW, badgeH, 2).fill(badgeColor);
+    doc.fillColor(WHITE).font('Helvetica-Bold').fontSize(7.5)
+       .text(badgeTxt, colStatus, textY + 1.5, { width: badgeW, align: 'center', characterSpacing: 0.6, lineBreak: false });
   });
-  let yMin = Math.min(...allVals);
-  let yMax = Math.max(...allVals);
-  // Pad y range 5%
-  const range = (yMax - yMin) || 1;
-  yMin -= range * 0.08;
-  yMax += range * 0.08;
 
-  const xAt = (i) => px + (i / (data.length - 1)) * pw;
-  const yAt = (v) => py + ph - ((v - yMin) / (yMax - yMin)) * ph;
-
-  // Y gridlines + labels (5 lines)
-  doc.lineWidth(0.3).strokeColor(LIGHT);
-  for (let k = 0; k <= 4; k++) {
-    const yg = py + (ph * k) / 4;
-    doc.moveTo(px, yg).lineTo(px + pw, yg).stroke();
-    const v = yMax - ((yMax - yMin) * k) / 4;
-    doc.fillColor(GRAY).font('Helvetica').fontSize(7)
-       .text(v.toFixed(0), x + 4, yg - 4, { width: padL - 6, align: 'right' });
-  }
-
-  // Baseline at 100
-  if (100 >= yMin && 100 <= yMax) {
-    const y100 = yAt(100);
-    doc.lineWidth(0.5).strokeColor(GRAY).dash(2, { space: 2 })
-       .moveTo(px, y100).lineTo(px + pw, y100).stroke().undash();
-  }
-
-  // X labels: first, mid, last date
-  const xLabelIdx = [0, Math.floor((data.length - 1) / 2), data.length - 1];
-  xLabelIdx.forEach(i => {
-    doc.fillColor(GRAY).font('Helvetica').fontSize(7)
-       .text(data[i].date, xAt(i) - 22, py + ph + 4, { width: 44, align: 'center' });
-  });
-
-  // Benchmark line (gold dashed)
-  const benchPts = data.map((d, i) => ({ i, v: d.bench })).filter(p => p.v != null);
-  if (benchPts.length >= 2) {
-    doc.lineWidth(1).strokeColor(GOLD).dash(3, { space: 2 });
-    benchPts.forEach((p, k) => {
-      const xx = xAt(p.i), yy = yAt(p.v);
-      if (k === 0) doc.moveTo(xx, yy);
-      else doc.lineTo(xx, yy);
-    });
-    doc.stroke().undash();
-  }
-
-  // Portfolio line (navy solid)
-  doc.lineWidth(1.4).strokeColor(NAVY);
-  data.forEach((d, i) => {
-    const xx = xAt(i), yy = yAt(d.portfolio);
-    if (i === 0) doc.moveTo(xx, yy);
-    else doc.lineTo(xx, yy);
-  });
-  doc.stroke();
-
-  // Legend
-  const legY = y + h - 12;
-  doc.lineWidth(1.4).strokeColor(NAVY).moveTo(x + 14, legY).lineTo(x + 28, legY).stroke();
-  doc.fillColor(NAVY).font('Helvetica').fontSize(8)
-     .text('Portfolio TWR', x + 32, legY - 4, { lineBreak: false });
-  doc.lineWidth(1).strokeColor(GOLD).dash(3, { space: 2 })
-     .moveTo(x + 110, legY).lineTo(x + 124, legY).stroke().undash();
-  doc.fillColor(GOLD).font('Helvetica').fontSize(8)
-     .text('IWQU.L (MSCI World Quality)', x + 128, legY - 4, { lineBreak: false });
+  // Footer note
+  const footerY = y + h - 12;
+  doc.fillColor(GRAY).font('Helvetica-Oblique').fontSize(7)
+     .text('Asignación táctica IPS §3.5–3.7 · Benchmark IPS §4.8: MSCI World Quality NR (proxy IWQU.L)', x + padX, footerY, { width: w - padX * 2, lineBreak: false });
 }
 
 module.exports = async (req, res) => {
@@ -193,7 +194,6 @@ module.exports = async (req, res) => {
     const result = await loadAndCompute({});
     const kpis = result.kpis;
     const holdings = result.holdings || [];
-    const series = result.dailySeries || [];
 
     if (!kpis) {
       res.status(400).json({ error: 'No performance data available yet. Add transactions first.' });
@@ -279,16 +279,14 @@ module.exports = async (req, res) => {
       }
     });
 
-    // ─── EQUITY CURVE ─────────────────────────────────────────────
+    // ─── IPS BANDS ────────────────────────────────────────────────
     y = 270;
-    drawSectionLabel(doc, y, 'Equity Curve');
+    drawSectionLabel(doc, y, 'IPS Bands');
     doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(13)
-       .text('Portfolio TWR vs IWQU.L', M, y + 14);
+       .text('Asignación táctica vs bandas IPS', M, y + 14);
     y += 38;
 
-    // Use last 240 days max to keep chart readable; otherwise full series
-    const chartSeries = series.length > 240 ? series.slice(-240) : series;
-    drawEquityCurve(doc, M, y, CW, 130, chartSeries);
+    drawIpsBands(doc, M, y, CW, 130, kpis);
     y += 130 + 16;
 
     // ─── HOLDINGS TABLE ───────────────────────────────────────────
