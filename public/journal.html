@@ -1842,11 +1842,220 @@ async function openReundDetail(dueId) {
 }
 window.openReundDetail = openReundDetail;
 
+// ============================================================
+// v3.2 Re-Underwriting block — mirrors the PDF output
+// Fields used: framework_version, outcome_v32, outcome_justification,
+// executive_summary, what_changed{new_10q_data, decisions_taken,
+// material_events[]}, thesis_tracking[], premortem_tracking[],
+// kpi_dashboard[], valuation_refresh{components[], conclusion},
+// next_actions[], analyst, reviewer, conviction_level,
+// position_size_actual_pct, cost_basis_per_share, unrealized_pnl_pct,
+// days_held, price_at_review.
+// ============================================================
+function renderReuwV32Block(entry, due) {
+  if (!entry || entry.framework_version !== 'v3.2') return '';
+  const wc       = entry.what_changed || {};
+  const new10q   = wc.new_10q_data || {};
+  const events   = Array.isArray(wc.material_events) ? wc.material_events : [];
+  const tt       = Array.isArray(entry.thesis_tracking) ? entry.thesis_tracking : [];
+  const pt       = Array.isArray(entry.premortem_tracking) ? entry.premortem_tracking : [];
+  const kd       = Array.isArray(entry.kpi_dashboard) ? entry.kpi_dashboard : [];
+  const vr       = entry.valuation_refresh || {};
+  const vrComps  = Array.isArray(vr.components) ? vr.components : [];
+  const na       = Array.isArray(entry.next_actions) ? entry.next_actions : [];
+
+  // Outcome v3.2 banner (4 official outcomes)
+  const ocClasses = {
+    'Thesis Intact':            { cls: 'sem-ThesisIntact',            label: 'Thesis Intact'  },
+    'Thresholds Recalibrated':  { cls: 'sem-ThresholdsRecalibrated',  label: 'Thresholds Recalibrated'  },
+    'Thesis Evolved':           { cls: 'sem-ThesisEvolved',           label: 'Thesis Evolved'  },
+    'Thesis Broken':            { cls: 'sem-ThesisBroken',            label: 'Thesis Broken'  }
+  };
+  const ocV32 = entry.outcome_v32 ? (ocClasses[entry.outcome_v32] || { cls:'', label: entry.outcome_v32 }) : null;
+  const outcomeBanner = ocV32 ? `
+    <div class="field">
+      <div class="field-lbl">Outcome (v3.2)</div>
+      <span class="sem-cell ${ocV32.cls}" style="font-size:11px;padding:6px 14px;letter-spacing:0.12em">${escapeHtml(ocV32.label)}</span>
+      ${entry.outcome_justification ? `<div style="margin-top:8px;font-size:12px;line-height:1.5;color:var(--ink)">${escapeHtml(entry.outcome_justification)}</div>` : ''}
+    </div>` : '';
+
+  // Snapshot table (financial + governance meta)
+  const snapRows = [];
+  if (entry.analyst)            snapRows.push(['Analyst', escapeHtml(entry.analyst)]);
+  if (entry.reviewer)           snapRows.push(['Reviewer', escapeHtml(entry.reviewer)]);
+  if (entry.conviction_level)   snapRows.push(['Conviction level', escapeHtml(entry.conviction_level)]);
+  if (entry.price_at_review != null) snapRows.push(['Price at review', 'USD ' + Number(entry.price_at_review).toFixed(2)]);
+  if (entry.cost_basis_per_share != null) snapRows.push(['Cost basis / share', 'USD ' + Number(entry.cost_basis_per_share).toFixed(2)]);
+  if (entry.unrealized_pnl_pct != null) snapRows.push(['Unrealized P&amp;L', fmtPctSigned(entry.unrealized_pnl_pct)]);
+  if (entry.position_size_actual_pct != null) {
+    const p = Number(entry.position_size_actual_pct);
+    const pVal = p < 1 ? p * 100 : p;
+    snapRows.push(['Position size', pVal.toFixed(1) + '% NAV']);
+  }
+  if (entry.days_held != null) snapRows.push(['Days held', String(entry.days_held)]);
+  if (entry.reviewed_at) snapRows.push(['Reviewed at', fmtDate(entry.reviewed_at)]);
+  const snapHtml = snapRows.length ? `
+    <div class="field">
+      <div class="field-lbl">Re-Underwriting Snapshot</div>
+      <table class="v32-table"><tbody>
+        ${snapRows.map(row => `<tr><td style="width:42%;font-weight:600;color:var(--navy)">${row[0]}</td><td>${row[1]}</td></tr>`).join('')}
+      </tbody></table>
+    </div>` : '';
+
+  // Executive summary
+  const execHtml = entry.executive_summary ? `
+    <div class="field">
+      <div class="field-lbl">Executive Summary</div>
+      <div style="line-height:1.5;font-size:13px">${escapeHtml(entry.executive_summary)}</div>
+    </div>` : '';
+
+  // What Changed — new 10-Q metrics + decisions + material events
+  const new10qLabels = {
+    revenue_usd_b:                'Revenue (USD B)',
+    revenue_yoy_pct:              'Revenue YoY',
+    azure_yoy_pct:                'Azure YoY',
+    operating_income_usd_b:       'Operating Income (USD B)',
+    operating_margin_pct:         'Operating Margin',
+    fcf_usd_b:                    'FCF (USD B)',
+    fcf_margin_pct:               'FCF Margin',
+    capex_usd_b:                  'Capex (USD B)',
+    capex_yoy_pct:                'Capex YoY',
+    buybacks_quarter_usd_b:       'Buybacks (USD B)',
+    ai_services_contribution_pp:  'AI services contribution (pp)'
+  };
+  const new10qRows = Object.keys(new10q)
+    .filter(k => new10q[k] !== null && new10q[k] !== undefined && new10q[k] !== '')
+    .map(k => {
+      const v = new10q[k];
+      const isPct = k.endsWith('_pct') || k.endsWith('_yoy_pct');
+      const valTxt = (typeof v === 'number')
+        ? (isPct ? Number(v).toFixed(1) + '%' : Number(v).toFixed(1))
+        : escapeHtml(String(v));
+      return [bqLabelOrFallback(new10qLabels, k), valTxt];
+    });
+  const wcHtml = (new10qRows.length || wc.decisions_taken || events.length) ? `
+    <div class="field">
+      <div class="field-lbl">What Changed (datos del filing)</div>
+      ${new10qRows.length ? `<table class="v32-table"><tbody>
+        ${new10qRows.map(row => `<tr><td style="width:55%;color:var(--navy)">${escapeHtml(row[0])}</td><td>${row[1]}</td></tr>`).join('')}
+      </tbody></table>` : ''}
+      ${wc.decisions_taken ? `<div style="margin-top:10px;padding:8px 10px;background:#fff8ec;border-left:3px solid var(--gold);font-size:12px;line-height:1.5"><b>Decisiones tomadas:</b> ${escapeHtml(wc.decisions_taken)}</div>` : ''}
+      ${events.length ? `<div style="margin-top:10px"><div style="font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--navy);margin-bottom:4px">EVENTOS MATERIALES</div><ul style="margin:0 0 0 18px;padding:0">${events.map(e => `<li style="margin:3px 0;font-size:12px;line-height:1.5">${escapeHtml(e)}</li>`).join('')}</ul></div>` : ''}
+    </div>` : '';
+
+  // Thesis tracking
+  const ttHtml = tt.length ? `
+    <div class="field">
+      <div class="field-lbl">Thesis Tracking — 5 pilares</div>
+      <table class="v32-table">
+        <thead><tr><th>Pilar</th><th>Estado</th><th>Evidencia este trimestre</th></tr></thead>
+        <tbody>
+          ${tt.map(t => `<tr>
+            <td style="font-weight:600;color:var(--navy)">${escapeHtml(t.pillar || t.title || '')}</td>
+            <td>${semCell(t.status || '')}</td>
+            <td>${escapeHtml(t.evidence || '')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : '';
+
+  // Premortem tracking
+  const ptHtml = pt.length ? `
+    <div class="field">
+      <div class="field-lbl">Pre-Mortem Tracking — failure modes</div>
+      <table class="v32-table">
+        <thead><tr><th>Failure Mode</th><th>Severidad</th><th>Estado</th><th>Evidencia</th></tr></thead>
+        <tbody>
+          ${pt.map(f => `<tr>
+            <td style="font-weight:600;color:var(--navy)">${escapeHtml(f.failure_mode || '')}</td>
+            <td>${escapeHtml(f.severity || '')}</td>
+            <td>${semCell(f.status || '')}</td>
+            <td>${escapeHtml(f.evidence || '')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : '';
+
+  // KPI dashboard
+  const kdHtml = kd.length ? `
+    <div class="field">
+      <div class="field-lbl">KPI Dashboard — semáforos del trimestre</div>
+      <table class="v32-table">
+        <thead><tr><th>KPI</th><th>Target</th><th>Q actual</th><th>Δ vs target</th><th>Estado</th></tr></thead>
+        <tbody>
+          ${kd.map(k => `<tr>
+            <td>${escapeHtml(k.kpi || '')}</td>
+            <td>${escapeHtml(k.target || '')}</td>
+            <td>${escapeHtml(k.current_q || k.current_value || '')}</td>
+            <td>${escapeHtml(k.delta_vs_target || '')}</td>
+            <td>${semCell(k.semaphore || k.status || '')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : '';
+
+  // Valuation refresh
+  const vrHtml = (vrComps.length || vr.conclusion) ? `
+    <div class="field">
+      <div class="field-lbl">Valuation Refresh</div>
+      ${vrComps.length ? `<table class="v32-table">
+        <thead><tr><th>Componente</th><th>Memo original</th><th>Q actual</th><th>Δ</th></tr></thead>
+        <tbody>
+          ${vrComps.map(c => `<tr>
+            <td style="color:var(--navy)">${escapeHtml(c.component || '')}</td>
+            <td>${escapeHtml(c.memo_original || '')}</td>
+            <td>${escapeHtml(c.current_q1_2026 || c.current || '')}</td>
+            <td>${escapeHtml(c.delta || '')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` : ''}
+      ${vr.conclusion ? `<div style="margin-top:8px;padding:8px 10px;background:#f3ead7;border-left:3px solid var(--gold);font-size:12px;line-height:1.5"><b>Conclusión:</b> ${escapeHtml(vr.conclusion)}</div>` : ''}
+    </div>` : '';
+
+  // Next actions
+  const naHtml = na.length ? `
+    <div class="field">
+      <div class="field-lbl">Next Actions</div>
+      <ul style="margin:6px 0 0 18px;padding:0">
+        ${na.map(a => `<li style="margin:4px 0;font-size:12px;line-height:1.5">${escapeHtml(typeof a === 'string' ? a : JSON.stringify(a))}</li>`).join('')}
+      </ul>
+    </div>` : '';
+
+  return outcomeBanner + snapHtml + execHtml + wcHtml + ttHtml + ptHtml + kdHtml + vrHtml + naHtml;
+}
+function bqLabelOrFallback(map, k) { return (map && map[k]) ? map[k] : k.replace(/_/g, ' '); }
+window.renderReuwV32Block = renderReuwV32Block;
+
 function renderReundDetail(data) {
   const due = data.due || {};
   const entry = data.entry || null;
   const rev = data.revision || null;
   document.getElementById('drawer-title').textContent = (due.ticker || '') + ' · Re-underwriting (firmado)';
+
+  // v3.2 path — entirely different render
+  if (entry && entry.framework_version === 'v3.2') {
+    const body = document.getElementById('drawer-body');
+    body.innerHTML = `
+      <div class="meta-grid">
+        <div><div class="k">Filing</div><div class="v">${escapeHtml(due.doc_type || '')}</div></div>
+        <div><div class="k">Period end</div><div class="v">${fmtDate(due.period_end)}</div></div>
+        <div><div class="k">Filed</div><div class="v" style="font-size:12px">${fmtDate(due.filed_at)}</div></div>
+        <div><div class="k">Cerrado</div><div class="v" style="font-size:12px">${fmtDate(due.completed_at)}</div></div>
+      </div>
+      ${due.source_url ? `<div class="field"><a href="${escapeHtml(due.source_url)}" target="_blank" rel="noopener" style="color:var(--gold);font-size:12px">View filing on EDGAR →</a></div>` : ''}
+      <div class="field">
+        <div class="field-lbl">Framework <span class="v32-banner">v3.2</span></div>
+      </div>
+      ${renderReuwV32Block(entry, due)}
+      <div class="field" style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button onclick="closeDrawer()" style="background:var(--white);color:var(--navy);border:1px solid var(--navy);padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600">Cerrar</button>
+        <button onclick="exportReundPdf(${due.id})" style="background:var(--gold);color:var(--white);border:none;padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600">Exportar PDF</button>
+        <button onclick="undoReund(${due.id}, '${escapeHtml(due.ticker || '')}', '${escapeHtml(due.doc_type || '')}', '${fmtDate(due.period_end)}')" style="background:var(--white);color:var(--red);border:1px solid var(--red);padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600;margin-left:auto">Deshacer</button>
+        <span id="reund-detail-msg" style="font-size:12px;width:100%;margin-top:6px"></span>
+      </div>
+    `;
+    return;
+  }
 
   const ocStyles = {
     thesis_intact:           { bg: '#e3f4ea', fg: '#1e6c3a', label: 'Tesis intacta' },

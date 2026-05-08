@@ -113,6 +113,32 @@ module.exports = async (req, res) => {
       revision = rows[0] || null;
     }
 
+    // ─── v3.2 short-circuit: redirect to archived dataroom PDF ───
+    // The new framework PDFs are pre-built data-driven from Supabase JSON
+    // and live under /docs/{TICKER}/. We don't regenerate via PDFKit.
+    if (entry && entry.framework_version === 'v3.2') {
+      const COMPANY_BY_TICKER = {
+        MSFT: 'Microsoft',
+        LULU: 'Lululemon',
+      };
+      const company = COMPANY_BY_TICKER[d.ticker] || d.ticker;
+      // Derive YYYY-Q# from period_end (e.g. 2026-03-31 → 2026-Q1)
+      const pe = String(d.period_end || '');
+      const m = pe.match(/^(\d{4})-(\d{2})-/);
+      let qLabel = pe;
+      if (m) {
+        const year = m[1];
+        const month = parseInt(m[2], 10);
+        const q = Math.ceil(month / 3);
+        qLabel = `${year}-Q${q}`;
+      }
+      const filename = `${qLabel}_Re-Underwriting_${company}_${d.ticker}.pdf`;
+      const location = `/docs/${d.ticker}/${filename}`;
+      res.writeHead(302, { Location: location });
+      res.end();
+      return;
+    }
+
     // Build PDF
     const doc = new PDFDocument({
       size: 'LETTER',
