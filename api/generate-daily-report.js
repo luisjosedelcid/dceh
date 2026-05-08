@@ -40,7 +40,9 @@ function fmtUSD(n, digits = 0) {
 }
 function fmtUSDSigned(n) {
   if (n === null || n === undefined || Number.isNaN(n)) return '—';
-  const sign = n >= 0 ? '+' : '−';
+  // Use ASCII '-' (not Unicode minus U+2212) — the bundled Helvetica AFM
+  // in pdfkit doesn't ship the U+2212 glyph and renders it as a tofu.
+  const sign = n >= 0 ? '+' : '-';
   return `${sign}${fmtUSD(Math.abs(n), 2)}`;
 }
 function fmtPct(n, digits = 2) {
@@ -73,15 +75,28 @@ function drawHeaderBar(doc) {
 }
 
 function drawFooter(doc, asOfDate) {
-  const footerY = doc.page.height - 50;
-  doc.moveTo(54, footerY).lineTo(doc.page.width - 54, footerY).strokeColor(GOLD).lineWidth(0.5).stroke();
+  // Pin everything to absolute coordinates within page bounds.
+  // LETTER height = 792pt. Footer occupies last ~40pt.
+  const pageH = doc.page.height;
+  const pageW = doc.page.width;
+  const lineY = pageH - 42;
+  const txt1Y = pageH - 32;
+  const txt2Y = pageH - 18;
+
+  doc.moveTo(54, lineY).lineTo(pageW - 54, lineY).strokeColor(GOLD).lineWidth(0.5).stroke();
+
   doc.fillColor(GRAY).font('Helvetica').fontSize(7)
      .text(
        `Generated ${new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC  ·  As of close ${asOfDate}  ·  Source: portfolio_snapshots + transactions + cashflows`,
-       54, footerY + 8, { width: doc.page.width - 108, characterSpacing: 0.4 }
+       54, txt1Y,
+       { width: pageW - 108, height: 10, lineBreak: false, ellipsis: true }
      );
   doc.fillColor(GRAY).font('Helvetica-Oblique').fontSize(7)
-     .text('DCE Holdings Investment Office — Confidential · Internal use only', 54, footerY + 22, { width: doc.page.width - 108 });
+     .text(
+       'DCE Holdings Investment Office — Confidential · Internal use only',
+       54, txt2Y,
+       { width: pageW - 108, height: 10, lineBreak: false, ellipsis: true }
+     );
 }
 
 function drawSectionLabel(doc, y, label) {
@@ -206,6 +221,8 @@ module.exports = async (req, res) => {
     const doc = new PDFDocument({
       size: 'LETTER',
       margins: { top: 60, bottom: 60, left: 54, right: 54 },
+      bufferPages: true,
+      autoFirstPage: true,
       info: {
         Title: `DCE Holdings — Performance Snapshot ${asOfDate}`,
         Author: 'DCE Holdings Investment Office',
@@ -214,6 +231,7 @@ module.exports = async (req, res) => {
     const chunks = [];
     doc.on('data', c => chunks.push(c));
     const done = new Promise(resolve => doc.on('end', resolve));
+
 
     const W = doc.page.width;
     const M = 54;
@@ -390,6 +408,23 @@ module.exports = async (req, res) => {
     });
 
     drawFooter(doc, asOfDate);
+
+    // Hard guarantee single-page output: if any implicit overflow created
+    // additional pages, we keep only page 0. With bufferPages: true we can
+    // inspect the buffered range and prune trailing pages before flushing.
+    const range = doc.bufferedPageRange(); // { start: 0, count: N }
+    if (range && range.count > 1) {
+      // Discard pages 1..N-1 by overwriting their content streams.
+      // Easiest way in pdfkit: switch to each extra page and clear it isn't
+      // exposed cleanly, so we just leave them blank-but-flushed. To truly
+      // drop them, we need to manipulate the internal _pageBuffer.
+      // pdfkit stores buffered pages in doc._pageBuffer when bufferPages=true.
+      if (Array.isArray(doc._pageBuffer)) {
+        doc._pageBuffer = doc._pageBuffer.slice(0, 1);
+        doc._pageBufferStart = 0;
+      }
+    }
+    doc.flushPages();
 
     doc.end();
     await done;
