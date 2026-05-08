@@ -27,8 +27,19 @@
   h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;color:var(--navy);margin-bottom:4px}
   .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:32px}
 
+  /* TOP-RIGHT TOOLBAR */
+  .top-row{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:8px 14px;border:1px solid var(--gold-rule);background:var(--white);color:var(--gold);cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{background:var(--gold-dim);border-color:var(--gold)}
+  .btn.primary{background:var(--gold);color:var(--white);border-color:var(--gold)}
+  .btn.primary:hover{background:var(--gold-lt);border-color:var(--gold-lt)}
+  .btn.danger{color:var(--red);border-color:rgba(155,35,53,0.30)}
+  .btn.danger:hover{background:rgba(155,35,53,0.06);border-color:var(--red)}
+  .btn[disabled]{opacity:0.4;pointer-events:none}
+
   /* BREADCRUMB */
-  .breadcrumb{font-size:11px;color:var(--gray-mid);margin-bottom:24px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .breadcrumb{font-size:11px;color:var(--gray-mid);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   .breadcrumb a{color:var(--gold);text-decoration:none;font-weight:500;cursor:pointer}
   .breadcrumb a:hover{text-decoration:underline}
   .breadcrumb .sep{color:var(--rule)}
@@ -44,7 +55,7 @@
   /* FOLDER GRID */
   .folder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:32px}
 
-  .folder{background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:24px 22px;cursor:pointer;transition:all .2s;text-decoration:none;display:block;color:var(--ink)}
+  .folder{background:var(--white);border:1px solid var(--rule);border-top:2px solid var(--gold);padding:24px 22px;cursor:pointer;transition:all .2s;text-decoration:none;display:block;color:var(--ink);position:relative}
   .folder:hover{border-color:var(--gold-rule);box-shadow:0 2px 12px rgba(27,38,66,0.06)}
   .folder-num{font-size:9px;font-weight:600;letter-spacing:0.2em;color:var(--gold);margin-bottom:6px}
   .folder-name{font-size:15px;font-weight:700;letter-spacing:-0.01em;color:var(--navy);margin-bottom:6px;line-height:1.3}
@@ -52,19 +63,31 @@
   .folder-meta{font-size:10px;color:var(--gray-mid);letter-spacing:0.08em;display:flex;align-items:center;gap:12px}
   .folder-count{font-weight:600;color:var(--gold)}
   .folder-arrow{font-size:11px;color:var(--gold);font-weight:600;letter-spacing:0.1em;margin-left:auto}
+  .folder-actions{position:absolute;top:8px;right:8px;display:none;gap:4px}
+  .folder:hover .folder-actions{display:flex}
+  .folder-actions button{font-size:10px;padding:3px 7px;border:1px solid var(--gold-rule);background:var(--white);color:var(--gold);cursor:pointer;line-height:1;border-radius:0;font-family:inherit}
+  .folder-actions button:hover{background:var(--gold-dim)}
+  .folder-actions button.del{color:var(--red);border-color:rgba(155,35,53,0.30)}
+  .folder-actions button.del:hover{background:rgba(155,35,53,0.06)}
+  .folder-system-tag{display:inline-block;font-size:8.5px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:1px 6px;background:var(--gold-dim);color:var(--gold);margin-left:6px;vertical-align:middle}
 
-  /* SUBFOLDER GRID (e.g. tickers within Portfolio) */
+  /* SUBFOLDER GRID */
   .subfolder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px}
-  .subfolder{background:var(--white);border:1px solid var(--rule);border-left:2px solid var(--gold);padding:16px 18px;cursor:pointer;transition:all .2s;text-decoration:none;color:var(--ink)}
+  .subfolder{background:var(--white);border:1px solid var(--rule);border-left:2px solid var(--gold);padding:16px 18px;cursor:pointer;transition:all .2s;text-decoration:none;color:var(--ink);position:relative}
   .subfolder:hover{border-color:var(--gold-rule);background:rgba(184,139,71,0.02)}
   .subfolder-name{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px}
   .subfolder-detail{font-size:11px;color:var(--gray-mid);margin-bottom:6px}
   .subfolder-tag{display:inline-block;font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:2px 8px;background:var(--gold-dim);color:var(--gold);margin-right:4px}
   .subfolder-count{font-size:10px;color:var(--gray-mid);margin-top:6px}
+  .subfolder-actions{position:absolute;top:6px;right:6px;display:none;gap:4px}
+  .subfolder:hover .subfolder-actions{display:flex}
+  .subfolder-actions button{font-size:9px;padding:2px 6px;border:1px solid var(--gold-rule);background:var(--white);color:var(--gold);cursor:pointer;line-height:1;font-family:inherit}
+  .subfolder-actions button.del{color:var(--red);border-color:rgba(155,35,53,0.30)}
 
-  /* SECTION TITLE inside folder view */
-  .section-title{font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin:24px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--rule)}
+  /* SECTION TITLE */
+  .section-title{font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin:24px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:12px}
   .section-title:first-child{margin-top:0}
+  .section-title .grow{flex:1}
 
   /* FILE LIST */
   .file-item{display:flex;align-items:center;background:var(--white);border:1px solid var(--rule);padding:14px 20px;margin-bottom:6px;transition:all .2s;text-decoration:none;color:var(--ink);gap:14px}
@@ -80,12 +103,23 @@
   .file-uploaded{font-size:10px;color:var(--gray-mid);letter-spacing:0.05em;flex-shrink:0;margin-right:12px}
   .file-action{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);flex-shrink:0}
 
-  .back-btn{font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);background:none;border:1px solid var(--gold-rule);padding:8px 18px;cursor:pointer;transition:all .2s;margin-bottom:24px}
-  .back-btn:hover{background:var(--gold-dim);border-color:var(--gold)}
-
   .empty{text-align:center;padding:40px 20px;color:var(--gray-mid);font-size:13px;background:var(--white);border:1px dashed var(--rule)}
   .empty-icon{font-size:24px;color:var(--gold);margin-bottom:8px;opacity:0.5}
   .access-tag{display:inline-block;font-size:9px;font-weight:500;letter-spacing:0.1em;color:var(--gray-mid);margin-top:8px}
+
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(27,38,66,0.45);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--white);border-top:3px solid var(--gold);padding:28px 32px;max-width:480px;width:100%;box-shadow:0 8px 32px rgba(27,38,66,0.20)}
+  .modal h2{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px}
+  .modal .modal-sub{font-size:11px;color:var(--gray-mid);margin-bottom:20px}
+  .modal label{display:block;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;margin-top:14px}
+  .modal label:first-of-type{margin-top:0}
+  .modal input[type="text"],.modal textarea{width:100%;padding:10px 12px;border:1px solid var(--rule);font-family:'Archivo',sans-serif;font-size:13px;color:var(--ink);background:var(--white);outline:none;transition:border-color .2s}
+  .modal input[type="text"]:focus,.modal textarea:focus{border-color:var(--gold)}
+  .modal textarea{resize:vertical;min-height:60px}
+  .modal .row{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
+  .modal-error{color:var(--red);font-size:11px;margin-top:12px;min-height:14px}
 
   footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
 </style>
@@ -118,8 +152,11 @@
   <h1>Data Room</h1>
   <div class="sub">Repositorio institucional. Naming convention: AAAA-MM - Tipo - Detalle (Operations Manual §3.4)</div>
 
-  <div class="breadcrumb" id="breadcrumb">
-    <a onclick="showRoot()">Data Room</a>
+  <div class="top-row">
+    <div class="breadcrumb" id="breadcrumb">
+      <a onclick="showRoot()">Data Room</a>
+    </div>
+    <div class="toolbar" id="toolbar"></div>
   </div>
 
   <div class="search-bar" id="search-bar" style="display:none">
@@ -127,23 +164,33 @@
     <span class="search-meta" id="search-meta"></span>
   </div>
 
-  <!-- ROOT: 8 FOLDERS -->
+  <!-- ROOT VIEW -->
   <div id="root-view">
     <div class="folder-grid" id="folder-grid"></div>
   </div>
 
-  <!-- FOLDER VIEW -->
+  <!-- FOLDER VIEW (any non-root node) -->
   <div id="folder-view" style="display:none">
-    <button class="back-btn" onclick="showRoot()">← Back to folders</button>
     <div id="folder-content"></div>
   </div>
-
-  <!-- SUBFOLDER VIEW (e.g. ticker inside Portfolio) -->
-  <div id="subfolder-view" style="display:none">
-    <button class="back-btn" id="subfolder-back-btn">← Back</button>
-    <div id="subfolder-content"></div>
-  </div>
 </main>
+
+<!-- New / Edit folder modal -->
+<div class="modal-bg" id="folder-modal">
+  <div class="modal">
+    <h2 id="modal-title">New folder</h2>
+    <div class="modal-sub" id="modal-sub">Add a folder under <strong id="modal-parent">Data Room</strong></div>
+    <label for="fld-name">Folder name</label>
+    <input type="text" id="fld-name" maxlength="120" placeholder="e.g. 2026 Q2 Reviews">
+    <label for="fld-desc">Description (optional)</label>
+    <textarea id="fld-desc" maxlength="500" placeholder="Short context for this folder"></textarea>
+    <div class="modal-error" id="modal-error"></div>
+    <div class="row">
+      <button class="btn" onclick="closeFolderModal()">Cancel</button>
+      <button class="btn primary" id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
 
 <footer>
   <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
@@ -151,52 +198,152 @@
 </footer>
 
 <script>
-let DATA = null;
-let currentFolder = null;
-let currentSubfolder = null;
+// ──────────────────────────────────────────────────────────────────
+// State
+// ──────────────────────────────────────────────────────────────────
+let FILE_INDEX = null;       // legacy /data/dataroom_index.json (files only)
+let FOLDERS = [];            // flat array of folders from Supabase
+let BY_ID = new Map();
+let BY_PARENT = new Map();
+let ROOTS = [];
 
-async function loadData() {
+let currentFolderId = null;  // null = root view
+let modalState = null;       // { mode: 'create'|'edit', parentId, folderId? }
+
+// ──────────────────────────────────────────────────────────────────
+// Auth helpers (shared across pages)
+// ──────────────────────────────────────────────────────────────────
+function adminToken() {
+  try { return localStorage.getItem('dce_admin_token') || ''; } catch { return ''; }
+}
+function isAdmin() {
   try {
-    const res = await fetch('/data/dataroom_index.json');
-    DATA = await res.json();
-    renderRoot();
-  } catch (e) {
-    document.getElementById('folder-grid').innerHTML =
-      '<div class="empty">Could not load data room index.</div>';
+    if (window.dceAuth && typeof window.dceAuth.isAdmin === 'function') {
+      return !!window.dceAuth.isAdmin();
+    }
+  } catch {}
+  return !!adminToken();
+}
+function authHeaders() {
+  const h = { 'Content-Type': 'application/json' };
+  const t = adminToken();
+  if (t) h['x-admin-token'] = t;
+  return h;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Loading
+// ──────────────────────────────────────────────────────────────────
+async function loadAll() {
+  // 1) Files (legacy JSON, keyed by folder slug)
+  try {
+    const r1 = await fetch('/data/dataroom_index.json');
+    FILE_INDEX = await r1.json();
+  } catch (e) { FILE_INDEX = { folders: {} }; }
+
+  // 2) Folders (Supabase tree)
+  try {
+    const r2 = await fetch('/api/admin/dataroom-folders', { headers: authHeaders() });
+    if (r2.ok) {
+      const j = await r2.json();
+      FOLDERS = j.items || [];
+    } else {
+      // fallback: render folders from legacy JSON if API fails (e.g. user not signed in)
+      FOLDERS = legacyFoldersFromJson();
+    }
+  } catch {
+    FOLDERS = legacyFoldersFromJson();
   }
+
+  buildIndices();
+  render();
 }
 
-function fileTypeClass(type) {
-  return ['pdf','docx','xlsx','json'].includes(type) ? type : 'pdf';
-}
-
-function countFiles(folder) {
-  let n = (folder.files || []).length;
-  if (folder.subfolders) {
-    Object.values(folder.subfolders).forEach(sf => {
-      n += (sf.files || []).length;
+function legacyFoldersFromJson() {
+  // Synthetic flat list from FILE_INDEX so the page still works without auth.
+  const out = [];
+  if (!FILE_INDEX || !FILE_INDEX.folders) return out;
+  Object.entries(FILE_INDEX.folders).forEach(([slug, f]) => {
+    const rootId = `legacy:${slug}`;
+    out.push({
+      id: rootId, parent_id: null, slug, name: f.name,
+      description: f.description, access_note: f.access || null,
+      order_index: f.order || 99, is_system: true, metadata: {},
     });
+    if (f.subfolders) {
+      Object.entries(f.subfolders).forEach(([sslug, sf], i) => {
+        out.push({
+          id: `legacy:${slug}:${sslug}`, parent_id: rootId, slug: sslug, name: sf.name,
+          description: sf.company || null, access_note: null,
+          order_index: i + 1, is_system: true,
+          metadata: { ticker: sf.ticker, company: sf.company, classification: sf.classification, status: sf.status },
+        });
+      });
+    }
+  });
+  return out;
+}
+
+function buildIndices() {
+  BY_ID = new Map();
+  BY_PARENT = new Map();
+  FOLDERS.forEach(f => {
+    BY_ID.set(f.id, f);
+    const k = f.parent_id || '__root__';
+    if (!BY_PARENT.has(k)) BY_PARENT.set(k, []);
+    BY_PARENT.get(k).push(f);
+  });
+  // Sort each group by order_index then name
+  for (const arr of BY_PARENT.values()) {
+    arr.sort((a, b) => (a.order_index - b.order_index) || a.name.localeCompare(b.name));
   }
+  ROOTS = BY_PARENT.get('__root__') || [];
+}
+
+function childrenOf(id) {
+  return BY_PARENT.get(id || '__root__') || [];
+}
+
+function ancestorsOf(id) {
+  const chain = [];
+  let cur = BY_ID.get(id);
+  while (cur) {
+    chain.unshift(cur);
+    cur = cur.parent_id ? BY_ID.get(cur.parent_id) : null;
+  }
+  return chain;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Files (still served from JSON, keyed by *root* slug + optional sub-slug)
+// ──────────────────────────────────────────────────────────────────
+function filesForFolder(folder) {
+  if (!FILE_INDEX || !FILE_INDEX.folders || !folder) return [];
+  const chain = ancestorsOf(folder.id);
+  if (chain.length === 0) return [];
+  const rootSlug = chain[0].slug;
+  const root = FILE_INDEX.folders[rootSlug];
+  if (!root) return [];
+  if (chain.length === 1) return root.files || [];
+  // Sub: match by slug under root.subfolders
+  const subSlug = chain[1].slug;
+  const sub = root.subfolders && root.subfolders[subSlug];
+  if (!sub) return [];
+  // Only return at the leaf the user is looking at; deeper levels (created via UI) currently have 0 files.
+  return chain.length === 2 ? (sub.files || []) : [];
+}
+
+function countFilesRecursive(folder) {
+  let n = filesForFolder(folder).length;
+  childrenOf(folder.id).forEach(c => { n += countFilesRecursive(c); });
   return n;
 }
 
-function renderRoot() {
-  const grid = document.getElementById('folder-grid');
-  const folders = DATA.folders;
-  const sorted = Object.entries(folders).sort((a,b) => a[1].order - b[1].order);
-  grid.innerHTML = sorted.map(([key, f]) => {
-    const num = String(f.order).padStart(2, '0');
-    const count = countFiles(f);
-    return `<div class="folder" onclick="openFolder('${key}')">
-      <div class="folder-num">${num}</div>
-      <div class="folder-name">${f.name.replace(/^\d+\s*/, '')}</div>
-      <div class="folder-desc">${f.description}</div>
-      <div class="folder-meta">
-        <span class="folder-count">${count}</span> ${count === 1 ? 'file' : 'files'}
-        <span class="folder-arrow">Open →</span>
-      </div>
-    </div>`;
-  }).join('');
+// ──────────────────────────────────────────────────────────────────
+// Rendering
+// ──────────────────────────────────────────────────────────────────
+function fileTypeClass(t) {
+  return ['pdf','docx','xlsx','json'].includes(t) ? t : 'pdf';
 }
 
 function fileItemHTML(file) {
@@ -206,45 +353,130 @@ function fileItemHTML(file) {
   const downloadAttr = isLink ? ' download' : '';
   const action = isLink ? 'Download ↓' : '— pending';
   const dateStr = file.uploaded || '';
-  return `<a class="file-item" href="${file.url}"${target}${downloadAttr} ${!isLink ? 'onclick="return false" style="cursor:default;opacity:0.55"' : ''}>
+  return `<a class="file-item" href="${file.url || '#'}"${target}${downloadAttr} ${!isLink ? 'onclick="return false" style="cursor:default;opacity:0.55"' : ''}>
     <div class="file-type ${fileTypeClass(type)}">${type}</div>
     <div class="file-info">
-      <div class="file-name">${file.name}</div>
-      <div class="file-detail">${file.detail || ''}</div>
+      <div class="file-name">${escapeHtml(file.name)}</div>
+      <div class="file-detail">${escapeHtml(file.detail || '')}</div>
     </div>
     <div class="file-uploaded">${dateStr}</div>
     <div class="file-action">${action}</div>
   </a>`;
 }
 
-function openFolder(key) {
-  const folder = DATA.folders[key];
-  if (!folder) return;
-  currentFolder = key;
-  currentSubfolder = null;
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function render() {
+  if (!currentFolderId) renderRoot();
+  else renderFolder(currentFolderId);
+}
+
+function renderToolbar() {
+  const tb = document.getElementById('toolbar');
+  const admin = isAdmin();
+  const here = currentFolderId ? BY_ID.get(currentFolderId) : null;
+  let html = '';
+  if (admin) {
+    html += `<button class="btn primary" onclick="openCreateModal('${currentFolderId || ''}')">+ New folder</button>`;
+    if (here && !here.is_system) {
+      html += `<button class="btn" onclick="openEditModal('${here.id}')">Rename</button>`;
+      html += `<button class="btn danger" onclick="deleteFolder('${here.id}')">Delete</button>`;
+    }
+  }
+  tb.innerHTML = html;
+}
+
+function renderBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  if (!currentFolderId) {
+    bc.innerHTML = '<a onclick="showRoot()">Data Room</a>';
+    return;
+  }
+  const chain = ancestorsOf(currentFolderId);
+  const head = '<a onclick="showRoot()">Data Room</a>';
+  const rest = chain.map((f, i) => {
+    const isLast = i === chain.length - 1;
+    if (isLast) return `<span class="sep">›</span> <strong>${escapeHtml(f.name)}</strong>`;
+    return `<span class="sep">›</span> <a onclick="openFolder('${f.id}')">${escapeHtml(f.name)}</a>`;
+  }).join(' ');
+  bc.innerHTML = head + ' ' + rest;
+}
+
+function renderRoot() {
+  document.getElementById('root-view').style.display = 'block';
+  document.getElementById('folder-view').style.display = 'none';
+
+  renderBreadcrumb();
+  renderToolbar();
+
+  const grid = document.getElementById('folder-grid');
+  const admin = isAdmin();
+  grid.innerHTML = ROOTS.map((f, idx) => {
+    const num = String(f.order_index || idx + 1).padStart(2, '0');
+    const count = countFilesRecursive(f);
+    const subCount = childrenOf(f.id).length;
+    const meta = subCount > 0 ? `${count} ${count === 1 ? 'file' : 'files'} · ${subCount} sub` : `${count} ${count === 1 ? 'file' : 'files'}`;
+    const sysTag = f.is_system ? '<span class="folder-system-tag">System</span>' : '';
+    const actions = admin && !f.is_system
+      ? `<div class="folder-actions" onclick="event.stopPropagation()">
+           <button onclick="openEditModal('${f.id}')">Edit</button>
+           <button class="del" onclick="deleteFolder('${f.id}')">×</button>
+         </div>` : '';
+    const cleanName = f.name.replace(/^\d+\s*/, '');
+    return `<div class="folder" onclick="openFolder('${f.id}')">
+      ${actions}
+      <div class="folder-num">${num}</div>
+      <div class="folder-name">${escapeHtml(cleanName)}${sysTag}</div>
+      <div class="folder-desc">${escapeHtml(f.description || '')}</div>
+      <div class="folder-meta">
+        <span class="folder-count">${meta}</span>
+        <span class="folder-arrow">Open →</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderFolder(id) {
+  const folder = BY_ID.get(id);
+  if (!folder) { showRoot(); return; }
+  currentFolderId = id;
 
   document.getElementById('root-view').style.display = 'none';
-  document.getElementById('subfolder-view').style.display = 'none';
   document.getElementById('folder-view').style.display = 'block';
 
-  document.getElementById('breadcrumb').innerHTML =
-    `<a onclick="showRoot()">Data Room</a> <span class="sep">›</span> <strong>${folder.name}</strong>`;
+  renderBreadcrumb();
+  renderToolbar();
 
   const content = document.getElementById('folder-content');
   let html = '';
 
-  // Subfolders (e.g., tickers in Portfolio or Pipeline)
-  if (folder.subfolders && Object.keys(folder.subfolders).length > 0) {
-    html += '<div class="section-title">Subfolders</div>';
+  const subs = childrenOf(id);
+  const files = filesForFolder(folder);
+  const admin = isAdmin();
+
+  if (subs.length > 0) {
+    html += `<div class="section-title"><span>Subfolders</span><span class="grow"></span><span style="font-size:10px;color:var(--gray-mid);font-weight:400;letter-spacing:0.08em">${subs.length} ${subs.length === 1 ? 'item' : 'items'}</span></div>`;
     html += '<div class="subfolder-grid">';
-    html += Object.entries(folder.subfolders).map(([sk, sf]) => {
+    html += subs.map(sf => {
+      const m = sf.metadata || {};
       const tags = [];
-      if (sf.classification) tags.push(`<span class="subfolder-tag">${sf.classification}</span>`);
-      if (sf.status) tags.push(`<span class="subfolder-tag">${sf.status}</span>`);
-      const fcount = (sf.files || []).length;
-      return `<div class="subfolder" onclick="openSubfolder('${key}','${sk}')">
-        <div class="subfolder-name">${sf.name}</div>
-        <div class="subfolder-detail">${sf.company || ''}</div>
+      if (m.classification) tags.push(`<span class="subfolder-tag">${escapeHtml(m.classification)}</span>`);
+      if (m.status) tags.push(`<span class="subfolder-tag">${escapeHtml(m.status)}</span>`);
+      const fcount = countFilesRecursive(sf);
+      const detail = m.company || sf.description || '';
+      const actions = admin && !sf.is_system
+        ? `<div class="subfolder-actions" onclick="event.stopPropagation()">
+             <button onclick="openEditModal('${sf.id}')">Edit</button>
+             <button class="del" onclick="deleteFolder('${sf.id}')">×</button>
+           </div>` : '';
+      return `<div class="subfolder" onclick="openFolder('${sf.id}')">
+        ${actions}
+        <div class="subfolder-name">${escapeHtml(sf.name)}</div>
+        <div class="subfolder-detail">${escapeHtml(detail)}</div>
         ${tags.join(' ')}
         <div class="subfolder-count">${fcount} ${fcount === 1 ? 'file' : 'files'}</div>
       </div>`;
@@ -252,58 +484,191 @@ function openFolder(key) {
     html += '</div>';
   }
 
-  // Files at folder level
-  if (folder.files && folder.files.length > 0) {
+  if (files.length > 0) {
     html += '<div class="section-title">Files</div>';
-    html += folder.files.map(fileItemHTML).join('');
-  } else if (!folder.subfolders || Object.keys(folder.subfolders).length === 0) {
+    html += files.map(fileItemHTML).join('');
+  } else if (subs.length === 0) {
     html += `<div class="empty">
       <div class="empty-icon">∅</div>
-      <div>No files in this folder yet.</div>
-      <div class="access-tag">${folder.access || ''}</div>
+      <div>No files or subfolders yet.</div>
+      ${folder.access_note ? `<div class="access-tag">${escapeHtml(folder.access_note)}</div>` : ''}
     </div>`;
   }
 
   content.innerHTML = html;
 }
 
-function openSubfolder(folderKey, subfolderKey) {
-  const folder = DATA.folders[folderKey];
-  const sf = folder.subfolders[subfolderKey];
-  if (!sf) return;
-  currentFolder = folderKey;
-  currentSubfolder = subfolderKey;
-
-  document.getElementById('root-view').style.display = 'none';
-  document.getElementById('folder-view').style.display = 'none';
-  document.getElementById('subfolder-view').style.display = 'block';
-
-  document.getElementById('breadcrumb').innerHTML =
-    `<a onclick="showRoot()">Data Room</a> <span class="sep">›</span> <a onclick="openFolder('${folderKey}')">${folder.name}</a> <span class="sep">›</span> <strong>${sf.name}</strong>`;
-
-  document.getElementById('subfolder-back-btn').onclick = () => openFolder(folderKey);
-
-  const content = document.getElementById('subfolder-content');
-  let html = '';
-  if (sf.classification) html += `<div style="margin-bottom:16px;font-size:11px;color:var(--gray-mid)">Classification: <strong style="color:var(--navy)">${sf.classification}</strong></div>`;
-  if (sf.files && sf.files.length > 0) {
-    html += sf.files.map(fileItemHTML).join('');
-  } else {
-    html += '<div class="empty"><div class="empty-icon">∅</div><div>No files in this position folder yet.</div></div>';
-  }
-  content.innerHTML = html;
+// ──────────────────────────────────────────────────────────────────
+// Navigation
+// ──────────────────────────────────────────────────────────────────
+function openFolder(id) {
+  currentFolderId = id;
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function showRoot() {
-  currentFolder = null;
-  currentSubfolder = null;
-  document.getElementById('folder-view').style.display = 'none';
-  document.getElementById('subfolder-view').style.display = 'none';
-  document.getElementById('root-view').style.display = 'block';
-  document.getElementById('breadcrumb').innerHTML = '<a onclick="showRoot()">Data Room</a>';
+  currentFolderId = null;
+  render();
 }
 
-loadData();
+// ──────────────────────────────────────────────────────────────────
+// CRUD modal
+// ──────────────────────────────────────────────────────────────────
+function openCreateModal(parentIdRaw) {
+  if (!isAdmin()) return alert('Sign in as admin to manage folders.');
+  const parentId = parentIdRaw && parentIdRaw !== 'null' ? parentIdRaw : null;
+  modalState = { mode: 'create', parentId, folderId: null };
+  document.getElementById('modal-title').textContent = 'New folder';
+  const parentName = parentId ? (BY_ID.get(parentId)?.name || 'this folder') : 'Data Room (root)';
+  document.getElementById('modal-parent').textContent = parentName;
+  document.getElementById('fld-name').value = '';
+  document.getElementById('fld-desc').value = '';
+  document.getElementById('modal-error').textContent = '';
+  document.getElementById('folder-modal').classList.add('open');
+  setTimeout(() => document.getElementById('fld-name').focus(), 50);
+}
+
+function openEditModal(folderId) {
+  if (!isAdmin()) return alert('Sign in as admin to manage folders.');
+  const f = BY_ID.get(folderId);
+  if (!f) return;
+  if (f.is_system) {
+    return alert('System folders cannot be renamed or deleted.');
+  }
+  modalState = { mode: 'edit', parentId: f.parent_id, folderId };
+  document.getElementById('modal-title').textContent = 'Rename folder';
+  const parentName = f.parent_id ? (BY_ID.get(f.parent_id)?.name || '—') : 'Data Room (root)';
+  document.getElementById('modal-parent').textContent = parentName;
+  document.getElementById('fld-name').value = f.name || '';
+  document.getElementById('fld-desc').value = f.description || '';
+  document.getElementById('modal-error').textContent = '';
+  document.getElementById('folder-modal').classList.add('open');
+  setTimeout(() => document.getElementById('fld-name').focus(), 50);
+}
+
+function closeFolderModal() {
+  document.getElementById('folder-modal').classList.remove('open');
+  modalState = null;
+}
+
+async function saveFolderModal() {
+  if (!modalState) return;
+  const errEl = document.getElementById('modal-error');
+  errEl.textContent = '';
+  const name = document.getElementById('fld-name').value.trim();
+  const description = document.getElementById('fld-desc').value.trim();
+  if (!name) { errEl.textContent = 'Name is required'; return; }
+
+  const btn = document.getElementById('modal-save');
+  btn.setAttribute('disabled', '1');
+  btn.textContent = 'Saving…';
+
+  try {
+    if (modalState.mode === 'create') {
+      const body = { name, description: description || null };
+      if (modalState.parentId) body.parent_id = modalState.parentId;
+      const r = await fetch('/api/admin/dataroom-folders', {
+        method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        throw new Error(j.error || `HTTP ${r.status}`);
+      }
+      const { item } = await r.json();
+      // Update local state and navigate to parent (or root) where it appears
+      FOLDERS.push(item);
+      buildIndices();
+      closeFolderModal();
+      render();
+    } else if (modalState.mode === 'edit') {
+      const r = await fetch(`/api/admin/dataroom-folders?id=${encodeURIComponent(modalState.folderId)}`, {
+        method: 'PATCH', headers: authHeaders(),
+        body: JSON.stringify({ name, description: description || null }),
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        throw new Error(j.error || `HTTP ${r.status}`);
+      }
+      const { item } = await r.json();
+      const idx = FOLDERS.findIndex(f => f.id === item.id);
+      if (idx >= 0) FOLDERS[idx] = item;
+      buildIndices();
+      closeFolderModal();
+      render();
+    }
+  } catch (e) {
+    errEl.textContent = e.message || 'Save failed';
+    btn.removeAttribute('disabled');
+    btn.textContent = 'Save';
+  }
+}
+
+async function deleteFolder(id) {
+  if (!isAdmin()) return;
+  const f = BY_ID.get(id);
+  if (!f) return;
+  if (f.is_system) { alert('System folders cannot be deleted.'); return; }
+  const kids = childrenOf(id);
+  const fileCount = countFilesRecursive(f);
+  let msg = `Delete folder "${f.name}"?`;
+  if (kids.length > 0) msg += `\n\nThis will ALSO delete ${kids.length} subfolder${kids.length === 1 ? '' : 's'} and any nested folders.`;
+  if (fileCount > 0) msg += `\n\nNote: ${fileCount} file${fileCount === 1 ? '' : 's'} will become orphaned in the file index until you remove them manually.`;
+  if (!confirm(msg)) return;
+
+  try {
+    const url = `/api/admin/dataroom-folders?id=${encodeURIComponent(id)}${kids.length > 0 ? '&force=1' : ''}`;
+    const r = await fetch(url, { method: 'DELETE', headers: authHeaders() });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      alert('Delete failed: ' + (j.error || `HTTP ${r.status}`));
+      return;
+    }
+    // Remove the folder + its descendants locally
+    const toRemove = new Set();
+    (function collect(nodeId) {
+      toRemove.add(nodeId);
+      childrenOf(nodeId).forEach(c => collect(c.id));
+    })(id);
+    FOLDERS = FOLDERS.filter(x => !toRemove.has(x.id));
+    buildIndices();
+    if (currentFolderId && toRemove.has(currentFolderId)) {
+      currentFolderId = f.parent_id || null;
+    }
+    render();
+  } catch (e) {
+    alert('Delete failed: ' + e.message);
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Boot
+// ──────────────────────────────────────────────────────────────────
+document.getElementById('modal-save').addEventListener('click', saveFolderModal);
+document.getElementById('folder-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'folder-modal') closeFolderModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('folder-modal').classList.contains('open')) {
+    closeFolderModal();
+  }
+});
+
+// Re-render toolbar when auth changes (sign-in / sign-out cross-tab)
+function _hookAuthChange() {
+  if (window.dceAuth && typeof window.dceAuth.onChange === 'function') {
+    window.dceAuth.onChange(() => render());
+    return true;
+  }
+  return false;
+}
+if (!_hookAuthChange()) {
+  // dce-auth.js loads with `defer`; retry once it's ready.
+  window.addEventListener('DOMContentLoaded', _hookAuthChange);
+  setTimeout(_hookAuthChange, 200);
+}
+
+loadAll();
 </script>
 <script src="/search.js" defer></script>
 </body>
