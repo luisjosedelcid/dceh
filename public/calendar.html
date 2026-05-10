@@ -175,7 +175,7 @@
     <span style="display:flex;gap:14px;align-items:center">
       <span id="last-updated" style="color:var(--gray-mid)"></span>
       <span class="admin-row" id="admin-row" style="display:none">
-        <button class="btn-admin ghost" id="btn-import">Import tickers</button>
+        <button class="btn-admin ghost" id="btn-import">Manage tickers</button>
         <button class="btn-admin" id="btn-refresh">Refresh now</button>
       </span>
     </span>
@@ -196,7 +196,7 @@
   <div class="modal-bg" id="import-modal" role="dialog" aria-modal="true">
     <div class="modal">
       <div class="modal-h">
-        <h2>Import tickers from covered universe / watchlist</h2>
+        <h2>Manage tickers</h2>
         <button class="x" id="import-close" aria-label="close">×</button>
       </div>
       <div class="modal-b">
@@ -442,7 +442,7 @@
   setTimeout(showAdminControls, 1500);
 
   function openImport() {
-    if (!isAdmin()) return alert('Sign in as admin to import tickers.');
+    if (!isAdmin()) return alert('Sign in as admin to manage tickers.');
     document.getElementById('import-modal').classList.add('show');
     document.getElementById('import-error').classList.remove('show');
     loadTickerSources();
