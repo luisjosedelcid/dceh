@@ -5,11 +5,11 @@
 //   → { items: [{ ticker, name, sources, in_calendar, last_event_date,
 //                  event_count, stage?, watchlist_status? }] }
 //
-// DELETE /api/admin/earnings-tickers?ticker=XXX
-//   → { ok, deleted } — removes every earnings_calendar row for that
-//     ticker. Does NOT touch pipeline_cards / watchlist. If the ticker
-//     is still in the covered universe / watchlist the next cron run
-//     will re-import its events.
+// DELETE /api/admin/earnings-tickers?ticker=XXX[&scope=calendar|universe]
+//   → { ok, deleted, deleted_pipeline } — scope=calendar (default) only
+//     removes earnings_calendar rows. scope=universe ALSO removes the
+//     ticker from pipeline_cards (covered universe) so the cron will
+//     never re-import it. watchlist is never touched here.
 // ═══════════════════════════════════════════════════════════════════
 
 const { verifyAdminToken } = require('../_admin-auth');
@@ -32,15 +32,36 @@ module.exports = async (req, res) => {
 
   if (req.method === 'DELETE') {
     const ticker = (req.query.ticker || '').toString().toUpperCase().trim();
+    const scope = (req.query.scope || 'calendar').toString().toLowerCase();
     if (!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(ticker)) {
       res.status(400).json({ error: 'Invalid ticker' });
       return;
     }
+    if (!['calendar', 'universe'].includes(scope)) {
+      res.status(400).json({ error: 'Invalid scope (calendar|universe)' });
+      return;
+    }
     try {
-      // Count first so we can return how many rows were dropped
+      // Count earnings rows first
       const before = await sbSelect('earnings_calendar', `select=ticker&ticker=eq.${ticker}`);
       await sbDelete('earnings_calendar', `ticker=eq.${ticker}`);
-      res.status(200).json({ ok: true, ticker, deleted: before.length });
+
+      let deleted_pipeline = 0;
+      if (scope === 'universe') {
+        const cards = await sbSelect('pipeline_cards', `select=id&ticker=eq.${ticker}`);
+        if (cards.length) {
+          await sbDelete('pipeline_cards', `ticker=eq.${ticker}`);
+          deleted_pipeline = cards.length;
+        }
+      }
+
+      res.status(200).json({
+        ok: true,
+        ticker,
+        scope,
+        deleted: before.length,
+        deleted_pipeline,
+      });
     } catch (e) {
       res.status(500).json({ error: String(e).slice(0, 300) });
     }

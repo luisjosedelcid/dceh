@@ -196,7 +196,7 @@
         <button class="x" id="import-close" aria-label="close">×</button>
       </div>
       <div class="modal-b">
-        <p>Select tickers to refresh into the calendar. Tracked tickers can be removed individually — if a ticker stays in the covered universe / watchlist, the daily cron will re-import its events on the next run.</p>
+        <p>Select tickers to refresh into the calendar. Removing a tracked ticker only drops it from the calendar by default; choose “Also from covered universe” to stop the cron from re-importing it.</p>
         <div id="tk-list"><div class="empty" style="padding:24px">Loading…</div></div>
         <div class="modal-error" id="import-error"></div>
       </div>
@@ -467,7 +467,9 @@
         const meta = tracked
           ? `${it.event_count} event${it.event_count===1?'':'s'} · last ${it.last_event_date || '—'}`
           : 'Not yet in calendar';
-        const checked = !tracked ? 'checked' : '';
+        // Default unchecked — admin must explicitly opt in. Prevents
+        // a just-removed ticker from being silently re-imported.
+        const checked = '';
         const removeBtn = tracked
           ? `<button class="tk-remove" data-remove="${it.ticker}" data-stillin="${stillInUniverse?'1':'0'}" type="button">Remove</button>`
           : '';
@@ -557,25 +559,52 @@
     }
   }
 
+  // Pick remove scope.
+  //   stillIn=true  → prompt(1=calendar only, 2=calendar+universe, anything else=cancel)
+  //   stillIn=false → simple confirm → 'calendar'
+  // Returns 'calendar' | 'universe' | null.
+  function pickRemoveScope(ticker, stillIn) {
+    if (!stillIn) {
+      return confirm(`Remove ${ticker} from the earnings calendar?`) ? 'calendar' : null;
+    }
+    const ans = prompt(
+      `${ticker} is still in the covered universe.\n\n` +
+      `Pick what to remove:\n` +
+      `  1 = Only from earnings calendar (cron may re-import it tomorrow)\n` +
+      `  2 = Calendar AND covered universe (permanent — deletes pipeline_cards row)\n` +
+      `  blank or anything else = Cancel`,
+      '1'
+    );
+    if (ans === '1') return 'calendar';
+    if (ans === '2') {
+      return confirm(`Confirm: permanently remove ${ticker} from the covered universe (pipeline_cards)?`)
+        ? 'universe'
+        : null;
+    }
+    return null;
+  }
+
   async function removeTicker(btn) {
     const ticker = btn.dataset.remove;
     const stillIn = btn.dataset.stillin === '1';
-    const warn = stillIn
-      ? `Remove ${ticker} from the earnings calendar?\n\nNote: ${ticker} is still in the covered universe / watchlist, so the daily cron will re-import its events tomorrow. To stop tracking permanently, also remove it from those sources.`
-      : `Remove ${ticker} from the earnings calendar?`;
-    if (!confirm(warn)) return;
+    const scope = pickRemoveScope(ticker, stillIn);
+    if (!scope) return;
     btn.disabled = true;
     const original = btn.textContent;
-    btn.textContent = 'Removing…';
+    btn.textContent = scope === 'universe' ? 'Removing all…' : 'Removing…';
     try {
-      const r = await fetch(`/api/admin/earnings-tickers?ticker=${encodeURIComponent(ticker)}`, {
-        method: 'DELETE',
-        headers: authHeaders(),
-      });
+      const url = `/api/admin/earnings-tickers?ticker=${encodeURIComponent(ticker)}&scope=${scope}`;
+      const r = await fetch(url, { method: 'DELETE', headers: authHeaders() });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || ('http ' + r.status));
       // Refresh the modal list and the underlying calendar in parallel
       await Promise.all([loadTickerSources(), load()]);
+      if (scope === 'universe' && (j.deleted_pipeline || 0) > 0) {
+        const lu = document.getElementById('last-updated');
+        const prev = lu.textContent;
+        lu.textContent = `${ticker} removed from calendar + covered universe.`;
+        setTimeout(() => { lu.textContent = prev; }, 5000);
+      }
     } catch (e) {
       const err = document.getElementById('import-error');
       err.textContent = `Remove failed: ${e.message || e}`;
