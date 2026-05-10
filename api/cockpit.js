@@ -119,12 +119,14 @@ async function getOutstandingDecisions() {
 }
 
 // ── 3. Re-underwriting due ────────────────────────────────────────────
+//   Only truly open work: status IN (pending, in_progress).
+//   Excludes: completed / done / skipped / superseded — those are not actionable.
 async function getReunderwritingDue() {
   let rows = [];
   try {
     rows = await sbSelect(
       'reunderwriting_due',
-      `select=id,ticker,period_end,doc_type,status,due_at,completed_at,outcome&status=neq.completed&order=due_at.asc.nullslast&limit=30`
+      `select=id,ticker,period_end,doc_type,status,due_at,completed_at,outcome&status=in.(pending,in_progress)&order=due_at.asc.nullslast&limit=30`
     );
   } catch (e) {
     console.error('getReunderwritingDue failed:', e.message);
