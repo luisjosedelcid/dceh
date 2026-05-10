@@ -157,7 +157,7 @@
 <main id="main-root">
   <div class="slbl">DCE Holdings — Investment Office</div>
   <h1>Settings</h1>
-  <div class="sub">Activity log, idea-feed sources and discipline rules.</div>
+  <div class="sub">Activity log, idea-feed sources, users and discipline rules.</div>
 
   <!-- ADMIN BAR -->
   <div class="admin-bar" id="admin-bar">
@@ -174,6 +174,8 @@
   <div class="tabs">
     <button class="tab active" data-tab="activity" type="button" id="tab-activity">Activity log</button>
     <button class="tab" data-tab="ideafeed" type="button" id="tab-ideafeed">Idea Feed sources</button>
+    <button class="tab admin-only" data-tab="users" type="button" id="tab-users" style="display:none">Users</button>
+    <button class="tab" data-tab="account" type="button" id="tab-account">My account</button>
     <button class="tab" data-tab="discipline" type="button" id="tab-discipline">Discipline rules</button>
   </div>
 
@@ -220,6 +222,76 @@
       </div>
     </div>
   </div><!-- /tab-panel ideafeed -->
+
+  <!-- TAB: USERS (admin only) -->
+  <div class="tab-panel" data-panel="users">
+    <div class="section" style="border-top-color:var(--gold)">
+      <div class="section-head">
+        <div class="section-name">Team Users</div>
+        <div class="section-meta">Admin · Analyst · Viewer</div>
+      </div>
+      <div class="section-desc">
+        Manage who can sign in to dceholdings.app. Roles: <strong>admin</strong> (full control + user management), <strong>analyst</strong> (read/write on research, journal, dataroom), <strong>viewer</strong> (read-only).
+      </div>
+      <div style="padding:0 24px 22px">
+        <div id="u-admin-list" style="margin-bottom:18px"><div class="loading-files">Sign in as admin to manage users</div></div>
+
+        <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:18px 0 10px">Add new user</h4>
+        <form onsubmit="return addUser(event)" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px">
+          <input type="email" name="email" required placeholder="name@dceholdings.com" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <input type="text" name="display_name" required placeholder="Display name" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <select name="role" required style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+            <option value="analyst">Analyst</option>
+            <option value="admin">Admin</option>
+            <option value="viewer">Viewer</option>
+          </select>
+          <input type="password" name="password" required minlength="8" placeholder="Initial password (min 8 chars)" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end;grid-column:span 2">
+            <span id="u-add-status" style="font-size:11px;font-style:italic"></span>
+            <button class="btn" type="submit">Add user</button>
+          </div>
+        </form>
+        <p style="font-size:11px;color:var(--gray-mid);margin-top:8px">Share the initial password with the user via a secure channel. They can change it from <em>My account</em> on first login.</p>
+      </div>
+    </div>
+  </div><!-- /tab-panel users -->
+
+  <!-- TAB: MY ACCOUNT -->
+  <div class="tab-panel" data-panel="account">
+    <div class="section" style="border-top-color:var(--gold)">
+      <div class="section-head">
+        <div class="section-name">My Account</div>
+        <div class="section-meta" id="acct-role-meta">—</div>
+      </div>
+      <div class="section-desc">
+        Update your display name or change your password. Role and access level are managed by an administrator.
+      </div>
+      <div style="padding:0 24px 22px">
+        <div id="acct-summary" style="margin-bottom:18px;padding:14px 18px;background:rgba(184,139,71,0.06);border-left:3px solid var(--gold);font-size:12px;color:var(--gray-mid)">
+          <div class="loading-files" style="padding:0">Sign in to view your account.</div>
+        </div>
+
+        <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:18px 0 10px">Change display name</h4>
+        <form onsubmit="return updateOwnName(event)" style="display:flex;gap:10px;align-items:center;font-size:12px;flex-wrap:wrap">
+          <input type="text" name="display_name" id="acct-name" required minlength="2" style="padding:8px;border:1px solid var(--rule);font-family:inherit;min-width:280px">
+          <button class="btn" type="submit">Save</button>
+          <span id="acct-name-status" style="font-size:11px;font-style:italic"></span>
+        </form>
+
+        <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:24px 0 10px">Change password</h4>
+        <form onsubmit="return changeOwnPassword(event)" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;max-width:520px">
+          <input type="password" name="current_password" required placeholder="Current password" style="padding:8px;border:1px solid var(--rule);font-family:inherit;grid-column:span 2">
+          <input type="password" name="new_password" required minlength="8" placeholder="New password (min 8 chars)" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <input type="password" name="confirm_password" required minlength="8" placeholder="Confirm new password" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end;grid-column:span 2">
+            <span id="acct-pw-status" style="font-size:11px;font-style:italic"></span>
+            <button class="btn" type="submit">Update password</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div><!-- /tab-panel account -->
+
 
 
   <!-- TAB: ACTIVITY -->
@@ -379,11 +451,19 @@ function refreshAdminUI() {
   const bar = document.getElementById('admin-bar');
   const label = document.getElementById('admin-label');
   const btn = document.getElementById('btn-admin');
+  const u = currentUser();
+  const isAdminRole = admin && u && u.role === 'admin';
+
+  // Show 'Users' tab only to actual admins (not analysts/viewers)
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = isAdminRole ? '' : 'none';
+  });
+
   if (admin) {
-    const u = currentUser();
     const who = u && u.displayName ? u.displayName : (u && u.email) || 'Admin';
+    const roleLabel = u && u.role ? u.role : 'admin';
     bar.classList.add('is-admin');
-    label.innerHTML = `<strong>${escapeHtml(who)}</strong> · admin mode · upload &amp; delete enabled`;
+    label.innerHTML = `<strong>${escapeHtml(who)}</strong> · ${escapeHtml(roleLabel)} mode`;
     btn.textContent = 'Sign out';
     btn.classList.remove('ghost');
     btn.classList.add('danger');
@@ -461,6 +541,8 @@ document.querySelectorAll('.tab').forEach(t => {
     document.querySelector(`.tab-panel[data-panel="${t.dataset.tab}"]`).classList.add('active');
     if (t.dataset.tab === 'activity') loadAudit();
     if (t.dataset.tab === 'ideafeed') loadIdeaFeedSources();
+    if (t.dataset.tab === 'users') loadUsersAdmin();
+    if (t.dataset.tab === 'account') loadMyAccount();
     if (t.dataset.tab === 'discipline') loadDisciplineRules();
   });
 });
@@ -730,6 +812,257 @@ async function saveDisciplineRule(ruleKey, rawValue) {
 }
 
 document.getElementById('btn-discipline-refresh')?.addEventListener('click', loadDisciplineRules);
+
+// ────────────────────────────────────────────────────────────────
+// USERS ADMIN (admin role only)
+// ────────────────────────────────────────────────────────────────
+async function loadUsersAdmin() {
+  const cont = document.getElementById('u-admin-list');
+  if (!cont) return;
+  const u = currentUser();
+  if (!isAdmin() || !u || u.role !== 'admin') {
+    cont.innerHTML = '<div class="loading-files">Sign in as admin to manage users</div>';
+    return;
+  }
+  cont.innerHTML = '<div class="loading-files">Loading…</div>';
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const r = await fetch('/api/admin/users', { headers: { 'x-admin-token': token } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    const items = data.items || [];
+    if (items.length === 0) { cont.innerHTML = '<div class="loading-files">No users.</div>'; return; }
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--navy);color:var(--white)">'
+      + '<th style="text-align:left;padding:8px 10px">Email / Name</th>'
+      + '<th style="text-align:left;padding:8px 10px">Role</th>'
+      + '<th style="padding:8px 10px">Active</th>'
+      + '<th style="text-align:left;padding:8px 10px">Last login</th>'
+      + '<th style="padding:8px 10px"></th>'
+      + '</tr></thead><tbody>';
+    for (const it of items) {
+      const isMe = u.email && u.email.toLowerCase() === (it.email||'').toLowerCase();
+      const safeEmail = encodeURIComponent(it.email || '');
+      html += `<tr style="border-bottom:1px solid var(--rule)">
+        <td style="padding:8px 10px">
+          <strong>${escapeHtml(it.display_name || '—')}</strong>${isMe ? ' <span style="font-size:9px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-left:4px">(you)</span>' : ''}
+          <div style="font-size:10px;color:var(--gray-mid)">${escapeHtml(it.email)}</div>
+        </td>
+        <td style="padding:8px 10px">
+          <select onchange="updateUserRole('${safeEmail}', this.value)" ${isMe ? 'disabled' : ''} style="padding:4px 8px;border:1px solid var(--rule);font-family:inherit;font-size:11px">
+            <option value="admin"   ${it.role==='admin'?'selected':''}>Admin</option>
+            <option value="analyst" ${it.role==='analyst'?'selected':''}>Analyst</option>
+            <option value="viewer"  ${it.role==='viewer'?'selected':''}>Viewer</option>
+          </select>
+        </td>
+        <td style="padding:8px 10px;text-align:center">
+          <label style="cursor:${isMe?'not-allowed':'pointer'}"><input type="checkbox" ${it.is_active?'checked':''} ${isMe?'disabled':''} onchange="toggleUserActive('${safeEmail}', this.checked)"></label>
+        </td>
+        <td style="padding:8px 10px;font-size:11px;color:var(--gray-mid)">${it.last_login ? fmtTs(it.last_login) : 'never'}</td>
+        <td style="padding:8px 10px;text-align:right;white-space:nowrap">
+          <button class="btn" style="font-size:10px;padding:4px 10px" onclick="setUserPassword('${safeEmail}', '${escapeHtml(it.display_name||it.email)}')">Set password</button>
+          <button class="btn" style="font-size:10px;padding:4px 10px;margin-left:6px" onclick="sendUserResetLink('${safeEmail}')">Reset link</button>
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    cont.innerHTML = html;
+  } catch (e) {
+    cont.innerHTML = '<div class="loading-files" style="color:var(--red)">Error: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function addUser(ev) {
+  ev.preventDefault();
+  const f = ev.target;
+  const status = document.getElementById('u-add-status');
+  status.textContent = 'Saving…'; status.style.color = 'var(--gray-mid)';
+  const token = localStorage.getItem(TOKEN_KEY);
+  try {
+    const r = await fetch('/api/admin/users', {
+      method: 'POST',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: f.email.value.trim().toLowerCase(),
+        display_name: f.display_name.value.trim(),
+        role: f.role.value,
+        password: f.password.value,
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    status.textContent = 'User added.'; status.style.color = 'var(--green)';
+    f.reset();
+    loadUsersAdmin();
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = 'var(--red)';
+  }
+  return false;
+}
+
+async function updateUserRole(emailEnc, role) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  try {
+    const r = await fetch('/api/admin/users?email=' + emailEnc, {
+      method: 'PATCH',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    loadUsersAdmin();
+  } catch (e) {
+    alert('Could not update role: ' + e.message);
+    loadUsersAdmin();
+  }
+}
+
+async function toggleUserActive(emailEnc, active) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  try {
+    const r = await fetch('/api/admin/users?email=' + emailEnc, {
+      method: 'PATCH',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: active }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    loadUsersAdmin();
+  } catch (e) {
+    alert('Could not update: ' + e.message);
+    loadUsersAdmin();
+  }
+}
+
+async function setUserPassword(emailEnc, name) {
+  const pw = prompt('New password for ' + decodeURIComponent(name) + ' (min 8 chars):');
+  if (!pw) return;
+  if (pw.length < 8) { alert('Min 8 characters'); return; }
+  const token = localStorage.getItem(TOKEN_KEY);
+  try {
+    const r = await fetch('/api/admin/users?action=password&email=' + emailEnc, {
+      method: 'POST',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    alert('Password updated. Share it with the user via a secure channel.');
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+async function sendUserResetLink(emailEnc) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  try {
+    const r = await fetch('/api/admin/users?action=reset_link&email=' + emailEnc, {
+      method: 'POST',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    // Show link in a modal-ish prompt for copy/paste (Resend wiring pending)
+    window.prompt('Copy this reset link (valid ' + data.expires_in_hours + 'h):', data.reset_url);
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+// MY ACCOUNT (any signed-in user)
+// ────────────────────────────────────────────────────────────────
+async function loadMyAccount() {
+  const summary = document.getElementById('acct-summary');
+  const meta = document.getElementById('acct-role-meta');
+  const nameInput = document.getElementById('acct-name');
+  if (!isAdmin()) {
+    summary.innerHTML = '<div class="loading-files" style="padding:0">Sign in to view your account.</div>';
+    if (nameInput) nameInput.value = '';
+    if (meta) meta.textContent = '—';
+    return;
+  }
+  summary.innerHTML = '<div class="loading-files" style="padding:0">Loading…</div>';
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const r = await fetch('/api/me', { headers: { 'x-admin-token': token } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    const me = data.user || {};
+    if (nameInput) nameInput.value = me.display_name || '';
+    if (meta) meta.textContent = (me.role || '').toUpperCase();
+    summary.innerHTML = `
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 18px;font-size:12px;color:var(--ink)">
+        <span style="color:var(--gray-mid);font-size:10px;letter-spacing:0.14em;text-transform:uppercase">Email</span><span><strong>${escapeHtml(me.email||'—')}</strong></span>
+        <span style="color:var(--gray-mid);font-size:10px;letter-spacing:0.14em;text-transform:uppercase">Role</span><span style="text-transform:capitalize">${escapeHtml(me.role||'—')}</span>
+        <span style="color:var(--gray-mid);font-size:10px;letter-spacing:0.14em;text-transform:uppercase">Member since</span><span>${me.created_at ? fmtTs(me.created_at) : '—'}</span>
+        <span style="color:var(--gray-mid);font-size:10px;letter-spacing:0.14em;text-transform:uppercase">Last login</span><span>${me.last_login ? fmtTs(me.last_login) : 'never'}</span>
+      </div>`;
+  } catch (e) {
+    summary.innerHTML = '<div class="loading-files" style="padding:0;color:var(--red)">Error: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function updateOwnName(ev) {
+  ev.preventDefault();
+  const f = ev.target;
+  const status = document.getElementById('acct-name-status');
+  status.textContent = 'Saving…'; status.style.color = 'var(--gray-mid)';
+  const token = localStorage.getItem(TOKEN_KEY);
+  const display_name = f.display_name.value.trim();
+  try {
+    const r = await fetch('/api/me', {
+      method: 'PATCH',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ display_name }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    // Update localStorage user record so UI label reflects change
+    try {
+      const u = currentUser();
+      if (u) { u.displayName = display_name; localStorage.setItem(USER_KEY, JSON.stringify(u)); }
+    } catch {}
+    status.textContent = 'Saved.'; status.style.color = 'var(--green)';
+    refreshAdminUI();
+    loadMyAccount();
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = 'var(--red)';
+  }
+  return false;
+}
+
+async function changeOwnPassword(ev) {
+  ev.preventDefault();
+  const f = ev.target;
+  const status = document.getElementById('acct-pw-status');
+  if (f.new_password.value !== f.confirm_password.value) {
+    status.textContent = 'Passwords do not match.'; status.style.color = 'var(--red)';
+    return false;
+  }
+  status.textContent = 'Saving…'; status.style.color = 'var(--gray-mid)';
+  const token = localStorage.getItem(TOKEN_KEY);
+  try {
+    const r = await fetch('/api/me?action=password', {
+      method: 'POST',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        current_password: f.current_password.value,
+        new_password: f.new_password.value,
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    status.textContent = 'Password updated.'; status.style.color = 'var(--green)';
+    f.reset();
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = 'var(--red)';
+  }
+  return false;
+}
 
 // INIT
 refreshAdminUI();
