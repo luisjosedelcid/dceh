@@ -6,7 +6,9 @@
 // covered universe + watchlist + portfolio + price alerts) and upserts
 // them into the earnings_calendar table.
 //
-// Window: today → today + 365 days (covers next four quarters).
+// Window: today - 135 days → today + 365 days. Backwards window covers
+// the most recent quarter plus margin (so 'Reported' filter has data);
+// forward window covers the next four quarters.
 //
 // Triggered by Vercel cron (see vercel.json), also re-used by
 // /api/admin/earnings-refresh-now via runEarningsRefresh().
@@ -156,7 +158,9 @@ async function runEarningsRefresh(opts) {
   if (!fhKey) throw new Error('FINNHUB_KEY env var not set');
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) throw new Error('Supabase env vars not set');
 
-  const fromIso = todayIso();
+  // Pull a backwards window so already-reported events land in the
+  // calendar (status=reported with eps_actual / revenue_actual).
+  const fromIso = plusDaysIso(-135);
   const toIso = plusDaysIso(365);
 
   const [{ tickers: trackedAll, names: dbNames }, blocklist] = await Promise.all([
