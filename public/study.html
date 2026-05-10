@@ -9,7 +9,7 @@
   :root {
     --navy:#1b2642;--gold:#b88b47;--gold-lt:#d4aa6a;--gold-dim:rgba(184,139,71,0.10);--gold-rule:rgba(184,139,71,0.30);
     --cream:#f5f1eb;--white:#ffffff;--ink:#1b2642;--gray-mid:#8a9098;--gray-txt:#606060;
-    --rule:rgba(27,38,66,0.09);
+    --rule:rgba(27,38,66,0.09);--red:#7a1010;
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
@@ -35,7 +35,16 @@
   .mode-pane{display:none}
   .mode-pane.active{display:block}
 
-  .meta{font-size:12px;color:var(--gray-mid);margin-bottom:16px}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .toolbar .meta{font-size:12px;color:var(--gray-mid);margin:0}
+  .btn{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:7px 13px;text-decoration:none;border:1px solid;background:none;cursor:pointer;font-family:'Archivo',sans-serif;transition:all .15s}
+  .btn-primary{color:var(--gold);border-color:var(--gold-rule)}
+  .btn-primary:hover{background:var(--gold);color:var(--white);border-color:var(--gold)}
+  .btn-ghost{color:var(--gray-mid);border-color:var(--rule)}
+  .btn-ghost:hover{color:var(--navy);border-color:var(--navy)}
+  .btn-danger{color:var(--red);border-color:rgba(122,16,16,0.30)}
+  .btn-danger:hover{background:var(--red);color:var(--white);border-color:var(--red)}
+  .btn[disabled]{opacity:0.5;cursor:not-allowed}
 
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
   .card{background:var(--white);border:1px solid var(--rule);border-top:3px solid var(--gold);padding:20px 22px;transition:all .2s;display:flex;flex-direction:column;min-height:200px}
@@ -46,15 +55,25 @@
   .card-meta{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:10px}
   .card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
   .tag{font-size:10px;font-weight:500;background:var(--gold-dim);color:var(--gold);padding:3px 9px;border-radius:3px;letter-spacing:0.04em}
-  .card-actions{display:flex;gap:8px;margin-top:auto}
-  .btn{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:7px 13px;text-decoration:none;border:1px solid;transition:all .15s}
-  .btn-primary{color:var(--gold);border-color:var(--gold-rule)}
-  .btn-primary:hover{background:var(--gold);color:var(--white);border-color:var(--gold)}
-  .btn-ghost{color:var(--gray-mid);border-color:var(--rule)}
-  .btn-ghost:hover{color:var(--navy);border-color:var(--navy)}
+  .upload-pill{display:inline-block;font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);background:var(--gold-dim);padding:2px 8px;border-radius:3px;margin-bottom:10px}
+  .card-actions{display:flex;gap:8px;margin-top:auto;flex-wrap:wrap}
 
   .empty{padding:40px;text-align:center;color:var(--gray-mid);font-style:italic;background:var(--white);border:1px dashed var(--rule)}
   .status{font-size:12px;color:var(--gray-mid);margin-bottom:14px}
+
+  /* Modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(27,38,66,0.45);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--white);border-top:3px solid var(--gold);padding:28px 32px;max-width:480px;width:100%;box-shadow:0 8px 32px rgba(27,38,66,0.20)}
+  .modal h2{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px}
+  .modal .modal-sub{font-size:11px;color:var(--gray-mid);margin-bottom:20px}
+  .modal label{display:block;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;margin-top:14px}
+  .modal label:first-of-type{margin-top:0}
+  .modal input[type="text"],.modal input[type="file"],.modal textarea{width:100%;padding:10px 12px;border:1px solid var(--rule);font-family:'Archivo',sans-serif;font-size:13px;color:var(--ink);background:var(--white);outline:none;transition:border-color .2s}
+  .modal input[type="text"]:focus,.modal textarea:focus{border-color:var(--gold)}
+  .modal textarea{resize:vertical;min-height:60px}
+  .modal .row{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
+  .modal-error{color:var(--red);font-size:11px;margin-top:12px;min-height:14px}
 
   footer{padding:24px 48px;background:var(--navy);color:rgba(255,255,255,0.55);font-size:11px;letter-spacing:0.04em;display:flex;justify-content:space-between;border-top:2px solid var(--gold)}
 
@@ -81,7 +100,7 @@
       <a href="/portfolio.html">Portfolio</a>
       <a href="/news.html">News</a>
       <a href="/dataroom.html">Data Room</a>
-            <a href="/performance.html">Performance</a>
+      <a href="/performance.html">Performance</a>
       <a href="/research.html">Research</a>
       <a href="/calendar.html">Calendar</a>
     </nav>
@@ -98,33 +117,120 @@
   </div>
 
   <div class="mode-pane active" id="pane-sector">
-    <div class="meta">In-depth analyses of GICS sectors — dynamics, value chains, KPIs, and quality screens.</div>
+    <div class="toolbar">
+      <div class="meta">In-depth analyses of GICS sectors — dynamics, value chains, KPIs, and quality screens.</div>
+      <button class="btn btn-primary admin-only" onclick="openUploadModal('sector')">+ Upload file</button>
+    </div>
     <div class="status" id="status-sector">Loading…</div>
     <div class="grid" id="grid-sector"></div>
   </div>
 
   <div class="mode-pane" id="pane-megatrends">
-    <div class="meta">Structural shifts that compound over a decade — AI, energy transition, demographics, geopolitics.</div>
+    <div class="toolbar">
+      <div class="meta">Structural shifts that compound over a decade — AI, energy transition, demographics, geopolitics.</div>
+      <button class="btn btn-primary admin-only" onclick="openUploadModal('megatrends')">+ Upload file</button>
+    </div>
     <div class="status" id="status-megatrends">Loading…</div>
     <div class="grid" id="grid-megatrends"></div>
   </div>
 </main>
 
+<!-- Upload modal -->
+<div class="modal-bg" id="upload-modal">
+  <div class="modal">
+    <h2>Upload file</h2>
+    <div class="modal-sub">Add a file to <strong id="upload-section">—</strong></div>
+    <label for="upl-file">File</label>
+    <input type="file" id="upl-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.json,.md,.txt,.png,.jpg,.jpeg,.zip">
+    <label for="upl-name">Display name (optional)</label>
+    <input type="text" id="upl-name" maxlength="200" placeholder="Defaults to filename">
+    <label for="upl-detail">Detail (optional)</label>
+    <input type="text" id="upl-detail" maxlength="300" placeholder="Short context shown on the card">
+    <div class="modal-error" id="upload-error"></div>
+    <div class="row">
+      <button class="btn btn-ghost" onclick="closeUploadModal()">Cancel</button>
+      <button class="btn btn-primary" id="upload-save">Upload</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rename modal -->
+<div class="modal-bg" id="rename-modal">
+  <div class="modal">
+    <h2>Rename file</h2>
+    <div class="modal-sub">Update the display name and detail</div>
+    <label for="ren-name">Display name</label>
+    <input type="text" id="ren-name" maxlength="200">
+    <label for="ren-detail">Detail (optional)</label>
+    <input type="text" id="ren-detail" maxlength="300">
+    <div class="modal-error" id="rename-error"></div>
+    <div class="row">
+      <button class="btn btn-ghost" onclick="closeRenameModal()">Cancel</button>
+      <button class="btn btn-primary" id="rename-save">Save</button>
+    </div>
+  </div>
+</div>
+
 <footer>
   <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
-  <span>Study v1</span>
+  <span>Study v2</span>
 </footer>
 
 <script>
+// ──────────────────────────────────────────────────────────────────
+// State
+// ──────────────────────────────────────────────────────────────────
+let CURATED = [];        // /api/study items
+let UPLOADS = [];        // study_files rows
+let uploadState = null;  // { section }
+let renameState = null;  // { id, section }
+
+// ──────────────────────────────────────────────────────────────────
+// Helpers
+// ──────────────────────────────────────────────────────────────────
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+function escapeAttr(s) { return escapeHtml(s); }
 function fmtDate(d) {
   if (!d) return '—';
   const dt = new Date(d);
   return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
+function fmtBytes(n) {
+  if (!n && n !== 0) return '';
+  const u = ['B','KB','MB','GB'];
+  let i = 0; let v = n;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return v.toFixed(v >= 10 || i === 0 ? 0 : 1) + ' ' + u[i];
+}
+function adminToken() {
+  try { return localStorage.getItem('dce_admin_token') || ''; } catch { return ''; }
+}
+function isAdmin() {
+  try {
+    if (window.dceAuth && typeof window.dceAuth.isAdmin === 'function') {
+      return !!window.dceAuth.isAdmin();
+    }
+  } catch {}
+  return !!adminToken();
+}
+function authHeaders(extra) {
+  const h = { ...(extra || {}) };
+  const t = adminToken();
+  if (t) h['x-admin-token'] = t;
+  return h;
+}
+function applyAdminVisibility() {
+  const show = isAdmin();
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = show ? '' : 'none';
+  });
+}
 
+// ──────────────────────────────────────────────────────────────────
+// Tab switching
+// ──────────────────────────────────────────────────────────────────
 function showSection(section, btn) {
   document.querySelectorAll('.mode-pane').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.mode-tab').forEach(el => el.classList.remove('active'));
@@ -132,52 +238,276 @@ function showSection(section, btn) {
   if (btn) btn.classList.add('active');
 }
 
-function renderItems(section, items) {
+// ──────────────────────────────────────────────────────────────────
+// Render
+// ──────────────────────────────────────────────────────────────────
+function renderItems(section) {
   const grid = document.getElementById('grid-' + section);
   const status = document.getElementById('status-' + section);
   const countEl = document.getElementById('count-' + section);
-  if (countEl) countEl.textContent = items.length;
-  if (items.length === 0) {
+
+  const curated = CURATED.filter(it => it.section === section);
+  const uploads = UPLOADS.filter(u => u.section === section);
+  const total = curated.length + uploads.length;
+  if (countEl) countEl.textContent = total;
+
+  if (total === 0) {
     status.textContent = '';
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">No articles yet.</div>`;
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">No articles yet. ${isAdmin() ? 'Use Upload to add one.' : ''}</div>`;
     return;
   }
-  status.textContent = items.length + ' article' + (items.length === 1 ? '' : 's');
-  grid.innerHTML = items.map(it => {
-    const tags = (it.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
-    const pdf = it.pdf_url
-      ? `<a class="btn btn-primary" href="${escapeHtml(it.pdf_url)}" target="_blank" rel="noopener">Read PDF →</a>`
-      : '';
-    const ext = it.external_url
-      ? `<a class="btn btn-ghost" href="${escapeHtml(it.external_url)}" target="_blank" rel="noopener">External link</a>`
-      : '';
-    return `<article class="card">
-      ${it.cover_emoji ? `<div class="card-emoji">${escapeHtml(it.cover_emoji)}</div>` : ''}
-      <div class="card-title">${escapeHtml(it.title)}</div>
-      <div class="card-meta">${escapeHtml(it.author || 'DCE Holdings')} · ${fmtDate(it.published_at)}</div>
-      ${tags ? `<div class="card-tags">${tags}</div>` : ''}
-      ${it.description ? `<div class="card-desc">${escapeHtml(it.description)}</div>` : '<div class="card-desc"></div>'}
-      <div class="card-actions">${pdf}${ext}</div>
-    </article>`;
-  }).join('');
+  status.textContent = total + ' article' + (total === 1 ? '' : 's');
+
+  // Uploads first (most recent), then curated
+  const uploadCards = uploads.map(u => renderUploadCard(u, section)).join('');
+  const curatedCards = curated.map(it => renderCuratedCard(it)).join('');
+  grid.innerHTML = uploadCards + curatedCards;
 }
 
-async function loadStudy() {
+function renderUploadCard(u, section) {
+  const adminBtns = isAdmin() ? `
+    <button class="btn btn-ghost" onclick="openRenameModal('${escapeAttr(u.id)}','${escapeAttr(section)}')">Rename</button>
+    <button class="btn btn-danger" onclick="deleteUploadedFile('${escapeAttr(u.id)}', ${JSON.stringify(u.name || u.filename)})">Delete</button>
+  ` : '';
+  const sizeStr = u.size_bytes ? ' · ' + fmtBytes(u.size_bytes) : '';
+  return `<article class="card">
+    <div class="upload-pill">Uploaded</div>
+    <div class="card-title">${escapeHtml(u.name || u.filename)}</div>
+    <div class="card-meta">${escapeHtml(u.uploaded_by || 'admin')} · ${fmtDate(u.uploaded_at)}${sizeStr}</div>
+    ${u.detail ? `<div class="card-desc">${escapeHtml(u.detail)}</div>` : '<div class="card-desc"></div>'}
+    <div class="card-actions">
+      <a class="btn btn-primary" href="${escapeAttr(u.url)}" target="_blank" rel="noopener">Open →</a>
+      ${adminBtns}
+    </div>
+  </article>`;
+}
+
+function renderCuratedCard(it) {
+  const tags = (it.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
+  const pdf = it.pdf_url
+    ? `<a class="btn btn-primary" href="${escapeAttr(it.pdf_url)}" target="_blank" rel="noopener">Read PDF →</a>`
+    : '';
+  const ext = it.external_url
+    ? `<a class="btn btn-ghost" href="${escapeAttr(it.external_url)}" target="_blank" rel="noopener">External link</a>`
+    : '';
+  return `<article class="card">
+    ${it.cover_emoji ? `<div class="card-emoji">${escapeHtml(it.cover_emoji)}</div>` : ''}
+    <div class="card-title">${escapeHtml(it.title)}</div>
+    <div class="card-meta">${escapeHtml(it.author || 'DCE Holdings')} · ${fmtDate(it.published_at)}</div>
+    ${tags ? `<div class="card-tags">${tags}</div>` : ''}
+    ${it.description ? `<div class="card-desc">${escapeHtml(it.description)}</div>` : '<div class="card-desc"></div>'}
+    <div class="card-actions">${pdf}${ext}</div>
+  </article>`;
+}
+
+function render() {
+  applyAdminVisibility();
+  renderItems('sector');
+  renderItems('megatrends');
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Upload modal
+// ──────────────────────────────────────────────────────────────────
+function openUploadModal(section) {
+  if (!isAdmin()) return alert('Sign in as admin to upload files.');
+  uploadState = { section };
+  document.getElementById('upload-section').textContent = section === 'sector' ? 'Sector Analysis' : 'Megatrends';
+  document.getElementById('upl-file').value = '';
+  document.getElementById('upl-name').value = '';
+  document.getElementById('upl-detail').value = '';
+  document.getElementById('upload-error').textContent = '';
+  const btn = document.getElementById('upload-save');
+  btn.removeAttribute('disabled');
+  btn.textContent = 'Upload';
+  document.getElementById('upload-modal').classList.add('open');
+  setTimeout(() => document.getElementById('upl-file').focus(), 50);
+}
+function closeUploadModal() {
+  document.getElementById('upload-modal').classList.remove('open');
+  uploadState = null;
+}
+async function saveUpload() {
+  if (!uploadState) return;
+  const errEl = document.getElementById('upload-error');
+  errEl.textContent = '';
+  const fileEl = document.getElementById('upl-file');
+  if (!fileEl.files || !fileEl.files[0]) { errEl.textContent = 'Select a file'; return; }
+  const file = fileEl.files[0];
+  if (file.size > 25 * 1024 * 1024) { errEl.textContent = 'File too large (max 25 MB)'; return; }
+
+  const displayName = document.getElementById('upl-name').value.trim() || file.name;
+  const detail = document.getElementById('upl-detail').value.trim();
+
+  const btn = document.getElementById('upload-save');
+  btn.setAttribute('disabled', '1');
+  btn.textContent = 'Uploading…';
+
   try {
-    const r = await fetch('/api/study');
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const data = await r.json();
-    const all = data.items || [];
-    const sector = all.filter(it => it.section === 'sector');
-    const trends = all.filter(it => it.section === 'megatrends');
-    renderItems('sector', sector);
-    renderItems('megatrends', trends);
+    const params = new URLSearchParams({
+      section: uploadState.section,
+      filename: file.name,
+      name: displayName,
+      detail,
+    });
+    const r = await fetch('/api/admin/study-upload?' + params.toString(), {
+      method: 'POST',
+      headers: authHeaders(),
+      body: file,
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error || `HTTP ${r.status}`);
+    }
+    const { item } = await r.json();
+    UPLOADS.unshift(item);
+    closeUploadModal();
+    render();
   } catch (e) {
-    document.getElementById('status-sector').textContent = 'Error loading: ' + e.message;
-    document.getElementById('status-megatrends').textContent = 'Error loading: ' + e.message;
+    errEl.textContent = e.message || 'Upload failed';
+    btn.removeAttribute('disabled');
+    btn.textContent = 'Upload';
   }
 }
-loadStudy();
+
+// ──────────────────────────────────────────────────────────────────
+// Rename modal
+// ──────────────────────────────────────────────────────────────────
+function openRenameModal(id, section) {
+  if (!isAdmin()) return;
+  const u = UPLOADS.find(x => x.id === id);
+  if (!u) return;
+  renameState = { id, section };
+  document.getElementById('ren-name').value = u.name || u.filename || '';
+  document.getElementById('ren-detail').value = u.detail || '';
+  document.getElementById('rename-error').textContent = '';
+  const btn = document.getElementById('rename-save');
+  btn.removeAttribute('disabled');
+  btn.textContent = 'Save';
+  document.getElementById('rename-modal').classList.add('open');
+  setTimeout(() => document.getElementById('ren-name').focus(), 50);
+}
+function closeRenameModal() {
+  document.getElementById('rename-modal').classList.remove('open');
+  renameState = null;
+}
+async function saveRename() {
+  if (!renameState) return;
+  const errEl = document.getElementById('rename-error');
+  errEl.textContent = '';
+  const name = document.getElementById('ren-name').value.trim();
+  const detail = document.getElementById('ren-detail').value.trim();
+  if (!name) { errEl.textContent = 'Name is required'; return; }
+
+  const btn = document.getElementById('rename-save');
+  btn.setAttribute('disabled', '1');
+  btn.textContent = 'Saving…';
+
+  try {
+    const r = await fetch('/api/admin/study-files?id=' + encodeURIComponent(renameState.id), {
+      method: 'PATCH',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ name, detail }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error || `HTTP ${r.status}`);
+    }
+    const { item } = await r.json();
+    const idx = UPLOADS.findIndex(x => x.id === renameState.id);
+    if (idx >= 0 && item) UPLOADS[idx] = item;
+    closeRenameModal();
+    render();
+  } catch (e) {
+    errEl.textContent = e.message || 'Rename failed';
+    btn.removeAttribute('disabled');
+    btn.textContent = 'Save';
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Delete
+// ──────────────────────────────────────────────────────────────────
+async function deleteUploadedFile(id, displayName) {
+  if (!isAdmin()) return;
+  if (!confirm(`Delete file "${displayName || id}"?\n\nThis permanently removes it from storage.`)) return;
+  try {
+    const r = await fetch('/api/admin/study-files?id=' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: authHeaders(),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      alert('Delete failed: ' + (j.error || `HTTP ${r.status}`));
+      return;
+    }
+    UPLOADS = UPLOADS.filter(u => u.id !== id);
+    render();
+  } catch (e) {
+    alert('Delete failed: ' + e.message);
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Loading
+// ──────────────────────────────────────────────────────────────────
+async function loadAll() {
+  // Curated
+  try {
+    const r = await fetch('/api/study');
+    if (r.ok) {
+      const data = await r.json();
+      CURATED = data.items || [];
+    } else { CURATED = []; }
+  } catch { CURATED = []; }
+
+  // Uploads (admin-only endpoint; if not admin, leave empty silently)
+  if (isAdmin()) {
+    try {
+      const r = await fetch('/api/admin/study-files', { headers: authHeaders() });
+      if (r.ok) {
+        const j = await r.json();
+        UPLOADS = j.items || [];
+      } else { UPLOADS = []; }
+    } catch { UPLOADS = []; }
+  } else {
+    UPLOADS = [];
+  }
+
+  render();
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Boot
+// ──────────────────────────────────────────────────────────────────
+document.getElementById('upload-save').addEventListener('click', saveUpload);
+document.getElementById('upload-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'upload-modal') closeUploadModal();
+});
+document.getElementById('rename-save').addEventListener('click', saveRename);
+document.getElementById('rename-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'rename-modal') closeRenameModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('upload-modal').classList.contains('open')) closeUploadModal();
+    if (document.getElementById('rename-modal').classList.contains('open')) closeRenameModal();
+  }
+});
+
+function _hookAuthChange() {
+  if (window.dceAuth && typeof window.dceAuth.onChange === 'function') {
+    window.dceAuth.onChange(() => loadAll());
+    return true;
+  }
+  return false;
+}
+if (!_hookAuthChange()) {
+  window.addEventListener('DOMContentLoaded', _hookAuthChange);
+  setTimeout(_hookAuthChange, 200);
+}
+
+loadAll();
 </script>
 <script src="/search.js" defer></script>
 </body>
