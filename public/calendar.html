@@ -80,6 +80,38 @@
   .empty{text-align:center;padding:48px 20px;color:var(--gray-mid)}
   .empty-icon{font-size:32px;margin-bottom:12px;color:var(--gold-rule)}
 
+  /* ADMIN BUTTONS */
+  .admin-row{display:flex;gap:8px;margin-left:auto}
+  .btn-admin{font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:8px 14px;background:var(--navy);color:var(--white);border:1px solid var(--navy);cursor:pointer;transition:all .2s}
+  .btn-admin:hover{background:var(--gold);border-color:var(--gold)}
+  .btn-admin.ghost{background:transparent;color:var(--navy);border-color:var(--rule)}
+  .btn-admin.ghost:hover{border-color:var(--gold);color:var(--gold);background:transparent}
+  .btn-admin[disabled]{opacity:.5;cursor:not-allowed}
+
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(13,13,13,.55);display:none;align-items:center;justify-content:center;z-index:50}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--white);border-top:3px solid var(--gold);width:min(560px,92vw);max-height:88vh;display:flex;flex-direction:column;box-shadow:0 12px 32px rgba(13,13,13,.25)}
+  .modal-h{padding:18px 22px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center}
+  .modal-h h2{font-size:14px;font-weight:700;color:var(--navy);letter-spacing:.02em}
+  .modal-h .x{font-size:18px;color:var(--gray-mid);cursor:pointer;padding:0 4px;background:transparent;border:0}
+  .modal-h .x:hover{color:var(--navy)}
+  .modal-b{padding:16px 22px;overflow-y:auto;flex:1}
+  .modal-b p{font-size:12px;color:var(--gray-txt);margin-bottom:12px}
+  .modal-f{padding:14px 22px;border-top:1px solid var(--rule);display:flex;justify-content:flex-end;gap:8px}
+  .modal-error{font-size:11px;color:var(--red);margin-top:8px;display:none}
+  .modal-error.show{display:block}
+
+  .tk-row{display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid var(--rule);font-size:12px}
+  .tk-row:last-child{border-bottom:0}
+  .tk-row input[type=checkbox]{accent-color:var(--gold);width:16px;height:16px;cursor:pointer}
+  .tk-row .tk-tk{font-family:'Archivo',monospace;font-weight:700;color:var(--gold);min-width:54px}
+  .tk-row .tk-name{flex:1;color:var(--navy)}
+  .tk-row .tk-state{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:2px}
+  .tk-row .tk-state.tracked{background:rgba(42,122,86,.10);color:var(--green)}
+  .tk-row .tk-state.untracked{background:var(--gold-dim);color:var(--gold)}
+  .tk-row .tk-meta{font-size:10px;color:var(--gray-mid)}
+
   .info-bar{background:rgba(184,139,71,0.06);border:1px solid var(--gold-rule);padding:12px 16px;font-size:11px;color:var(--gray-txt);margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
   .info-bar code{background:var(--cream);padding:2px 6px;font-size:11px;color:var(--navy)}
 
@@ -130,7 +162,13 @@
   <!-- INFO BAR -->
   <div class="info-bar">
     <span>Source: live from <code>/api/earnings</code> · auto-refreshed daily from Finnhub.</span>
-    <span id="last-updated" style="color:var(--gray-mid)"></span>
+    <span style="display:flex;gap:14px;align-items:center">
+      <span id="last-updated" style="color:var(--gray-mid)"></span>
+      <span class="admin-row" id="admin-row" style="display:none">
+        <button class="btn-admin ghost" id="btn-import">Import tickers</button>
+        <button class="btn-admin" id="btn-refresh">Refresh now</button>
+      </span>
+    </span>
   </div>
 
   <!-- FILTERS -->
@@ -139,9 +177,28 @@
     <button class="filter" data-filter="reported">Reported</button>
     <button class="filter" data-filter="all">All</button>
     <span style="border-left:1px solid var(--rule);margin:0 6px"></span>
-    <button class="filter active" data-tk="ALL">All Companies</button>
-    <button class="filter" data-tk="BKNG">BKNG</button>
-    <button class="filter" data-tk="SAP">SAP</button>
+    <span id="ticker-filters" style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="filter active" data-tk="ALL">All Companies</button>
+    </span>
+  </div>
+
+  <!-- IMPORT MODAL -->
+  <div class="modal-bg" id="import-modal" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-h">
+        <h2>Import tickers from covered universe / watchlist</h2>
+        <button class="x" id="import-close" aria-label="close">×</button>
+      </div>
+      <div class="modal-b">
+        <p>Select the tickers you want present in the earnings calendar. Tickers already tracked will be re-fetched. Tickers not yet tracked will be added on the next run.</p>
+        <div id="tk-list"><div class="empty" style="padding:24px">Loading…</div></div>
+        <div class="modal-error" id="import-error"></div>
+      </div>
+      <div class="modal-f">
+        <button class="btn-admin ghost" id="import-cancel">Cancel</button>
+        <button class="btn-admin" id="import-confirm">Refresh selected</button>
+      </div>
+    </div>
   </div>
 
   <!-- EVENTS -->
@@ -158,6 +215,27 @@
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   let DATA = null;
   let filters = { status: 'upcoming', ticker: 'ALL' };
+
+  // ──────────────────────────────────────────────────────────────
+  // Admin auth helpers (mirror dataroom.html)
+  // ──────────────────────────────────────────────────────────────
+  function adminToken() {
+    try { return localStorage.getItem('dce_admin_token') || ''; } catch { return ''; }
+  }
+  function isAdmin() {
+    try {
+      if (window.dceAuth && typeof window.dceAuth.isAdmin === 'function') {
+        return !!window.dceAuth.isAdmin();
+      }
+    } catch {}
+    return !!adminToken();
+  }
+  function authHeaders() {
+    const h = { 'Content-Type': 'application/json' };
+    const t = adminToken();
+    if (t) h['x-admin-token'] = t;
+    return h;
+  }
 
   function fmtDate(iso) {
     const [y,m,d] = iso.split('-').map(Number);
@@ -197,8 +275,23 @@
       } catch { label = 'Last updated: ' + ts; }
     }
     document.getElementById('last-updated').textContent = label;
+    renderTickerFilters();
     renderKPIs();
     render();
+  }
+
+  // Build ticker filter buttons dynamically from the data.
+  // ALL is always first; the rest are derived from events sorted alpha.
+  function renderTickerFilters() {
+    const wrap = document.getElementById('ticker-filters');
+    if (!wrap || !DATA || !DATA.events) return;
+    const tickers = Array.from(new Set(DATA.events.map(e => e.ticker).filter(Boolean))).sort();
+    const active = filters.ticker;
+    let html = `<button class="filter ${active==='ALL'?'active':''}" data-tk="ALL">All Companies</button>`;
+    for (const tk of tickers) {
+      html += `<button class="filter ${active===tk?'active':''}" data-tk="${tk}">${tk}</button>`;
+    }
+    wrap.innerHTML = html;
   }
 
   function renderKPIs() {
@@ -319,6 +412,138 @@
   load().catch(err => {
     document.getElementById('events').innerHTML = '<div class="empty"><div class="empty-icon">⚠</div><div>Could not load earnings data.</div></div>';
     console.error(err);
+  });
+
+  // ──────────────────────────────────────────────────────────────
+  // Admin: import + refresh
+  // ──────────────────────────────────────────────────────────────
+  function showAdminControls() {
+    if (isAdmin()) document.getElementById('admin-row').style.display = 'flex';
+  }
+  // Re-check on auth change (dataroom.html pattern)
+  showAdminControls();
+  window.addEventListener('storage', showAdminControls);
+  setTimeout(showAdminControls, 400);
+  setTimeout(showAdminControls, 1500);
+
+  function openImport() {
+    if (!isAdmin()) return alert('Sign in as admin to import tickers.');
+    document.getElementById('import-modal').classList.add('show');
+    document.getElementById('import-error').classList.remove('show');
+    loadTickerSources();
+  }
+  function closeImport() {
+    document.getElementById('import-modal').classList.remove('show');
+  }
+
+  async function loadTickerSources() {
+    const list = document.getElementById('tk-list');
+    list.innerHTML = '<div class="empty" style="padding:24px">Loading…</div>';
+    try {
+      const r = await fetch('/api/admin/earnings-tickers', { headers: authHeaders() });
+      if (!r.ok) throw new Error('http ' + r.status);
+      const j = await r.json();
+      const items = j.items || [];
+      if (!items.length) {
+        list.innerHTML = '<div class="empty" style="padding:24px">No tickers in the covered universe or watchlist yet.</div>';
+        return;
+      }
+      let html = '';
+      for (const it of items) {
+        const sources = (it.sources || []).map(s => s[0].toUpperCase() + s.slice(1)).join(' · ');
+        const tracked = it.in_calendar;
+        const meta = tracked
+          ? `${it.event_count} event${it.event_count===1?'':'s'} · last ${it.last_event_date || '—'}`
+          : 'Not yet in calendar';
+        const checked = !tracked ? 'checked' : '';
+        html += `<label class="tk-row">
+          <input type="checkbox" data-tk="${it.ticker}" ${checked}>
+          <span class="tk-tk">${it.ticker}</span>
+          <span class="tk-name">${it.name||it.ticker}<div class="tk-meta">${sources} · ${meta}</div></span>
+          <span class="tk-state ${tracked?'tracked':'untracked'}">${tracked?'Tracked':'New'}</span>
+        </label>`;
+      }
+      list.innerHTML = html;
+    } catch (e) {
+      list.innerHTML = '<div class="empty" style="padding:24px;color:var(--red)">Failed to load tickers.</div>';
+      console.error(e);
+    }
+  }
+
+  async function confirmImport() {
+    const btn = document.getElementById('import-confirm');
+    const err = document.getElementById('import-error');
+    err.classList.remove('show');
+    const checks = document.querySelectorAll('#tk-list input[type=checkbox]:checked');
+    const tickers = Array.from(checks).map(c => c.dataset.tk).filter(Boolean);
+    if (!tickers.length) {
+      err.textContent = 'Select at least one ticker.';
+      err.classList.add('show');
+      return;
+    }
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = 'Refreshing…';
+    try {
+      const r = await fetch('/api/admin/earnings-refresh-now', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ tickers }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || ('http ' + r.status));
+      closeImport();
+      // Reload calendar with the fresh data
+      await load();
+      const evMsg = `Imported ${tickers.length} ticker${tickers.length===1?'':'s'} — ${j.upserted||0} event${(j.upserted||0)===1?'':'s'} upserted.`;
+      if (Array.isArray(j.errors) && j.errors.length) {
+        alert(evMsg + '\nErrors: ' + j.errors.map(e => `${e.ticker}: ${e.error}`).join('; '));
+      } else {
+        // Subtle banner via last-updated
+        const lu = document.getElementById('last-updated');
+        const prev = lu.textContent;
+        lu.textContent = evMsg;
+        setTimeout(() => { lu.textContent = prev; }, 5000);
+      }
+    } catch (e) {
+      err.textContent = 'Refresh failed: ' + (e.message || e);
+      err.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  }
+
+  async function refreshNow() {
+    if (!isAdmin()) return alert('Sign in as admin to refresh.');
+    const btn = document.getElementById('btn-refresh');
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = 'Refreshing…';
+    try {
+      const r = await fetch('/api/admin/earnings-refresh-now', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({}),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || ('http ' + r.status));
+      await load();
+    } catch (e) {
+      alert('Refresh failed: ' + (e.message || e));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  }
+
+  document.getElementById('btn-import').addEventListener('click', openImport);
+  document.getElementById('btn-refresh').addEventListener('click', refreshNow);
+  document.getElementById('import-close').addEventListener('click', closeImport);
+  document.getElementById('import-cancel').addEventListener('click', closeImport);
+  document.getElementById('import-confirm').addEventListener('click', confirmImport);
+  document.getElementById('import-modal').addEventListener('click', (ev) => {
+    if (ev.target.id === 'import-modal') closeImport();
   });
 </script>
 <script src="/search.js" defer></script>

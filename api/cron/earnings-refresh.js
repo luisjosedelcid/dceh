@@ -3,27 +3,33 @@
 // GET /api/cron/earnings-refresh
 //
 // Pulls earnings events from Finnhub for a curated set of tickers (DCE
-// universe + portfolio + watchlist) and upserts them into the
-// earnings_calendar table.
+// covered universe + watchlist + portfolio + price alerts) and upserts
+// them into the earnings_calendar table.
 //
 // Window: today → today + 365 days (covers next four quarters).
 //
-// Triggered by Vercel cron (see vercel.json).
+// Triggered by Vercel cron (see vercel.json), also re-used by
+// /api/admin/earnings-refresh-now via runEarningsRefresh().
 // Auth: x-cron-secret header OR x-vercel-cron header.
 // ═══════════════════════════════════════════════════════════════════
 
 const { sbSelect } = require('../_supabase.js');
 
-// Tickers we always track. Universe (BKNG, SAP) hardcoded; portfolio +
-// watchlist pulled live from positions / price_alerts so newly added
-// tickers automatically start showing earnings.
+// Hard fallback baseline so the calendar never empties out even if every
+// other source is empty.
 const ALWAYS_TRACK = ['BKNG', 'SAP'];
 
-// IR pages for known tickers (so the UI link is meaningful)
+// IR pages for known tickers (so the UI link is meaningful). Any ticker
+// not listed here will have ir_url=null in the calendar event — the
+// admin can add it via the watchlist later.
 const IR_URLS = {
   BKNG: 'https://ir.bookingholdings.com',
   SAP:  'https://www.sap.com/investors/en/financial-documents-and-events/events.html',
   MSFT: 'https://www.microsoft.com/en-us/investor',
+  LULU: 'https://corporate.lululemon.com/investors',
+  ORLY: 'https://corporate.oreillyauto.com/onlineapplications/investorrelations',
+  ALSN: 'https://ir.allisontransmission.com',
+  ALV:  'https://www.autoliv.com/investors',
   AAPL: 'https://investor.apple.com',
   GOOGL:'https://abc.xyz/investor/',
 };
@@ -32,6 +38,10 @@ const COMPANY_NAMES = {
   BKNG: 'Booking Holdings',
   SAP:  'SAP SE',
   MSFT: 'Microsoft',
+  LULU: 'Lululemon Athletica',
+  ORLY: "O'Reilly Automotive",
+  ALSN: 'Allison Transmission',
+  ALV:  'Autoliv',
   AAPL: 'Apple',
   GOOGL:'Alphabet',
 };
@@ -84,49 +94,69 @@ async function upsertEvent(supabaseUrl, serviceKey, row) {
   }
 }
 
+// Pull tickers + display names from every relevant source so any company
+// the team adds to the covered universe / watchlist starts producing
+// earnings rows automatically on the next run.
 async function getTrackedTickers() {
   const set = new Set(ALWAYS_TRACK);
-  // Add any ticker from positions (portfolio) and price_alerts (watchlist)
+  const names = {};
+
+  // Covered universe = pipeline_cards (any stage)
   try {
-    const pos = await sbSelect('positions', 'select=ticker&limit=200');
+    const cards = await sbSelect('pipeline_cards', 'select=ticker,name&limit=500');
+    cards.forEach(c => {
+      if (c && c.ticker) {
+        const tk = c.ticker.toUpperCase();
+        set.add(tk);
+        if (c.name && !names[tk]) names[tk] = c.name;
+      }
+    });
+  } catch {}
+
+  // Active watchlist (price targets / catalysts)
+  try {
+    const wl = await sbSelect('watchlist', 'select=ticker&limit=500');
+    wl.forEach(w => w && w.ticker && set.add(w.ticker.toUpperCase()));
+  } catch {}
+
+  // Portfolio (positions). Optional table — silently skip if missing.
+  try {
+    const pos = await sbSelect('positions', 'select=ticker&limit=500');
     pos.forEach(p => p && p.ticker && set.add(p.ticker.toUpperCase()));
   } catch {}
+
+  // Price alerts
   try {
     const pa = await sbSelect('price_alerts', 'select=ticker&limit=500');
     pa.forEach(a => a && a.ticker && set.add(a.ticker.toUpperCase()));
   } catch {}
-  return Array.from(set);
+
+  return { tickers: Array.from(set), names };
 }
 
-module.exports = async (req, res) => {
-  res.setHeader('Cache-Control', 'no-store');
-
-  // Auth
-  const isVercelCron = req.headers['x-vercel-cron'] === '1' || req.headers['x-vercel-cron'] === 'true';
-  const secretOk = req.headers['x-cron-secret'] === process.env.CRON_SECRET && !!process.env.CRON_SECRET;
-  if (!isVercelCron && !secretOk) {
-    res.status(401).json({ error: 'Unauthorized' });
-    return;
-  }
-
+// Core refresh logic exposed for the manual admin trigger.
+// `opts.onlyTickers` (array, optional) restricts the run to a subset.
+async function runEarningsRefresh(opts) {
+  opts = opts || {};
+  const fhKey = process.env.FINNHUB_KEY || process.env.FINNHUB_API_KEY;
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const fhKey = process.env.FINNHUB_KEY || process.env.FINNHUB_API_KEY;
   if (!fhKey) throw new Error('FINNHUB_KEY env var not set');
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-    res.status(500).json({ error: 'Server not configured' });
-    return;
-  }
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) throw new Error('Supabase env vars not set');
 
   const fromIso = todayIso();
   const toIso = plusDaysIso(365);
 
-  let tickers;
-  try {
-    tickers = await getTrackedTickers();
-  } catch (e) {
-    res.status(500).json({ error: 'Failed to load tickers', detail: String(e).slice(0, 200) });
-    return;
+  const { tickers: trackedAll, names: dbNames } = await getTrackedTickers();
+  let tickers = trackedAll;
+  if (Array.isArray(opts.onlyTickers) && opts.onlyTickers.length) {
+    const filt = new Set(opts.onlyTickers.map(t => String(t || '').toUpperCase()));
+    tickers = trackedAll.filter(t => filt.has(t));
+    // Also include explicit tickers even if not yet in the tracked set
+    opts.onlyTickers.forEach(t => {
+      const tk = String(t || '').toUpperCase();
+      if (tk && !tickers.includes(tk)) tickers.push(tk);
+    });
   }
 
   const summary = { ok: true, from: fromIso, to: toIso, tickers, fetched: 0, upserted: 0, skipped: 0, errors: [] };
@@ -142,7 +172,7 @@ module.exports = async (req, res) => {
         const row = {
           ticker: ticker,
           date,
-          company: COMPANY_NAMES[ticker] || ev.symbol || ticker,
+          company: COMPANY_NAMES[ticker] || dbNames[ticker] || ev.symbol || ticker,
           hour: ev.hour || null,
           timing: normalizeTiming(ev.hour),
           eps_estimate: Number.isFinite(ev.epsEstimate) ? ev.epsEstimate : null,
@@ -165,5 +195,29 @@ module.exports = async (req, res) => {
     }
   }
 
-  res.status(200).json(summary);
+  return summary;
+}
+
+module.exports = async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+
+  // Auth
+  const isVercelCron = req.headers['x-vercel-cron'] === '1' || req.headers['x-vercel-cron'] === 'true';
+  const secretOk = req.headers['x-cron-secret'] === process.env.CRON_SECRET && !!process.env.CRON_SECRET;
+  if (!isVercelCron && !secretOk) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  try {
+    const summary = await runEarningsRefresh({});
+    res.status(200).json(summary);
+  } catch (e) {
+    res.status(500).json({ error: 'Refresh failed', detail: String(e).slice(0, 200) });
+  }
 };
+
+// Exported helpers so the admin trigger and other server-side callers
+// can re-use the exact same logic.
+module.exports.runEarningsRefresh = runEarningsRefresh;
+module.exports.getTrackedTickers = getTrackedTickers;
