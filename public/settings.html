@@ -845,6 +845,7 @@ async function loadUsersAdmin() {
       html += `<tr style="border-bottom:1px solid var(--rule)">
         <td style="padding:8px 10px">
           <strong>${escapeHtml(it.display_name || '—')}</strong>${isMe ? ' <span style="font-size:9px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-left:4px">(you)</span>' : ''}
+          <button type="button" onclick="renameUser('${safeEmail}', '${escapeHtml(it.display_name||'').replace(/'/g, "\\'")}')" title="Edit name" style="background:none;border:none;cursor:pointer;padding:0 4px;color:var(--gray-mid);font-size:11px;margin-left:2px">✎</button>
           <div style="font-size:10px;color:var(--gray-mid)">${escapeHtml(it.email)}</div>
         </td>
         <td style="padding:8px 10px">
@@ -898,6 +899,34 @@ async function addUser(ev) {
     status.style.color = 'var(--red)';
   }
   return false;
+}
+
+async function renameUser(emailEnc, currentName) {
+  const next = prompt('Edit display name:', currentName || '');
+  if (next === null) return; // cancelled
+  const trimmed = next.trim();
+  if (trimmed.length < 2) { alert('Display name must be at least 2 characters'); return; }
+  if (trimmed === currentName) return; // no change
+  const token = localStorage.getItem(TOKEN_KEY);
+  try {
+    const r = await fetch('/api/admin/users?email=' + emailEnc, {
+      method: 'PATCH',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ display_name: trimmed }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    // If you renamed yourself, sync localStorage so the admin bar updates
+    const me = currentUser();
+    if (me && me.email && me.email.toLowerCase() === decodeURIComponent(emailEnc).toLowerCase()) {
+      me.displayName = trimmed;
+      localStorage.setItem(USER_KEY, JSON.stringify(me));
+      refreshAdminUI();
+    }
+    loadUsersAdmin();
+  } catch (e) {
+    alert('Could not rename: ' + e.message);
+  }
 }
 
 async function updateUserRole(emailEnc, role) {
