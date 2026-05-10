@@ -1,22 +1,19 @@
 // ═══════════════════════════════════════════════════════════════════
 // DCE Holdings — Earnings Calendar ticker sources (admin-only)
 // ───────────────────────────────────────────────────────────────────
-// GET /api/admin/earnings-tickers
-//   → {
-//       items: [
-//         { ticker, name, sources: ['pipeline'|'watchlist'|'calendar'],
-//           in_calendar: bool, last_event_date: 'YYYY-MM-DD'|null,
-//           event_count: number }
-//       ]
-//     }
+// GET    /api/admin/earnings-tickers
+//   → { items: [{ ticker, name, sources, in_calendar, last_event_date,
+//                  event_count, stage?, watchlist_status? }] }
 //
-// Returns one row per ticker drawn from pipeline_cards (covered
-// universe) ∪ watchlist ∪ earnings_calendar, so the UI can render a
-// single import dialog showing what is already tracked vs what is new.
+// DELETE /api/admin/earnings-tickers?ticker=XXX
+//   → { ok, deleted } — removes every earnings_calendar row for that
+//     ticker. Does NOT touch pipeline_cards / watchlist. If the ticker
+//     is still in the covered universe / watchlist the next cron run
+//     will re-import its events.
 // ═══════════════════════════════════════════════════════════════════
 
 const { verifyAdminToken } = require('../_admin-auth');
-const { sbSelect } = require('../_supabase');
+const { sbSelect, sbDelete } = require('../_supabase');
 
 function requireAuth(req, res) {
   const tok = req.headers['x-admin-token'];
@@ -32,6 +29,23 @@ module.exports = async (req, res) => {
 
   const actor = requireAuth(req, res);
   if (!actor) return;
+
+  if (req.method === 'DELETE') {
+    const ticker = (req.query.ticker || '').toString().toUpperCase().trim();
+    if (!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(ticker)) {
+      res.status(400).json({ error: 'Invalid ticker' });
+      return;
+    }
+    try {
+      // Count first so we can return how many rows were dropped
+      const before = await sbSelect('earnings_calendar', `select=ticker&ticker=eq.${ticker}`);
+      await sbDelete('earnings_calendar', `ticker=eq.${ticker}`);
+      res.status(200).json({ ok: true, ticker, deleted: before.length });
+    } catch (e) {
+      res.status(500).json({ error: String(e).slice(0, 300) });
+    }
+    return;
+  }
 
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });

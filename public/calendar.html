@@ -114,6 +114,9 @@
   .tk-row .tk-state.tracked{background:rgba(42,122,86,.10);color:var(--green)}
   .tk-row .tk-state.untracked{background:var(--gold-dim);color:var(--gold)}
   .tk-row .tk-meta{font-size:10px;color:var(--gray-mid)}
+  .tk-row .tk-remove{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:4px 8px;border:1px solid var(--rule);background:transparent;color:var(--gray-mid);cursor:pointer;transition:all .2s}
+  .tk-row .tk-remove:hover{border-color:var(--red);color:var(--red)}
+  .tk-row .tk-remove[disabled]{opacity:.5;cursor:not-allowed}
 
   .info-bar{background:rgba(184,139,71,0.06);border:1px solid var(--gold-rule);padding:12px 16px;font-size:11px;color:var(--gray-txt);margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
   .info-bar code{background:var(--cream);padding:2px 6px;font-size:11px;color:var(--navy)}
@@ -193,7 +196,7 @@
         <button class="x" id="import-close" aria-label="close">×</button>
       </div>
       <div class="modal-b">
-        <p>Select the tickers you want present in the earnings calendar. Tickers already tracked will be re-fetched. Tickers not yet tracked will be added on the next run.</p>
+        <p>Select tickers to refresh into the calendar. Tracked tickers can be removed individually — if a ticker stays in the covered universe / watchlist, the daily cron will re-import its events on the next run.</p>
         <div id="tk-list"><div class="empty" style="padding:24px">Loading…</div></div>
         <div class="modal-error" id="import-error"></div>
       </div>
@@ -460,18 +463,27 @@
       for (const it of items) {
         const sources = (it.sources || []).map(s => s[0].toUpperCase() + s.slice(1)).join(' · ');
         const tracked = it.in_calendar;
+        const stillInUniverse = (it.sources || []).some(s => s === 'pipeline' || s === 'watchlist');
         const meta = tracked
           ? `${it.event_count} event${it.event_count===1?'':'s'} · last ${it.last_event_date || '—'}`
           : 'Not yet in calendar';
         const checked = !tracked ? 'checked' : '';
-        html += `<label class="tk-row">
+        const removeBtn = tracked
+          ? `<button class="tk-remove" data-remove="${it.ticker}" data-stillin="${stillInUniverse?'1':'0'}" type="button">Remove</button>`
+          : '';
+        html += `<div class="tk-row">
           <input type="checkbox" data-tk="${it.ticker}" ${checked}>
           <span class="tk-tk">${it.ticker}</span>
           <span class="tk-name">${it.name||it.ticker}<div class="tk-meta">${sources} · ${meta}</div></span>
           <span class="tk-state ${tracked?'tracked':'untracked'}">${tracked?'Tracked':'New'}</span>
-        </label>`;
+          ${removeBtn}
+        </div>`;
       }
       list.innerHTML = html;
+      // Wire up Remove buttons
+      list.querySelectorAll('button.tk-remove').forEach(btn => {
+        btn.addEventListener('click', () => removeTicker(btn));
+      });
     } catch (e) {
       list.innerHTML = '<div class="empty" style="padding:24px;color:var(--red)">Failed to load tickers.</div>';
       console.error(e);
@@ -540,6 +552,34 @@
     } catch (e) {
       alert('Refresh failed: ' + (e.message || e));
     } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  }
+
+  async function removeTicker(btn) {
+    const ticker = btn.dataset.remove;
+    const stillIn = btn.dataset.stillin === '1';
+    const warn = stillIn
+      ? `Remove ${ticker} from the earnings calendar?\n\nNote: ${ticker} is still in the covered universe / watchlist, so the daily cron will re-import its events tomorrow. To stop tracking permanently, also remove it from those sources.`
+      : `Remove ${ticker} from the earnings calendar?`;
+    if (!confirm(warn)) return;
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = 'Removing…';
+    try {
+      const r = await fetch(`/api/admin/earnings-tickers?ticker=${encodeURIComponent(ticker)}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || ('http ' + r.status));
+      // Refresh the modal list and the underlying calendar in parallel
+      await Promise.all([loadTickerSources(), load()]);
+    } catch (e) {
+      const err = document.getElementById('import-error');
+      err.textContent = `Remove failed: ${e.message || e}`;
+      err.classList.add('show');
       btn.disabled = false;
       btn.textContent = original;
     }

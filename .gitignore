@@ -2,3 +2,11 @@
 # Workspace intermediate files
 _sap_data.json
 node_modules/
+
+# Local mockups & screenshots used for design iteration but not part of the
+# deployed site. Keep these out of git so accidental `git add -A` doesn't
+# ship them.
+mock_*.html
+screenshot_*.png
+*.bak
+.DS_Store
