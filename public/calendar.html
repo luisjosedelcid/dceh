@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>DCE Holdings — Earnings Calendar</title>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -371,7 +374,14 @@
         else if (dDays > 7) statusTag = `<span class="tag tag-watch">${dDays}d</span>`;
 
         const callTime = e.call_time ? ` · Call ${e.call_time}` : '';
+        const timezone = e.timezone || 'ET';
+        // The new /api/earnings returns `timing` (BMO/AMC/TBD) and `hour`,
+        // not `time`. Fall back gracefully if any field is missing.
+        const timeLabel = e.time || (e.timing && e.timing !== 'TBD' ? e.timing : 'Time TBD');
 
+        const irLink = e.ir_url
+          ? `<a class="evt-link" href="${e.ir_url}" target="_blank" rel="noopener">IR ↗</a>`
+          : '';
         html += `<div class="${cls}">
           <div class="evt-date">
             <div class="evt-date-day">${f.day}</div>
@@ -380,13 +390,11 @@
           </div>
           <div class="evt-body">
             <div class="evt-tk">${e.ticker}</div>
-            <div class="evt-co">${e.company} — ${e.quarter}</div>
-            <div class="evt-meta">${e.time} ${e.timezone}${callTime}</div>
+            <div class="evt-co">${e.company || e.ticker} — ${e.quarter || ''}</div>
+            <div class="evt-meta">${timeLabel} ${timezone}${callTime}</div>
           </div>
           <div class="evt-tags">${timingTag}${statusTag}</div>
-          <div class="evt-actions">
-            <a class="evt-link" href="${e.ir_url}" target="_blank" rel="noopener">IR ↗</a>
-          </div>
+          <div class="evt-actions">${irLink}</div>
         </div>`;
       }
     }
