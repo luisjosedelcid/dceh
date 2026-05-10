@@ -3,635 +3,553 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DCE Holdings — Portfolio Cockpit</title>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>DCE Holdings — Cockpit · Process Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --navy:#1b2642; --gold:#b88b47; --gold-lt:#d4aa6a;
-    --gold-dim:rgba(184,139,71,0.10); --gold-rule:rgba(184,139,71,0.30);
-    --cream:#f5f1eb; --white:#ffffff; --ink:#1b2642;
-    --gray-mid:#8a9098; --gray-txt:#606060;
+    --navy:#1B2642; --gold:#B88B47; --gold-lt:#d4aa6a;
+    --black:#0D0D0D; --gray:#606060; --gray-mid:#8a9098;
+    --green:#1F5F3F; --amber:#B88B47; --red:#7A1010;
+    --line:#E5E2DC; --bg:#FAF8F4; --card:#FFFFFF; --cream:#f5f1eb;
+    --gold-soft:rgba(184,139,71,.08);
+    --gold-rule:rgba(184,139,71,0.30);
+    --green-soft:rgba(31,95,63,.10);
+    --red-soft:rgba(122,16,16,.08);
+    --navy-soft:rgba(27,38,66,.08);
     --rule:rgba(27,38,66,0.09);
-    --green:#2e6b4f; --red:#8b0000; --amber:#b88b47;
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+  html,body{background:var(--bg);font-family:'Inter','Helvetica Neue',Arial,sans-serif;color:var(--black);font-size:13px;line-height:1.5;min-height:100vh}
 
+  /* Header (consistent with rest of app) */
   header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
-  .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
+  .logo{font-size:20px;font-weight:700;color:#fff;font-family:'Inter',sans-serif}
+  .logo span{color:var(--gold);font-weight:300}
   .hnav{display:flex;gap:8px;flex-wrap:wrap}
   .hnav a{font-size:10px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;padding:8px 16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;transition:all .2s}
   .hnav a:hover{color:var(--gold);border-color:var(--gold-rule)}
   .hnav a.active{color:var(--gold);border-color:var(--gold)}
 
-  main{padding:28px 36px 60px;max-width:1500px;margin:0 auto}
-  .slbl{font-size:10px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
-  h1{font-size:32px;font-weight:700;letter-spacing:-0.01em;margin-bottom:6px}
-  .sub{color:var(--gray-mid);font-size:14px;margin-bottom:24px}
-  .meta-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:24px}
-  .meta-row .updated{font-size:11px;color:var(--gray-mid)}
+  .wrap{max-width:1320px;margin:0 auto;padding:36px 40px 80px}
+  .eyebrow{font-size:10px;font-weight:600;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:8px}
+  h1{font-family:'Playfair Display','Georgia',serif;font-size:38px;font-weight:600;color:var(--navy);letter-spacing:-0.01em;margin-bottom:6px}
+  .lede{color:var(--gray);font-size:14px;margin-bottom:28px}
 
-  /* ── KPI strip (estilo A) ── */
-  .strip {
-    background: var(--white);
-    border:1px solid var(--rule);
-    border-left: 4px solid var(--navy);
-    padding: 18px 24px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr) auto;
-    gap: 24px;
-    align-items: center;
-    margin-bottom: 24px;
-  }
-  .kpi .lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gray-mid); margin-bottom: 6px; }
-  .kpi .val { font-size: 26px; font-weight: 700; color: var(--navy); line-height: 1; font-variant-numeric: tabular-nums; }
-  .kpi .sub2 { font-size: 11px; color: var(--gray-txt); margin-top: 4px; }
-  .pos { color: var(--green); }
-  .neg { color: var(--red); }
-  .gld { color: var(--gold); }
+  /* Top status bar */
+  .status{display:flex;gap:14px;margin-bottom:28px;padding:14px 20px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);flex-wrap:wrap}
+  .status .item{display:flex;flex-direction:column;gap:2px;padding-right:24px;border-right:1px solid var(--line);min-width:120px}
+  .status .item:last-child{border-right:none}
+  .status .lbl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray);font-weight:600}
+  .status .val{font-size:18px;font-weight:600;color:var(--navy);font-family:'Playfair Display',serif}
+  .status .val.amber{color:var(--amber)}
+  .status .val.red{color:var(--red)}
+  .status .val.green{color:var(--green)}
+  .status .val.muted{color:var(--gray);font-size:13px;font-family:'Inter',sans-serif}
 
-  .chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; max-width: 360px; }
-  .chip {
-    background: var(--white); border: 1px solid var(--rule);
-    padding: 6px 12px; font-size: 10px; font-weight: 600;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--gray-txt);
-    display: flex; align-items: center; gap: 6px;
-  }
-  .chip.alert { background: rgba(184,139,71,0.08); border-color: var(--gold); color: #8a6a35; }
-  .chip.danger { background: rgba(139,0,0,0.08); border-color: var(--red); color: var(--red); }
-  .chip.ok { background: rgba(46,107,79,0.08); border-color: var(--green); color: var(--green); }
-  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  /* Card grid */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);display:flex;flex-direction:column;min-height:280px}
+  .card.span2{grid-column:span 2}
+  .card-h{padding:14px 18px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(0deg,transparent 0%,rgba(27,38,66,.02) 100%)}
+  .card-h h3{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--navy);font-weight:600}
+  .card-h .count{font-size:10px;font-weight:600;background:var(--gold-soft);padding:2px 8px;border-radius:2px;color:var(--gold)}
+  .card-b{padding:6px 0;flex:1;overflow:hidden}
+  .card-f{padding:10px 18px;border-top:1px solid var(--line);text-align:right}
+  .card-f a{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--navy);text-decoration:none;font-weight:600}
+  .card-f a:hover{color:var(--gold)}
 
-  /* ── Main grid ── */
-  .grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; }
+  /* Row item */
+  .row{padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:10px;font-size:12px}
+  .row:last-child{border-bottom:none}
+  .row .tk{font-weight:700;color:var(--navy);font-size:11px;letter-spacing:.06em;min-width:48px}
+  .row .body{flex:1;min-width:0}
+  .row .body .title{color:var(--black);font-weight:500;line-height:1.35}
+  .row .body .meta{color:var(--gray);font-size:10px;margin-top:2px;letter-spacing:.02em}
+  .row .badge{font-size:9px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;padding:2px 7px;border-radius:2px;white-space:nowrap;align-self:flex-start;margin-top:1px}
+  .badge{font-size:9px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;padding:2px 7px;border-radius:2px;white-space:nowrap;display:inline-block}
+  .badge.green{background:var(--green-soft);color:var(--green)}
+  .badge.amber{background:var(--gold-soft);color:var(--gold)}
+  .badge.red{background:var(--red-soft);color:var(--red)}
+  .badge.navy{background:var(--navy-soft);color:var(--navy)}
 
-  .card {
-    background: var(--white); border: 1px solid var(--rule);
-    margin-bottom: 24px;
-  }
-  .card .head {
-    background: var(--navy); color: var(--white);
-    padding: 12px 18px; font-size: 11px; font-weight: 600;
-    letter-spacing: 0.18em; text-transform: uppercase;
-    display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 1px solid var(--gold-rule);
-  }
-  .card .head .badge {
-    font-size: 10px; background: var(--gold); color: var(--navy);
-    padding: 2px 8px; font-weight: 700; letter-spacing: 0.1em;
-  }
-  .card .body { padding: 8px 18px; }
+  /* Stage chip in pipeline */
+  .stage{font-size:9px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;color:var(--gray)}
+  .stage.research,.stage.idea{color:var(--navy)}
+  .stage.committee,.stage.decision{color:var(--gold)}
+  .stage.execution,.stage.approved{color:var(--green)}
 
-  /* ── Discipline gates ── */
-  .gate {
-    display: grid; grid-template-columns: 28px 1fr auto;
-    gap: 14px; padding: 14px 0;
-    border-bottom: 1px solid var(--rule); align-items: center;
-  }
-  .gate:last-child { border-bottom: none; }
-  .gate .icon {
-    width: 24px; height: 24px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700; color: var(--white);
-  }
-  .gate .icon.ok { background: var(--green); }
-  .gate .icon.fail { background: var(--red); }
-  .gate .icon.warn { background: var(--gold); }
-  .gate .text strong { color: var(--navy); display: block; font-size: 13px; }
-  .gate .text .sub3 { font-size: 11px; color: var(--gray-txt); margin-top: 3px; }
-  .gate .status { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
-  .gate .status.ok { color: var(--green); }
-  .gate .status.fail { color: var(--red); }
-  .gate .status.warn { color: var(--gold); }
+  /* Calendar mini list */
+  .cal-row{padding:8px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;font-size:12px}
+  .cal-row:last-child{border-bottom:none}
+  .cal-row .date{font-family:'Playfair Display',serif;font-weight:600;color:var(--navy);min-width:46px;font-size:13px}
+  .cal-row .date .d{display:block;font-size:18px;line-height:1}
+  .cal-row .date .m{display:block;font-size:9px;letter-spacing:.10em;text-transform:uppercase;color:var(--gray);font-family:'Inter',sans-serif;font-weight:600}
+  .cal-row .info{flex:1;min-width:0}
+  .cal-row .info .co{color:var(--navy);font-weight:500}
+  .cal-row .info .sub{color:var(--gray);font-size:10px}
 
-  /* ── Positions table ── */
-  .pos-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .pos-table thead th {
-    background: var(--cream); color: var(--gray-txt);
-    font-size: 10px; font-weight: 600; letter-spacing: 0.14em;
-    text-transform: uppercase; padding: 10px 12px; text-align: left;
-    border-bottom: 1px solid var(--rule);
-  }
-  .pos-table thead th.right { text-align: right; }
-  .pos-table tbody td {
-    padding: 12px; border-bottom: 1px solid var(--rule);
-    font-variant-numeric: tabular-nums;
-  }
-  .pos-table tbody td.right { text-align: right; }
-  .pos-table tbody td.tk { font-weight: 700; color: var(--navy); }
-  .pos-table tbody tr:last-child td { border-bottom: none; }
-  .mos-pill {
-    display: inline-block; padding: 2px 8px; font-size: 10px;
-    font-weight: 700; letter-spacing: 0.05em;
-  }
-  .mos-pill.ok { background: rgba(46,107,79,0.12); color: var(--green); }
-  .mos-pill.warn { background: rgba(184,139,71,0.12); color: var(--gold); }
-  .mos-pill.bad { background: rgba(139,0,0,0.12); color: var(--red); }
-  .mos-pill.none { background: rgba(96,96,96,0.10); color: var(--gray-txt); }
-  /* Tesis Q1 badges */
-  .tesis-badge { display:inline-block; padding:2px 8px; font-size:9px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; }
-  .tesis-badge.GREEN  { background:rgba(42,122,86,0.12); color:var(--green); }
-  .tesis-badge.YELLOW { background:rgba(193,149,52,0.14); color:#7a5a00; }
-  .tesis-badge.RED    { background:rgba(155,35,53,0.12); color:var(--red); }
-  .tesis-badge.PENDING { background:rgba(96,96,96,0.10); color:var(--gray-txt); }
-  .tier1-stat { font-size:10px; color:var(--gray-mid); white-space:nowrap; }
-  /* Deliverables card */
-  .deliverable-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--rule); }
-  .deliverable-row:last-child { border-bottom:none; }
-  .deliverable-row .dlabel { font-size:12px; color:var(--ink); }
-  .deliverable-row .dtype { font-size:9px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--gold); display:block; margin-bottom:3px; }
-  .deliverable-row .dlink { font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--navy); text-decoration:none; border:1px solid var(--rule); padding:4px 10px; white-space:nowrap; }
-  .deliverable-row .dlink:hover { color:var(--gold); border-color:var(--gold); }
+  /* Empty state */
+  .empty{padding:30px 18px;text-align:center;color:var(--gray);font-size:11px;font-style:italic}
+  .loading{padding:30px 18px;text-align:center;color:var(--gray-mid);font-size:11px}
 
-  /* ── Decisions ── */
-  .decision {
-    padding: 14px 0; border-bottom: 1px solid var(--rule);
-  }
-  .decision:last-child { border-bottom: none; }
-  .decision .row1 {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
-  }
-  .decision .ticker { font-size: 14px; font-weight: 700; color: var(--navy); letter-spacing: 0.04em; }
-  .decision .deadline {
-    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--gray-mid);
-  }
-  .decision .deadline.urgent { color: var(--red); }
-  .decision .what { font-size: 13px; color: var(--ink); line-height: 1.5; }
-  .decision .why { font-size: 11px; color: var(--gray-txt); font-style: italic; margin-top: 4px; }
-  .decision .cta {
-    display: inline-block; margin-top: 6px; font-size: 10px;
-    color: var(--gold); text-decoration: none;
-    letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600;
-  }
-  .decision .cta:hover { color: var(--navy); }
+  /* TODO checklist */
+  .todo{padding:8px 18px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:10px;font-size:12px}
+  .todo:last-child{border-bottom:none}
+  .todo .check{width:14px;height:14px;border:1.5px solid var(--gray);border-radius:2px;flex-shrink:0;margin-top:2px}
+  .todo .check.done{background:var(--green);border-color:var(--green);position:relative}
+  .todo .check.done::after{content:'';position:absolute;left:3px;top:0;width:4px;height:8px;border:solid white;border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}
+  .todo .body{flex:1;min-width:0}
+  .todo .body .title{color:var(--black);font-weight:500;line-height:1.35}
+  .todo .body .meta{color:var(--gray);font-size:10px;margin-top:2px}
+  .todo.done .body .title{color:var(--gray);text-decoration:line-through}
 
-  /* ── Events ── */
-  .event { font-size: 12px; padding: 8px 0; border-bottom: 1px solid var(--rule); }
-  .event:last-child { border-bottom: none; }
-  .event .ts { color: var(--gold); font-weight: 600; font-size: 11px; }
-  .event .lbl { color: var(--navy); font-weight: 600; }
-  .event .det { color: var(--gray-txt); font-size: 11px; margin-top: 2px; }
+  /* Deliverables row */
+  .deliv{padding:9px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;font-size:11.5px}
+  .deliv:last-child{border-bottom:none}
+  .deliv .icon{width:22px;height:26px;background:var(--gold-soft);color:var(--gold);font-size:8px;font-weight:700;letter-spacing:.04em;display:flex;align-items:center;justify-content:center;border-radius:1px;flex-shrink:0}
+  .deliv .icon.pdf{background:var(--red-soft);color:var(--red)}
+  .deliv .icon.xls{background:var(--green-soft);color:var(--green)}
+  .deliv .icon.doc{background:var(--navy-soft);color:var(--navy)}
+  .deliv .icon.img{background:var(--gold-soft);color:var(--gold)}
+  .deliv .info{flex:1;min-width:0}
+  .deliv .info a.name{color:var(--navy);font-weight:500;line-height:1.3;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none}
+  .deliv .info a.name:hover{color:var(--gold)}
+  .deliv .info .name{color:var(--navy);font-weight:500;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .deliv .info .sub{color:var(--gray);font-size:10px;margin-top:1px}
 
-  .empty { color: var(--gray-mid); font-size: 12px; padding: 16px 0; text-align: center; font-style: italic; }
-  .footer-rule {
-    margin-top: 32px; padding-top: 16px;
-    border-top: 1px solid var(--gold-rule);
-    font-size: 11px; color: var(--gray-txt);
+  /* Watchlist alert */
+  .alert-row{padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;font-size:12px}
+  .alert-row:last-child{border-bottom:none}
+  .alert-row .pulse{width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0}
+  .alert-row .pulse.red{background:var(--red)}
+  .alert-row .pulse.green{background:var(--green)}
+  .alert-row .tk{font-weight:700;color:var(--navy);font-size:11px;letter-spacing:.06em;min-width:48px}
+  .alert-row .body{flex:1;min-width:0}
+  .alert-row .body .title{font-weight:500;color:var(--black);line-height:1.35}
+  .alert-row .body .meta{color:var(--gray);font-size:10px;margin-top:2px}
+
+  .footer-note{margin-top:32px;padding-top:18px;border-top:1px solid var(--line);text-align:center;font-size:10px;color:var(--gray);letter-spacing:.10em;text-transform:uppercase;font-weight:500}
+  .footer-note span{color:var(--gold)}
+
+  @media (max-width:1100px){
+    .grid{grid-template-columns:repeat(2,1fr)}
+    .card.span2{grid-column:span 2}
   }
-  .footer-rule strong { color: var(--navy); }
-
-  /* ── Loading state ── */
-  .loading { color: var(--gray-mid); padding: 24px; text-align: center; font-size: 13px; }
-
-  /* ── Responsive ── */
-  @media (max-width: 1024px) {
-    .strip { grid-template-columns: repeat(2, 1fr); }
-    .strip .chips { grid-column: 1 / -1; justify-content: flex-start; max-width: 100%; }
-    .grid { grid-template-columns: 1fr; }
-    main { padding: 20px 16px 40px; }
-    header { padding: 0 16px; }
-    h1 { font-size: 24px; }
+  @media (max-width:720px){
+    header{padding:0 20px}
+    .wrap{padding:24px 16px 60px}
+    .grid{grid-template-columns:1fr}
+    .card.span2{grid-column:span 1}
+    .status{flex-direction:column;align-items:flex-start}
+    .status .item{border-right:none;border-bottom:1px solid var(--line);width:100%;padding:8px 0}
+    .status .item:last-child{border-bottom:none}
   }
 </style>
-<link rel="stylesheet" href="/responsive.css"><script src="/dce-auth.js" defer></script>
 </head>
 <body>
 
 <header>
   <div class="logo">DCE <span>Holdings</span></div>
   <nav class="hnav">
-      <a href="/">Home</a>
-      <a href="/cockpit.html" class="active">Cockpit</a>
-      <a href="/universe.html">Universe</a>
-      <a href="/screener.html">Find</a>
-      <a href="/study.html">Study</a>
-      <a href="/journal.html">Journal</a>
-      <a href="/portfolio.html">Portfolio</a>
-      <a href="/news.html">News</a>
-      <a href="/dataroom.html">Data Room</a>
-            <a href="/performance.html">Performance</a>
-      <a href="/research.html">Research</a>
-      <a href="/calendar.html">Calendar</a>
-    </nav>
+    <a href="/">Home</a>
+    <a href="/cockpit.html" class="active">Cockpit</a>
+    <a href="/universe.html">Universe</a>
+    <a href="/screener.html">Find</a>
+    <a href="/study.html">Study</a>
+    <a href="/journal.html">Journal</a>
+    <a href="/portfolio.html">Portfolio</a>
+    <a href="/news.html">News</a>
+    <a href="/dataroom.html">Data Room</a>
+    <a href="/performance.html">Performance</a>
+    <a href="/research.html">Research</a>
+    <a href="/calendar.html">Calendar</a>
+  </nav>
 </header>
 
-<main>
-  <div class="slbl">DCE Holdings — Investment Office</div>
-  <div class="meta-row">
-    <div>
-      <h1>Portfolio Cockpit</h1>
-      <div class="sub">Tu pantalla diaria de CIO — disciplina, decisiones, estado del sistema.</div>
-    </div>
-    <div class="updated" id="updated">—</div>
+<div class="wrap">
+
+  <div class="eyebrow">— DCE Holdings · Investment Office</div>
+  <h1>Cockpit</h1>
+  <p class="lede">Process center — what is open, what is due, what just shipped. No positions, no performance.</p>
+
+  <!-- STATUS BAR -->
+  <div class="status" id="status-bar">
+    <div class="item"><span class="lbl">Open Processes</span><span class="val" id="kpi-open">—</span></div>
+    <div class="item"><span class="lbl">Decisions Pending</span><span class="val amber" id="kpi-decisions">—</span></div>
+    <div class="item"><span class="lbl">Re-underwriting Due</span><span class="val red" id="kpi-reu">—</span></div>
+    <div class="item"><span class="lbl">Earnings This Week</span><span class="val" id="kpi-earn">—</span></div>
+    <div class="item"><span class="lbl">Watchlist Alerts</span><span class="val amber" id="kpi-watch">—</span></div>
+    <div class="item"><span class="lbl">Last Sync</span><span class="val muted" id="kpi-sync">—</span></div>
   </div>
 
-  <!-- KPI strip + chips -->
-  <div class="strip" id="strip">
-    <div class="kpi"><div class="lbl">NAV</div><div class="val" id="nav-val">—</div><div class="sub2" id="nav-sub">—</div></div>
-    <div class="kpi"><div class="lbl">vs IWQU.L YTD</div><div class="val" id="vsurth-val">—</div><div class="sub2" id="vsurth-sub">—</div></div>
-    <div class="kpi"><div class="lbl">Posiciones</div><div class="val" id="pos-val">—</div><div class="sub2" id="pos-sub">—</div></div>
-    <div class="kpi"><div class="lbl">Cash</div><div class="val" id="cash-val">—</div><div class="sub2" id="cash-sub">—</div></div>
-    <div class="chips" id="chips"><div class="chip">Cargando…</div></div>
-  </div>
-
+  <!-- GRID -->
   <div class="grid">
 
-    <!-- ── Left column ── -->
-    <div>
-      <!-- Discipline gates -->
-      <div class="card">
-        <div class="head">
-          Discipline Gates
-          <span class="badge" id="gates-badge">— / —</span>
-        </div>
-        <div class="body" id="gates-body">
-          <div class="loading">Cargando gates…</div>
-        </div>
-      </div>
-
-      <!-- Positions -->
-      <div class="card">
-        <div class="head">Posiciones</div>
-        <div class="body" style="padding: 0;" id="positions-body">
-          <div class="loading">Cargando posiciones…</div>
-        </div>
-      </div>
+    <!-- 1. PIPELINE — span 2 -->
+    <div class="card span2">
+      <div class="card-h"><h3>Pipeline in flight</h3><span class="count" id="cnt-pipeline">—</span></div>
+      <div class="card-b" id="pipeline-body"><div class="loading">Cargando…</div></div>
+      <div class="card-f"><a href="/research.html">Open pipeline →</a></div>
     </div>
 
-    <!-- ── Right column ── -->
-    <div>
-      <!-- Último entregable institucional -->
-      <div class="card" id="deliverables-card">
-        <div class="head">
-          Último entregable institucional
-        </div>
-        <div class="body" id="deliverables-body">
-          <div class="loading">Cargando entregables…</div>
-        </div>
-      </div>
+    <!-- 2. OUTSTANDING DECISIONS -->
+    <div class="card">
+      <div class="card-h"><h3>Outstanding decisions</h3><span class="count" id="cnt-decisions">—</span></div>
+      <div class="card-b" id="decisions-body"><div class="loading">Cargando…</div></div>
+      <div class="card-f"><a href="/journal.html">Open journal →</a></div>
+    </div>
 
-      <!-- Outstanding Decisions -->
-      <div class="card">
-        <div class="head">
-          Outstanding Decisions
-          <span class="badge" id="dec-badge">—</span>
-        </div>
-        <div class="body" id="decisions-body">
-          <div class="loading">Cargando decisiones…</div>
-        </div>
-      </div>
+    <!-- 3. RE-UNDERWRITING DUE -->
+    <div class="card">
+      <div class="card-h"><h3>Re-underwriting due</h3><span class="count" id="cnt-reu">—</span></div>
+      <div class="card-b" id="reu-body"><div class="loading">Cargando…</div></div>
+      <div class="card-f"><a href="/journal.html">Open re-underwriting →</a></div>
+    </div>
 
-      <!-- Today / Recent events -->
-      <div class="card">
-        <div class="head">Eventos recientes</div>
-        <div class="body" id="events-body">
-          <div class="loading">Cargando eventos…</div>
+    <!-- 4. EARNINGS UPCOMING -->
+    <div class="card">
+      <div class="card-h"><h3>Earnings upcoming</h3><span class="count">Next 45 days</span></div>
+      <div class="card-b" id="earnings-body"><div class="loading">Cargando…</div></div>
+      <div class="card-f"><a href="/calendar.html">Open calendar →</a></div>
+    </div>
+
+    <!-- 5. LAST DELIVERABLES -->
+    <div class="card">
+      <div class="card-h"><h3>Last deliverables</h3><span class="count">Recent</span></div>
+      <div class="card-b" id="deliv-body"><div class="loading">Cargando…</div></div>
+      <div class="card-f"><a href="/dataroom.html">Open data room →</a></div>
+    </div>
+
+    <!-- 6. OPEN TASKS (Notion) -->
+    <div class="card">
+      <div class="card-h"><h3>Open tasks</h3><span class="count" id="cnt-tasks">Notion</span></div>
+      <div class="card-b" id="tasks-body">
+        <div class="empty">
+          Conecta una página o base de datos de Notion para ver tareas aquí.<br>
+          <span style="font-size:10px;color:var(--gray-mid)">El cockpit puede mostrar las primeras 8 tareas abiertas si configuras <code>NOTION_TASKS_DB_URL</code>.</span>
         </div>
       </div>
+      <div class="card-f"><a href="https://www.notion.so" target="_blank" rel="noopener">Open Notion →</a></div>
+    </div>
+
+    <!-- 7. WATCHLIST ALERTS -->
+    <div class="card">
+      <div class="card-h"><h3>Watchlist alerts</h3><span class="count" id="cnt-watch">—</span></div>
+      <div class="card-b" id="watch-body"><div class="loading">Cargando…</div></div>
+      <div class="card-f"><a href="/screener.html">Open watchlist →</a></div>
+    </div>
+
+    <!-- 8. CALENDAR THIS WEEK -->
+    <div class="card">
+      <div class="card-h"><h3>Calendar — this week</h3><span class="count" id="cnt-cal">—</span></div>
+      <div class="card-b" id="cal-body"><div class="loading">Cargando…</div></div>
+      <div class="card-f"><a href="/calendar.html">Open agenda →</a></div>
     </div>
 
   </div>
 
-  <div class="footer-rule">
-    <strong>Reglas de la disciplina —</strong>
-    Si hay un gate en FAIL o una decisión vencida, esa tarea es la siguiente acción.
-    No se invierte ni se modifica peso sin pasar las gates verdes.
-    Thresholds actuales: re-underwriting ≤5d · revisión posiciones ≤90d · cash ≥10% · concentración ≤35%.
-  </div>
-</main>
+  <div class="footer-note">DCE Holdings · Cockpit · <span>Process center</span> · No performance, no positions</div>
+
+</div>
 
 <script>
-(function() {
-  const TOKEN_KEY = 'dce_admin_token';
+'use strict';
 
-  const fmtUsd = (n) => {
-    if (n == null || isNaN(n)) return '—';
-    const abs = Math.abs(n);
-    if (abs >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
-    if (abs >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
-    return '$' + n.toFixed(0);
-  };
-  const fmtUsdFull = (n) => {
-    if (n == null || isNaN(n)) return '—';
-    return '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
-  };
-  const fmtPct = (n, dp = 1) => {
-    if (n == null || isNaN(n)) return '—';
-    const sign = n > 0 ? '+' : '';
-    return sign + (n * 100).toFixed(dp) + '%';
-  };
-  const fmtPctRaw = (n, dp = 1) => {
-    if (n == null || isNaN(n)) return '—';
-    return (n * 100).toFixed(dp) + '%';
-  };
-  const cls = (n) => n == null ? '' : (n > 0 ? 'pos' : n < 0 ? 'neg' : '');
-  const escapeHtml = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// ── helpers ──────────────────────────────────────────────────────────
+const $ = (id) => document.getElementById(id);
 
-  function setKpi() {}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+}
+function fmtDateTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) + ' · ' +
+         d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+}
+function dayMonth(iso) {
+  if (!iso) return { d: '—', m: '' };
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return { d: '—', m: '' };
+  return { d: String(d.getUTCDate()).padStart(2, '0'),
+           m: d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }) };
+}
+function weekdayShort(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+}
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
 
-  async function fetchSummary() {
-    const token = localStorage.getItem(TOKEN_KEY) || '';
-    if (!token) {
-      showAuthError('Necesitas iniciar sesión.');
-      return null;
+// urgency badge from days
+function urgencyBadge(days, kind) {
+  // kind: 'until' (positive = future) or 'overdue' (positive = days overdue)
+  if (days == null) return '';
+  if (kind === 'overdue') {
+    if (days <= 0) return '<span class="badge green">On time</span>';
+    if (days <= 7) return `<span class="badge amber">${days}d late</span>`;
+    return `<span class="badge red">${days}d late</span>`;
+  }
+  // until
+  if (days < 0) return `<span class="badge red">${-days}d late</span>`;
+  if (days === 0) return '<span class="badge red">Today</span>';
+  if (days <= 7) return `<span class="badge amber">${days}d</span>`;
+  if (days <= 30) return `<span class="badge navy">${days}d</span>`;
+  return `<span class="badge navy">${days}d</span>`;
+}
+
+// pipeline stage class
+function stageClass(stage) {
+  if (!stage) return '';
+  const s = String(stage).toLowerCase();
+  if (['research','idea','backlog'].includes(s)) return 'research';
+  if (['committee','decision'].includes(s)) return 'decision';
+  if (['execution','approved'].includes(s)) return 'execution';
+  return '';
+}
+function stageLabel(stage) {
+  if (!stage) return '—';
+  return stage.charAt(0).toUpperCase() + stage.slice(1).toLowerCase();
+}
+
+// ── renderers ────────────────────────────────────────────────────────
+function renderPipeline(items) {
+  const el = $('pipeline-body');
+  $('cnt-pipeline').textContent = `${items.length} active`;
+  if (!items.length) { el.innerHTML = '<div class="empty">No hay procesos abiertos.</div>'; return; }
+  el.innerHTML = items.slice(0, 8).map(p => {
+    const days = p.days_in_stage;
+    let badge = '<span class="badge green">On track</span>';
+    if (days != null) {
+      if (days >= 30) badge = '<span class="badge red">Stalled</span>';
+      else if (days >= 14) badge = '<span class="badge amber">Slow</span>';
     }
-    try {
-      const res = await fetch('/api/cockpit-summary', {
-        headers: { 'x-admin-token': token },
-      });
-      if (res.status === 401 || res.status === 403) {
-        showAuthError('Sesión expirada — vuelve a iniciar sesión.');
-        return null;
-      }
-      const data = await res.json();
-      if (!data.ok) {
-        showError(data.error || 'Error desconocido');
-        return null;
-      }
-      return data;
-    } catch (e) {
-      showError('Error de red: ' + e.message);
-      return null;
-    }
-  }
-
-  function showAuthError(msg) {
-    const containers = ['gates-body','positions-body','decisions-body','events-body'];
-    containers.forEach(id => {
-      document.getElementById(id).innerHTML = `<div class="empty">${escapeHtml(msg)} <a href="/" style="color:var(--gold)">Iniciar sesión</a></div>`;
-    });
-  }
-  function showError(msg) {
-    document.getElementById('gates-body').innerHTML = `<div class="empty">⚠ ${escapeHtml(msg)}</div>`;
-  }
-
-  function renderKpis(d) {
-    const k = d.kpis;
-    document.getElementById('nav-val').textContent = fmtUsdFull(k.nav_usd);
-    const dayPnl = k.day_pnl_usd;
-    const dayPct = k.day_pnl_pct;
-    document.getElementById('nav-sub').innerHTML =
-      dayPnl != null
-        ? `<span class="${cls(dayPnl)}">${dayPnl > 0 ? '+' : ''}${fmtUsdFull(dayPnl)} hoy (${fmtPct(dayPct)})</span>`
-        : 'Sin datos del día';
-
-    const vsIwqu = k.vs_iwqu_ytd_pct;
-    const vsEl = document.getElementById('vsurth-val');
-    vsEl.textContent = fmtPct(vsIwqu);
-    vsEl.className = 'val ' + cls(vsIwqu);
-    document.getElementById('vsurth-sub').textContent =
-      `Portfolio ${fmtPct(k.ytd_pct)} · IWQU.L ${fmtPct(k.iwqu_ytd_pct)}`;
-    // IPS §4.8 benchmark note
-    document.getElementById('vsurth-val').title = 'Benchmark IPS §4.8: MSCI World Quality NR (proxy IWQU.L)';
-
-    document.getElementById('pos-val').textContent = k.positions_count;
-    document.getElementById('pos-sub').textContent = d.positions.map(p => p.ticker).join(' · ') || 'Ninguna';
-
-    const cashEl = document.getElementById('cash-val');
-    cashEl.textContent = fmtPctRaw(k.cash_pct);
-    cashEl.className = 'val ' + (k.cash_pct >= (d.thresholds.CASH_MIN_PCT || 0.10) ? 'pos' : 'neg');
-    document.getElementById('cash-sub').textContent = `${fmtUsdFull(k.cash_usd)} · ≥${(d.thresholds.CASH_MIN_PCT * 100).toFixed(0)}% ${k.cash_pct >= d.thresholds.CASH_MIN_PCT ? '✓' : '✗'}`;
-
-    // Chips
-    const chips = [];
-    const a = d.alerts;
-    if (a.reviews_overdue > 0) chips.push(`<div class="chip danger"><span class="dot"></span>${a.reviews_overdue} reviews vencidas</div>`);
-    if (a.watch_triggered > 0) chips.push(`<div class="chip alert"><span class="dot"></span>${a.watch_triggered} watch trigger</div>`);
-    if (a.pm_triggered > 0) chips.push(`<div class="chip alert"><span class="dot"></span>${a.pm_triggered} pre-mortem trigger</div>`);
-    if (a.concentration_warn > 0) chips.push(`<div class="chip alert"><span class="dot"></span>concentración &gt;35%</div>`);
-    if (a.cash_low > 0) chips.push(`<div class="chip danger"><span class="dot"></span>cash bajo</div>`);
-    if (chips.length === 0) chips.push('<div class="chip ok"><span class="dot"></span>todo en orden</div>');
-    document.getElementById('chips').innerHTML = chips.join('');
-  }
-
-  function renderGates(d) {
-    const body = document.getElementById('gates-body');
-    body.innerHTML = '';
-    for (const g of d.gates) {
-      const iconCls = g.status === 'OK' ? 'ok' : g.status === 'FAIL' ? 'fail' : 'warn';
-      const iconChar = g.status === 'OK' ? '✓' : g.status === 'FAIL' ? '✗' : '!';
-      const div = document.createElement('div');
-      div.className = 'gate';
-      div.innerHTML = `
-        <div class="icon ${iconCls}">${iconChar}</div>
-        <div class="text">
-          <strong>${escapeHtml(g.label)}</strong>
-          <div class="sub3">${escapeHtml(g.detail)}</div>
-        </div>
-        <div class="status ${iconCls}">${g.status}</div>
-      `;
-      body.appendChild(div);
-    }
-    document.getElementById('gates-badge').textContent = `${d.gates_summary.ok} / ${d.gates_summary.total} OK`;
-  }
-
-  function mosClass(p) {
-    if (p.mos_pct == null) return 'none';
-    if (p.mos_pct >= 0.20) return 'ok';
-    if (p.mos_pct >= 0.0) return 'warn';
-    return 'bad';
-  }
-  function mosLabel(p) {
-    if (p.mos_pct == null) return '— sin ancla';
-    const sign = p.mos_pct > 0 ? '+' : '';
-    return `${p.anchor_type} · ${sign}${(p.mos_pct * 100).toFixed(0)}% MoS`;
-  }
-
-  // Monitoring data cache: loaded async after positions render
-  const _monitoringCache = {};
-  const MONITORING_FILES = { MSFT: '/data/monitoring_msft.json', LULU: '/data/monitoring_lulu.json' };
-
-  async function loadMonitoringData() {
-    const tickers = Object.keys(MONITORING_FILES);
-    await Promise.all(tickers.map(async ticker => {
-      try {
-        const r = await fetch(MONITORING_FILES[ticker]);
-        if (r.ok) _monitoringCache[ticker] = await r.json();
-      } catch { /* ignore */ }
-    }));
-  }
-
-  function getTesisQ1(ticker) {
-    const m = _monitoringCache[ticker];
-    if (!m) return { status: 'PENDING', note: 'Sin datos', tier1Total: 0 };
-    return {
-      status: m.q1_2026_status || 'PENDING',
-      note: m.q1_2026_status_note || '',
-      tier1Total: Array.isArray(m.tier_1_metrics) ? m.tier_1_metrics.length : 0,
-    };
-  }
-
-  function renderPositions(d) {
-    const body = document.getElementById('positions-body');
-    if (!d.positions.length) {
-      body.innerHTML = '<div class="empty">Sin posiciones de equity.</div>';
-      return;
-    }
-    const buildTable = () => {
-      let html = `
-        <table class="pos-table">
-          <thead>
-            <tr>
-              <th>Ticker</th>
-              <th class="right">Peso</th>
-              <th class="right">P&amp;L</th>
-              <th>MoS vs ancla</th>
-              <th>Tesis Q1</th>
-              <th>Última revisión</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-      for (const p of d.positions) {
-        const reviewTxt = p.days_since_review == null
-          ? '<span style="color:var(--red)">sin revisión</span>'
-          : (p.days_since_review > 90
-            ? `<span style="color:var(--red);font-weight:600">${p.days_since_review}d</span>`
-            : `${p.days_since_review}d`);
-        const tq = getTesisQ1(p.ticker);
-        const statusLabel = tq.status === 'GREEN'  ? 'Tesis intacta'
-                          : tq.status === 'YELLOW' ? 'Bajo presión'
-                          : tq.status === 'RED'    ? 'ALERTA'
-                          : tq.status;
-        const tier1Stat = tq.tier1Total > 0
-          ? `<div class="tier1-stat">${tq.tier1Total}/${tq.tier1Total} Tier 1 PENDING</div>`
-          : '';
-        const titleAttr = tq.note ? ` title="${escapeHtml(tq.note)}"` : '';
-        html += `
-          <tr>
-            <td class="tk">${escapeHtml(p.ticker)}</td>
-            <td class="right">${p.weight_pct != null ? (p.weight_pct * 100).toFixed(1) + '%' : '—'}</td>
-            <td class="right ${cls(p.unrealized_pct)}">${fmtPct(p.unrealized_pct)}</td>
-            <td><span class="mos-pill ${mosClass(p)}">${escapeHtml(mosLabel(p))}</span></td>
-            <td><span class="tesis-badge ${escapeHtml(tq.status)}"${titleAttr}>${escapeHtml(statusLabel)}</span>${tier1Stat}</td>
-            <td>${reviewTxt}</td>
-          </tr>
-        `;
-      }
-      html += '</tbody></table>';
-      body.innerHTML = html;
-    };
-
-    // Render immediately with available data, then refresh once monitoring loads
-    buildTable();
-    if (Object.keys(_monitoringCache).length === 0) {
-      loadMonitoringData().then(buildTable);
-    }
-  }
-
-  function renderDecisions(d) {
-    const body = document.getElementById('decisions-body');
-    if (!d.decisions.length) {
-      body.innerHTML = '<div class="empty">Sin decisiones pendientes — disciplina al día.</div>';
-      document.getElementById('dec-badge').textContent = '0';
-      return;
-    }
-    body.innerHTML = '';
-    for (const dec of d.decisions) {
-      const div = document.createElement('div');
-      div.className = 'decision';
-      div.innerHTML = `
-        <div class="row1">
-          <div class="ticker">${escapeHtml(dec.ticker)}</div>
-          <div class="deadline ${dec.deadline_urgent ? 'urgent' : ''}">${escapeHtml(dec.deadline_label || '')}</div>
-        </div>
-        <div class="what">${escapeHtml(dec.title)}</div>
-        <div class="why">${escapeHtml(dec.detail)}</div>
-        ${dec.cta_url ? `<a class="cta" href="${escapeHtml(dec.cta_url)}">Ir →</a>` : ''}
-      `;
-      body.appendChild(div);
-    }
-    document.getElementById('dec-badge').textContent = String(d.decisions.length);
-  }
-
-  function renderEvents(d) {
-    const body = document.getElementById('events-body');
-    if (!d.events.length) {
-      body.innerHTML = '<div class="empty">Sin eventos recientes.</div>';
-      return;
-    }
-    body.innerHTML = d.events.map(e => `
-      <div class="event">
-        <span class="ts">${escapeHtml(e.when || '—')}</span> ·
-        <span class="lbl">${escapeHtml(e.label)}</span>
-        <div class="det">${escapeHtml(e.detail)}</div>
+    const note = p.note ? ` · ${escapeHtml(p.note).slice(0, 70)}` : '';
+    return `<div class="row">
+      <span class="tk">${escapeHtml(p.ticker || '—')}</span>
+      <div class="body">
+        <div class="title">${escapeHtml(p.name || p.ticker || '—')}</div>
+        <div class="meta"><span class="stage ${stageClass(p.stage)}">${escapeHtml(stageLabel(p.stage))}</span> · ${days != null ? days + ' days in stage' : 'just moved'}${note}</div>
       </div>
-    `).join('');
-  }
+      ${badge}
+    </div>`;
+  }).join('');
+}
 
-  // ── Institutional deliverables ──────────────────────────────────────
-  async function loadDeliverables() {
-    const token = localStorage.getItem(TOKEN_KEY) || '';
-    const body = document.getElementById('deliverables-body');
-    if (!body) return;
-    if (!token) {
-      body.innerHTML = '<div class="empty">Inicia sesi\u00f3n para ver entregables.</div>';
-      return;
+function renderDecisions(items) {
+  const el = $('decisions-body');
+  $('cnt-decisions').textContent = `${items.length} pending`;
+  if (!items.length) { el.innerHTML = '<div class="empty">Sin decisiones pendientes.</div>'; return; }
+  el.innerHTML = items.slice(0, 6).map(d => {
+    let badge = '<span class="badge amber">This week</span>';
+    let title = '';
+    let meta = '';
+    if (d.kind === 'pending_ratification') {
+      title = `Ratify ${escapeHtml(d.decision_type || 'decision')}`;
+      meta = (d.thesis || '').slice(0, 80);
+      if (d.days_open != null && d.days_open >= 14) badge = '<span class="badge red">Now</span>';
+    } else if (d.kind && d.kind.startsWith('review_')) {
+      const period = d.kind.split('_')[1];
+      title = `Scheduled ${period} review overdue`;
+      meta = `Due ${fmtDate(d.review_due)} · ${d.days_overdue || 0}d overdue`;
+      badge = '<span class="badge red">Overdue</span>';
     }
-    try {
-      const [monthlyRes, committeeRes] = await Promise.all([
-        fetch('/api/list-reports?folder=monthly',   { headers: { 'x-admin-token': token } }),
-        fetch('/api/list-reports?folder=committee', { headers: { 'x-admin-token': token } }),
-      ]);
-      const [monthlyData, committeeData] = await Promise.all([
-        monthlyRes.ok   ? monthlyRes.json()   : Promise.resolve({ files: [] }),
-        committeeRes.ok ? committeeRes.json() : Promise.resolve({ files: [] }),
-      ]);
-      const monthly   = (monthlyData.files   || []).sort((a, b) => b.name.localeCompare(a.name))[0] || null;
-      const committee = (committeeData.files || []).sort((a, b) => b.name.localeCompare(a.name))[0] || null;
+    return `<div class="row">
+      <span class="tk">${escapeHtml(d.ticker || '—')}</span>
+      <div class="body">
+        <div class="title">${title}</div>
+        <div class="meta">${escapeHtml(meta)}${d.owner ? ' · ' + escapeHtml(d.owner) : ''}</div>
+      </div>
+      ${badge}
+    </div>`;
+  }).join('');
+}
 
-      if (!monthly && !committee) {
-        body.innerHTML = '<div class="empty">Sin entregables en repositorio.</div>';
-        return;
-      }
-
-      const rows = [];
-      if (monthly) {
-        const label = monthly.name.replace(/\.pdf$/i, '').replace(/_/g, ' ');
-        rows.push({ type: 'Monthly Close', label, url: monthly.url });
-      }
-      if (committee) {
-        const label = committee.name.replace(/\.pdf$/i, '').replace(/_/g, ' ');
-        rows.push({ type: 'CI Pack', label, url: committee.url });
-      }
-
-      body.innerHTML = rows.map(r => `
-        <div class="deliverable-row">
-          <div class="dlabel">
-            <span class="dtype">${escapeHtml(r.type)}</span>
-            ${escapeHtml(r.label)}
-          </div>
-          <a class="dlink" href="${escapeHtml(r.url)}" target="_blank" rel="noopener">Abrir</a>
-        </div>
-      `).join('');
-    } catch (e) {
-      body.innerHTML = '<div class="empty">Error cargando entregables.</div>';
+function renderReunderwriting(items) {
+  const el = $('reu-body');
+  $('cnt-reu').textContent = `${items.length} due`;
+  if (!items.length) { el.innerHTML = '<div class="empty">Sin re-underwriting pendiente.</div>'; return; }
+  el.innerHTML = items.slice(0, 5).map(r => {
+    const d = r.days_until_due;
+    let badge = '<span class="badge amber">Soon</span>';
+    if (d != null) {
+      if (d < 0) badge = `<span class="badge red">${-d}d late</span>`;
+      else if (d <= 7) badge = `<span class="badge amber">${d}d</span>`;
+      else badge = `<span class="badge navy">${d}d</span>`;
     }
+    return `<div class="row">
+      <span class="tk">${escapeHtml(r.ticker || '—')}</span>
+      <div class="body">
+        <div class="title">${escapeHtml(r.doc_type || 'Review')} · period ${escapeHtml(r.period_end || '')}</div>
+        <div class="meta">Due ${fmtDate(r.due_at)} · status ${escapeHtml(r.status || '—')}</div>
+      </div>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+function renderEarnings(items) {
+  const el = $('earnings-body');
+  if (!items.length) { el.innerHTML = '<div class="empty">No earnings in the next 45 days.</div>'; return; }
+  el.innerHTML = items.slice(0, 6).map(e => {
+    const dm = dayMonth(e.date);
+    const days = e.days_until;
+    let badge = '';
+    if (days != null) {
+      if (days <= 0) badge = '<span class="badge red">Today</span>';
+      else if (days <= 7) badge = `<span class="badge red">${days}d</span>`;
+      else if (days <= 14) badge = `<span class="badge amber">${days}d</span>`;
+      else badge = `<span class="badge navy">${days}d</span>`;
+    }
+    const timing = e.timing ? ` · ${escapeHtml(e.timing)}` : '';
+    return `<div class="cal-row">
+      <div class="date"><span class="d">${dm.d}</span><span class="m">${dm.m}</span></div>
+      <div class="info">
+        <div class="co">${escapeHtml(e.company || e.ticker || '—')}</div>
+        <div class="sub">${escapeHtml(e.ticker || '')}${timing}</div>
+      </div>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+function renderDeliverables(items) {
+  const el = $('deliv-body');
+  if (!items.length) { el.innerHTML = '<div class="empty">No deliverables yet.</div>'; return; }
+  el.innerHTML = items.slice(0, 6).map(d => {
+    const kind = d.kind || 'doc';
+    const label = kind === 'pdf' ? 'PDF' : kind === 'xls' ? 'XLS' : kind === 'doc' ? 'DOC' : kind === 'img' ? 'IMG' : 'FILE';
+    const sub = `${d.days_ago != null ? d.days_ago + 'd ago' : fmtDate(d.uploaded_at)}${d.uploaded_by ? ' · ' + escapeHtml(d.uploaded_by) : ''}`;
+    const nameHtml = d.url
+      ? `<a class="name" href="${escapeHtml(d.url)}" target="_blank" rel="noopener">${escapeHtml(d.name || d.filename || '—')}</a>`
+      : `<span class="name">${escapeHtml(d.name || d.filename || '—')}</span>`;
+    return `<div class="deliv">
+      <div class="icon ${kind}">${label}</div>
+      <div class="info">
+        ${nameHtml}
+        <div class="sub">${sub}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderWatchlist(items) {
+  const el = $('watch-body');
+  $('cnt-watch').textContent = `${items.length} active`;
+  if (!items.length) { el.innerHTML = '<div class="empty">No watchlist alerts active.</div>'; return; }
+  el.innerHTML = items.slice(0, 6).map(w => {
+    let pulse = 'pulse';
+    let badge = '<span class="badge amber">Soon</span>';
+    let title = '';
+    let meta = '';
+    if (w.kind === 'triggered') {
+      pulse = 'pulse red';
+      badge = '<span class="badge red">Triggered</span>';
+      title = 'Crossed entry target';
+      meta = `Anchor: ${w.anchor_type || ''} ${w.target_price != null ? '$' + w.target_price : ''}${w.triggered_price != null ? ' · hit $' + w.triggered_price : ''}`;
+    } else if (w.kind === 'review_overdue') {
+      pulse = 'pulse red';
+      badge = '<span class="badge red">Overdue</span>';
+      title = 'Review deadline passed';
+      meta = `Was due ${fmtDate(w.deadline_review)}`;
+    } else {
+      title = 'Review deadline approaches';
+      meta = `Due ${fmtDate(w.deadline_review)}${w.days_until_review != null ? ' · ' + w.days_until_review + 'd' : ''}`;
+      badge = `<span class="badge amber">${w.days_until_review != null ? w.days_until_review + 'd' : 'Soon'}</span>`;
+    }
+    if (w.catalyst) meta += ` · ${escapeHtml(w.catalyst).slice(0, 40)}`;
+    return `<div class="alert-row">
+      <span class="${pulse}"></span>
+      <span class="tk">${escapeHtml(w.ticker || '—')}</span>
+      <div class="body">
+        <div class="title">${title}</div>
+        <div class="meta">${meta}</div>
+      </div>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+function renderCalendarWeek(items) {
+  const el = $('cal-body');
+  // Date range label
+  const today = new Date();
+  const wkEnd = new Date(); wkEnd.setDate(today.getDate() + 7);
+  const fmt = (d) => d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+  $('cnt-cal').textContent = `${fmt(today)}–${fmt(wkEnd)}`;
+  if (!items.length) { el.innerHTML = '<div class="empty">No earnings or events this week.</div>'; return; }
+  el.innerHTML = items.slice(0, 6).map(c => {
+    const wd = weekdayShort(c.date);
+    const days = c.days_until;
+    let badge = '';
+    if (days != null && days <= 1) badge = '<span class="badge red">Hard</span>';
+    return `<div class="row">
+      <span class="tk" style="color:var(--gold)">${wd}</span>
+      <div class="body">
+        <div class="title">${escapeHtml(c.company || c.ticker || '—')} earnings</div>
+        <div class="meta">${fmtDate(c.date)}${c.timing ? ' · ' + escapeHtml(c.timing) : ''}${c.hour ? ' · ' + escapeHtml(c.hour) : ''}</div>
+      </div>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+function renderStatus(s) {
+  $('kpi-open').textContent = s.open_processes ?? 0;
+  $('kpi-decisions').textContent = s.decisions_pending ?? 0;
+  $('kpi-reu').textContent = s.reunderwriting_due ?? 0;
+  $('kpi-earn').textContent = s.earnings_this_week ?? 0;
+  $('kpi-watch').textContent = s.watchlist_alerts ?? 0;
+  $('kpi-sync').textContent = fmtDateTime(s.last_sync);
+
+  // dynamic colors based on counts
+  $('kpi-decisions').className = (s.decisions_pending || 0) > 0 ? 'val amber' : 'val green';
+  $('kpi-reu').className = (s.reunderwriting_due || 0) > 0 ? 'val red' : 'val green';
+  $('kpi-watch').className = (s.watchlist_alerts || 0) > 0 ? 'val amber' : 'val green';
+}
+
+function renderError(msg) {
+  const ids = ['pipeline-body','decisions-body','reu-body','earnings-body','deliv-body','watch-body','cal-body'];
+  ids.forEach(id => {
+    const el = $(id);
+    if (el) el.innerHTML = `<div class="empty">⚠ ${escapeHtml(msg)}</div>`;
+  });
+}
+
+// ── load ──────────────────────────────────────────────────────────────
+async function load() {
+  try {
+    const r = await fetch('/api/cockpit', { cache: 'no-store' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error || 'API error');
+    renderStatus(data.status || {});
+    const sec = data.sections || {};
+    renderPipeline(sec.pipeline_in_flight || []);
+    renderDecisions(sec.outstanding_decisions || []);
+    renderReunderwriting(sec.reunderwriting_due || []);
+    renderEarnings(sec.earnings_upcoming || []);
+    renderDeliverables(sec.last_deliverables || []);
+    renderWatchlist(sec.watchlist_alerts || []);
+    renderCalendarWeek(sec.calendar_week || []);
+  } catch (e) {
+    console.error('cockpit load failed:', e);
+    renderError('No se pudo cargar el cockpit: ' + e.message);
   }
+}
 
-  async function load() {
-    const data = await fetchSummary();
-    if (!data) return;
-
-    document.getElementById('updated').textContent =
-      'Última actualización: ' + new Date(data.generated_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
-
-    renderKpis(data);
-    renderGates(data);
-    renderPositions(data);
-    renderDecisions(data);
-    renderEvents(data);
-  }
-
-  // IV Status section removed in v3.2 (Operations Manual). Implied IRR ahora vive en el Quarterly Re-Underwriting §7.
-
-  load();
-  loadDeliverables();
-})();
+load();
 </script>
 
-<script src="/search.js" defer></script>
 </body>
 </html>
