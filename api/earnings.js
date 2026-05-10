@@ -44,7 +44,9 @@ function deriveQuarter(dateIso) {
 
 module.exports = async (req, res) => {
   // CORS / cache: data refreshes daily, allow short edge cache
-  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+  // No cache: removals must be reflected immediately. The events table
+  // is small (a handful of rows) so re-querying on every request is fine.
+  res.setHeader('Cache-Control', 'no-store, max-age=0, must-revalidate');
 
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
