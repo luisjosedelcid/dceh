@@ -113,6 +113,10 @@
   .tk-row .tk-state{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:2px}
   .tk-row .tk-state.tracked{background:rgba(42,122,86,.10);color:var(--green)}
   .tk-row .tk-state.untracked{background:var(--gold-dim);color:var(--gold)}
+  .tk-row .tk-state.blocked{background:rgba(122,16,16,.10);color:var(--red)}
+  .tk-row .tk-unblock{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:4px 8px;border:1px solid var(--rule);background:transparent;color:var(--green);cursor:pointer;transition:all .2s;margin-left:8px}
+  .tk-row .tk-unblock:hover{border-color:var(--green);background:rgba(42,122,86,.05)}
+  .tk-row.is-blocked{opacity:.85}
   .tk-row .tk-meta{font-size:10px;color:var(--gray-mid)}
   .tk-row .tk-remove{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:4px 8px;border:1px solid var(--rule);background:transparent;color:var(--gray-mid);cursor:pointer;transition:all .2s}
   .tk-row .tk-remove:hover{border-color:var(--red);color:var(--red)}
@@ -196,7 +200,7 @@
         <button class="x" id="import-close" aria-label="close">×</button>
       </div>
       <div class="modal-b">
-        <p>Select tickers to refresh into the calendar. Removing a tracked ticker only drops it from the calendar by default; choose “Also from covered universe” to stop the cron from re-importing it.</p>
+        <p>Select tickers to refresh into the calendar. Removing a ticker also blocks it — the daily cron and Refresh Now will skip blocked tickers until you Unblock them. Blocked tickers appear at the top of the list with a red badge.</p>
         <div id="tk-list"><div class="empty" style="padding:24px">Loading…</div></div>
         <div class="modal-error" id="import-error"></div>
       </div>
@@ -461,30 +465,50 @@
       }
       let html = '';
       for (const it of items) {
-        const sources = (it.sources || []).map(s => s[0].toUpperCase() + s.slice(1)).join(' · ');
+        const blocked = !!it.blocked;
+        const sources = (it.sources || [])
+          .filter(s => s !== 'blocklist')
+          .map(s => s[0].toUpperCase() + s.slice(1))
+          .join(' · ') || '—';
         const tracked = it.in_calendar;
         const stillInUniverse = (it.sources || []).some(s => s === 'pipeline' || s === 'watchlist');
-        const meta = tracked
-          ? `${it.event_count} event${it.event_count===1?'':'s'} · last ${it.last_event_date || '—'}`
-          : 'Not yet in calendar';
+        let meta;
+        if (blocked) {
+          const reason = it.blocked_reason ? ` · ${it.blocked_reason}` : '';
+          meta = `Blocked${reason}`;
+        } else if (tracked) {
+          meta = `${it.event_count} event${it.event_count===1?'':'s'} · last ${it.last_event_date || '—'}`;
+        } else {
+          meta = 'Not yet in calendar';
+        }
         // Default unchecked — admin must explicitly opt in. Prevents
-        // a just-removed ticker from being silently re-imported.
-        const checked = '';
-        const removeBtn = tracked
-          ? `<button class="tk-remove" data-remove="${it.ticker}" data-stillin="${stillInUniverse?'1':'0'}" type="button">Remove</button>`
-          : '';
-        html += `<div class="tk-row">
-          <input type="checkbox" data-tk="${it.ticker}" ${checked}>
+        // a just-removed ticker from being silently re-imported. Blocked
+        // tickers are also disabled — admin must Unblock first.
+        const disabled = blocked ? 'disabled' : '';
+        let stateClass = 'untracked', stateLabel = 'New';
+        if (blocked) { stateClass = 'blocked'; stateLabel = 'Blocked'; }
+        else if (tracked) { stateClass = 'tracked'; stateLabel = 'Tracked'; }
+        let actionBtn = '';
+        if (blocked) {
+          actionBtn = `<button class="tk-unblock" data-unblock="${it.ticker}" type="button">Unblock</button>`;
+        } else if (tracked) {
+          actionBtn = `<button class="tk-remove" data-remove="${it.ticker}" data-stillin="${stillInUniverse?'1':'0'}" type="button">Remove</button>`;
+        }
+        html += `<div class="tk-row${blocked?' is-blocked':''}">
+          <input type="checkbox" data-tk="${it.ticker}" ${disabled}>
           <span class="tk-tk">${it.ticker}</span>
           <span class="tk-name">${it.name||it.ticker}<div class="tk-meta">${sources} · ${meta}</div></span>
-          <span class="tk-state ${tracked?'tracked':'untracked'}">${tracked?'Tracked':'New'}</span>
-          ${removeBtn}
+          <span class="tk-state ${stateClass}">${stateLabel}</span>
+          ${actionBtn}
         </div>`;
       }
       list.innerHTML = html;
-      // Wire up Remove buttons
+      // Wire up action buttons
       list.querySelectorAll('button.tk-remove').forEach(btn => {
         btn.addEventListener('click', () => removeTicker(btn));
+      });
+      list.querySelectorAll('button.tk-unblock').forEach(btn => {
+        btn.addEventListener('click', () => unblockTicker(btn));
       });
     } catch (e) {
       list.innerHTML = '<div class="empty" style="padding:24px;color:var(--red)">Failed to load tickers.</div>';
@@ -582,6 +606,27 @@
         : null;
     }
     return null;
+  }
+
+  async function unblockTicker(btn) {
+    const ticker = btn.dataset.unblock;
+    if (!confirm(`Unblock ${ticker}? The next refresh will pull its earnings events again.`)) return;
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = 'Unblocking…';
+    try {
+      const url = `/api/admin/earnings-tickers?action=unblock&ticker=${encodeURIComponent(ticker)}`;
+      const r = await fetch(url, { method: 'POST', headers: authHeaders() });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || ('http ' + r.status));
+      await loadTickerSources();
+    } catch (e) {
+      const err = document.getElementById('import-error');
+      err.textContent = `Unblock failed: ${e.message || e}`;
+      err.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = original;
+    }
   }
 
   async function removeTicker(btn) {

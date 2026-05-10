@@ -134,6 +134,18 @@ async function getTrackedTickers() {
   return { tickers: Array.from(set), names };
 }
 
+// Tickers explicitly blocked by an admin (via Remove). The cron and
+// admin refresh skip these even if they remain in pipeline_cards or
+// watchlist. Returns a Set of uppercase tickers.
+async function getBlocklist() {
+  try {
+    const rows = await sbSelect('calendar_blocklist', 'select=ticker&limit=500');
+    return new Set(rows.map(r => String(r.ticker || '').toUpperCase()).filter(Boolean));
+  } catch {
+    return new Set();
+  }
+}
+
 // Core refresh logic exposed for the manual admin trigger.
 // `opts.onlyTickers` (array, optional) restricts the run to a subset.
 async function runEarningsRefresh(opts) {
@@ -147,7 +159,10 @@ async function runEarningsRefresh(opts) {
   const fromIso = todayIso();
   const toIso = plusDaysIso(365);
 
-  const { tickers: trackedAll, names: dbNames } = await getTrackedTickers();
+  const [{ tickers: trackedAll, names: dbNames }, blocklist] = await Promise.all([
+    getTrackedTickers(),
+    getBlocklist(),
+  ]);
   let tickers = trackedAll;
   if (Array.isArray(opts.onlyTickers) && opts.onlyTickers.length) {
     const filt = new Set(opts.onlyTickers.map(t => String(t || '').toUpperCase()));
@@ -159,7 +174,15 @@ async function runEarningsRefresh(opts) {
     });
   }
 
-  const summary = { ok: true, from: fromIso, to: toIso, tickers, fetched: 0, upserted: 0, skipped: 0, errors: [] };
+  // Honor blocklist unconditionally — even if the admin manually passed
+  // the ticker. To re-enable, the admin must Unblock first.
+  const blocked = [];
+  tickers = tickers.filter(t => {
+    if (blocklist.has(t)) { blocked.push(t); return false; }
+    return true;
+  });
+
+  const summary = { ok: true, from: fromIso, to: toIso, tickers, blocked, fetched: 0, upserted: 0, skipped: 0, errors: [] };
 
   for (const ticker of tickers) {
     try {
@@ -221,3 +244,4 @@ module.exports = async (req, res) => {
 // can re-use the exact same logic.
 module.exports.runEarningsRefresh = runEarningsRefresh;
 module.exports.getTrackedTickers = getTrackedTickers;
+module.exports.getBlocklist = getBlocklist;
