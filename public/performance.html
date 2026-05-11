@@ -264,7 +264,11 @@
       <div class="actions" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <button class="btn ghost" id="btn-dash-reload" type="button">Reload</button>
         <button class="btn gold admin-only" id="btn-dash-snapshot" type="button">Backfill snapshots</button>
-        <button class="btn" id="btn-perf-report" type="button" title="Download a branded PDF snapshot of this dashboard">↓ Generate Report</button>
+        <div style="display:inline-flex;align-items:center;gap:6px">
+          <label for="perf-report-asof" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.06em;text-transform:uppercase;font-weight:600">As of</label>
+          <input type="date" id="perf-report-asof" style="font-size:12px;padding:6px 8px;border:1px solid #d0d2d6;border-radius:4px;font-family:inherit;color:var(--navy)" title="Select snapshot date. Defaults to today.">
+        </div>
+        <button class="btn" id="btn-perf-report" type="button" title="Download a branded PDF snapshot for the selected date">↓ Generate Report</button>
         <span id="perf-report-status" style="font-size:11px;color:var(--gray-mid);font-style:italic"></span>
       </div>
       <div id="dash-alert"></div>
@@ -1159,25 +1163,39 @@ document.getElementById('btn-dash-snapshot').addEventListener('click', async()=>
 });
 
 // ── Generate Performance Snapshot PDF ────────
+// Default the date picker to today on first load
+(function initPerfReportDate(){
+  const input = document.getElementById('perf-report-asof');
+  if (input && !input.value) {
+    input.value = new Date().toISOString().slice(0, 10);
+    input.max = new Date().toISOString().slice(0, 10); // Don't allow future dates
+  }
+})();
+
 document.getElementById('btn-perf-report').addEventListener('click', async () => {
   const btn = document.getElementById('btn-perf-report');
   const status = document.getElementById('perf-report-status');
+  const dateInput = document.getElementById('perf-report-asof');
   const original = btn.textContent;
+  // Get and validate the selected date
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let asOf = (dateInput && dateInput.value) ? dateInput.value : todayStr;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(asOf)) asOf = todayStr;
+  if (asOf > todayStr) asOf = todayStr; // Clamp future dates
   btn.disabled = true;
   btn.textContent = 'Generating…';
-  status.textContent = 'Building PDF from live performance data…';
+  status.textContent = `Building PDF as of ${asOf}…`;
   status.style.color = 'var(--gray-mid)';
   try {
-    const r = await fetch('/api/generate-daily-report', { method: 'GET' });
+    const r = await fetch(`/api/generate-daily-report?as_of=${encodeURIComponent(asOf)}`, { method: 'GET' });
     if (!r.ok) {
       const err = await r.json().catch(() => ({}));
       throw new Error(err.error || `HTTP ${r.status}`);
     }
     const blob = await r.blob();
-    const today = new Date().toISOString().slice(0, 10);
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `DCE_Performance_Snapshot_${today}.pdf`;
+    a.download = `DCE_Performance_Snapshot_${asOf}.pdf`;
     document.body.appendChild(a);
     a.click();
     a.remove();

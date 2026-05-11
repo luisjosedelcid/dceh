@@ -205,8 +205,19 @@ function drawIpsBands(doc, x, y, w, h, kpis) {
 
 module.exports = async (req, res) => {
   try {
+    // Parse optional ?as_of=YYYY-MM-DD to generate the snapshot for a past date.
+    // Default: today (loadAndCompute clamps to the latest available data).
+    let requestedAsOf = null;
+    try {
+      const u = new URL(req.url, 'http://x');
+      const v = (u.searchParams.get('as_of') || '').trim();
+      if (v && /^\d{4}-\d{2}-\d{2}$/.test(v)) {
+        requestedAsOf = v;
+      }
+    } catch (_) {}
+
     // ── 1) Pull live performance data (same source as /api/performance) ──
-    const result = await loadAndCompute({});
+    const result = await loadAndCompute(requestedAsOf ? { endDate: requestedAsOf } : {});
     const kpis = result.kpis;
     const holdings = result.holdings || [];
 
