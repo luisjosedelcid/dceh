@@ -326,8 +326,8 @@ function stageLabel(stage) {
 // ── renderers ────────────────────────────────────────────────────────
 function renderPipeline(items) {
   const el = $('pipeline-body');
-  $('cnt-pipeline').textContent = `${items.length} active`;
-  if (!items.length) { el.innerHTML = '<div class="empty">No hay procesos abiertos.</div>'; return; }
+  $('cnt-pipeline').textContent = `${items.length} pending`;
+  if (!items.length) { el.innerHTML = '<div class="empty">Nada pendiente de tu firma.</div>'; return; }
   el.innerHTML = items.slice(0, 8).map(p => {
     const days = p.days_in_stage;
     let badge = '<span class="badge green">On track</span>';

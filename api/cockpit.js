@@ -36,11 +36,13 @@ function plusDaysISO(n) {
 
 // ── 1. Pipeline in flight ─────────────────────────────────────────────
 async function getPipeline() {
-  // Active (non-terminal) stages per _pipeline-stage.js lifecycle:
-  //   backlog -> analysis -> review -> decision -> approved -> {invested|passed|rejected}
-  //   invested -> closed
-  // Terminal stages excluded: invested, passed, rejected, closed.
-  const ACTIVE_STAGES = ['backlog', 'analysis', 'review', 'decision', 'approved'];
+  // Cockpit shows only what requires CIO action right now:
+  //   review   = analyst has shipped research, CIO must sign off
+  //   decision = committee discussion / ratification in progress
+  // Earlier stages (backlog, analysis) are work-in-progress for the analyst —
+  // they belong in /pipeline, not the cockpit. Terminal stages (approved,
+  // invested, passed, rejected, closed) are also excluded.
+  const ACTIVE_STAGES = ['review', 'decision'];
   const stagesFilter = `(${ACTIVE_STAGES.map(s => `"${s}"`).join(',')})`;
   let rows = [];
   try {
