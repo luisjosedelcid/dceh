@@ -699,21 +699,61 @@ function signedPct(n,dec){ if(n==null||isNaN(n)) return '—'; const v=Number(n)
 function signedUsd(n){ if(n==null||isNaN(n)) return '—'; const v=Number(n); return (v>=0?'+$':'−$')+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function setSignClass(el,n){ if(n==null||isNaN(n)){ el.classList.remove('pos','neg'); return;} el.classList.toggle('pos',n>0); el.classList.toggle('neg',n<0); }
 
+// Render pending dividends+interest mini-stat.
+// Expects: { total_pending_usd, declared_usd, forecast_usd, interest_pending_usd, breakdown:[{ticker, shares, per_share_amount, payment_date, status, amount_usd, source_url}] }
+function renderPendingIncome(p){
+  const el = document.getElementById('st-income-pending');
+  if (!el) return;
+  if (!p || typeof p.total_pending_usd !== 'number') {
+    el.textContent = 'Pendiente';
+    el.style.color = 'var(--gray-mid)';
+    el.style.fontStyle = 'italic';
+    el.style.fontSize = '14px';
+    return;
+  }
+  el.style.color = '';
+  el.style.fontStyle = '';
+  el.style.fontSize = '';
+  el.textContent = '$'+p.total_pending_usd.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
+  // Build tooltip with breakdown
+  const card = el.closest('.mini-stat');
+  if (card) {
+    const lines = [];
+    lines.push(`Declared: $${(p.declared_usd||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`);
+    lines.push(`Forecast: $${(p.forecast_usd||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`);
+    lines.push(`Interest: $${(p.interest_pending_usd||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} (pending cash sweep rate)`);
+    if (Array.isArray(p.breakdown) && p.breakdown.length) {
+      lines.push('');
+      lines.push('Breakdown:');
+      for (const b of p.breakdown){
+        lines.push(`  ${b.ticker} · ${b.shares} sh × $${Number(b.per_share_amount).toFixed(2)} → $${Number(b.amount_usd).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} (${b.status}, pays ${b.payment_date})`);
+      }
+    }
+    card.title = lines.join('\n');
+  }
+}
+
 async function loadDashboard(){
   document.getElementById('dash-loading').classList.remove('hide');
   document.getElementById('dash-content').classList.add('hide');
   try{
     const tok = adminToken();
-    // Load alerts in parallel with /api/performance so the holdings render is one pass
-    const [, r] = await Promise.all([
+    const hdrs = tok ? { headers: { 'x-admin-token': tok } } : {};
+    // Load alerts + performance + pending dividends in parallel
+    const [, r, rp] = await Promise.all([
       loadAlerts(),
-      fetch('/api/performance', tok ? { headers: { 'x-admin-token': tok } } : {}),
+      fetch('/api/performance', hdrs),
+      fetch('/api/dividend-pending', hdrs).catch(() => null),
     ]);
     const j = await r.json();
     if(!r.ok || !j.ok) throw new Error(j.error || ('HTTP '+r.status));
     if(!j.kpis){
       document.getElementById('dash-loading').textContent = 'No data yet — import a Schwab CSV or add manual entries below.';
       return;
+    }
+    // Optional: attach pending dividends if endpoint responded ok
+    if (rp && rp.ok) {
+      try { const jp = await rp.json(); if (jp && jp.ok) j.pending = jp; } catch(_){}
     }
     renderDashboard(j);
     document.getElementById('dash-loading').classList.add('hide');
@@ -757,6 +797,7 @@ function renderDashboard(j){
   const r=document.getElementById('st-realized'); r.textContent = signedUsd(k.realized_pnl); setSignClass(r, k.realized_pnl);
   const u=document.getElementById('st-unrealized'); u.textContent = signedUsd(k.unrealized_pnl); setSignClass(u, k.unrealized_pnl);
   document.getElementById('st-income').textContent = '$'+(k.total_dividends + k.total_interest).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  renderPendingIncome(j.pending);
   document.getElementById('st-tax').textContent = '−$'+Math.abs(k.total_taxes).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 
   // Holdings table
