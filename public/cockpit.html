@@ -444,6 +444,33 @@ function renderDeliverables(items) {
   }).join('');
 }
 
+function renderHighlights(payload) {
+  const el = $('tasks-body');
+  const cnt = $('cnt-tasks');
+  if (!payload || !Array.isArray(payload.messages) || payload.messages.length === 0) {
+    // empty state stays — but show channel + last fetched if we have it
+    const ch = payload && payload.channel_name ? escapeHtml(payload.channel_name) : '#general-dce-holdings';
+    el.innerHTML = `<div class="empty">Sin mensajes recientes en <strong>${ch}</strong>.<br><span style="font-size:10px;color:var(--gray-mid)">Pendiente: cron para refrescar este snapshot automáticamente.</span></div>`;
+    if (cnt) cnt.textContent = '0';
+    return;
+  }
+  if (cnt) cnt.textContent = String(payload.messages.length);
+  el.innerHTML = payload.messages.slice(0, 8).map(m => {
+    const user = escapeHtml(m.user_name || m.user || 'unknown');
+    const txt = escapeHtml((m.text || '').slice(0, 140));
+    const when = m.ts_human || (m.ts ? fmtDate(m.ts) : '');
+    const link = m.permalink ? `<a href="${escapeHtml(m.permalink)}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:none">` : '<span>';
+    const close = m.permalink ? '</a>' : '</span>';
+    return `<div class="deliv">
+      <div class="icon doc" style="background:#4a154b;color:#fff">SL</div>
+      <div class="info">
+        ${link}<span class="name">${user}</span>${close}
+        <div class="sub">${txt}${when ? ' · ' + escapeHtml(when) : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function renderWatchlist(items) {
   const el = $('watch-body');
   $('cnt-watch').textContent = `${items.length} active`;
@@ -520,7 +547,7 @@ function renderStatus(s) {
 }
 
 function renderError(msg) {
-  const ids = ['pipeline-body','decisions-body','reu-body','earnings-body','deliv-body','watch-body','cal-body'];
+  const ids = ['pipeline-body','decisions-body','reu-body','earnings-body','deliv-body','watch-body','cal-body','tasks-body'];
   ids.forEach(id => {
     const el = $(id);
     if (el) el.innerHTML = `<div class="empty">⚠ ${escapeHtml(msg)}</div>`;
@@ -543,6 +570,20 @@ async function load() {
     renderDeliverables(sec.last_deliverables || []);
     renderWatchlist(sec.watchlist_alerts || []);
     renderCalendarWeek(sec.calendar_week || []);
+
+    // Slack channel highlights (snapshot served as static JSON)
+    try {
+      const sr = await fetch('/data/slack_highlights.json', { cache: 'no-store' });
+      if (sr.ok) {
+        const slackPayload = await sr.json();
+        renderHighlights(slackPayload);
+      } else {
+        renderHighlights(null);
+      }
+    } catch (slackErr) {
+      console.warn('slack highlights load failed:', slackErr);
+      renderHighlights(null);
+    }
   } catch (e) {
     console.error('cockpit load failed:', e);
     renderError('No se pudo cargar el cockpit: ' + e.message);
