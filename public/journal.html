@@ -138,7 +138,8 @@
   .btn-new-entry:hover{background:var(--gold);border-color:var(--gold)}
   .modal-bg{position:fixed;inset:0;background:rgba(27,38,66,0.55);display:none;z-index:70;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 20px}
   .modal-bg.open{display:flex}
-  .modal{background:var(--cream);border:1px solid var(--gold-rule);border-top:3px solid var(--gold);width:100%;max-width:680px;box-shadow:0 12px 48px rgba(27,38,66,0.25)}
+  .modal{background:var(--cream);border:1px solid var(--gold-rule);border-top:3px solid var(--gold);width:100%;max-width:680px;box-shadow:0 12px 48px rgba(27,38,66,0.25);transition:max-width .2s ease}
+  .modal.modal-wide{max-width:880px}
   .modal-header{background:var(--navy);color:#fff;padding:18px 26px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--gold)}
   .modal-title{font-size:18px;font-weight:700;letter-spacing:-0.01em}
   .modal-close{background:none;border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:20px;width:32px;height:32px;cursor:pointer;line-height:1}
@@ -160,6 +161,44 @@
   .btn-submit:disabled{opacity:.5;cursor:not-allowed}
   .form-msg{font-size:13px;margin-top:8px;min-height:18px}
   .header-actions{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:8px}
+
+  /* ---- v3.2 BUY modal sections ---- */
+  .v32-import-banner{display:none;align-items:flex-start;gap:12px;padding:12px 14px;margin-bottom:18px;background:rgba(184,139,71,0.08);border:1px solid var(--gold-rule);border-left:3px solid var(--gold)}
+  .v32-import-banner.open{display:flex}
+  .v32-import-banner.muted{background:#f5f6f8;border-color:var(--rule);border-left-color:var(--gray-mid)}
+  .v32-import-banner .ib-body{flex:1;min-width:0}
+  .v32-import-banner .ib-title{font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--navy);margin-bottom:2px}
+  .v32-import-banner .ib-detail{font-size:12px;color:var(--gray-mid);line-height:1.5}
+  .v32-import-banner .ib-btn{flex-shrink:0;background:var(--gold);color:#fff;border:1px solid var(--gold);padding:8px 14px;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;font-family:inherit}
+  .v32-import-banner .ib-btn:hover{background:var(--navy);border-color:var(--navy)}
+  .v32-import-banner .ib-btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .v32-section{margin-top:24px;padding-top:18px;border-top:1px solid var(--gold-rule)}
+  .v32-section:first-of-type{margin-top:18px}
+  .v32-section-title{font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .v32-section-title::before{content:'';display:inline-block;width:24px;height:1px;background:var(--gold)}
+  .v32-section-help{font-size:11px;color:var(--gray-mid);margin:-8px 0 14px;line-height:1.55}
+
+  .form-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .form-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media (max-width: 720px){
+    .form-grid-3,.form-grid-4{grid-template-columns:1fr 1fr}
+  }
+
+  /* Dynamic lists (pillars / catalysts / failure modes / kill criteria) */
+  .dyn-list{display:flex;flex-direction:column;gap:10px}
+  .dyn-item{display:flex;flex-direction:column;gap:8px;padding:12px;background:var(--white);border:1px solid var(--rule);position:relative}
+  .dyn-item-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .dyn-item-idx{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold)}
+  .dyn-item-remove{background:transparent;border:none;color:var(--gray-mid);cursor:pointer;font-size:18px;line-height:1;padding:2px 6px}
+  .dyn-item-remove:hover{color:var(--red)}
+  .dyn-item textarea{min-height:60px}
+  .dyn-item .dyn-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+  .dyn-item .dyn-meta input,.dyn-item .dyn-meta select{padding:6px 8px;font-size:12px;border:1px solid var(--rule);background:var(--white);font-family:inherit;color:var(--ink);box-sizing:border-box;width:100%}
+  .dyn-item .dyn-meta label{display:block;font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:3px}
+  .dyn-add{background:transparent;color:var(--navy);border:1px dashed var(--gold-rule);padding:8px 14px;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;margin-top:8px;width:100%}
+  .dyn-add:hover{border-color:var(--gold);color:var(--gold);background:rgba(184,139,71,0.04)}
+  .dyn-empty{font-size:12px;color:var(--gray-mid);font-style:italic;padding:8px 0}
 
   .drawer-bg{position:fixed;inset:0;background:rgba(27,38,66,0.5);display:none;z-index:50}
   .drawer-bg.open{display:block}
@@ -339,7 +378,7 @@
 <!-- Drawer -->
 <!-- New Entry Modal -->
 <div class="modal-bg" id="new-entry-modal" onclick="if(event.target===this)closeNewEntry()">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="new-entry-title">
+  <div class="modal" id="new-entry-modal-box" role="dialog" aria-modal="true" aria-labelledby="new-entry-title">
     <div class="modal-header">
       <div>
         <div class="modal-title" id="new-entry-title">New Decision Entry</div>
@@ -349,6 +388,15 @@
     </div>
     <form id="new-entry-form" onsubmit="submitNewEntry(event)">
       <div class="modal-body">
+        <!-- v3.2 import banner (only when type=BUY) -->
+        <div class="v32-import-banner" id="ne-import-banner">
+          <div class="ib-body">
+            <div class="ib-title" id="ne-import-title">Munger package available</div>
+            <div class="ib-detail" id="ne-import-detail">Found a research package for this ticker. Import to prefill the form.</div>
+          </div>
+          <button type="button" class="ib-btn" id="ne-import-btn" onclick="importMungerPackage()">Import &amp; Edit</button>
+        </div>
+
         <div class="form-grid-2">
           <div class="form-row">
             <label>Ticker<span class="req">*</span></label>
@@ -395,6 +443,164 @@
           <label>Notes <span style="color:var(--gray-mid);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
           <textarea id="ne-notes" placeholder="Committee context, dissenting views, related decisions…"></textarea>
         </div>
+
+        <!-- =================== v3.2 BUY sections =================== -->
+        <div id="ne-v32-sections" style="display:none">
+
+          <!-- 1) Classification & Position -->
+          <div class="v32-section">
+            <div class="v32-section-title">1 · Classification &amp; Position</div>
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>Sector</label>
+                <input type="text" id="ne-sector" placeholder="Technology" maxlength="100">
+              </div>
+              <div class="form-row">
+                <label>Industry</label>
+                <input type="text" id="ne-industry" placeholder="Systems Software" maxlength="100">
+              </div>
+            </div>
+            <div class="form-grid-3">
+              <div class="form-row">
+                <label>Current Price</label>
+                <input type="number" id="ne-current-price" step="0.01" min="0" placeholder="e.g. 414.44">
+              </div>
+              <div class="form-row">
+                <label>Market Cap (USD B)</label>
+                <input type="number" id="ne-mcap" step="0.01" min="0" placeholder="e.g. 3590">
+              </div>
+              <div class="form-row">
+                <label>Enterprise Value (USD B)</label>
+                <input type="number" id="ne-ev" step="0.01" min="0" placeholder="e.g. 3520">
+              </div>
+            </div>
+            <div class="form-grid-4">
+              <div class="form-row">
+                <label>Target Size (% NAV)</label>
+                <input type="number" id="ne-size-pct" step="0.001" min="0" max="1" placeholder="0.060">
+                <div class="help">Decimal: 0.06 = 6%</div>
+              </div>
+              <div class="form-row">
+                <label>Size Band</label>
+                <select id="ne-size-band">
+                  <option value="">—</option>
+                  <option value="Starter (1-3% NAV)">Starter (1-3% NAV)</option>
+                  <option value="Core Compounder (4-8% NAV)">Core Compounder (4-8% NAV)</option>
+                  <option value="High Conviction (8-12% NAV)">High Conviction (8-12% NAV)</option>
+                  <option value="Special Situation">Special Situation</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Horizon</label>
+                <select id="ne-horizon">
+                  <option value="">—</option>
+                  <option value="1-3 años">1-3 años</option>
+                  <option value="3-5 años">3-5 años</option>
+                  <option value="5+ años">5+ años</option>
+                  <option value="10+ años">10+ años</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Conviction</label>
+                <select id="ne-conviction">
+                  <option value="">—</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Very High">Very High</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2) Governance -->
+          <div class="v32-section">
+            <div class="v32-section-title">2 · Governance</div>
+            <div class="form-grid-3">
+              <div class="form-row">
+                <label>Reviewer</label>
+                <input type="text" id="ne-reviewer" placeholder="Director of Research — DCE Holdings" maxlength="200">
+              </div>
+              <div class="form-row">
+                <label>Decision Owner</label>
+                <input type="text" id="ne-owner" placeholder="Executive Chairman &amp; CIO" maxlength="200">
+              </div>
+              <div class="form-row">
+                <label>Framework</label>
+                <input type="text" id="ne-framework" value="v3.2" maxlength="16">
+              </div>
+            </div>
+          </div>
+
+          <!-- 3) Executive Summary -->
+          <div class="v32-section">
+            <div class="v32-section-title">3 · Executive Summary</div>
+            <div class="v32-section-help">~250 words. Voz institucional. Sin emojis. Cifras específicas.</div>
+            <div class="form-row">
+              <textarea id="ne-exec-summary" maxlength="12000" placeholder="Microsoft califica como Core Compounder de DCE Holdings..." style="min-height:140px"></textarea>
+            </div>
+          </div>
+
+          <!-- 4) Thesis Pillars -->
+          <div class="v32-section">
+            <div class="v32-section-title">4 · Thesis Pillars</div>
+            <div class="v32-section-help">3-7 pilares. Una línea cada uno: edge económico, moat, capital allocation, valuation, etc.</div>
+            <div class="dyn-list" id="dl-pillars"></div>
+            <button type="button" class="dyn-add" onclick="dynAdd('pillars')">+ Add pillar</button>
+          </div>
+
+          <!-- 5) Variant Perception -->
+          <div class="v32-section">
+            <div class="v32-section-title">5 · Variant Perception</div>
+            <div class="v32-section-help">¿En qué se equivoca el consenso? Lo que el mercado no está pricing.</div>
+            <div class="form-row">
+              <textarea id="ne-variant" maxlength="8000" placeholder="El consenso de sell-side modela X, pero nuestra view es Y porque..." style="min-height:100px"></textarea>
+            </div>
+          </div>
+
+          <!-- 6) Catalysts (structured) -->
+          <div class="v32-section">
+            <div class="v32-section-title">6 · Catalysts (Structured)</div>
+            <div class="v32-section-help">3-5 catalizadores con timing. Reemplaza el campo Catalysts simple de arriba si está poblado.</div>
+            <div class="dyn-list" id="dl-catalysts"></div>
+            <button type="button" class="dyn-add" onclick="dynAdd('catalysts')">+ Add catalyst</button>
+          </div>
+
+          <!-- 7) Failure Modes -->
+          <div class="v32-section">
+            <div class="v32-section-title">7 · Failure Modes (Pre-Mortem)</div>
+            <div class="v32-section-help">5-8 modos de falla con probabilidad y severidad. Del Thesis Breaker + Munger.</div>
+            <div class="dyn-list" id="dl-failure-modes"></div>
+            <button type="button" class="dyn-add" onclick="dynAdd('failure-modes')">+ Add failure mode</button>
+          </div>
+
+          <!-- 8) Kill Criteria -->
+          <div class="v32-section">
+            <div class="v32-section-title">8 · Kill Criteria</div>
+            <div class="v32-section-help">Umbrales medibles que disparan revisión obligatoria de la tesis.</div>
+            <div class="dyn-list" id="dl-kill-criteria"></div>
+            <button type="button" class="dyn-add" onclick="dynAdd('kill-criteria')">+ Add kill criterion</button>
+          </div>
+
+          <!-- 9) Final Recommendation -->
+          <div class="v32-section">
+            <div class="v32-section-title">9 · Final Recommendation</div>
+            <div class="form-row">
+              <textarea id="ne-final-rec" maxlength="8000" placeholder="BUY — initiate position al X% del NAV con escalonamiento..." style="min-height:100px"></textarea>
+            </div>
+          </div>
+
+          <!-- 10) Position Sizing Rationale -->
+          <div class="v32-section">
+            <div class="v32-section-title">10 · Position Sizing Rationale</div>
+            <div class="form-row">
+              <textarea id="ne-size-rationale" maxlength="8000" placeholder="Tamaño objetivo X% del NAV. Esto sitúa a [TICKER] en..." style="min-height:100px"></textarea>
+            </div>
+          </div>
+
+        </div>
+        <!-- =================== END v3.2 sections =================== -->
+
         <div class="form-msg" id="ne-msg"></div>
       </div>
       <div class="modal-footer">
@@ -1397,12 +1603,38 @@ function openNewEntry(opts) {
     const t = String(opts.type).toUpperCase();
     if (valid.includes(t)) sel.value = t;
   }
+  // Reset v3.2 dynamic lists
+  dynReset();
+  // Reset v3.2 scalar fields explicitly (form.reset() clears <input> values but
+  // we also want to clear the import banner / cached package)
+  _mungerPackage = null;
+  const banner = document.getElementById('ne-import-banner');
+  if (banner) banner.classList.remove('open', 'muted');
+  const importBtn = document.getElementById('ne-import-btn');
+  if (importBtn) { importBtn.disabled = false; importBtn.textContent = 'Import & Edit'; }
+  // Default framework version
+  const fwEl = document.getElementById('ne-framework');
+  if (fwEl) fwEl.value = 'v3.2';
+
   // React to decision-type changes: BUY → "Investment Memo" framing
   applyEntryTypeFraming();
   const typeSel = document.getElementById('ne-type');
   if (typeSel && !typeSel.dataset.framingBound) {
     typeSel.addEventListener('change', applyEntryTypeFraming);
     typeSel.dataset.framingBound = '1';
+  }
+  // React to ticker changes: re-probe for Munger package when type=BUY
+  const tickerEl = document.getElementById('ne-ticker');
+  if (tickerEl && !tickerEl.dataset.mungerBound) {
+    let _t;
+    tickerEl.addEventListener('input', () => {
+      clearTimeout(_t);
+      _t = setTimeout(() => {
+        const ty = document.getElementById('ne-type').value;
+        if ((ty || '').toUpperCase() === 'BUY') checkMungerPackage();
+      }, 350);
+    });
+    tickerEl.dataset.mungerBound = '1';
   }
 
   // Thesis prefill from company dashboard (sessionStorage handoff).
@@ -1442,27 +1674,336 @@ function closeNewEntry() {
 window.closeNewEntry = closeNewEntry;
 
 // Switch modal title/subtitle/submit-label/manual-ref based on selected decision type.
-// BUY frames the entry as a formal Investment Memo (per Operations Manual §1.5).
+// BUY frames the entry as a formal Investment Memo (per Operations Manual §1.5)
+// and reveals the v3.2 sections.
 function applyEntryTypeFraming() {
   const sel = document.getElementById('ne-type');
   const titleEl = document.getElementById('new-entry-title');
   const subEl = document.getElementById('new-entry-subtitle');
   const submitEl = document.getElementById('ne-submit');
   const refEl = document.getElementById('ne-manual-ref');
+  const v32El = document.getElementById('ne-v32-sections');
+  const boxEl = document.getElementById('new-entry-modal-box');
   if (!sel || !titleEl) return;
   const t = (sel.value || '').toUpperCase();
   if (t === 'BUY') {
     titleEl.textContent = 'New Investment Memo';
-    if (subEl) { subEl.textContent = 'Decision Journal entry · BUY · per Ops Manual §1.5'; subEl.style.display = ''; }
+    if (subEl) { subEl.textContent = 'Decision Journal entry · BUY · per Ops Manual §1.5 · v3.2 framework'; subEl.style.display = ''; }
     if (submitEl) submitEl.textContent = 'Save Investment Memo';
     if (refEl) refEl.style.display = '';
+    if (v32El) v32El.style.display = '';
+    if (boxEl) boxEl.classList.add('modal-wide');
+    // Probe for a Munger package for the current ticker
+    checkMungerPackage();
   } else {
     titleEl.textContent = 'New Decision Entry';
     if (subEl) { subEl.textContent = ''; subEl.style.display = 'none'; }
     if (submitEl) submitEl.textContent = 'Save Entry';
     if (refEl) refEl.style.display = 'none';
+    if (v32El) v32El.style.display = 'none';
+    if (boxEl) boxEl.classList.remove('modal-wide');
+    // Hide import banner
+    const banner = document.getElementById('ne-import-banner');
+    if (banner) banner.classList.remove('open');
   }
 }
+
+// ================= v3.2 dynamic lists =================
+// pillars: [{ text }]
+// catalysts: [{ text, timing }]
+// failure-modes: [{ failure_mode, category, probability_pct, severity_pct, source, notes }]
+// kill-criteria: [{ metric, operator, threshold, timeframe, notes }]
+const DYN_CONFIG = {
+  'pillars': {
+    label: 'Pillar',
+    fields: [
+      { id: 'text', type: 'textarea', placeholder: 'One-line pillar (the economic edge / moat / catalyst…)' }
+    ]
+  },
+  'catalysts': {
+    label: 'Catalyst',
+    fields: [
+      { id: 'text', type: 'textarea', placeholder: 'Catalyst description (e.g. Azure re-acceleration, Copilot monetization…)' },
+      { id: 'timing', type: 'text', placeholder: 'Timing (e.g. Q4 FY26, 12-18 mo)', meta: true, label: 'Timing' }
+    ]
+  },
+  'failure-modes': {
+    label: 'Failure mode',
+    fields: [
+      { id: 'failure_mode', type: 'textarea', placeholder: 'Specific failure description…' },
+      { id: 'category', type: 'select', label: 'Category', meta: true, options: ['','moat','unit-economics','capital-allocation','valuation','governance','competitive','macro','execution'] },
+      { id: 'probability_pct', type: 'number', label: 'Prob %', placeholder: '25', meta: true, min: 0, max: 100 },
+      { id: 'severity_pct', type: 'number', label: 'Severity %', placeholder: '60', meta: true, min: 0, max: 100 },
+      { id: 'source', type: 'text', label: 'Source', placeholder: 'thesis_breaker_§7', meta: true }
+    ]
+  },
+  'kill-criteria': {
+    label: 'Kill criterion',
+    fields: [
+      { id: 'metric', type: 'text', placeholder: 'Metric (e.g. Azure YoY growth, ROIC, FCF margin)' },
+      { id: 'operator', type: 'select', label: 'Op', meta: true, options: ['','<','<=','>','>=','='] },
+      { id: 'threshold', type: 'text', label: 'Threshold', placeholder: '20', meta: true },
+      { id: 'timeframe', type: 'text', label: 'Timeframe', placeholder: '2 quarters', meta: true },
+      { id: 'notes', type: 'text', label: 'Notes', placeholder: '(optional)', meta: true }
+    ]
+  }
+};
+
+const dynState = { pillars: [], catalysts: [], 'failure-modes': [], 'kill-criteria': [] };
+
+function dynRender(kind) {
+  const cfg = DYN_CONFIG[kind];
+  const host = document.getElementById('dl-' + kind);
+  if (!host || !cfg) return;
+  const items = dynState[kind];
+  if (!items.length) {
+    host.innerHTML = '<div class="dyn-empty">No items yet. Click "Add" below.</div>';
+    return;
+  }
+  host.innerHTML = items.map((it, idx) => {
+    const main = cfg.fields.filter(f => !f.meta);
+    const metas = cfg.fields.filter(f => f.meta);
+    const mainHtml = main.map(f => {
+      const val = escapeHtml(it[f.id] ?? '');
+      if (f.type === 'textarea') {
+        return `<textarea data-kind="${kind}" data-idx="${idx}" data-field="${f.id}" placeholder="${escapeHtml(f.placeholder || '')}" oninput="dynUpdate(this)">${val}</textarea>`;
+      }
+      return `<input type="${f.type}" data-kind="${kind}" data-idx="${idx}" data-field="${f.id}" placeholder="${escapeHtml(f.placeholder || '')}" value="${val}" oninput="dynUpdate(this)">`;
+    }).join('');
+    const metaHtml = metas.length ? `<div class="dyn-meta">${metas.map(f => {
+      const val = it[f.id] ?? '';
+      let inputHtml;
+      if (f.type === 'select') {
+        inputHtml = `<select data-kind="${kind}" data-idx="${idx}" data-field="${f.id}" onchange="dynUpdate(this)">${
+          (f.options || []).map(o => `<option value="${escapeHtml(o)}" ${String(val) === String(o) ? 'selected' : ''}>${escapeHtml(o || '—')}</option>`).join('')
+        }</select>`;
+      } else {
+        const extra = (f.min != null ? ` min="${f.min}"` : '') + (f.max != null ? ` max="${f.max}"` : '');
+        inputHtml = `<input type="${f.type}"${extra} data-kind="${kind}" data-idx="${idx}" data-field="${f.id}" placeholder="${escapeHtml(f.placeholder || '')}" value="${escapeHtml(val)}" oninput="dynUpdate(this)">`;
+      }
+      return `<div><label>${escapeHtml(f.label || f.id)}</label>${inputHtml}</div>`;
+    }).join('')}</div>` : '';
+    return `<div class="dyn-item">
+      <div class="dyn-item-head">
+        <div class="dyn-item-idx">${cfg.label} #${idx + 1}</div>
+        <button type="button" class="dyn-item-remove" onclick="dynRemove('${kind}', ${idx})" aria-label="Remove">×</button>
+      </div>
+      ${mainHtml}
+      ${metaHtml}
+    </div>`;
+  }).join('');
+}
+window.dynRender = dynRender;
+
+function dynAdd(kind) {
+  if (!dynState[kind]) return;
+  dynState[kind].push({});
+  dynRender(kind);
+}
+window.dynAdd = dynAdd;
+
+function dynRemove(kind, idx) {
+  if (!dynState[kind]) return;
+  dynState[kind].splice(idx, 1);
+  dynRender(kind);
+}
+window.dynRemove = dynRemove;
+
+function dynUpdate(el) {
+  const kind = el.dataset.kind;
+  const idx = Number(el.dataset.idx);
+  const field = el.dataset.field;
+  if (!dynState[kind] || !dynState[kind][idx]) return;
+  dynState[kind][idx][field] = el.value;
+}
+window.dynUpdate = dynUpdate;
+
+function dynReset() {
+  dynState.pillars = [];
+  dynState.catalysts = [];
+  dynState['failure-modes'] = [];
+  dynState['kill-criteria'] = [];
+  Object.keys(DYN_CONFIG).forEach(dynRender);
+}
+
+// Map dyn lists to API payload
+function collectV32Payload() {
+  const out = {};
+  const v = (id) => (document.getElementById(id)?.value || '').trim();
+  const num = (id) => {
+    const s = v(id);
+    if (!s) return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  };
+  // Scalars
+  const fields = {
+    sector: v('ne-sector'),
+    industry: v('ne-industry'),
+    current_price: num('ne-current-price'),
+    market_cap_usd_b: num('ne-mcap'),
+    enterprise_value_usd_b: num('ne-ev'),
+    position_size_target_pct: num('ne-size-pct'),
+    position_size_band: v('ne-size-band'),
+    investment_horizon: v('ne-horizon'),
+    conviction_level: v('ne-conviction'),
+    reviewer: v('ne-reviewer'),
+    decision_owner: v('ne-owner'),
+    framework_version: v('ne-framework') || 'v3.2',
+    executive_summary: v('ne-exec-summary'),
+    variant_perception: v('ne-variant'),
+    final_recommendation: v('ne-final-rec'),
+    position_sizing_rationale: v('ne-size-rationale'),
+  };
+  Object.entries(fields).forEach(([k, val]) => {
+    if (val != null && val !== '') out[k] = val;
+  });
+
+  // JSONB structures
+  const pillars = dynState.pillars.map(p => (p.text || '').trim()).filter(Boolean);
+  if (pillars.length) out.thesis_pillars = pillars;
+
+  const catalysts = dynState.catalysts
+    .map(c => ({ text: (c.text || '').trim(), timing: (c.timing || '').trim() }))
+    .filter(c => c.text);
+  if (catalysts.length) out.catalysts_v32 = catalysts;
+
+  const fms = dynState['failure-modes']
+    .map(f => {
+      const row = { failure_mode: (f.failure_mode || '').trim() };
+      if (f.category) row.category = f.category;
+      if (f.probability_pct !== '' && f.probability_pct != null) row.probability_pct = Number(f.probability_pct);
+      if (f.severity_pct !== '' && f.severity_pct != null) row.severity_pct = Number(f.severity_pct);
+      if (f.source) row.source = f.source;
+      if (f.notes) row.notes = f.notes;
+      return row;
+    })
+    .filter(f => f.failure_mode);
+  if (fms.length) out.failure_modes = fms;
+
+  const kcs = dynState['kill-criteria']
+    .map(k => {
+      const row = { metric: (k.metric || '').trim() };
+      if (k.operator) row.operator = k.operator;
+      if (k.threshold) row.threshold = k.threshold;
+      if (k.timeframe) row.timeframe = k.timeframe;
+      if (k.notes) row.notes = k.notes;
+      return row;
+    })
+    .filter(k => k.metric);
+  if (kcs.length) out.kill_criteria_v32 = kcs;
+
+  return out;
+}
+
+// ================= Munger import =================
+let _mungerPackage = null;
+
+async function checkMungerPackage() {
+  const ticker = (document.getElementById('ne-ticker').value || '').toUpperCase().trim();
+  const banner = document.getElementById('ne-import-banner');
+  const titleEl = document.getElementById('ne-import-title');
+  const detailEl = document.getElementById('ne-import-detail');
+  const btnEl = document.getElementById('ne-import-btn');
+  if (!banner || !ticker || !/^[A-Z][A-Z0-9.\-]{0,9}$/.test(ticker)) {
+    if (banner) banner.classList.remove('open');
+    _mungerPackage = null;
+    return;
+  }
+  try {
+    const r = await fetch('/api/journal-decision-inputs?ticker=' + encodeURIComponent(ticker), { cache: 'no-store' });
+    const data = await r.json();
+    if (data.ok && data.exists && data.item && data.item.payload) {
+      _mungerPackage = data.item.payload;
+      const pkg = data.item;
+      const gen = pkg.generated_at ? fmtDate(pkg.generated_at) : '—';
+      const verdict = (pkg.payload && pkg.payload.munger_verdict) ? String(pkg.payload.munger_verdict).replace(/_/g, ' ') : 'n/a';
+      titleEl.textContent = `Munger package found · ${ticker}`;
+      detailEl.textContent = `Verdict: ${verdict} · Generated: ${gen} · Framework: ${pkg.framework_version || 'v3.2'}`;
+      btnEl.disabled = false;
+      btnEl.textContent = 'Import & Edit';
+      banner.classList.remove('muted');
+      banner.classList.add('open');
+    } else {
+      _mungerPackage = null;
+      titleEl.textContent = 'No Munger package';
+      detailEl.textContent = `No research package found for ${ticker}. Fill the form manually, or run the Munger Digital skill first.`;
+      btnEl.disabled = true;
+      btnEl.textContent = 'Not available';
+      banner.classList.add('muted');
+      banner.classList.add('open');
+    }
+  } catch (e) {
+    _mungerPackage = null;
+    banner.classList.remove('open');
+  }
+}
+window.checkMungerPackage = checkMungerPackage;
+
+function importMungerPackage() {
+  if (!_mungerPackage) return;
+  const pkg = _mungerPackage;
+  // valuation_snapshot → price + classification numerics
+  const vs = pkg.valuation_snapshot || {};
+  if (vs.price_at_research != null) {
+    const priceEl = document.getElementById('ne-price');
+    if (priceEl && !priceEl.value) priceEl.value = vs.price_at_research;
+    const curEl = document.getElementById('ne-current-price');
+    if (curEl && !curEl.value) curEl.value = vs.price_at_research;
+  }
+  // thesis_draft
+  const td = pkg.thesis_draft || {};
+  if (td.executive_summary) {
+    const ex = document.getElementById('ne-exec-summary');
+    if (ex && !ex.value) ex.value = td.executive_summary;
+    // Also seed the main thesis with a condensed version if empty
+    const th = document.getElementById('ne-thesis');
+    if (th && !th.value) th.value = td.executive_summary.slice(0, 8000);
+  }
+  if (Array.isArray(td.pillars) && td.pillars.length) {
+    dynState.pillars = td.pillars.map(p => ({ text: String(p) }));
+    dynRender('pillars');
+  }
+  if (Array.isArray(td.catalysts) && td.catalysts.length) {
+    // Skill stores as ['text', 'text2'] — map to {text, timing}
+    dynState.catalysts = td.catalysts.map(c => {
+      if (typeof c === 'string') return { text: c, timing: '' };
+      return { text: c.text || c.description || '', timing: c.timing || '' };
+    });
+    dynRender('catalysts');
+    // Also seed the simple catalysts input if empty
+    const cat = document.getElementById('ne-catalysts');
+    if (cat && !cat.value) cat.value = dynState.catalysts.map(c => c.text).join(', ');
+  }
+  // premortem_draft
+  const pm = pkg.premortem_draft || {};
+  if (Array.isArray(pm.failure_modes_proposed) && pm.failure_modes_proposed.length) {
+    dynState['failure-modes'] = pm.failure_modes_proposed.map(f => ({
+      failure_mode: f.failure_mode || '',
+      category: f.category || '',
+      probability_pct: f.probability_pct ?? '',
+      severity_pct: f.severity_pct ?? '',
+      source: f.source || '',
+      notes: f.notes || ''
+    }));
+    dynRender('failure-modes');
+  }
+  if (pm.thesis_summary) {
+    const pmEl = document.getElementById('ne-premortem');
+    if (pmEl && !pmEl.value) pmEl.value = pm.thesis_summary;
+  }
+  // Hint user
+  const msg = document.getElementById('ne-msg');
+  if (msg) {
+    msg.style.color = 'var(--green)';
+    msg.textContent = 'Imported Munger package — review and edit before saving.';
+    setTimeout(() => { if (msg.textContent.startsWith('Imported')) msg.textContent = ''; }, 4000);
+  }
+  // Disable button to avoid re-import overwriting edits
+  const btnEl = document.getElementById('ne-import-btn');
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Imported ✓'; }
+}
+window.importMungerPackage = importMungerPackage;
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
@@ -1509,6 +2050,12 @@ async function submitNewEntry(ev) {
   }
   if (pre_mortem) payload.pre_mortem = pre_mortem;
   if (notes) payload.notes = notes;
+
+  // v3.2 fields (only meaningful for BUY, but harmless for other types)
+  if (decision_type === 'BUY') {
+    const v32 = collectV32Payload();
+    Object.assign(payload, v32);
+  }
 
   msg.style.color = 'var(--gray-mid)';
   msg.textContent = 'Saving…';

@@ -90,6 +90,65 @@ module.exports = async (req, res) => {
     const pre_mortem = body.pre_mortem ? String(body.pre_mortem).trim().slice(0, 8000) : null;
     const notes = body.notes ? String(body.notes).trim() : '';
 
+    // ---- v3.2 fields (only meaningful for BUY/ADD, but accepted for any type) -----
+    // All optional. Plain text helpers + JSONB structures coming from the
+    // Munger Digital v3.2 package (decision_inputs.json) or filled manually.
+    const v32 = {};
+    const txt = (k, max = 4000) => {
+      if (body[k] == null || body[k] === '') return;
+      v32[k] = String(body[k]).trim().slice(0, max);
+    };
+    const num = (k) => {
+      if (body[k] == null || body[k] === '') return;
+      const n = Number(body[k]);
+      if (Number.isFinite(n)) v32[k] = n;
+    };
+    const json = (k) => {
+      if (body[k] == null) return;
+      // Accept either an already-parsed value or a JSON string
+      let v = body[k];
+      if (typeof v === 'string') {
+        const s = v.trim();
+        if (!s) return;
+        try { v = JSON.parse(s); } catch (_) { return; }
+      }
+      // Hard cap on serialized size to keep rows reasonable (~64KB each).
+      try {
+        const ser = JSON.stringify(v);
+        if (ser.length > 65536) return;
+      } catch (_) { return; }
+      v32[k] = v;
+    };
+
+    // Scalar / text columns
+    txt('framework_version', 16);
+    txt('sector', 100);
+    txt('industry', 100);
+    txt('investment_horizon', 60);
+    txt('conviction_level', 40);
+    txt('position_size_band', 80);
+    txt('reviewer', 200);
+    txt('decision_owner', 200);
+    txt('variant_perception', 8000);
+    txt('executive_summary', 12000);
+    txt('final_recommendation', 8000);
+    txt('position_sizing_rationale', 8000);
+    num('current_price');
+    num('market_cap_usd_b');
+    num('enterprise_value_usd_b');
+    num('position_size_target_pct');
+
+    // JSONB columns
+    json('thesis_pillars');
+    json('variant_evidence');
+    json('business_quality');
+    json('value_drivers');
+    json('kpi_framework');
+    json('expected_return');
+    json('catalysts_v32');
+    json('failure_modes');
+    json('kill_criteria_v32');
+
     // Append notes to thesis (separator) if both provided
     let finalThesis = thesis;
     if (notes) {
@@ -124,6 +183,7 @@ module.exports = async (req, res) => {
       review_12m_date: review_12m,
       created_by: auth.user.email,
       active: true,
+      ...v32,
     };
 
     const inserted = await sbInsert('decision_journal', row);
