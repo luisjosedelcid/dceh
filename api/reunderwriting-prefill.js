@@ -54,11 +54,11 @@ module.exports = async (req, res) => {
     const dueId = dueIdRaw ? Number(dueIdRaw) : null;
 
     // -------- 1) Active BUY entry from decision_journal --------------------
-    // Pick the most recent BUY (decision='buy') with framework_version v3.2 if any,
-    // otherwise the latest BUY of any version.
+    // Pick the most recent BUY (decision_type='BUY') with framework_version v3.2 if any,
+    // otherwise the latest BUY of any version. ADD is also accepted.
     const buyRows = await sbSelect(
       'decision_journal',
-      `select=id,ticker,decision,decision_date,framework_version,memo_reference_id,analyst,decision_owner,reviewer,conviction_level,position_size_target_pct,position_size_band,investment_horizon,sector,industry,thesis_pillars,catalysts_v32,failure_modes,kill_criteria_v32,executive_summary,final_recommendation,position_sizing_rationale&ticker=eq.${encodeURIComponent(ticker)}&decision=eq.buy&order=decision_date.desc&limit=5`
+      `select=id,ticker,decision_type,decision_date,framework_version,memo_reference_id,analyst,decision_owner,reviewer,conviction_level,position_size_target_pct,position_size_band,investment_horizon,sector,industry,thesis_pillars,catalysts_v32,failure_modes,kill_criteria_v32,executive_summary,final_recommendation,position_sizing_rationale&ticker=eq.${encodeURIComponent(ticker)}&decision_type=in.(BUY,ADD)&active=eq.true&order=decision_date.desc&limit=5`
     );
     let memo = null;
     if (buyRows && buyRows.length > 0) {
