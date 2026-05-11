@@ -58,7 +58,7 @@ module.exports = async (req, res) => {
     // otherwise the latest BUY of any version. ADD is also accepted.
     const buyRows = await sbSelect(
       'decision_journal',
-      `select=id,ticker,decision_type,decision_date,framework_version,memo_reference_id,analyst,decision_owner,reviewer,conviction_level,position_size_target_pct,position_size_band,investment_horizon,sector,industry,thesis_pillars,catalysts_v32,failure_modes,kill_criteria_v32,executive_summary,final_recommendation,position_sizing_rationale&ticker=eq.${encodeURIComponent(ticker)}&decision_type=in.(BUY,ADD)&active=eq.true&order=decision_date.desc&limit=5`
+      `select=id,ticker,decision_type,decision_date,framework_version,decision_owner,reviewer,conviction_level,position_size_target_pct,position_size_band,investment_horizon,sector,industry,thesis_pillars,catalysts_v32,failure_modes,kill_criteria_v32,executive_summary,final_recommendation,position_sizing_rationale&ticker=eq.${encodeURIComponent(ticker)}&decision_type=in.(BUY,ADD)&active=eq.true&order=decision_date.desc&limit=5`
     );
     let memo = null;
     if (buyRows && buyRows.length > 0) {
