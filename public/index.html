@@ -948,110 +948,126 @@ window.addEventListener('DOMContentLoaded', () => {
   // - For each open position (qty>0), show its card.
   // - If a Columbia dashboard exists (data-static-ticker matches), reveal the static card.
   // - Else, render a compact card with a 'Start study' button (creates pipeline_card).
-  (async function loadPortfolioCompanies() {
+  (function bootstrapPortfolioCompanies() {
     const grid = document.getElementById('cards-grid-portfolio');
     const emptyEl = document.getElementById('cards-grid-empty');
     if (!grid) return;
 
-    // Helper: get admin token if available (for x-admin-token header)
     function getAdminToken() {
       try {
-        return (window.dceAuth && window.dceAuth.getToken && window.dceAuth.getToken()) ||
-               localStorage.getItem('dce-admin-token') || '';
+        const a = window.dceAuth;
+        if (a && typeof a.token === 'function') return a.token() || '';
+        return localStorage.getItem('dce-admin-token') || '';
       } catch (_) { return ''; }
     }
-    const tok = getAdminToken();
-    const hdrs = tok ? { headers: { 'x-admin-token': tok } } : {};
 
-    let holdings = [];
-    try {
-      const r = await fetch('/api/performance', hdrs);
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const j = await r.json();
-      holdings = (j && j.holdings) ? j.holdings.filter(h => Number(h.qty) > 0) : [];
-    } catch (e) {
-      console.warn('Portfolio holdings load failed:', e);
-      return;
-    }
+    // Wait until dceAuth is ready AND the user is admin (gate unlocked).
+    // dce-auth.js is loaded synchronously above, but isAdmin() also depends on the
+    // user having signed in — so we poll up to ~10s, then bail silently.
+    let tries = 0;
+    const maxTries = 50; // 50 * 200ms = 10s
+    const iv = setInterval(() => {
+      tries++;
+      const a = window.dceAuth;
+      const ready = a && typeof a.isAdmin === 'function' && a.isAdmin();
+      if (ready) { clearInterval(iv); render(); return; }
+      if (tries >= maxTries) { clearInterval(iv); }
+    }, 200);
 
-    if (!holdings.length) {
-      if (emptyEl) emptyEl.style.display = '';
-      return;
-    }
+    async function render() {
+      const tok = getAdminToken();
+      const hdrs = tok ? { headers: { 'x-admin-token': tok } } : {};
 
-    // Build set of held tickers (uppercase)
-    const heldSet = new Set(holdings.map(h => String(h.ticker).toUpperCase()));
-
-    // Show static cards for held tickers that have a Columbia dashboard.
-    // Hide static cards for tickers NOT held.
-    grid.querySelectorAll('a.company-card[data-static-ticker]').forEach(card => {
-      const tk = card.getAttribute('data-static-ticker').toUpperCase();
-      card.style.display = heldSet.has(tk) ? '' : 'none';
-    });
-
-    // For held tickers WITHOUT a static dashboard card, render a compact 'start study' card.
-    const staticTickers = new Set(
-      Array.from(grid.querySelectorAll('a.company-card[data-static-ticker]')).map(c => c.getAttribute('data-static-ticker').toUpperCase())
-    );
-    const dynamicTickers = Array.from(heldSet).filter(t => !staticTickers.has(t));
-
-    // Insert dynamic cards before the empty placeholder
-    for (const tk of dynamicTickers) {
-      const h = holdings.find(x => String(x.ticker).toUpperCase() === tk);
-      const mv = h && h.market_value ? Number(h.market_value) : 0;
-      const qty = h ? Number(h.qty) : 0;
-      const weight = h && h.weight_pct != null ? (Number(h.weight_pct) * 100).toFixed(1) + '%' : '—';
-      const card = document.createElement('div');
-      card.className = 'company-card';
-      card.style.cssText = 'cursor:default;display:block';
-      card.innerHTML = `
-        <div class="card-header">
-          <div><div class="card-ticker">${tk}</div></div>
-          <div class="card-badge badge-condicional">No dashboard yet</div>
-        </div>
-        <div class="card-name">Open position · ${qty.toLocaleString('en-US')} sh · ${weight} NAV</div>
-        <div class="card-metrics">
-          <div><div class="metric-val">$${mv.toLocaleString('en-US',{maximumFractionDigits:0})}</div><div class="metric-lbl">Market value</div></div>
-          <div><div class="metric-val gold">${qty.toLocaleString('en-US')}</div><div class="metric-lbl">Shares</div></div>
-          <div><div class="metric-val">${weight}</div><div class="metric-lbl">Weight</div></div>
-        </div>
-        <div class="card-footer">
-          <span class="card-date">No Columbia model yet</span>
-          <button type="button" class="card-arrow" data-action="start-study" data-ticker="${tk}" style="background:transparent;border:1px solid var(--gold);color:var(--gold);padding:6px 12px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;font-family:inherit">+ Start study</button>
-        </div>
-      `;
-      grid.insertBefore(card, emptyEl);
-    }
-
-    // Wire up 'Start study' buttons
-    grid.addEventListener('click', async (ev) => {
-      const btn = ev.target.closest('[data-action="start-study"]');
-      if (!btn) return;
-      ev.preventDefault();
-      const ticker = btn.getAttribute('data-ticker');
-      if (!ticker) return;
-      const tok2 = getAdminToken();
-      if (!tok2) { alert('Please sign in first.'); return; }
-      btn.disabled = true;
-      btn.textContent = 'Creating…';
+      let holdings = [];
       try {
-        const r = await fetch('/api/admin/pipeline-cards', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-admin-token': tok2 },
-          body: JSON.stringify({ ticker, name: ticker, stage: 'analysis', note: 'Created from home Portfolio Companies card.' }),
-        });
+        const r = await fetch('/api/performance', hdrs);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
         const j = await r.json();
-        if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
-        btn.textContent = 'Created ✓';
-        btn.style.borderColor = 'var(--green, #1F5F3F)';
-        btn.style.color = 'var(--green, #1F5F3F)';
-        setTimeout(() => { window.location.href = '/research'; }, 600);
+        holdings = (j && j.holdings) ? j.holdings.filter(h => Number(h.qty) > 0) : [];
       } catch (e) {
-        btn.disabled = false;
-        btn.textContent = '+ Start study';
-        alert('Could not create pipeline card: ' + e.message);
+        console.warn('Portfolio holdings load failed:', e);
+        return;
       }
-    });
+
+      if (!holdings.length) {
+        if (emptyEl) emptyEl.style.display = '';
+        return;
+      }
+
+      // Build set of held tickers (uppercase)
+      const heldSet = new Set(holdings.map(h => String(h.ticker).toUpperCase()));
+
+      // Show static cards for held tickers that have a Columbia dashboard.
+      // Hide static cards for tickers NOT held.
+      grid.querySelectorAll('a.company-card[data-static-ticker]').forEach(card => {
+        const tk = card.getAttribute('data-static-ticker').toUpperCase();
+        card.style.display = heldSet.has(tk) ? '' : 'none';
+      });
+
+      // For held tickers WITHOUT a static dashboard card, render a compact 'start study' card.
+      const staticTickers = new Set(
+        Array.from(grid.querySelectorAll('a.company-card[data-static-ticker]')).map(c => c.getAttribute('data-static-ticker').toUpperCase())
+      );
+      const dynamicTickers = Array.from(heldSet).filter(t => !staticTickers.has(t));
+
+      // Insert dynamic cards before the empty placeholder
+      for (const tk of dynamicTickers) {
+        const h = holdings.find(x => String(x.ticker).toUpperCase() === tk);
+        const mv = h && h.market_value ? Number(h.market_value) : 0;
+        const qty = h ? Number(h.qty) : 0;
+        const weight = h && h.weight_pct != null ? (Number(h.weight_pct) * 100).toFixed(1) + '%' : '—';
+        const card = document.createElement('div');
+        card.className = 'company-card';
+        card.style.cssText = 'cursor:default;display:block';
+        card.innerHTML = `
+          <div class="card-header">
+            <div><div class="card-ticker">${tk}</div></div>
+            <div class="card-badge badge-condicional">No dashboard yet</div>
+          </div>
+          <div class="card-name">Open position · ${qty.toLocaleString('en-US')} sh · ${weight} NAV</div>
+          <div class="card-metrics">
+            <div><div class="metric-val">$${mv.toLocaleString('en-US',{maximumFractionDigits:0})}</div><div class="metric-lbl">Market value</div></div>
+            <div><div class="metric-val gold">${qty.toLocaleString('en-US')}</div><div class="metric-lbl">Shares</div></div>
+            <div><div class="metric-val">${weight}</div><div class="metric-lbl">Weight</div></div>
+          </div>
+          <div class="card-footer">
+            <span class="card-date">No Columbia model yet</span>
+            <button type="button" class="card-arrow" data-action="start-study" data-ticker="${tk}" style="background:transparent;border:1px solid var(--gold);color:var(--gold);padding:6px 12px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;font-family:inherit">+ Start study</button>
+          </div>
+        `;
+        grid.insertBefore(card, emptyEl);
+      }
+
+      // Wire up 'Start study' buttons
+      grid.addEventListener('click', async (ev) => {
+        const btn = ev.target.closest('[data-action="start-study"]');
+        if (!btn) return;
+        ev.preventDefault();
+        const ticker = btn.getAttribute('data-ticker');
+        if (!ticker) return;
+        const tok2 = getAdminToken();
+        if (!tok2) { alert('Please sign in first.'); return; }
+        btn.disabled = true;
+        btn.textContent = 'Creating…';
+        try {
+          const r = await fetch('/api/admin/pipeline-cards', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-admin-token': tok2 },
+            body: JSON.stringify({ ticker, name: ticker, stage: 'analysis', note: 'Created from home Portfolio Companies card.' }),
+          });
+          const j = await r.json();
+          if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+          btn.textContent = 'Created ✓';
+          btn.style.borderColor = 'var(--green, #1F5F3F)';
+          btn.style.color = 'var(--green, #1F5F3F)';
+          setTimeout(() => { window.location.href = '/research'; }, 600);
+        } catch (e) {
+          btn.disabled = false;
+          btn.textContent = '+ Start study';
+          alert('Could not create pipeline card: ' + e.message);
+        }
+      });
+    }
   })();
 </script>
 <script src="/search.js" defer></script>
