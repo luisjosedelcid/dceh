@@ -237,11 +237,11 @@
       <div class="card-f"><a href="/screener.html">Open watchlist →</a></div>
     </div>
 
-    <!-- 8. CALENDAR THIS WEEK -->
+    <!-- 8. TEAM MEETINGS (Google Calendar — próximos 7 días, asistentes @dceholdings.com) -->
     <div class="card">
-      <div class="card-h"><h3>Calendar — this week</h3><span class="count" id="cnt-cal">—</span></div>
+      <div class="card-h"><h3>Team meetings</h3><span class="count" id="cnt-cal">Next 7d</span></div>
       <div class="card-b" id="cal-body"><div class="loading">Cargando…</div></div>
-      <div class="card-f"><a href="/calendar.html">Open agenda →</a></div>
+      <div class="card-f"><a href="https://calendar.google.com" target="_blank" rel="noopener">Open Google Calendar →</a></div>
     </div>
 
   </div>
@@ -506,24 +506,30 @@ function renderWatchlist(items) {
   }).join('');
 }
 
-function renderCalendarWeek(items) {
+function renderTeamMeetings(payload) {
   const el = $('cal-body');
-  // Date range label
-  const today = new Date();
-  const wkEnd = new Date(); wkEnd.setDate(today.getDate() + 7);
-  const fmt = (d) => d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
-  $('cnt-cal').textContent = `${fmt(today)}–${fmt(wkEnd)}`;
-  if (!items.length) { el.innerHTML = '<div class="empty">No earnings or events this week.</div>'; return; }
-  el.innerHTML = items.slice(0, 6).map(c => {
-    const wd = weekdayShort(c.date);
-    const days = c.days_until;
+  const cnt = $('cnt-cal');
+  const events = (payload && Array.isArray(payload.events)) ? payload.events : [];
+  if (cnt) cnt.textContent = events.length === 0 ? 'Next 7d' : String(events.length);
+  if (events.length === 0) {
+    el.innerHTML = '<div class="empty">Sin reuniones de equipo en los próximos 7 días.<br><span style="font-size:10px;color:var(--gray-mid)">Solo eventos con asistentes @dceholdings.com.</span></div>';
+    return;
+  }
+  el.innerHTML = events.slice(0, 6).map(e => {
+    const wd = e.weekday || (e.start ? weekdayShort(e.start) : '');
+    const time = e.time_label || '';
+    const title = escapeHtml(e.title || 'Reunión');
+    const attendees = Array.isArray(e.attendees) ? e.attendees.length : 0;
+    const link = e.html_link ? `<a href="${escapeHtml(e.html_link)}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:none">${title}</a>` : title;
+    const days = (typeof e.days_until === 'number') ? e.days_until : null;
     let badge = '';
-    if (days != null && days <= 1) badge = '<span class="badge red">Hard</span>';
+    if (days != null && days <= 0) badge = '<span class="badge red">Today</span>';
+    else if (days === 1) badge = '<span class="badge amber">Tomorrow</span>';
     return `<div class="row">
-      <span class="tk" style="color:var(--gold)">${wd}</span>
+      <span class="tk" style="color:var(--gold)">${escapeHtml(wd)}</span>
       <div class="body">
-        <div class="title">${escapeHtml(c.company || c.ticker || '—')} earnings</div>
-        <div class="meta">${fmtDate(c.date)}${c.timing ? ' · ' + escapeHtml(c.timing) : ''}${c.hour ? ' · ' + escapeHtml(c.hour) : ''}</div>
+        <div class="title">${link}</div>
+        <div class="meta">${escapeHtml(e.date_label || e.start || '')}${time ? ' · ' + escapeHtml(time) : ''}${attendees ? ' · ' + attendees + ' asistentes' : ''}</div>
       </div>
       ${badge}
     </div>`;
@@ -545,7 +551,8 @@ function renderStatus(s) {
 }
 
 function renderError(msg) {
-  const ids = ['pipeline-body','decisions-body','reu-body','earnings-body','deliv-body','watch-body','cal-body','tasks-body'];
+  // Cards alimentados por /api/cockpit. cal-body y tasks-body usan JSONs estáticos y manejan su propio error.
+  const ids = ['pipeline-body','decisions-body','reu-body','earnings-body','deliv-body','watch-body'];
   ids.forEach(id => {
     const el = $(id);
     if (el) el.innerHTML = `<div class="empty">⚠ ${escapeHtml(msg)}</div>`;
@@ -553,7 +560,7 @@ function renderError(msg) {
 }
 
 // ── load ──────────────────────────────────────────────────────────────
-async function load() {
+async function loadApi() {
   try {
     const r = await fetch('/api/cockpit', { cache: 'no-store' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -567,28 +574,30 @@ async function load() {
     renderEarnings(sec.earnings_upcoming || []);
     renderDeliverables(sec.last_deliverables || []);
     renderWatchlist(sec.watchlist_alerts || []);
-    renderCalendarWeek(sec.calendar_week || []);
-
-    // Slack channel highlights (snapshot served as static JSON)
-    try {
-      const sr = await fetch('/data/slack_highlights.json', { cache: 'no-store' });
-      if (sr.ok) {
-        const slackPayload = await sr.json();
-        renderHighlights(slackPayload);
-      } else {
-        renderHighlights(null);
-      }
-    } catch (slackErr) {
-      console.warn('slack highlights load failed:', slackErr);
-      renderHighlights(null);
-    }
   } catch (e) {
-    console.error('cockpit load failed:', e);
+    console.error('cockpit api load failed:', e);
     renderError('No se pudo cargar el cockpit: ' + e.message);
   }
 }
 
-load();
+async function loadTeamMeetings() {
+  try {
+    const cr = await fetch('/data/team_meetings.json', { cache: 'no-store' });
+    renderTeamMeetings(cr.ok ? await cr.json() : null);
+  } catch (e) { console.warn('team meetings load failed:', e); renderTeamMeetings(null); }
+}
+
+async function loadSlackInbox() {
+  try {
+    const sr = await fetch('/data/slack_highlights.json', { cache: 'no-store' });
+    renderHighlights(sr.ok ? await sr.json() : null);
+  } catch (e) { console.warn('slack inbox load failed:', e); renderHighlights(null); }
+}
+
+// 3 fuentes independientes: si una falla, las otras igual se pintan.
+loadApi();
+loadTeamMeetings();
+loadSlackInbox();
 </script>
 
 </body>

@@ -1,0 +1,7 @@
+{
+  "source": "google_calendar",
+  "filter": "asistentes con dominio @dceholdings.com",
+  "window_days": 7,
+  "fetched_at": "2026-05-11T14:40:00Z",
+  "events": []
+}
