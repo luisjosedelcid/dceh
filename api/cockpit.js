@@ -36,14 +36,17 @@ function plusDaysISO(n) {
 
 // ── 1. Pipeline in flight ─────────────────────────────────────────────
 async function getPipeline() {
-  // Active stages only — exclude terminal (invested, passed, closed, rejected)
-  const ACTIVE_STAGES = ['idea', 'research', 'committee', 'decision', 'execution', 'approved'];
+  // Active (non-terminal) stages per _pipeline-stage.js lifecycle:
+  //   backlog -> analysis -> review -> decision -> approved -> {invested|passed|rejected}
+  //   invested -> closed
+  // Terminal stages excluded: invested, passed, rejected, closed.
+  const ACTIVE_STAGES = ['backlog', 'analysis', 'review', 'decision', 'approved'];
   const stagesFilter = `(${ACTIVE_STAGES.map(s => `"${s}"`).join(',')})`;
   let rows = [];
   try {
     rows = await sbSelect(
       'pipeline_cards',
-      `select=id,ticker,name,stage,quality,valuation,irr,note,moved_at,created_at,updated_at&stage=in.${stagesFilter}&order=moved_at.desc.nullslast&limit=50`
+      `select=id,ticker,name,stage,quality,valuation,irr,note,moved_at,created_at&stage=in.${stagesFilter}&order=moved_at.desc.nullslast&limit=50`
     );
   } catch (e) {
     console.error('getPipeline failed:', e.message);
@@ -58,7 +61,7 @@ async function getPipeline() {
     valuation: r.valuation,
     irr: r.irr,
     note: r.note,
-    days_in_stage: daysSince(r.moved_at || r.updated_at || r.created_at),
+    days_in_stage: daysSince(r.moved_at || r.created_at),
     moved_at: r.moved_at || r.created_at,
   }));
 }

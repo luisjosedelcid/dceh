@@ -75,9 +75,10 @@
 
   /* Stage chip in pipeline */
   .stage{font-size:9px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;color:var(--gray)}
-  .stage.research,.stage.idea{color:var(--navy)}
-  .stage.committee,.stage.decision{color:var(--gold)}
-  .stage.execution,.stage.approved{color:var(--green)}
+  .stage.backlog{color:var(--gray)}
+  .stage.analysis{color:var(--navy)}
+  .stage.review,.stage.decision{color:var(--gold)}
+  .stage.approved{color:var(--green)}
 
   /* Calendar mini list */
   .cal-row{padding:8px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;font-size:12px}
@@ -306,13 +307,15 @@ function urgencyBadge(days, kind) {
   return `<span class="badge navy">${days}d</span>`;
 }
 
-// pipeline stage class
+// pipeline stage class (matches _pipeline-stage.js lifecycle:
+//   backlog -> analysis -> review -> decision -> approved -> terminal)
 function stageClass(stage) {
   if (!stage) return '';
   const s = String(stage).toLowerCase();
-  if (['research','idea','backlog'].includes(s)) return 'research';
-  if (['committee','decision'].includes(s)) return 'decision';
-  if (['execution','approved'].includes(s)) return 'execution';
+  if (s === 'backlog') return 'backlog';
+  if (s === 'analysis') return 'analysis';
+  if (s === 'review' || s === 'decision') return 'decision';
+  if (s === 'approved') return 'approved';
   return '';
 }
 function stageLabel(stage) {
