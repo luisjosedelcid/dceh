@@ -1,6 +1,19 @@
 {
-  "channel_name": "#general-dce-holdings",
-  "channel_id": "C0A3BAA7F3Q",
-  "fetched_at": "2026-05-11T16:34:00Z",
-  "messages": []
+  "source": "slack_inbox",
+  "query": "to:<@U0A3GUK3YF6>",
+  "scope": "menciones + DMs recibidos en el workspace dceholdings.slack.com",
+  "fetched_at": "2026-05-11T16:37:00Z",
+  "messages": [
+    {
+      "channel_id": "D0A47MW2AL8",
+      "channel_label": "DM · Notion (bot)",
+      "user_name": "Notion",
+      "user_id": "U0A3SAH3KCH",
+      "is_bot": true,
+      "text": "(mensaje sin texto · probable notificación del bot)",
+      "ts": "1772134039.712969",
+      "ts_human": "2026-02-26 20:27",
+      "permalink": "https://dceholdings.slack.com/archives/D0A47MW2AL8/p1772134039712969"
+    }
+  ]
 }

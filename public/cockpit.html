@@ -221,14 +221,11 @@
       <div class="card-f"><a href="/dataroom.html">Open data room →</a></div>
     </div>
 
-    <!-- 6. CHANNEL HIGHLIGHTS (Slack) -->
+    <!-- 6. SLACK INBOX (menciones + DMs recibidos) -->
     <div class="card">
-      <div class="card-h"><h3>Channel highlights</h3><span class="count" id="cnt-tasks">Slack</span></div>
+      <div class="card-h"><h3>Slack inbox</h3><span class="count" id="cnt-tasks">Slack</span></div>
       <div class="card-b" id="tasks-body">
-        <div class="empty">
-          Conecta un canal de Slack para ver lo último relevante del comité.<br>
-          <span style="font-size:10px;color:var(--gray-mid)">El cockpit puede mostrar los últimos 8 mensajes pinned o con reacción 📌 del canal si configuras <code>SLACK_HIGHLIGHTS_CHANNEL_ID</code> y <code>SLACK_BOT_TOKEN</code>.</span>
-        </div>
+        <div class="empty">Cargando…</div>
       </div>
       <div class="card-f"><a href="https://app.slack.com/client" target="_blank" rel="noopener">Open Slack →</a></div>
     </div>
@@ -448,24 +445,25 @@ function renderHighlights(payload) {
   const el = $('tasks-body');
   const cnt = $('cnt-tasks');
   if (!payload || !Array.isArray(payload.messages) || payload.messages.length === 0) {
-    // empty state stays — but show channel + last fetched if we have it
-    const ch = payload && payload.channel_name ? escapeHtml(payload.channel_name) : '#general-dce-holdings';
-    el.innerHTML = `<div class="empty">Sin mensajes recientes en <strong>${ch}</strong>.<br><span style="font-size:10px;color:var(--gray-mid)">Pendiente: cron para refrescar este snapshot automáticamente.</span></div>`;
+    el.innerHTML = `<div class="empty">Sin menciones ni DMs pendientes.<br><span style="font-size:10px;color:var(--gray-mid)">Refrescar manualmente desde el agente o esperar al cron.</span></div>`;
     if (cnt) cnt.textContent = '0';
     return;
   }
   if (cnt) cnt.textContent = String(payload.messages.length);
   el.innerHTML = payload.messages.slice(0, 8).map(m => {
-    const user = escapeHtml(m.user_name || m.user || 'unknown');
-    const txt = escapeHtml((m.text || '').slice(0, 140));
-    const when = m.ts_human || (m.ts ? fmtDate(m.ts) : '');
+    const who = escapeHtml(m.user_name || 'unknown') + (m.is_bot ? ' <span style="font-size:9px;color:var(--gray-mid)">BOT</span>' : '');
+    const where = m.channel_label ? escapeHtml(m.channel_label) : '';
+    const txt = escapeHtml((m.text || '—').slice(0, 140));
+    const when = m.ts_human ? escapeHtml(m.ts_human) : '';
+    const sub = [where, when].filter(Boolean).join(' · ');
     const link = m.permalink ? `<a href="${escapeHtml(m.permalink)}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:none">` : '<span>';
     const close = m.permalink ? '</a>' : '</span>';
     return `<div class="deliv">
       <div class="icon doc" style="background:#4a154b;color:#fff">SL</div>
       <div class="info">
-        ${link}<span class="name">${user}</span>${close}
-        <div class="sub">${txt}${when ? ' · ' + escapeHtml(when) : ''}</div>
+        ${link}<span class="name">${who}</span>${close}
+        <div class="sub">${txt}</div>
+        ${sub ? `<div class="sub" style="font-size:10px;color:var(--gray-mid);margin-top:2px">${sub}</div>` : ''}
       </div>
     </div>`;
   }).join('');
