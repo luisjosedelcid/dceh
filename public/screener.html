@@ -135,6 +135,7 @@
 
   <!-- ═══ MODE TABS ═══ -->
   <div class="mode-tabs">
+    <button class="mode-tab" data-mode="screener" onclick="showMode('screener',this)">Screener</button>
     <button class="mode-tab active" data-mode="ideafeed" onclick="showMode('ideafeed',this)">Idea Feed <span class="count" id="ideafeed-count">—</span></button>
     <button class="mode-tab" data-mode="superinvestors" onclick="showMode('superinvestors',this)">Superinvestors <span class="count">10</span></button>
     <button class="mode-tab" data-mode="sectors" onclick="showMode('sectors',this)">Sector Screener</button>
@@ -142,7 +143,24 @@
   </div>
 
   <!-- ════════════════════════════════════════════════════════════ -->
-  <!-- MODE 1: SECTOR SCREENER (existing content)                    -->
+  <!-- MODE 0: SCREENER (full US universe — placeholder)               -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="mode-pane" id="mode-screener">
+    <div class="meta">Full US listed universe (NYSE / NASDAQ — ~7,000 tickers). Pure quantitative filters: size, valuation, quality, growth, leverage, capital allocation. Pre-curated screeners live under <em>Sector Screener</em>.</div>
+
+    <div style="margin-top:32px;padding:48px 28px;background:var(--white);border:1px solid var(--rule);text-align:center">
+      <div style="font-family:'Archivo',sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:14px">In construction</div>
+      <div style="font-size:15px;color:var(--ink);font-weight:500;margin-bottom:8px">Pure quantitative screener</div>
+      <div style="font-size:12px;color:var(--gray-mid);max-width:560px;margin:0 auto;line-height:1.6">
+        Daily ROIC.ai snapshot of the US universe into Supabase, with 15+ filters grouped by size,
+        valuation, quality, growth, leverage and capital allocation. Results feed directly into
+        Watchlist. Schema, cron and UI to be wired in subsequent commits.
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- MODE 1: SECTOR SCREENER (pre-curated by quality)                -->
   <!-- ════════════════════════════════════════════════════════════ -->
   <div class="mode-pane" id="mode-sectors">
     <div class="meta" id="screener-meta">Source: roic.ai API · <span id="screener-live" style="color:var(--gray-mid)">Loading...</span></div>
