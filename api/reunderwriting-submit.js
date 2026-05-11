@@ -52,9 +52,21 @@
 const { sbSelect, sbInsert, sbUpdate } = require('./_supabase');
 const { requireRole } = require('./_require-role');
 const { sendThesisBrokenAlert } = require('./_notify');
+const pipelineStage = require('./_pipeline-stage');
+const { archivePremortemForTicker } = require('./_premortem-archive');
 
 const VALID_ACTIONS = new Set(['buy_more', 'hold', 'trim', 'sell']);
 const VALID_OUTCOMES = new Set(['thesis_intact', 'thresholds_recalibrated', 'thesis_evolved', 'thesis_broken']);
+
+// Map a re-underwriting action to the decision_type that gets written into
+// decision_journal as the derived entry. BUY / PASS are NEVER produced here
+// (those come from the manual journal-create endpoint).
+const ACTION_TO_DECISION_TYPE = {
+  buy_more: 'ADD',
+  hold:     'HOLD',
+  trim:     'TRIM',
+  sell:     'SELL',
+};
 
 module.exports = async (req, res) => {
   try {
@@ -375,6 +387,75 @@ module.exports = async (req, res) => {
       }
     }
 
+    // 7. Create the DERIVED decision_journal entry (ADD/HOLD/TRIM/SELL).
+    // Every re-underwriting produces exactly one journal entry, linked back
+    // via reunderwriting_id for full traceability. This is the only path that
+    // creates ADD/HOLD/TRIM/SELL entries — the public journal-create endpoint
+    // only accepts BUY and PASS.
+    let derivedEntry = null;
+    let derivedStageSync = null;
+    let derivedArchive = null;
+    let derivedError = null;
+    try {
+      const derivedType = ACTION_TO_DECISION_TYPE[action];
+      if (derivedType) {
+        const today = new Date().toISOString().slice(0, 10);
+        // Compose a concise thesis paragraph that records WHAT was decided and WHY.
+        // The full v3.2 context lives in reunderwriting_entries; we just leave a
+        // pointer + the human-readable rationale here.
+        const thesisParts = [
+          `[Re-underwriting ${due.ticker} · ${due.period_end}] Outcome: ${outcomeV32}.`,
+          thesisText ? `Thesis check: ${thesisText}` : null,
+          actionReason ? `Action reason: ${actionReason}` : null,
+          changeSummary ? `Change summary: ${changeSummary}` : null,
+        ].filter(Boolean);
+        let derivedThesis = thesisParts.join('\n\n');
+        if (derivedThesis.length > 8000) derivedThesis = derivedThesis.slice(0, 8000);
+
+        const derivedRow = {
+          ticker: due.ticker,
+          decision_type: derivedType,
+          decision_date: today,
+          price_at_decision: priceAtReview,
+          thesis: derivedThesis,
+          pre_mortem: null,
+          catalysts: null,
+          created_by: auth.user.email,
+          active: true,
+          reunderwriting_id: entry.id,
+          framework_version: (v32 && v32.framework_version) || 'v3.2',
+          conviction_level: (v32 && v32.conviction_level) || null,
+          executive_summary: (v32 && v32.executive_summary) || null,
+        };
+
+        const derivedInserted = await sbInsert('decision_journal', derivedRow);
+        derivedEntry = Array.isArray(derivedInserted) ? derivedInserted[0] : derivedInserted;
+
+        // Pipeline stage transitions — same rules as journal-create:
+        //   ADD  -> onBuyDecision (invested)
+        //   SELL -> onSellDecision (closed) + archive pre-mortem
+        //   HOLD / TRIM -> no transition
+        try {
+          if (derivedType === 'ADD') {
+            derivedStageSync = await pipelineStage.onBuyDecision(due.ticker);
+          } else if (derivedType === 'SELL') {
+            derivedStageSync = await pipelineStage.onSellDecision(due.ticker);
+            try {
+              derivedArchive = await archivePremortemForTicker(due.ticker);
+            } catch (eArc) {
+              derivedArchive = { error: String(eArc.message || eArc) };
+            }
+          }
+        } catch (eSync) {
+          derivedStageSync = { ok: false, error: String(eSync.message || eSync) };
+        }
+      }
+    } catch (eDerived) {
+      // Never break the primary re-underwriting submit on a derived-entry failure.
+      derivedError = String(eDerived.message || eDerived).slice(0, 300);
+      console.error('[reunderwriting-submit] derived journal entry failed:', derivedError);
+    }
+
     res.setHeader('content-type', 'application/json');
     res.status(200).end(JSON.stringify({
       ok: true,
@@ -387,6 +468,14 @@ module.exports = async (req, res) => {
       revision_id: revisionId,
       new_version: newVersion,
       alert,
+      derived: derivedEntry ? {
+        id: derivedEntry.id,
+        decision_type: derivedEntry.decision_type,
+        decision_date: derivedEntry.decision_date,
+        stage_sync: derivedStageSync,
+        archive: derivedArchive,
+      } : null,
+      derived_error: derivedError,
     }));
   } catch (e) {
     res.status(500).end(JSON.stringify({ ok: false, error: String(e.message || e) }));

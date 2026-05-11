@@ -407,12 +407,11 @@
             <select id="ne-type" required>
               <option value="">— Select —</option>
               <option value="BUY">BUY — Initiate position</option>
-              <option value="ADD">ADD — Increase position</option>
               <option value="PASS">PASS — Studied, declined</option>
-              <option value="HOLD">HOLD — Reviewed, kept</option>
-              <option value="TRIM">TRIM — Reduce position</option>
-              <option value="SELL">SELL — Exit position</option>
             </select>
+            <div class="field" style="font-size:11px;color:var(--gray-mid);margin-top:4px;font-style:italic">
+              ADD / HOLD / TRIM / SELL are derived automatically from re-underwriting outcomes.
+            </div>
           </div>
         </div>
         <div class="form-grid-2">
@@ -2344,12 +2343,20 @@ function openReundForm(dueId) {
     <div class="field">
       <div class="field-lbl">4. Action *</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
-        <label class="chip" style="cursor:pointer"><input type="radio" name="reund-action" value="buy_more" style="margin-right:6px">Buy more</label>
-        <label class="chip" style="cursor:pointer"><input type="radio" name="reund-action" value="hold" checked style="margin-right:6px">Hold</label>
-        <label class="chip" style="cursor:pointer"><input type="radio" name="reund-action" value="trim" style="margin-right:6px">Trim</label>
-        <label class="chip" style="cursor:pointer"><input type="radio" name="reund-action" value="sell" style="margin-right:6px">Sell</label>
+        <label class="chip" style="cursor:pointer"><input type="radio" name="reund-action" value="buy_more" onchange="onReundActionChange()" style="margin-right:6px">Buy more</label>
+        <label class="chip" style="cursor:pointer"><input type="radio" name="reund-action" value="hold" checked onchange="onReundActionChange()" style="margin-right:6px">Hold</label>
+        <label class="chip" style="cursor:pointer"><input type="radio" name="reund-action" value="trim" onchange="onReundActionChange()" style="margin-right:6px">Trim</label>
+        <label class="chip" style="cursor:pointer"><input type="radio" name="reund-action" value="sell" onchange="onReundActionChange()" style="margin-right:6px">Sell</label>
       </div>
       <textarea id="reund-actionreason" rows="2" style="width:100%;padding:10px;border:1px solid var(--rule);background:var(--white);font-family:inherit;font-size:13px;resize:vertical;margin-top:8px" placeholder="Brief reason for the action…"></textarea>
+    </div>
+
+    <!-- Derived decision_journal entry preview -->
+    <div id="reund-derived-preview" class="v32-import-banner open" style="margin-top:14px;border-left:3px solid var(--gold)">
+      <div class="ib-body">
+        <div class="ib-title" id="reund-derived-title">Derived journal entry</div>
+        <div class="ib-detail" id="reund-derived-detail">Submitting this re-underwriting will also create a <strong>HOLD</strong> entry in the Decision Journal, linked back to this review.</div>
+      </div>
     </div>
 
     <!-- §8.3 — Next Actions -->
@@ -2371,6 +2378,7 @@ function openReundForm(dueId) {
   reuwDynReset();
   loadKillCriteriaForReund(item.ticker);
   loadReundPrefill(item.ticker, item.id);
+  if (typeof onReundActionChange === 'function') onReundActionChange();
 }
 
 async function loadKillCriteriaForReund(ticker) {
@@ -3336,8 +3344,33 @@ function onOutcomeChange() {
   const ntWrap = document.getElementById('reund-newthesis-wrap');
   if (csWrap) csWrap.style.display = outcome === 'thesis_intact' ? 'none' : '';
   if (ntWrap) ntWrap.style.display = outcome === 'thesis_evolved' ? '' : 'none';
+  onReundActionChange();
 }
 window.onOutcomeChange = onOutcomeChange;
+
+// Map re-underwriting action → derived decision_journal entry type.
+// buy_more → ADD, hold → HOLD, trim → TRIM, sell → SELL.
+const REUND_ACTION_TO_TYPE = { buy_more: 'ADD', hold: 'HOLD', trim: 'TRIM', sell: 'SELL' };
+
+function derivedTypeFromAction(action) {
+  return REUND_ACTION_TO_TYPE[action] || null;
+}
+window.derivedTypeFromAction = derivedTypeFromAction;
+
+function onReundActionChange() {
+  const actionRadio = document.querySelector('input[name="reund-action"]:checked');
+  const action = actionRadio ? actionRadio.value : '';
+  const derivedType = derivedTypeFromAction(action);
+  const banner = document.getElementById('reund-derived-preview');
+  const title = document.getElementById('reund-derived-title');
+  const detail = document.getElementById('reund-derived-detail');
+  if (!banner || !derivedType) return;
+  const item = reundState && reundState.current;
+  const ticker = item ? (item.ticker || '') : '';
+  title.textContent = 'Derived journal entry: ' + derivedType + (ticker ? ' · ' + ticker : '');
+  detail.innerHTML = 'Submitting this re-underwriting will also create a <strong>' + derivedType + '</strong> entry in the Decision Journal, linked back to this review for full traceability.';
+}
+window.onReundActionChange = onReundActionChange;
 
 async function submitReund() {
   const item = reundState.current;
@@ -3377,6 +3410,17 @@ async function submitReund() {
   if (outcome === 'thesis_broken') {
     if (!confirm('Vas a marcar la tesis como ROTA.\n\nEsto:\n- Crea una revisión inmutable del pre-mortem\n- Envía alerta a Slack y email al comité\n- NO ejecuta venta automática\n\n¿Confirmas?')) {
       msg.textContent = '';
+      return;
+    }
+  }
+
+  // Confirmation: derived decision_journal entry will be created.
+  const derivedType = derivedTypeFromAction(action);
+  if (derivedType) {
+    const tk = (reundState && reundState.current && reundState.current.ticker) || '';
+    if (!confirm('Este re-underwriting también creará una entrada ' + derivedType + ' en el Decision Journal' + (tk ? ' para ' + tk : '') + ',\nenlazada a esta revisión.\n\n¿Confirmas?')) {
+      msg.textContent = '';
+      btn.disabled = false;
       return;
     }
   }

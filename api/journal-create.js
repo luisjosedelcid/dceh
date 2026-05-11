@@ -4,7 +4,10 @@
 //
 // Body: {
 //   ticker:           "BKNG"        (required, uppercased)
-//   decision_type:    "BUY"|"PASS"|"SELL"|"HOLD"|"TRIM"|"ADD"  (required)
+//   decision_type:    "BUY"|"PASS"  (required)
+//                     ADD/HOLD/TRIM/SELL are NOT accepted here — those are
+//                     derived entries created automatically from re-underwriting
+//                     submissions (see /api/reunderwriting-submit).
 //   decision_date:    "2026-05-07"  (required, ISO date)
 //   thesis:           "..."         (required, free text)
 //   price_at_decision: 4521.30      (optional, numeric)
@@ -27,7 +30,11 @@ const { requireRole } = require('./_require-role');
 const pipelineStage = require('./_pipeline-stage');
 const { archivePremortemForTicker } = require('./_premortem-archive');
 
-const VALID_TYPES = new Set(['BUY', 'PASS', 'SELL', 'HOLD', 'TRIM', 'ADD']);
+// Manual decision entries are restricted to BUY and PASS — they are the only
+// types that originate from a fresh research package (Columbia + Memo + Munger).
+// ADD / HOLD / TRIM / SELL are derived from re-underwriting outcomes and are
+// inserted server-side by /api/reunderwriting-submit, never via this endpoint.
+const VALID_TYPES = new Set(['BUY', 'PASS']);
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
