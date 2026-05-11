@@ -419,6 +419,14 @@
             </div>
           </div>
         </div>
+
+        <!-- Empty-state hint: shown until a decision type is selected -->
+        <div id="ne-empty-state" style="padding:32px 8px;text-align:center;color:var(--gray-mid);font-size:12px;letter-spacing:0.04em">
+          Select a <strong style="color:var(--navy);font-weight:600">Decision Type</strong> above to continue.
+        </div>
+
+        <!-- Rest of form, hidden until decision type is chosen -->
+        <div id="ne-rest" style="display:none">
         <div class="form-grid-2">
           <div class="form-row">
             <label>Decision Date<span class="req">*</span></label>
@@ -606,10 +614,14 @@
         <!-- =================== END v3.2 sections =================== -->
 
         <div class="form-msg" id="ne-msg"></div>
+        </div><!-- /#ne-rest -->
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" id="ne-footer" style="display:none">
         <button type="button" class="btn-cancel" onclick="closeNewEntry()">Cancel</button>
         <button type="submit" class="btn-submit" id="ne-submit">Save Entry</button>
+      </div>
+      <div class="modal-footer" id="ne-footer-empty">
+        <button type="button" class="btn-cancel" onclick="closeNewEntry()">Cancel</button>
       </div>
       <!-- Manual reference, only shown for BUY type -->
       <div id="ne-manual-ref" style="display:none;padding:10px 22px 14px;background:#fafbfc;border-top:1px solid #ececef;font-size:11px;color:var(--gray-mid);line-height:1.55;letter-spacing:0.01em">
@@ -1604,7 +1616,7 @@ function openNewEntry(opts) {
   if (opts.ticker) document.getElementById('ne-ticker').value = String(opts.ticker).toUpperCase();
   if (opts.type) {
     const sel = document.getElementById('ne-type');
-    const valid = ['BUY','PASS','SELL','HOLD','TRIM','ADD'];
+    const valid = ['BUY','PASS','FOLLOW','SELL','HOLD','TRIM','ADD'];
     const t = String(opts.type).toUpperCase();
     if (valid.includes(t)) sel.value = t;
   }
@@ -1689,8 +1701,18 @@ function applyEntryTypeFraming() {
   const refEl = document.getElementById('ne-manual-ref');
   const v32El = document.getElementById('ne-v32-sections');
   const boxEl = document.getElementById('new-entry-modal-box');
+  const restEl = document.getElementById('ne-rest');
+  const emptyEl = document.getElementById('ne-empty-state');
+  const footerEl = document.getElementById('ne-footer');
+  const footerEmptyEl = document.getElementById('ne-footer-empty');
   if (!sel || !titleEl) return;
   const t = (sel.value || '').toUpperCase();
+  const hasType = (t === 'BUY' || t === 'PASS' || t === 'FOLLOW');
+  // Show/hide the rest of the form depending on whether a type is selected
+  if (restEl) restEl.style.display = hasType ? '' : 'none';
+  if (emptyEl) emptyEl.style.display = hasType ? 'none' : '';
+  if (footerEl) footerEl.style.display = hasType ? '' : 'none';
+  if (footerEmptyEl) footerEmptyEl.style.display = hasType ? 'none' : '';
   if (t === 'BUY') {
     titleEl.textContent = 'New Investment Memo';
     if (subEl) { subEl.textContent = 'Decision Journal entry · BUY · per Ops Manual §1.5 · v3.2 framework'; subEl.style.display = ''; }
@@ -1700,14 +1722,32 @@ function applyEntryTypeFraming() {
     if (boxEl) boxEl.classList.add('modal-wide');
     // Probe for a Munger package for the current ticker
     checkMungerPackage();
+  } else if (t === 'FOLLOW') {
+    titleEl.textContent = 'New Decision Entry — Follow';
+    if (subEl) { subEl.textContent = 'Watchlist after research · moves card to Followed in pipeline'; subEl.style.display = ''; }
+    if (submitEl) submitEl.textContent = 'Save Follow Entry';
+    if (refEl) refEl.style.display = 'none';
+    if (v32El) v32El.style.display = 'none';
+    if (boxEl) boxEl.classList.remove('modal-wide');
+    const banner = document.getElementById('ne-import-banner');
+    if (banner) banner.classList.remove('open');
+  } else if (t === 'PASS') {
+    titleEl.textContent = 'New Decision Entry — Pass';
+    if (subEl) { subEl.textContent = 'Studied, declined · moves card to Passed in pipeline'; subEl.style.display = ''; }
+    if (submitEl) submitEl.textContent = 'Save Pass Entry';
+    if (refEl) refEl.style.display = 'none';
+    if (v32El) v32El.style.display = 'none';
+    if (boxEl) boxEl.classList.remove('modal-wide');
+    const banner = document.getElementById('ne-import-banner');
+    if (banner) banner.classList.remove('open');
   } else {
+    // No type selected
     titleEl.textContent = 'New Decision Entry';
     if (subEl) { subEl.textContent = ''; subEl.style.display = 'none'; }
     if (submitEl) submitEl.textContent = 'Save Entry';
     if (refEl) refEl.style.display = 'none';
     if (v32El) v32El.style.display = 'none';
     if (boxEl) boxEl.classList.remove('modal-wide');
-    // Hide import banner
     const banner = document.getElementById('ne-import-banner');
     if (banner) banner.classList.remove('open');
   }
