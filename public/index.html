@@ -704,93 +704,12 @@
     </div>
 
   <div class="universe">
-    <div class="section-label">Companies — FY2025</div>
-    <div class="cards-grid">
-
-      <!-- BKNG -->
-      <a class="company-card" href="/bkng" onclick="passThrough(event, '/bkng')">
-        <div class="card-header">
-          <div>
-            <div class="card-ticker">BKNG</div>
-          </div>
-          <div class="card-badge badge-condicional">Conditional</div>
-        </div>
-        <div class="card-name">Booking Holdings · NASDAQ · Travel Services</div>
-        <div class="card-metrics">
-          <div>
-            <div class="metric-val green">19.7%</div>
-            <div class="metric-lbl">Implied IRR</div>
-          </div>
-          <div>
-            <div class="metric-val gold">1.70×</div>
-            <div class="metric-lbl">Price / EPV</div>
-          </div>
-          <div>
-            <div class="metric-val green">+7.7pp</div>
-            <div class="metric-lbl">MoS IRR</div>
-          </div>
-          <div>
-            <div class="metric-val">99.9%</div>
-            <div class="metric-lbl">ROIC FY25</div>
-          </div>
-          <div>
-            <div class="metric-val gold">8.61%</div>
-            <div class="metric-lbl">WACC</div>
-          </div>
-          <div>
-            <div class="metric-val">6.0/10</div>
-            <div class="metric-lbl">Munger Score</div>
-          </div>
-        </div>
-        <div class="card-footer">
-          <span class="card-date">Reviewed 09-Mar-2026</span>
-          <span class="card-arrow">Open dashboard →</span>
-        </div>
-      </a>
-
-      <!-- SAP -->
-      <a class="company-card" href="/sap" onclick="passThrough(event, '/sap')">
-        <div class="card-header">
-          <div>
-            <div class="card-ticker">SAP</div>
-          </div>
-          <div class="card-badge badge-condicional">Pass / Overvalued</div>
-        </div>
-        <div class="card-name">SAP SE · NYSE ADR / XETRA · Enterprise Software</div>
-        <div class="card-metrics">
-          <div>
-            <div class="metric-val red">4.6%</div>
-            <div class="metric-lbl">Implied IRR</div>
-          </div>
-          <div>
-            <div class="metric-val gold">2.06×</div>
-            <div class="metric-lbl">Price / EPV</div>
-          </div>
-          <div>
-            <div class="metric-val red">−7.4pp</div>
-            <div class="metric-lbl">MoS IRR</div>
-          </div>
-          <div>
-            <div class="metric-val">24.8%</div>
-            <div class="metric-lbl">ROIC 3yr</div>
-          </div>
-          <div>
-            <div class="metric-val gold">7.91%</div>
-            <div class="metric-lbl">WACC</div>
-          </div>
-          <div>
-            <div class="metric-val">—</div>
-            <div class="metric-lbl">Munger Score</div>
-          </div>
-        </div>
-        <div class="card-footer">
-          <span class="card-date">Reviewed 27-Mar-2026</span>
-          <span class="card-arrow">Open dashboard →</span>
-        </div>
-      </a>
+    <div class="section-label">Portfolio Companies</div>
+    <div class="cards-grid" id="cards-grid-portfolio">
+      <!-- Cards rendered dynamically from /api/performance holdings -->
 
       <!-- LULU -->
-      <a class="company-card" href="/lulu" onclick="passThrough(event, '/lulu')">
+      <a class="company-card" data-static-ticker="LULU" href="/lulu" onclick="passThrough(event, '/lulu')" style="display:none">
         <div class="card-header">
           <div>
             <div class="card-ticker">LULU</div>
@@ -831,7 +750,7 @@
       </a>
 
       <!-- MSFT -->
-      <a class="company-card" href="/msft" onclick="passThrough(event, '/msft')">
+      <a class="company-card" data-static-ticker="MSFT" href="/msft" onclick="passThrough(event, '/msft')" style="display:none">
         <div class="card-header">
           <div>
             <div class="card-ticker">MSFT</div>
@@ -871,11 +790,11 @@
         </div>
       </a>
 
-      <!-- PLACEHOLDER -->
-      <div class="card-placeholder">
+      <!-- Dynamic empty/loading state -->
+      <div class="card-placeholder" id="cards-grid-empty" style="display:none">
         <div class="placeholder-inner">
-          <div class="plus">+</div>
-          <div class="txt">Next company</div>
+          <div class="plus">—</div>
+          <div class="txt">No open positions</div>
         </div>
       </div>
 
@@ -1022,6 +941,117 @@ window.addEventListener('DOMContentLoaded', () => {
       // Silently fail — widget just stays hidden
       console.warn('Earnings widget load failed:', err);
     }
+  })();
+</script>
+<script>
+  // Render Portfolio Companies grid from /api/performance holdings.
+  // - For each open position (qty>0), show its card.
+  // - If a Columbia dashboard exists (data-static-ticker matches), reveal the static card.
+  // - Else, render a compact card with a 'Start study' button (creates pipeline_card).
+  (async function loadPortfolioCompanies() {
+    const grid = document.getElementById('cards-grid-portfolio');
+    const emptyEl = document.getElementById('cards-grid-empty');
+    if (!grid) return;
+
+    // Helper: get admin token if available (for x-admin-token header)
+    function getAdminToken() {
+      try {
+        return (window.dceAuth && window.dceAuth.getToken && window.dceAuth.getToken()) ||
+               localStorage.getItem('dce-admin-token') || '';
+      } catch (_) { return ''; }
+    }
+    const tok = getAdminToken();
+    const hdrs = tok ? { headers: { 'x-admin-token': tok } } : {};
+
+    let holdings = [];
+    try {
+      const r = await fetch('/api/performance', hdrs);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      holdings = (j && j.holdings) ? j.holdings.filter(h => Number(h.qty) > 0) : [];
+    } catch (e) {
+      console.warn('Portfolio holdings load failed:', e);
+      return;
+    }
+
+    if (!holdings.length) {
+      if (emptyEl) emptyEl.style.display = '';
+      return;
+    }
+
+    // Build set of held tickers (uppercase)
+    const heldSet = new Set(holdings.map(h => String(h.ticker).toUpperCase()));
+
+    // Show static cards for held tickers that have a Columbia dashboard.
+    // Hide static cards for tickers NOT held.
+    grid.querySelectorAll('a.company-card[data-static-ticker]').forEach(card => {
+      const tk = card.getAttribute('data-static-ticker').toUpperCase();
+      card.style.display = heldSet.has(tk) ? '' : 'none';
+    });
+
+    // For held tickers WITHOUT a static dashboard card, render a compact 'start study' card.
+    const staticTickers = new Set(
+      Array.from(grid.querySelectorAll('a.company-card[data-static-ticker]')).map(c => c.getAttribute('data-static-ticker').toUpperCase())
+    );
+    const dynamicTickers = Array.from(heldSet).filter(t => !staticTickers.has(t));
+
+    // Insert dynamic cards before the empty placeholder
+    for (const tk of dynamicTickers) {
+      const h = holdings.find(x => String(x.ticker).toUpperCase() === tk);
+      const mv = h && h.market_value ? Number(h.market_value) : 0;
+      const qty = h ? Number(h.qty) : 0;
+      const weight = h && h.weight_pct != null ? (Number(h.weight_pct) * 100).toFixed(1) + '%' : '—';
+      const card = document.createElement('div');
+      card.className = 'company-card';
+      card.style.cssText = 'cursor:default;display:block';
+      card.innerHTML = `
+        <div class="card-header">
+          <div><div class="card-ticker">${tk}</div></div>
+          <div class="card-badge badge-condicional">No dashboard yet</div>
+        </div>
+        <div class="card-name">Open position · ${qty.toLocaleString('en-US')} sh · ${weight} NAV</div>
+        <div class="card-metrics">
+          <div><div class="metric-val">$${mv.toLocaleString('en-US',{maximumFractionDigits:0})}</div><div class="metric-lbl">Market value</div></div>
+          <div><div class="metric-val gold">${qty.toLocaleString('en-US')}</div><div class="metric-lbl">Shares</div></div>
+          <div><div class="metric-val">${weight}</div><div class="metric-lbl">Weight</div></div>
+        </div>
+        <div class="card-footer">
+          <span class="card-date">No Columbia model yet</span>
+          <button type="button" class="card-arrow" data-action="start-study" data-ticker="${tk}" style="background:transparent;border:1px solid var(--gold);color:var(--gold);padding:6px 12px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;font-family:inherit">+ Start study</button>
+        </div>
+      `;
+      grid.insertBefore(card, emptyEl);
+    }
+
+    // Wire up 'Start study' buttons
+    grid.addEventListener('click', async (ev) => {
+      const btn = ev.target.closest('[data-action="start-study"]');
+      if (!btn) return;
+      ev.preventDefault();
+      const ticker = btn.getAttribute('data-ticker');
+      if (!ticker) return;
+      const tok2 = getAdminToken();
+      if (!tok2) { alert('Please sign in first.'); return; }
+      btn.disabled = true;
+      btn.textContent = 'Creating…';
+      try {
+        const r = await fetch('/api/admin/pipeline-cards', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-token': tok2 },
+          body: JSON.stringify({ ticker, name: ticker, stage: 'analysis', note: 'Created from home Portfolio Companies card.' }),
+        });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+        btn.textContent = 'Created ✓';
+        btn.style.borderColor = 'var(--green, #1F5F3F)';
+        btn.style.color = 'var(--green, #1F5F3F)';
+        setTimeout(() => { window.location.href = '/research'; }, 600);
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = '+ Start study';
+        alert('Could not create pipeline card: ' + e.message);
+      }
+    });
   })();
 </script>
 <script src="/search.js" defer></script>
