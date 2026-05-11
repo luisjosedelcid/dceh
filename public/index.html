@@ -978,12 +978,18 @@ window.addEventListener('DOMContentLoaded', () => {
       const tok = getAdminToken();
       const hdrs = tok ? { headers: { 'x-admin-token': tok } } : {};
 
+      // Cash-equivalents / treasury ETFs are excluded from the Portfolio Companies
+      // grid: this grid is for equities and crypto only.
+      const CASH_EQUIVALENTS = new Set(['SGOV','BIL','SHV','SHY','VGSH','VBIL','TBIL','USFR','GBIL','XHLF','CLTL','MINT']);
+
       let holdings = [];
       try {
         const r = await fetch('/api/performance', hdrs);
         if (!r.ok) throw new Error('HTTP ' + r.status);
         const j = await r.json();
-        holdings = (j && j.holdings) ? j.holdings.filter(h => Number(h.qty) > 0) : [];
+        holdings = (j && j.holdings)
+          ? j.holdings.filter(h => Number(h.qty) > 0 && !CASH_EQUIVALENTS.has(String(h.ticker).toUpperCase()))
+          : [];
       } catch (e) {
         console.warn('Portfolio holdings load failed:', e);
         return;
