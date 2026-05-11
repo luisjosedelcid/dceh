@@ -2206,6 +2206,50 @@ function openReundForm(dueId) {
     </div>
     ${item.source_url ? `<div class="field"><a href="${escapeHtml(item.source_url)}" target="_blank" rel="noopener" style="color:var(--gold);font-size:12px">View filing on EDGAR →</a></div>` : ''}
 
+    <!-- v3.2 Prefill banner (auto-loaded) -->
+    <div id="reund-prefill-banner" class="v32-import-banner" style="margin-bottom:14px">
+      <div class="ib-body">
+        <div class="ib-title" id="reund-prefill-title">Loading prefill data…</div>
+        <div class="ib-detail" id="reund-prefill-detail">Querying memo, previous re-underwriting, and active pre-mortem…</div>
+      </div>
+      <button type="button" id="reund-prefill-btn" class="ib-btn" onclick="applyReundPrefill()" disabled>Loading…</button>
+    </div>
+
+    <!-- §1 — Position & Governance metadata (v3.2) -->
+    <div class="v32-section" data-v32-num="1">
+      <div class="v32-section-title">Investment Snapshot</div>
+      <div class="form-grid-3">
+        <div><label class="field-lbl">Analyst</label><input type="text" id="reund-analyst" placeholder="Investment Analyst — DCE Holdings" class="v32-input"></div>
+        <div><label class="field-lbl">Reviewer</label><input type="text" id="reund-reviewer" placeholder="Director of Research — DCE Holdings" class="v32-input"></div>
+        <div><label class="field-lbl">Conviction level</label>
+          <select id="reund-conviction" class="v32-input">
+            <option value="">—</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Very High">Very High</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid-4" style="margin-top:10px">
+        <div><label class="field-lbl">Position size (% NAV)</label><input type="number" step="0.01" id="reund-position-size-pct" placeholder="6.1" class="v32-input"></div>
+        <div><label class="field-lbl">Cost basis / share</label><input type="number" step="0.01" id="reund-cost-basis" placeholder="462.80" class="v32-input"></div>
+        <div><label class="field-lbl">Price at review</label><input type="number" step="0.01" id="reund-price" placeholder="482.30" class="v32-input"></div>
+        <div><label class="field-lbl">Unrealized P&amp;L %</label><input type="number" step="0.01" id="reund-pnl-pct" placeholder="4.2" class="v32-input"></div>
+      </div>
+      <div class="form-grid-3" style="margin-top:10px">
+        <div><label class="field-lbl">Days held</label><input type="number" id="reund-days-held" placeholder="147" class="v32-input"></div>
+        <div><label class="field-lbl">Next review date</label><input type="date" id="reund-next-review" class="v32-input"></div>
+        <div><label class="field-lbl">Trigger document</label><input type="text" id="reund-trigger-doc" placeholder="10-Q presentado por…" class="v32-input"></div>
+      </div>
+    </div>
+
+    <!-- §2 — Executive Summary -->
+    <div class="v32-section" data-v32-num="2">
+      <div class="v32-section-title">Executive Summary</div>
+      <textarea id="reund-exec-summary" rows="4" class="v32-textarea" placeholder="Síntesis del trimestre: pilares validados, KPIs principales, conclusión del comité…"></textarea>
+    </div>
+
     <div id="reund-killmodes" class="field">
       <div class="field-lbl">Kill criteria status (auto)</div>
       <div class="field-val muted" id="reund-killmodes-body">Loading…</div>
@@ -2227,6 +2271,50 @@ function openReundForm(dueId) {
       <textarea id="reund-killconcern" rows="2" style="width:100%;padding:10px;border:1px solid var(--rule);background:var(--white);font-family:inherit;font-size:13px;resize:vertical" placeholder="If a failure mode is getting closer, note it here…"></textarea>
     </div>
 
+    <!-- §3 — What Changed Since Last Quarter -->
+    <div class="v32-section" data-v32-num="3">
+      <div class="v32-section-title">What Changed Since Last Quarter</div>
+      <label class="field-lbl">Eventos materiales del trimestre</label>
+      <div id="reuw-dl-material-events" class="dyn-list"></div>
+      <button type="button" class="dyn-add" onclick="reuwDynAdd('material-events')">+ Add evento</button>
+      <label class="field-lbl" style="margin-top:14px">Decisiones tomadas durante el trimestre</label>
+      <textarea id="reund-decisions-taken" rows="2" class="v32-textarea" placeholder="E.g. Ninguna decisión de portfolio sobre [TICKER] durante el trimestre. Posición mantenida."></textarea>
+    </div>
+
+    <!-- §4 — Thesis Tracking -->
+    <div class="v32-section" data-v32-num="4">
+      <div class="v32-section-title">Thesis Tracking — pilares del memo</div>
+      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:8px">Cada pilar de la tesis original (Memo §2) se evalúa contra la evidencia trimestral.</div>
+      <div id="reuw-dl-thesis-tracking" class="dyn-list"></div>
+      <button type="button" class="dyn-add" onclick="reuwDynAdd('thesis-tracking')">+ Add pilar</button>
+    </div>
+
+    <!-- §5 — Pre-Mortem Tracking -->
+    <div class="v32-section" data-v32-num="5">
+      <div class="v32-section-title">Pre-Mortem Tracking — failure modes</div>
+      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:8px">Cada failure mode del Memo §10 se evalúa con la evidencia trimestral. Severidad Alta/Crítica activada escala al CIO.</div>
+      <div id="reuw-dl-premortem-tracking" class="dyn-list"></div>
+      <button type="button" class="dyn-add" onclick="reuwDynAdd('premortem-tracking')">+ Add failure mode</button>
+    </div>
+
+    <!-- §6 — KPI Dashboard -->
+    <div class="v32-section" data-v32-num="6">
+      <div class="v32-section-title">KPI Dashboard — semáforos del trimestre</div>
+      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:8px">Los KPIs definidos en el Memo §6. Cualquier KPI en zona Roja por dos trimestres consecutivos dispara revisión de tesis.</div>
+      <div id="reuw-dl-kpi-dashboard" class="dyn-list"></div>
+      <button type="button" class="dyn-add" onclick="reuwDynAdd('kpi-dashboard')">+ Add KPI</button>
+    </div>
+
+    <!-- §7 — Valuation Update -->
+    <div class="v32-section" data-v32-num="7">
+      <div class="v32-section-title">Valuation Update</div>
+      <label class="field-lbl">Componentes del Implied IRR (refresh)</label>
+      <div id="reuw-dl-valuation-components" class="dyn-list"></div>
+      <button type="button" class="dyn-add" onclick="reuwDynAdd('valuation-components')">+ Add componente</button>
+      <label class="field-lbl" style="margin-top:14px">Conclusión de la valoración</label>
+      <textarea id="reund-valuation-conclusion" rows="2" class="v32-textarea" placeholder="E.g. Implied IRR forward se mantiene en 14.1%. Margen vs hurdle 410bps sigue robusto. Sin re-rating estructural."></textarea>
+    </div>
+
     <div class="field">
       <div class="field-lbl">3. Outcome del re-underwriting *</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
@@ -2240,6 +2328,12 @@ function openReundForm(dueId) {
     <div class="field" id="reund-changesummary-wrap" style="display:none">
       <div class="field-lbl">3a. Justificación del cambio *</div>
       <textarea id="reund-changesummary" rows="3" style="width:100%;padding:10px;border:1px solid var(--rule);background:var(--white);font-family:inherit;font-size:13px;resize:vertical" placeholder="Por qué el contrato original cambia. Esta justificación queda inmutable en el audit trail."></textarea>
+    </div>
+
+    <!-- §8.2 — Outcome justification (v3.2) -->
+    <div class="field">
+      <div class="field-lbl">3c. Justificación del outcome (v3.2)</div>
+      <textarea id="reund-outcome-justification" rows="3" class="v32-textarea" placeholder="Por qué este outcome es el correcto: cuántos pilares validados, cuántos failure modes activados, margen vs hurdle, etc."></textarea>
     </div>
 
     <div class="field" id="reund-newthesis-wrap" style="display:none">
@@ -2258,6 +2352,13 @@ function openReundForm(dueId) {
       <textarea id="reund-actionreason" rows="2" style="width:100%;padding:10px;border:1px solid var(--rule);background:var(--white);font-family:inherit;font-size:13px;resize:vertical;margin-top:8px" placeholder="Brief reason for the action…"></textarea>
     </div>
 
+    <!-- §8.3 — Next Actions -->
+    <div class="v32-section" data-v32-num="8">
+      <div class="v32-section-title">Next Actions</div>
+      <div id="reuw-dl-next-actions" class="dyn-list"></div>
+      <button type="button" class="dyn-add" onclick="reuwDynAdd('next-actions')">+ Add acción</button>
+    </div>
+
     <div class="field">
       <button id="reund-submit" onclick="submitReund()" style="background:var(--navy);color:var(--white);border:none;padding:11px 22px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600">Submit re-underwriting</button>
       <span id="reund-msg" style="margin-left:14px;font-size:12px"></span>
@@ -2266,8 +2367,10 @@ function openReundForm(dueId) {
   document.getElementById('drawer-bg').classList.add('open');
   document.getElementById('drawer').classList.add('open');
 
-  // Async load kill criteria status
+  // Reset dyn lists, then async load prefill + kill criteria status
+  reuwDynReset();
   loadKillCriteriaForReund(item.ticker);
+  loadReundPrefill(item.ticker, item.id);
 }
 
 async function loadKillCriteriaForReund(ticker) {
@@ -2804,6 +2907,428 @@ function collectQuarterlyMetrics() {
 }
 window.collectQuarterlyMetrics = collectQuarterlyMetrics;
 
+// ============================================================
+// Re-Underwriting v3.2 — dyn lists + prefill + payload
+// State namespace separate from dynState (which belongs to the BUY modal)
+// ============================================================
+const REUW_DYN_CONFIG = {
+  'thesis-tracking': {
+    label: 'Pilar',
+    fields: [
+      { id: 'pillar', type: 'textarea', placeholder: 'Pilar de la tesis (Memo §2)…' },
+      { id: 'status', type: 'select', label: 'Estado', meta: true, options: ['', 'Validado', 'Parcial', 'Watch', 'Debilitado', 'Roto'] },
+      { id: 'evidence', type: 'text', label: 'Evidencia trimestral', placeholder: '27.8% YoY this Q…', meta: true }
+    ]
+  },
+  'premortem-tracking': {
+    label: 'Failure mode',
+    fields: [
+      { id: 'failure_mode', type: 'textarea', placeholder: 'Failure mode (Memo §10)…' },
+      { id: 'severity', type: 'select', label: 'Severidad', meta: true, options: ['', 'Baja', 'Media', 'Alta', 'Crítica'] },
+      { id: 'status', type: 'select', label: 'Estado', meta: true, options: ['', 'No activado', 'Watch', 'Activado'] },
+      { id: 'evidence', type: 'text', label: 'Evidencia', placeholder: 'Datos del trimestre…', meta: true }
+    ]
+  },
+  'kpi-dashboard': {
+    label: 'KPI',
+    fields: [
+      { id: 'kpi', type: 'text', placeholder: 'KPI (e.g. Azure revenue YoY %)' },
+      { id: 'target', type: 'text', label: 'Target', placeholder: '≥ 25%', meta: true },
+      { id: 'current_q', type: 'text', label: 'Q actual', placeholder: '27.8%', meta: true },
+      { id: 'delta_vs_target', type: 'text', label: 'Δ vs target', placeholder: '+280bps', meta: true },
+      { id: 'semaphore', type: 'select', label: 'Semáforo', meta: true, options: ['', 'Verde', 'Amarillo', 'Rojo'] }
+    ]
+  },
+  'valuation-components': {
+    label: 'Componente',
+    fields: [
+      { id: 'component', type: 'text', placeholder: 'Componente (e.g. Earnings growth 5-yr CAGR)' },
+      { id: 'memo_original', type: 'text', label: 'Memo original', placeholder: '+13.5%', meta: true },
+      { id: 'current_q1_2026', type: 'text', label: 'Q actual', placeholder: '+13.4%', meta: true },
+      { id: 'delta', type: 'text', label: 'Δ', placeholder: '−10bps', meta: true }
+    ]
+  },
+  'material-events': {
+    label: 'Evento',
+    fields: [
+      { id: 'text', type: 'textarea', placeholder: 'Evento material del trimestre (fecha + descripción)' }
+    ]
+  },
+  'next-actions': {
+    label: 'Acción',
+    fields: [
+      { id: 'text', type: 'textarea', placeholder: 'Próxima acción (e.g. Monitorear FCF margin; si Q2 sigue Amarillo, escalar al CIO)' }
+    ]
+  }
+};
+const reuwDynState = {
+  'thesis-tracking': [],
+  'premortem-tracking': [],
+  'kpi-dashboard': [],
+  'valuation-components': [],
+  'material-events': [],
+  'next-actions': []
+};
+
+function reuwDynRender(kind) {
+  const cfg = REUW_DYN_CONFIG[kind];
+  const host = document.getElementById('reuw-dl-' + kind);
+  if (!host || !cfg) return;
+  const items = reuwDynState[kind];
+  if (!items.length) {
+    host.innerHTML = '<div class="dyn-empty">No items yet. Click "Add" below.</div>';
+    return;
+  }
+  host.innerHTML = items.map((it, idx) => {
+    const main = cfg.fields.filter(f => !f.meta);
+    const metas = cfg.fields.filter(f => f.meta);
+    const mainHtml = main.map(f => {
+      const val = escapeHtml(it[f.id] ?? '');
+      if (f.type === 'textarea') {
+        return `<textarea data-rkind="${kind}" data-idx="${idx}" data-field="${f.id}" placeholder="${escapeHtml(f.placeholder || '')}" oninput="reuwDynUpdate(this)">${val}</textarea>`;
+      }
+      return `<input type="${f.type}" data-rkind="${kind}" data-idx="${idx}" data-field="${f.id}" placeholder="${escapeHtml(f.placeholder || '')}" value="${val}" oninput="reuwDynUpdate(this)">`;
+    }).join('');
+    const metaHtml = metas.length ? `<div class="dyn-meta">${metas.map(f => {
+      const val = it[f.id] ?? '';
+      let inputHtml;
+      if (f.type === 'select') {
+        inputHtml = `<select data-rkind="${kind}" data-idx="${idx}" data-field="${f.id}" onchange="reuwDynUpdate(this)">${
+          (f.options || []).map(o => `<option value="${escapeHtml(o)}" ${String(val) === String(o) ? 'selected' : ''}>${escapeHtml(o || '—')}</option>`).join('')
+        }</select>`;
+      } else {
+        inputHtml = `<input type="${f.type}" data-rkind="${kind}" data-idx="${idx}" data-field="${f.id}" placeholder="${escapeHtml(f.placeholder || '')}" value="${escapeHtml(val)}" oninput="reuwDynUpdate(this)">`;
+      }
+      return `<div><label>${escapeHtml(f.label || f.id)}</label>${inputHtml}</div>`;
+    }).join('')}</div>` : '';
+    return `<div class="dyn-item">
+      <div class="dyn-item-head">
+        <div class="dyn-item-idx">${cfg.label} #${idx + 1}</div>
+        <button type="button" class="dyn-item-remove" onclick="reuwDynRemove('${kind}', ${idx})" aria-label="Remove">×</button>
+      </div>
+      ${mainHtml}
+      ${metaHtml}
+    </div>`;
+  }).join('');
+}
+window.reuwDynRender = reuwDynRender;
+
+function reuwDynAdd(kind) {
+  if (!reuwDynState[kind]) return;
+  reuwDynState[kind].push({});
+  reuwDynRender(kind);
+}
+window.reuwDynAdd = reuwDynAdd;
+
+function reuwDynRemove(kind, idx) {
+  if (!reuwDynState[kind]) return;
+  reuwDynState[kind].splice(idx, 1);
+  reuwDynRender(kind);
+}
+window.reuwDynRemove = reuwDynRemove;
+
+function reuwDynUpdate(el) {
+  const kind = el.dataset.rkind;
+  const idx = Number(el.dataset.idx);
+  const field = el.dataset.field;
+  if (!reuwDynState[kind] || !reuwDynState[kind][idx]) return;
+  reuwDynState[kind][idx][field] = el.value;
+}
+window.reuwDynUpdate = reuwDynUpdate;
+
+function reuwDynReset() {
+  Object.keys(reuwDynState).forEach(k => { reuwDynState[k] = []; });
+  Object.keys(REUW_DYN_CONFIG).forEach(reuwDynRender);
+}
+window.reuwDynReset = reuwDynReset;
+
+// ---------- Prefill: load + apply ----------
+let _reundPrefillData = null;
+
+async function loadReundPrefill(ticker, dueId) {
+  const banner = document.getElementById('reund-prefill-banner');
+  const titleEl = document.getElementById('reund-prefill-title');
+  const detailEl = document.getElementById('reund-prefill-detail');
+  const btnEl = document.getElementById('reund-prefill-btn');
+  if (!banner || !ticker) return;
+  banner.classList.add('open');
+  titleEl.textContent = `Loading prefill for ${ticker}…`;
+  detailEl.textContent = 'Querying memo + previous re-underwriting + active pre-mortem…';
+  btnEl.disabled = true;
+  btnEl.textContent = 'Loading…';
+  try {
+    const url = '/api/reunderwriting-prefill?ticker=' + encodeURIComponent(ticker) + (dueId ? '&due_id=' + encodeURIComponent(dueId) : '');
+    const r = await fetch(url, { cache: 'no-store' });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error || 'prefill_failed');
+    _reundPrefillData = data;
+
+    const memoFound = !!data.memo;
+    const prevFound = !!data.previous;
+    const pmFound = !!data.premortem;
+    const parts = [];
+    if (memoFound) {
+      const memo = data.memo;
+      const memoTag = memo.framework_version || 'legacy';
+      const pillars = Array.isArray(memo.thesis_pillars) ? memo.thesis_pillars.length : 0;
+      const fms = Array.isArray(memo.failure_modes) ? memo.failure_modes.length : 0;
+      parts.push(`Memo ${memoTag} (${pillars} pilares, ${fms} failure modes)`);
+    } else {
+      parts.push('No active BUY memo found');
+    }
+    if (prevFound) {
+      parts.push(`Previous re-underwriting: ${fmtDate(data.previous.reviewed_at)} — ${data.previous.outcome_v32 || 'legacy'}`);
+    } else {
+      parts.push('No previous re-underwriting');
+    }
+    if (pmFound) {
+      parts.push(`Active pre-mortem v${data.premortem.version} (${data.premortem.failure_modes.length} failure modes)`);
+    }
+
+    if (memoFound || prevFound || pmFound) {
+      titleEl.textContent = `Prefill available — ${ticker}`;
+      detailEl.textContent = parts.join(' · ');
+      btnEl.disabled = false;
+      btnEl.textContent = 'Apply Prefill';
+      banner.classList.remove('muted');
+    } else {
+      titleEl.textContent = `No prefill data — ${ticker}`;
+      detailEl.textContent = 'Fill manually. No memo, previous re-underwriting, or pre-mortem found.';
+      btnEl.disabled = true;
+      btnEl.textContent = 'Not available';
+      banner.classList.add('muted');
+    }
+  } catch (e) {
+    _reundPrefillData = null;
+    titleEl.textContent = 'Prefill error';
+    detailEl.textContent = String(e.message || e);
+    btnEl.disabled = true;
+    btnEl.textContent = 'Error';
+    banner.classList.add('muted');
+  }
+}
+window.loadReundPrefill = loadReundPrefill;
+
+function applyReundPrefill() {
+  if (!_reundPrefillData) return;
+  const data = _reundPrefillData;
+  const memo = data.memo || {};
+  const previous = data.previous || {};
+  const premortem = data.premortem || {};
+
+  // Scalars — prefer memo, fallback to previous re-underwriting
+  const setIfEmpty = (id, val) => {
+    if (val == null || val === '') return;
+    const el = document.getElementById(id);
+    if (el && !el.value) el.value = val;
+  };
+  setIfEmpty('reund-analyst', memo.analyst || previous.analyst);
+  setIfEmpty('reund-reviewer', memo.reviewer || previous.reviewer);
+  setIfEmpty('reund-conviction', memo.conviction_level || previous.conviction_level);
+  // position size — normalize decimals (0.061 → 6.1) for display
+  const posTarget = memo.position_size_target_pct;
+  const posPrev = previous.position_size_actual_pct;
+  let posVal = posPrev != null ? posPrev : posTarget;
+  if (posVal != null) {
+    if (Number(posVal) < 1) posVal = Number(posVal) * 100;
+    setIfEmpty('reund-position-size-pct', Number(posVal).toFixed(1));
+  }
+  setIfEmpty('reund-cost-basis', previous.cost_basis_per_share);
+  setIfEmpty('reund-pnl-pct', previous.unrealized_pnl_pct);
+  setIfEmpty('reund-days-held', previous.days_held);
+
+  // Thesis tracking — prefer previous quarter (carry status forward as starting point)
+  // Otherwise seed from memo pillars (all empty status).
+  if (Array.isArray(previous.thesis_tracking) && previous.thesis_tracking.length) {
+    reuwDynState['thesis-tracking'] = previous.thesis_tracking.map(t => ({
+      pillar: t.pillar || '',
+      status: t.status || '',
+      evidence: ''  // user fills new evidence; never carry old evidence forward
+    }));
+  } else if (Array.isArray(memo.thesis_pillars) && memo.thesis_pillars.length) {
+    reuwDynState['thesis-tracking'] = memo.thesis_pillars.map(p => ({
+      pillar: typeof p === 'string' ? p : (p.text || p.pillar || ''),
+      status: '',
+      evidence: ''
+    }));
+  }
+  reuwDynRender('thesis-tracking');
+
+  // Premortem tracking — seed from active premortem failure_modes if available, else memo failure_modes, else previous
+  let pmList = null;
+  if (Array.isArray(previous.premortem_tracking) && previous.premortem_tracking.length) {
+    pmList = previous.premortem_tracking.map(f => ({
+      failure_mode: f.failure_mode || '',
+      severity: f.severity || '',
+      status: '',  // re-evaluate this quarter
+      evidence: ''
+    }));
+  } else if (premortem.failure_modes && premortem.failure_modes.length) {
+    pmList = premortem.failure_modes.map(f => ({
+      failure_mode: f.failure_mode || '',
+      severity: severityLabelFromPct(f.severity_pct),
+      status: '',
+      evidence: ''
+    }));
+  } else if (Array.isArray(memo.failure_modes) && memo.failure_modes.length) {
+    pmList = memo.failure_modes.map(f => ({
+      failure_mode: f.failure_mode || '',
+      severity: severityLabelFromPct(f.severity_pct),
+      status: '',
+      evidence: ''
+    }));
+  }
+  if (pmList) {
+    reuwDynState['premortem-tracking'] = pmList;
+    reuwDynRender('premortem-tracking');
+  }
+
+  // KPI dashboard — carry KPI labels + targets from previous quarter; clear current values
+  if (Array.isArray(previous.kpi_dashboard) && previous.kpi_dashboard.length) {
+    reuwDynState['kpi-dashboard'] = previous.kpi_dashboard.map(k => ({
+      kpi: k.kpi || '',
+      target: k.target || '',
+      current_q: '',
+      delta_vs_target: '',
+      semaphore: ''
+    }));
+    reuwDynRender('kpi-dashboard');
+  }
+
+  // Valuation components — carry from previous, clearing current_q + delta
+  if (previous.valuation_refresh && Array.isArray(previous.valuation_refresh.components)) {
+    reuwDynState['valuation-components'] = previous.valuation_refresh.components.map(c => ({
+      component: c.component || '',
+      memo_original: c.memo_original || c.current_q1_2026 || '',
+      current_q1_2026: '',
+      delta: ''
+    }));
+    reuwDynRender('valuation-components');
+  }
+
+  // UI feedback
+  const btnEl = document.getElementById('reund-prefill-btn');
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Applied ✓'; }
+  const msg = document.getElementById('reund-msg');
+  if (msg) {
+    msg.style.color = 'var(--green)';
+    msg.textContent = 'Prefill applied. Review and edit before submitting.';
+    setTimeout(() => { if (msg.textContent.startsWith('Prefill')) msg.textContent = ''; }, 4500);
+  }
+}
+window.applyReundPrefill = applyReundPrefill;
+
+function severityLabelFromPct(pct) {
+  if (pct == null) return '';
+  const n = Number(pct);
+  if (!Number.isFinite(n)) return '';
+  if (n >= 80) return 'Crítica';
+  if (n >= 60) return 'Alta';
+  if (n >= 30) return 'Media';
+  return 'Baja';
+}
+
+// ---------- Collect v3.2 payload from re-underwriting drawer ----------
+function collectReundV32Payload() {
+  const out = {};
+  const v = (id) => (document.getElementById(id)?.value || '').trim();
+  const num = (id) => {
+    const s = v(id);
+    if (!s) return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  };
+  // Scalars
+  const txt = {
+    framework_version: 'v3.2',
+    analyst: v('reund-analyst'),
+    reviewer: v('reund-reviewer'),
+    conviction_level: v('reund-conviction'),
+    executive_summary: v('reund-exec-summary'),
+    outcome_justification: v('reund-outcome-justification'),
+    trigger_doc: v('reund-trigger-doc')
+  };
+  Object.entries(txt).forEach(([k, val]) => { if (val) out[k] = val; });
+  const nums = {
+    position_size_actual_pct: num('reund-position-size-pct'),
+    cost_basis_per_share: num('reund-cost-basis'),
+    unrealized_pnl_pct: num('reund-pnl-pct'),
+    days_held: num('reund-days-held')
+  };
+  Object.entries(nums).forEach(([k, val]) => { if (val != null) out[k] = val; });
+  const nextReview = v('reund-next-review');
+  if (nextReview && /^\d{4}-\d{2}-\d{2}$/.test(nextReview)) out.next_review_date = nextReview;
+
+  // JSONB: thesis_tracking
+  const tt = reuwDynState['thesis-tracking']
+    .map(t => ({
+      pillar: (t.pillar || '').trim(),
+      status: (t.status || '').trim(),
+      evidence: (t.evidence || '').trim()
+    }))
+    .filter(t => t.pillar);
+  if (tt.length) out.thesis_tracking = tt;
+
+  // JSONB: premortem_tracking
+  const pt = reuwDynState['premortem-tracking']
+    .map(f => ({
+      failure_mode: (f.failure_mode || '').trim(),
+      severity: (f.severity || '').trim(),
+      status: (f.status || '').trim(),
+      evidence: (f.evidence || '').trim()
+    }))
+    .filter(f => f.failure_mode);
+  if (pt.length) out.premortem_tracking = pt;
+
+  // JSONB: kpi_dashboard
+  const kd = reuwDynState['kpi-dashboard']
+    .map(k => ({
+      kpi: (k.kpi || '').trim(),
+      target: (k.target || '').trim(),
+      current_q: (k.current_q || '').trim(),
+      delta_vs_target: (k.delta_vs_target || '').trim(),
+      semaphore: (k.semaphore || '').trim()
+    }))
+    .filter(k => k.kpi);
+  if (kd.length) out.kpi_dashboard = kd;
+
+  // JSONB: valuation_refresh
+  const comps = reuwDynState['valuation-components']
+    .map(c => ({
+      component: (c.component || '').trim(),
+      memo_original: (c.memo_original || '').trim(),
+      current_q1_2026: (c.current_q1_2026 || '').trim(),
+      delta: (c.delta || '').trim()
+    }))
+    .filter(c => c.component);
+  const vConclusion = v('reund-valuation-conclusion');
+  if (comps.length || vConclusion) {
+    out.valuation_refresh = {};
+    if (comps.length) out.valuation_refresh.components = comps;
+    if (vConclusion) out.valuation_refresh.conclusion = vConclusion;
+  }
+
+  // JSONB: what_changed
+  const events = reuwDynState['material-events']
+    .map(e => (e.text || '').trim())
+    .filter(Boolean);
+  const decisionsTaken = v('reund-decisions-taken');
+  if (events.length || decisionsTaken) {
+    out.what_changed = {};
+    if (events.length) out.what_changed.material_events = events;
+    if (decisionsTaken) out.what_changed.decisions_taken = decisionsTaken;
+  }
+
+  // JSONB: next_actions
+  const actions = reuwDynState['next-actions']
+    .map(a => (a.text || '').trim())
+    .filter(Boolean);
+  if (actions.length) out.next_actions = actions;
+
+  return out;
+}
+window.collectReundV32Payload = collectReundV32Payload;
+
 function onOutcomeChange() {
   const outcomeRadio = document.querySelector('input[name="reund-outcome"]:checked');
   const outcome = outcomeRadio ? outcomeRadio.value : 'thesis_intact';
@@ -2862,6 +3387,12 @@ async function submitReund() {
 
   try {
     const tk = tokenAdmin();
+    const priceAtReview = (function () {
+      const s = (document.getElementById('reund-price') || {}).value;
+      const n = s ? Number(s) : null;
+      return Number.isFinite(n) ? n : null;
+    })();
+    const v32Payload = (typeof collectReundV32Payload === 'function') ? collectReundV32Payload() : {};
     const r = await fetch('/api/reunderwriting-submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-token': tk },
@@ -2871,10 +3402,12 @@ async function submitReund() {
         kill_criteria_concern: killConcern || null,
         action,
         action_reason: actionReason || null,
+        price_at_review: priceAtReview,
         outcome,
         change_summary: changeSummary || null,
         new_thesis_summary: newThesisSummary || null,
         quarterly_metrics: collectQuarterlyMetrics(),
+        ...v32Payload,
       }),
     });
     const data = await r.json();

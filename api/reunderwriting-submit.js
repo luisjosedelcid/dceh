@@ -12,7 +12,27 @@
 //     new_failure_modes: <array|null>,       // optional, full replacement for failure modes (rare)
 //     quarterly_metrics: [                   // optional, observations for quarterly_metric failure modes
 //       { failure_mode_id, observed_value, notes? }
-//     ]
+//     ],
+//
+//     // ---- v3.2 enrichment (all optional) ----
+//     framework_version: 'v3.2',
+//     trigger_doc: <text>,                   // e.g. "10-Q presentado por Microsoft el 25 de abril de 2026"
+//     analyst: <text>,                       // e.g. "Investment Analyst — DCE Holdings"
+//     reviewer: <text>,                      // e.g. "Director of Research — DCE Holdings"
+//     conviction_level: 'Low'|'Medium'|'High'|'Very High',
+//     position_size_actual_pct: <number>,    // decimal, e.g. 0.061
+//     cost_basis_per_share: <number>,
+//     unrealized_pnl_pct: <number>,
+//     days_held: <number>,
+//     next_review_date: 'YYYY-MM-DD',
+//     executive_summary: <text>,
+//     outcome_justification: <text>,
+//     thesis_tracking: [{pillar, status, evidence}],
+//     premortem_tracking: [{failure_mode, severity, status, evidence}],
+//     kpi_dashboard: [{kpi, target, current_q, semaphore, delta_vs_target}],
+//     valuation_refresh: {components: [...], conclusion},
+//     what_changed: {material_events: [...], decisions_taken, new_10q_data?},
+//     next_actions: [string]
 //   }
 //
 // Behavior:
@@ -61,6 +81,65 @@ module.exports = async (req, res) => {
     const newThesisSummary = body.new_thesis_summary ? String(body.new_thesis_summary).trim() : null;
     const newFailureModes = Array.isArray(body.new_failure_modes) ? body.new_failure_modes : null;
     const quarterlyMetricsInput = Array.isArray(body.quarterly_metrics) ? body.quarterly_metrics : [];
+
+    // ---- v3.2 fields (all optional) -----------------------------------------
+    // outcome_v32 is auto-derived from the enum outcome (title-cased + spaces).
+    const OUTCOME_V32_MAP = {
+      thesis_intact: 'Thesis Intact',
+      thresholds_recalibrated: 'Thresholds Recalibrated',
+      thesis_evolved: 'Thesis Evolved',
+      thesis_broken: 'Thesis Broken',
+    };
+    const outcomeV32 = OUTCOME_V32_MAP[outcome] || null;
+
+    const v32 = {};
+    const v32txt = (k, max = 8000) => {
+      if (body[k] == null || body[k] === '') return;
+      v32[k] = String(body[k]).trim().slice(0, max);
+    };
+    const v32num = (k) => {
+      if (body[k] == null || body[k] === '') return;
+      const n = Number(body[k]);
+      if (Number.isFinite(n)) v32[k] = n;
+    };
+    const v32json = (k) => {
+      if (body[k] == null) return;
+      let v = body[k];
+      if (typeof v === 'string') {
+        const s = v.trim();
+        if (!s) return;
+        try { v = JSON.parse(s); } catch (_) { return; }
+      }
+      // Reject empty arrays/objects to avoid storing meaningless nulls-as-shapes
+      if (Array.isArray(v) && v.length === 0) return;
+      if (typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0) return;
+      try {
+        const ser = JSON.stringify(v);
+        if (ser.length > 131072) return; // hard cap ~128KB per field
+      } catch (_) { return; }
+      v32[k] = v;
+    };
+
+    v32txt('framework_version', 16);
+    v32txt('trigger_doc', 400);
+    v32txt('analyst', 200);
+    v32txt('reviewer', 200);
+    v32txt('conviction_level', 40);
+    v32txt('executive_summary', 12000);
+    v32txt('outcome_justification', 8000);
+    v32num('position_size_actual_pct');
+    v32num('cost_basis_per_share');
+    v32num('unrealized_pnl_pct');
+    v32num('days_held');
+    if (body.next_review_date && /^\d{4}-\d{2}-\d{2}$/.test(String(body.next_review_date).trim())) {
+      v32.next_review_date = String(body.next_review_date).trim();
+    }
+    v32json('thesis_tracking');
+    v32json('premortem_tracking');
+    v32json('kpi_dashboard');
+    v32json('valuation_refresh');
+    v32json('what_changed');
+    v32json('next_actions');
 
     // Basic validation
     if (!dueId) return res.status(400).end(JSON.stringify({ ok: false, error: 'due_id required' }));
@@ -211,7 +290,7 @@ module.exports = async (req, res) => {
       }
     }
 
-    // 3. Insert reunderwriting_entries
+    // 3. Insert reunderwriting_entries (v3.2 fields included if provided)
     const inserted = await sbInsert('reunderwriting_entries', [{
       due_id: due.id,
       ticker: due.ticker,
@@ -224,6 +303,8 @@ module.exports = async (req, res) => {
       action_reason: actionReason,
       price_at_review: priceAtReview,
       reviewer_email: auth.user.email,
+      outcome_v32: outcomeV32,
+      ...v32,
     }]);
     const entry = Array.isArray(inserted) ? inserted[0] : inserted;
 
