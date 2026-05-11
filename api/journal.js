@@ -44,6 +44,7 @@ module.exports = async (req, res) => {
       hold: allRows.filter(r => r.decision_type === 'HOLD').length,
       trim: allRows.filter(r => r.decision_type === 'TRIM').length,
       add: allRows.filter(r => r.decision_type === 'ADD').length,
+      follow: allRows.filter(r => r.decision_type === 'FOLLOW').length,
     };
 
     // Pending reviews (review date in past + not yet done)

@@ -7,14 +7,19 @@
 //   invested -> followed (on SELL)
 //
 // Auto-transitions (idempotent, only fire when in eligible source state):
-//   onBuyTrade(ticker)      : decision|review|analysis|backlog -> invested
-//   onSellDecision(ticker)  : invested -> followed
-//   onPassDecision(ticker)  : decision|review|analysis|backlog -> passed
+//   onBuyTrade(ticker)        : decision|review|analysis|backlog -> invested
+//   onSellDecision(ticker)    : invested -> followed
+//   onPassDecision(ticker)    : decision|review|analysis|backlog -> passed
+//   onFollowDecision(ticker)  : decision|review|analysis|backlog -> followed
+//                              (committee decides to keep the company on the
+//                              watch list without taking a position; conceptually
+//                              the dual of PASS — "interested, not now")
 //
 // Reversibility (best-effort, callable from DELETE/PATCH handlers):
 //   revertFromInvested(ticker)  : invested -> decision (only if no remaining BUY/ADD trades)
 //   revertFromClosed(ticker)    : followed -> invested (only if SELL no longer active)
 //   revertFromPassed(ticker)    : passed   -> decision (only if PASS no longer active)
+//   revertFromFollowed(ticker)  : followed -> decision (only if FOLLOW & SELL no longer active)
 //
 // All functions log warnings on failure but never throw — auto-transitions must
 // not break the primary write path.
@@ -94,6 +99,21 @@ async function onPassDecision(ticker) {
   return setStage(card.id, 'passed', `auto: PASS decision for ${card.ticker}`);
 }
 
+// Triggered when the committee registers a FOLLOW decision. Moves the card
+// to the 'followed' stage — the watchlist of names we keep monitoring without
+// holding a position. Distinct from PASS ("do not re-evaluate") and from
+// 'followed-after-SELL' (a former position): mechanically it lands in the
+// same column, but the reverse path is different (see revertFromFollowed).
+async function onFollowDecision(ticker) {
+  const card = await findCardByTicker(ticker);
+  if (!card) return { ok: false, reason: 'no_card' };
+  const eligible = ['decision', 'review', 'analysis', 'backlog'];
+  if (!eligible.includes(card.stage)) {
+    return { ok: false, reason: 'stage_not_eligible', current: card.stage };
+  }
+  return setStage(card.id, 'followed', `auto: FOLLOW decision for ${card.ticker}`);
+}
+
 // === Reversibility ===
 
 async function revertFromInvested(ticker) {
@@ -149,13 +169,39 @@ async function revertFromPassed(ticker) {
   return setStage(card.id, 'decision', `auto: PASS decision removed for ${card.ticker}`);
 }
 
+// 'followed' is reached from two distinct sources:
+//   1. SELL on an invested position
+//   2. FOLLOW decision (watchlist after research)
+// Reverting only makes sense if BOTH sources are gone for this ticker.
+async function revertFromFollowed(ticker) {
+  const card = await findCardByTicker(ticker);
+  if (!card || card.stage !== 'followed') return { ok: false, reason: 'not_followed' };
+  try {
+    const tEnc = encodeURIComponent(card.ticker);
+    const sells = await sbSelect('decision_journal', `select=id&ticker=eq.${tEnc}&decision_type=eq.SELL&active=eq.true&limit=1`);
+    if (sells && sells.length > 0) {
+      return { ok: false, reason: 'still_has_active_sell' };
+    }
+    const follows = await sbSelect('decision_journal', `select=id&ticker=eq.${tEnc}&decision_type=eq.FOLLOW&active=eq.true&limit=1`);
+    if (follows && follows.length > 0) {
+      return { ok: false, reason: 'still_has_active_follow' };
+    }
+  } catch (e) {
+    console.warn('[pipeline-stage] revertFromFollowed check failed', e.message);
+    return { ok: false, error: e.message };
+  }
+  return setStage(card.id, 'decision', `auto: FOLLOW/SELL sources removed for ${card.ticker}`);
+}
+
 module.exports = {
   VALID_STAGES,
   onBuyTrade,
   onBuyDecision,
   onSellDecision,
   onPassDecision,
+  onFollowDecision,
   revertFromInvested,
   revertFromClosed,
   revertFromPassed,
+  revertFromFollowed,
 };

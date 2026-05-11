@@ -4,10 +4,12 @@
 //
 // Body: {
 //   ticker:           "BKNG"        (required, uppercased)
-//   decision_type:    "BUY"|"PASS"  (required)
+//   decision_type:    "BUY"|"PASS"|"FOLLOW"  (required)
 //                     ADD/HOLD/TRIM/SELL are NOT accepted here — those are
 //                     derived entries created automatically from re-underwriting
 //                     submissions (see /api/reunderwriting-submit).
+//                     FOLLOW = committee decides to keep the company on the
+//                     watchlist after research (dual of PASS).
 //   decision_date:    "2026-05-07"  (required, ISO date)
 //   thesis:           "..."         (required, free text)
 //   price_at_decision: 4521.30      (optional, numeric)
@@ -30,11 +32,12 @@ const { requireRole } = require('./_require-role');
 const pipelineStage = require('./_pipeline-stage');
 const { archivePremortemForTicker } = require('./_premortem-archive');
 
-// Manual decision entries are restricted to BUY and PASS — they are the only
-// types that originate from a fresh research package (Columbia + Memo + Munger).
-// ADD / HOLD / TRIM / SELL are derived from re-underwriting outcomes and are
-// inserted server-side by /api/reunderwriting-submit, never via this endpoint.
-const VALID_TYPES = new Set(['BUY', 'PASS']);
+// Manual decision entries are restricted to BUY, PASS and FOLLOW — the three
+// outcomes that originate from a fresh research package (Columbia + Memo +
+// Munger). ADD / HOLD / TRIM / SELL are derived from re-underwriting outcomes
+// and are inserted server-side by /api/reunderwriting-submit, never via this
+// endpoint.
+const VALID_TYPES = new Set(['BUY', 'PASS', 'FOLLOW']);
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -211,6 +214,8 @@ module.exports = async (req, res) => {
         stageSync = await pipelineStage.onBuyDecision(ticker);
       } else if (decision_type === 'PASS') {
         stageSync = await pipelineStage.onPassDecision(ticker);
+      } else if (decision_type === 'FOLLOW') {
+        stageSync = await pipelineStage.onFollowDecision(ticker);
       } else if (decision_type === 'SELL') {
         stageSync = await pipelineStage.onSellDecision(ticker);
         try {

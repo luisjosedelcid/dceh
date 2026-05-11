@@ -94,6 +94,7 @@
   .exec-badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.1em;padding:2px 7px;border-radius:2px}
   .exec-badge.BUY,.exec-badge.ADD{background:rgba(46,107,79,0.12);color:#2e6b4f}
   .exec-badge.TRIM,.exec-badge.SELL{background:rgba(139,0,0,0.10);color:#8b0000}
+  .exec-badge.FOLLOW{background:rgba(184,139,71,0.12);color:#8b6a2f}
   .exec-undo{font-size:10px;color:var(--gray-mid);background:none;border:none;cursor:pointer;text-decoration:underline}
   .exec-undo:hover{color:var(--red)}
   .exec-form{margin-top:12px;padding:14px;background:var(--cream);border:1px dashed var(--gold-rule);display:none}
@@ -124,6 +125,7 @@
   .badge.TRIM{background:rgba(139,0,0,0.06);color:#8b0000;border:1px solid rgba(139,0,0,0.25)}
   .badge.PASS{background:rgba(96,96,96,0.10);color:#606060}
   .badge.HOLD{background:rgba(184,139,71,0.12);color:#b88b47}
+  .badge.FOLLOW{background:rgba(184,139,71,0.18);color:#8b6a2f;border:1px solid rgba(184,139,71,0.35)}
 
   .review-pill{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;letter-spacing:0.05em;background:var(--gold-dim);color:var(--gold)}
   .review-pill.due{background:rgba(139,0,0,0.10);color:var(--red)}
@@ -313,9 +315,10 @@
   <div class="kpi-row">
     <div class="kpi"><div class="kpi-lbl">Total</div><div class="kpi-val" id="kpi-total">—</div><div class="kpi-sub">All decisions</div></div>
     <div class="kpi"><div class="kpi-lbl">Buy</div><div class="kpi-val" id="kpi-buy">—</div><div class="kpi-sub">Initiated / added</div></div>
-    <div class="kpi"><div class="kpi-lbl">Sell</div><div class="kpi-val" id="kpi-sell">—</div><div class="kpi-sub">Exits</div></div>
     <div class="kpi"><div class="kpi-lbl">Pass</div><div class="kpi-val" id="kpi-pass">—</div><div class="kpi-sub">Studied, declined</div></div>
+    <div class="kpi"><div class="kpi-lbl">Follow</div><div class="kpi-val" id="kpi-follow">—</div><div class="kpi-sub">Watchlist after research</div></div>
     <div class="kpi"><div class="kpi-lbl">Hold</div><div class="kpi-val" id="kpi-hold">—</div><div class="kpi-sub">Reviewed, kept</div></div>
+    <div class="kpi"><div class="kpi-lbl">Sell</div><div class="kpi-val" id="kpi-sell">—</div><div class="kpi-sub">Exits</div></div>
     <div class="kpi pending"><div class="kpi-lbl">Pending Reviews</div><div class="kpi-val" id="kpi-pending">—</div><div class="kpi-sub">Due for revisit</div></div>
   </div>
 
@@ -331,11 +334,12 @@
     <div class="filters">
       <span class="chip filter-type active" data-type="" onclick="setTypeFilter('', this)">All types</span>
       <span class="chip filter-type" data-type="BUY" onclick="setTypeFilter('BUY', this)">Buy</span>
-      <span class="chip filter-type" data-type="SELL" onclick="setTypeFilter('SELL', this)">Sell</span>
       <span class="chip filter-type" data-type="PASS" onclick="setTypeFilter('PASS', this)">Pass</span>
-      <span class="chip filter-type" data-type="HOLD" onclick="setTypeFilter('HOLD', this)">Hold</span>
+      <span class="chip filter-type" data-type="FOLLOW" onclick="setTypeFilter('FOLLOW', this)">Follow</span>
       <span class="chip filter-type" data-type="ADD" onclick="setTypeFilter('ADD', this)">Add</span>
+      <span class="chip filter-type" data-type="HOLD" onclick="setTypeFilter('HOLD', this)">Hold</span>
       <span class="chip filter-type" data-type="TRIM" onclick="setTypeFilter('TRIM', this)">Trim</span>
+      <span class="chip filter-type" data-type="SELL" onclick="setTypeFilter('SELL', this)">Sell</span>
       <input type="text" id="filter-ticker" placeholder="Ticker…" oninput="applyFilters()">
       <input type="number" id="filter-year" placeholder="Year" min="2000" max="2100" oninput="applyFilters()">
     </div>
@@ -407,6 +411,7 @@
             <select id="ne-type" required>
               <option value="">— Select —</option>
               <option value="BUY">BUY — Initiate position</option>
+              <option value="FOLLOW">FOLLOW — Watchlist after research</option>
               <option value="PASS">PASS — Studied, declined</option>
             </select>
             <div class="field" style="font-size:11px;color:var(--gray-mid);margin-top:4px;font-style:italic">
@@ -1461,6 +1466,7 @@ async function loadJournal() {
     document.getElementById('kpi-buy').textContent = (s.buy ?? 0) + (s.add ?? 0);
     document.getElementById('kpi-sell').textContent = (s.sell ?? 0) + (s.trim ?? 0);
     document.getElementById('kpi-pass').textContent = s.pass ?? 0;
+    document.getElementById('kpi-follow').textContent = s.follow ?? 0;
     document.getElementById('kpi-hold').textContent = s.hold ?? 0;
     document.getElementById('kpi-pending').textContent = s.pending_reviews ?? 0;
     applyFilters();
