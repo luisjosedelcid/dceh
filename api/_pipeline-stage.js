@@ -1,17 +1,19 @@
 // Auto-transition pipeline_cards stage based on trade/decision events.
 //
-// Lifecycle stages (consolidated 2026-05-11 — dropped approved + rejected):
+// Lifecycle stages (consolidated 2026-05-11 — dropped approved + rejected;
+// renamed 'closed' -> 'followed' to reflect that exited positions stay in the
+// followed universe, distinct from 'passed' which means "don't re-evaluate"):
 //   backlog -> analysis -> review -> decision -> {invested|passed}
-//   invested -> closed (on SELL)
+//   invested -> followed (on SELL)
 //
 // Auto-transitions (idempotent, only fire when in eligible source state):
 //   onBuyTrade(ticker)      : decision|review|analysis|backlog -> invested
-//   onSellDecision(ticker)  : invested -> closed
+//   onSellDecision(ticker)  : invested -> followed
 //   onPassDecision(ticker)  : decision|review|analysis|backlog -> passed
 //
 // Reversibility (best-effort, callable from DELETE/PATCH handlers):
 //   revertFromInvested(ticker)  : invested -> decision (only if no remaining BUY/ADD trades)
-//   revertFromClosed(ticker)    : closed   -> invested (only if SELL no longer active)
+//   revertFromClosed(ticker)    : followed -> invested (only if SELL no longer active)
 //   revertFromPassed(ticker)    : passed   -> decision (only if PASS no longer active)
 //
 // All functions log warnings on failure but never throw — auto-transitions must
@@ -19,7 +21,7 @@
 
 const { sbSelect, sbUpdate } = require('./_supabase');
 
-const VALID_STAGES = ['backlog', 'analysis', 'review', 'decision', 'invested', 'closed', 'passed'];
+const VALID_STAGES = ['backlog', 'analysis', 'review', 'decision', 'invested', 'followed', 'passed'];
 
 async function findCardByTicker(ticker) {
   const t = String(ticker || '').trim().toUpperCase();
@@ -79,7 +81,7 @@ async function onSellDecision(ticker) {
   if (!eligible.includes(card.stage)) {
     return { ok: false, reason: 'stage_not_eligible', current: card.stage };
   }
-  return setStage(card.id, 'closed', `auto: SELL decision for ${card.ticker}`);
+  return setStage(card.id, 'followed', `auto: SELL decision for ${card.ticker}`);
 }
 
 async function onPassDecision(ticker) {
@@ -118,7 +120,7 @@ async function revertFromInvested(ticker) {
 
 async function revertFromClosed(ticker) {
   const card = await findCardByTicker(ticker);
-  if (!card || card.stage !== 'closed') return { ok: false, reason: 'not_closed' };
+  if (!card || card.stage !== 'followed') return { ok: false, reason: 'not_followed' };
   // Only revert if no active SELL decision remains
   try {
     const sells = await sbSelect('decision_journal', `select=id&ticker=eq.${encodeURIComponent(card.ticker)}&decision_type=eq.SELL&active=eq.true&limit=1`);

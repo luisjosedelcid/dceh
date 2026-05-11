@@ -56,7 +56,7 @@
   @media (max-width:1400px){.kanban{display:flex;overflow-x:auto;padding-bottom:8px}.kanban>.col{min-width:240px;flex:0 0 240px}}
   .col.terminal{border-top-color:#9aa0a6}
   .col.terminal-invested{border-top-color:#2f7a3f}
-  .col.terminal-closed{border-top-color:#1b2642}
+  .col.terminal-followed{border-top-color:#1b2642}
   .col.terminal-passed{border-top-color:#b88b47}
   .col{background:var(--white);border-top:2px solid var(--gold);min-height:300px;display:flex;flex-direction:column}
   .col-h{padding:14px 14px 8px;border-bottom:1px solid var(--rule)}
@@ -172,7 +172,7 @@ const COLUMNS = [
   { id: 'review',   title: 'Review',           desc: 'Model & thesis review' },
   { id: 'decision', title: 'Decision Pending', desc: 'Awaiting CIO decision' },
   { id: 'invested', title: 'Invested',         desc: 'Position open',           terminal: true, cls: 'terminal-invested', auto: true },
-  { id: 'closed',   title: 'Closed',           desc: 'Position closed',         terminal: true, cls: 'terminal-closed',   auto: true },
+  { id: 'followed', title: 'Followed',         desc: 'Exited — stays in universe', terminal: true, cls: 'terminal-followed', auto: true },
   { id: 'passed',   title: 'Passed',           desc: 'Did not invest',          terminal: true, cls: 'terminal-passed',   auto: true },
 ];
 
@@ -329,16 +329,16 @@ function dismissPrefill() {
 }
 
 function renderBoard() {
-  const TERMINAL = ['invested','closed','passed'];
+  const TERMINAL = ['invested','followed','passed'];
   const total = pipeline.length;
   const inPipe = pipeline.filter(c => !TERMINAL.includes(c.stage)).length;
   const invested = pipeline.filter(c => c.stage === 'invested').length;
-  const closed = pipeline.filter(c => c.stage === 'closed').length;
+  const followed = pipeline.filter(c => c.stage === 'followed').length;
   document.getElementById('stats').innerHTML =
     `<span><strong>${total}</strong>total</span>
      <span><strong>${inPipe}</strong>in pipeline</span>
      <span><strong>${invested}</strong>invested</span>
-     <span><strong>${closed}</strong>closed</span>`;
+     <span><strong>${followed}</strong>followed</span>`;
 
   const k = document.getElementById('kanban');
   k.innerHTML = COLUMNS.map(col => {
