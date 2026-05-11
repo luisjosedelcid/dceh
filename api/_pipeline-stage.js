@@ -1,25 +1,25 @@
 // Auto-transition pipeline_cards stage based on trade/decision events.
 //
-// Lifecycle stages:
-//   backlog -> analysis -> review -> decision -> approved -> {invested|passed|rejected}
+// Lifecycle stages (consolidated 2026-05-11 — dropped approved + rejected):
+//   backlog -> analysis -> review -> decision -> {invested|passed}
 //   invested -> closed (on SELL)
 //
 // Auto-transitions (idempotent, only fire when in eligible source state):
-//   onBuyTrade(ticker)      : approved|decision|review -> invested
+//   onBuyTrade(ticker)      : decision|review|analysis|backlog -> invested
 //   onSellDecision(ticker)  : invested -> closed
-//   onPassDecision(ticker)  : decision|review|analysis|approved -> passed
+//   onPassDecision(ticker)  : decision|review|analysis|backlog -> passed
 //
 // Reversibility (best-effort, callable from DELETE/PATCH handlers):
-//   revertFromInvested(ticker)  : invested -> approved (only if no remaining BUY/ADD trades)
-//   revertFromClosed(ticker)    : closed -> invested  (only if SELL no longer active)
-//   revertFromPassed(ticker)    : passed -> decision  (only if PASS no longer active)
+//   revertFromInvested(ticker)  : invested -> decision (only if no remaining BUY/ADD trades)
+//   revertFromClosed(ticker)    : closed   -> invested (only if SELL no longer active)
+//   revertFromPassed(ticker)    : passed   -> decision (only if PASS no longer active)
 //
 // All functions log warnings on failure but never throw — auto-transitions must
 // not break the primary write path.
 
 const { sbSelect, sbUpdate } = require('./_supabase');
 
-const VALID_STAGES = ['backlog', 'analysis', 'review', 'decision', 'approved', 'rejected', 'invested', 'closed', 'passed'];
+const VALID_STAGES = ['backlog', 'analysis', 'review', 'decision', 'invested', 'closed', 'passed'];
 
 async function findCardByTicker(ticker) {
   const t = String(ticker || '').trim().toUpperCase();
@@ -63,9 +63,9 @@ async function onBuyDecision(ticker) {
 async function onBuyTrade(ticker) {
   const card = await findCardByTicker(ticker);
   if (!card) return { ok: false, reason: 'no_card' };
-  // Only transition if currently in a "considering / approved" state.
+  // Only transition if currently in a "considering" state.
   // If already invested or closed (e.g. re-buying after exit), leave it.
-  const eligible = ['approved', 'decision', 'review', 'analysis', 'backlog'];
+  const eligible = ['decision', 'review', 'analysis', 'backlog'];
   if (!eligible.includes(card.stage)) {
     return { ok: false, reason: 'stage_not_eligible', current: card.stage };
   }
@@ -75,8 +75,7 @@ async function onBuyTrade(ticker) {
 async function onSellDecision(ticker) {
   const card = await findCardByTicker(ticker);
   if (!card) return { ok: false, reason: 'no_card' };
-  // Allow closing from invested or even from approved (edge case: manual SELL without trades).
-  const eligible = ['invested', 'approved'];
+  const eligible = ['invested'];
   if (!eligible.includes(card.stage)) {
     return { ok: false, reason: 'stage_not_eligible', current: card.stage };
   }
@@ -86,7 +85,7 @@ async function onSellDecision(ticker) {
 async function onPassDecision(ticker) {
   const card = await findCardByTicker(ticker);
   if (!card) return { ok: false, reason: 'no_card' };
-  const eligible = ['decision', 'review', 'analysis', 'approved', 'backlog'];
+  const eligible = ['decision', 'review', 'analysis', 'backlog'];
   if (!eligible.includes(card.stage)) {
     return { ok: false, reason: 'stage_not_eligible', current: card.stage };
   }

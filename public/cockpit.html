@@ -78,7 +78,6 @@
   .stage.backlog{color:var(--gray)}
   .stage.analysis{color:var(--navy)}
   .stage.review,.stage.decision{color:var(--gold)}
-  .stage.approved{color:var(--green)}
 
   /* Calendar mini list */
   .cal-row{padding:8px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;font-size:12px}
@@ -308,14 +307,13 @@ function urgencyBadge(days, kind) {
 }
 
 // pipeline stage class (matches _pipeline-stage.js lifecycle:
-//   backlog -> analysis -> review -> decision -> approved -> terminal)
+//   backlog -> analysis -> review -> decision -> {invested|passed|closed})
 function stageClass(stage) {
   if (!stage) return '';
   const s = String(stage).toLowerCase();
   if (s === 'backlog') return 'backlog';
   if (s === 'analysis') return 'analysis';
   if (s === 'review' || s === 'decision') return 'decision';
-  if (s === 'approved') return 'approved';
   return '';
 }
 function stageLabel(stage) {
