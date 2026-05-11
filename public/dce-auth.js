@@ -360,7 +360,7 @@
       { href:'/calendar.html',    label:'Calendar', desc:'Earnings dates de la cobertura' },
     ]},
     { id:'pipeline', label:'Pipeline', items:[
-      { href:'/screener.html',    label:'Find',     desc:'Idea generation — superinvestors, sector screener' },
+      { href:'/screener.html',    label:'Find',     desc:'Idea generation — screener, superinvestors, sector tracker' },
       { href:'/research.html',    label:'Workflow', desc:'Kanban de tesis en investigación' },
       { href:'/universe.html',    label:'Universe', desc:'Columbia framework — EPV, IRR, MoS' },
       { href:'/journal.html',     label:'Decisions', desc:'Decision journal — buy/pass/sell + re-underwriting' },

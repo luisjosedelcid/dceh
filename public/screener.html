@@ -28,7 +28,7 @@
   .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:6px}
   .meta{font-size:10px;color:var(--gray-mid);font-weight:300;margin-bottom:28px;font-style:italic}
 
-  /* MODE TABS (Sector Screener / Superinvestors) */
+  /* MODE TABS (Screener / Idea Feed / Superinvestors / Sector Tracker / Watchlist) */
   .mode-tabs{display:flex;gap:0;margin-bottom:28px;border-bottom:1px solid var(--rule)}
   .mode-tab{font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;padding:14px 28px;background:none;border:none;border-bottom:2px solid transparent;color:var(--gray-mid);cursor:pointer;transition:all .2s;margin-bottom:-1px}
   .mode-tab:hover{color:var(--navy)}
@@ -38,7 +38,7 @@
   .mode-pane{display:none}
   .mode-pane.active{display:block}
 
-  /* SECTOR TABS (within Sector Screener) */
+  /* SECTOR TABS (within Sector Tracker) */
   .sector-tabs{display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap}
   .sector-tab{font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:8px 18px;background:none;border:1px solid var(--rule);color:var(--gray-mid);cursor:pointer;transition:all .2s}
   .sector-tab:hover{border-color:var(--gold-rule);color:var(--navy)}
@@ -138,7 +138,7 @@
     <button class="mode-tab" data-mode="screener" onclick="showMode('screener',this)">Screener</button>
     <button class="mode-tab active" data-mode="ideafeed" onclick="showMode('ideafeed',this)">Idea Feed <span class="count" id="ideafeed-count">—</span></button>
     <button class="mode-tab" data-mode="superinvestors" onclick="showMode('superinvestors',this)">Superinvestors <span class="count">10</span></button>
-    <button class="mode-tab" data-mode="sectors" onclick="showMode('sectors',this)">Sector Screener</button>
+    <button class="mode-tab" data-mode="sectors" onclick="showMode('sectors',this)">Sector Tracker</button>
     <button class="mode-tab" data-mode="watchlist" onclick="showMode('watchlist',this)">Watchlist <span class="count" id="watchlist-count">—</span></button>
   </div>
 
@@ -146,11 +146,10 @@
   <!-- MODE 0: SCREENER (full US universe — placeholder)               -->
   <!-- ════════════════════════════════════════════════════════════ -->
   <div class="mode-pane" id="mode-screener">
-    <div class="meta">Full US listed universe (NYSE / NASDAQ — ~7,000 tickers). Pure quantitative filters: size, valuation, quality, growth, leverage, capital allocation. Pre-curated screeners live under <em>Sector Screener</em>.</div>
+    <div class="meta">Full US listed universe (NYSE / NASDAQ — ~7,000 tickers). Pure quantitative filters: size, valuation, quality, growth, leverage, capital allocation. Pre-curated screeners live under <em>Sector Tracker</em>.</div>
 
     <div style="margin-top:32px;padding:48px 28px;background:var(--white);border:1px solid var(--rule);text-align:center">
       <div style="font-family:'Archivo',sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:14px">In construction</div>
-      <div style="font-size:15px;color:var(--ink);font-weight:500;margin-bottom:8px">Pure quantitative screener</div>
       <div style="font-size:12px;color:var(--gray-mid);max-width:560px;margin:0 auto;line-height:1.6">
         Daily ROIC.ai snapshot of the US universe into Supabase, with 15+ filters grouped by size,
         valuation, quality, growth, leverage and capital allocation. Results feed directly into
@@ -283,7 +282,7 @@
 
 <footer>
   <span>DCE Holdings Investment Office — Confidential · Internal use only</span>
-  <span id="footer-meta">Find · Sector Screener v4 + Superinvestors v1 + Idea Feed v1</span>
+  <span id="footer-meta">Find · Screener v0 + Idea Feed v1 + Superinvestors v1 + Sector Tracker v4</span>
 </footer>
 
 <script>
