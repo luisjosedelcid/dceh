@@ -1,7 +1,7 @@
 {
   "_meta": {
     "description": "Single source of truth para el Data Room de dceholdings.app. Se actualiza automaticamente por las skills DCE al generar nuevos entregables. Estructura alineada con Operations Manual v3 seccion 3.4.",
-    "last_updated": "2026-05-08",
+    "last_updated": "2026-05-12",
     "naming_convention": "AAAA-MM - Tipo - Detalle.ext (Operations Manual v3 §3.4)",
     "owner": "CIO"
   },
@@ -13,31 +13,61 @@
       "access": "Read-only para Analyst",
       "files": [
         {
-          "name": "Investment Charter v3.1.3",
+          "name": "Investment Charter v3.1",
+          "filename": "DCE_Holdings_Investment_Charter_v3-1.docx",
+          "type": "docx",
+          "detail": "Version vigente. Alinea el Charter a la estructura organizacional transitoria 2026 formalizada en Operations Manual v3.5: el rol analitico senior (Director of Investment Research en estructura objetivo) es absorbido por el Investment Associate durante 2026, con clausula de evolucion al incorporarse un segundo perfil analitico. Reescritura de seccion 3.3 (rol analitico senior), 3.4 (area de analisis como concepto), 4.2 (delegacion funcional) y 4.3 (regimen transitorio de doble firma extendido al supuesto de Associate unico).",
+          "url": "/docs/DCE_Holdings_Investment_Charter_v3-1.docx",
+          "uploaded": "2026-05-12",
+          "version": "v3.1"
+        },
+        {
+          "name": "Investment Policy Statement v10.0",
+          "filename": "DCE_Holdings_IPS_v10.docx",
+          "type": "docx",
+          "detail": "Version vigente. Alinea el IPS al proceso de inversion consolidado en Operations Manual v3.5. Cambios sustantivos: seccion 4.6 reescrita como Horizonte, decisiones del comite y reglas de salida, con incorporacion formal de las cuatro decisiones del Comite de Inversiones (BUY / FOLLOW / PASS / SELL) con identico estandar documental y el Decision Journal como registro vivo. Seccion 4.7 Entregables de monitoreo: reemplazo del Investment Fact Sheet (IFS), Scorecard de posicion y Desconfirmacion independiente por el Quarterly Re-Underwriting de ocho secciones alineado al ciclo 10-K/10-Q.",
+          "url": "/docs/DCE_Holdings_IPS_v10.docx",
+          "uploaded": "2026-05-12",
+          "version": "v10.0"
+        },
+        {
+          "name": "Governance & Succession Framework v5.0",
+          "filename": "DCE_Holdings_Governance_v5-0.docx",
+          "type": "docx",
+          "detail": "Version vigente. Alinea el Framework a la estructura organizacional transitoria 2026. Cambios: seccion 3.1 Composicion del CI bajo regimen transitorio 2026 (CIO + miembro externo, con Associate como invitado tecnico sin voz ni voto); seccion 3.2 Funcionamiento (CI Pack producido por el rol analitico senior con doble denominacion y registro de decisiones BUY/FOLLOW/PASS/SELL en el Decision Journal); seccion 5 Sucesion del rol analitico senior generalizada; seccion 6 Incapacidad temporal del CIO: bajo regimen transitorio el CI presidido por el miembro externo asume coordinacion en modo de preservacion mientras el Associate continua produccion analitica regular sin autoridad de decision.",
+          "url": "/docs/DCE_Holdings_Governance_v5-0.docx",
+          "uploaded": "2026-05-12",
+          "version": "v5.0"
+        },
+        {
+          "name": "Investment Charter v3.1.3 (historico)",
           "filename": "DCE_Holdings_Investment_Charter_v3-1-3.pdf",
           "type": "pdf",
-          "detail": "Marco constitucional del holding",
+          "detail": "Marco constitucional del holding. Reemplazada por version vigente.",
           "url": "#",
           "uploaded": "2026-04-15",
-          "version": "v3.1.3"
+          "version": "v3.1.3",
+          "historico": true
         },
         {
-          "name": "Investment Policy Statement v9.2",
+          "name": "Investment Policy Statement v9.2 (historico)",
           "filename": "DCE_Holdings_IPS_v9-2.pdf",
           "type": "pdf",
-          "detail": "Politicas, bandas, hurdles, criterios de calidad",
+          "detail": "Politicas, bandas, hurdles, criterios de calidad. Reemplazada por version vigente.",
           "url": "#",
           "uploaded": "2026-04-15",
-          "version": "v9.2"
+          "version": "v9.2",
+          "historico": true
         },
         {
-          "name": "Governance & Succession Framework v4.4",
+          "name": "Governance & Succession Framework v4.4 (historico)",
           "filename": "DCE_Holdings_Governance_v4-4.pdf",
           "type": "pdf",
-          "detail": "Comite de Inversiones, sucesion, resolucion de conflictos",
+          "detail": "Comite de Inversiones, sucesion, resolucion de conflictos. Reemplazada por version vigente.",
           "url": "#",
           "uploaded": "2026-04-15",
-          "version": "v4.4"
+          "version": "v4.4",
+          "historico": true
         },
         {
           "name": "2026-05 - Operations Manual v3.5",
