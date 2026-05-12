@@ -40,14 +40,47 @@
           "version": "v4.4"
         },
         {
-          "name": "2026-05 - Operations Manual v3.2",
+          "name": "2026-05 - Operations Manual v3.5",
+          "filename": "2026-05_Operations_Manual_v3-5.docx",
+          "type": "docx",
+          "detail": "Version vigente. Formaliza el principio de delegacion analitica entre CIO e Investment Associate: el Associate firma con responsabilidad propia sobre la exactitud tecnica y numerica; el CIO valida la tesis y la decision, no audita los modelos linea por linea. Calibra la meta operativa de cartera en ~10 posiciones a 24 meses.",
+          "url": "/docs/2026-05_Operations_Manual_v3-5.docx",
+          "uploaded": "2026-05-12",
+          "version": "v3.5",
+          "doc_type": "Operations Manual"
+        },
+        {
+          "name": "2026-05 - Operations Manual v3.4 (historico)",
+          "filename": "2026-05_Operations_Manual_v3-4.docx",
+          "type": "docx",
+          "detail": "Version intermedia reemplazada por v3.5. Alineo el manual con la estructura transitoria 2026 (CIO + Investment Associate unico), redujo la cadencia semanal a 2 reuniones y fusiono los roles de Director of Research e Investment Analyst en uno solo.",
+          "url": "/docs/2026-05_Operations_Manual_v3-4.docx",
+          "uploaded": "2026-05-12",
+          "version": "v3.4",
+          "doc_type": "Operations Manual",
+          "historico": true
+        },
+        {
+          "name": "2026-05 - Operations Manual v3.3 (historico)",
+          "filename": "2026-05_Operations_Manual_v3-3.docx",
+          "type": "docx",
+          "detail": "Version intermedia reemplazada por v3.4. Formalizo el Decision Journal y la decision FOLLOW como parte explicita del marco operativo; explicito las 4 decisiones del comite (BUY / FOLLOW / PASS / SELL).",
+          "url": "/docs/2026-05_Operations_Manual_v3-3.docx",
+          "uploaded": "2026-05-12",
+          "version": "v3.3",
+          "doc_type": "Operations Manual",
+          "historico": true
+        },
+        {
+          "name": "2026-05 - Operations Manual v3.2 (historico)",
           "filename": "2026-05_Operations_Manual_v3-2.docx",
           "type": "docx",
-          "detail": "Version vigente. Consolida monitoreo trimestral en Re-Underwriting unico de 8 secciones; Pre-Mortem absorbido en el Investment Memo §10. Deprecia Scorecard, IFS y Desconfirmacion como entregables separados.",
+          "detail": "Version anterior reemplazada en Mayo 2026. Consolido monitoreo trimestral en Re-Underwriting unico de 8 secciones; Pre-Mortem absorbido en el Investment Memo §10. Deprecio Scorecard, IFS y Desconfirmacion como entregables separados.",
           "url": "/docs/2026-05_Operations_Manual_v3-2.docx",
           "uploaded": "2026-05-08",
           "version": "v3.2",
-          "doc_type": "Operations Manual"
+          "doc_type": "Operations Manual",
+          "historico": true
         },
         {
           "name": "2026-05 - Operations Manual v3.1 (historico)",
@@ -57,7 +90,8 @@
           "url": "/docs/2026-05_Operations_Manual_v3-1.docx",
           "uploaded": "2026-05-04",
           "version": "v3.1",
-          "doc_type": "Operations Manual"
+          "doc_type": "Operations Manual",
+          "historico": true
         },
         {
           "name": "Operations Manual v3.0 (historico)",
