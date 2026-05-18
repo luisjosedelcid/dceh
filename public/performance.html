@@ -122,7 +122,6 @@
   /* ── Return decomposition row ── */
   .decomp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:14px}
   .mini-stat{background:var(--white);border:1px solid var(--rule);padding:12px 14px;border-left:3px solid var(--navy)}
-  /* Total P&L card — highlighted */
   .mini-stat.featured{background:var(--cream);border-color:var(--gold-rule);border-left:3px solid var(--gold)}
   .mini-label{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:4px}
   .mini-value{font-size:15px;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums}
@@ -221,14 +220,13 @@
       <!-- ── Return decomposition ── -->
       <div class="section-label">Return decomposition</div>
       <div class="decomp-grid">
-        <!-- Total P&L — featured, first card -->
         <div class="mini-stat featured"><div class="mini-label">Total P&amp;L</div><div class="mini-value" id="kpi-pnl">—</div><div style="font-size:10px;color:var(--gray-mid);margin-top:3px">realized + unrealized</div></div>
         <div class="mini-stat"><div class="mini-label">Cash (USD)</div><div class="mini-value" id="st-cash">—</div></div>
         <div class="mini-stat"><div class="mini-label">Market value</div><div class="mini-value" id="st-mv">—</div></div>
         <div class="mini-stat"><div class="mini-label">Realized P&amp;L</div><div class="mini-value" id="st-realized">—</div></div>
         <div class="mini-stat"><div class="mini-label">Unrealized P&amp;L</div><div class="mini-value" id="st-unrealized">—</div></div>
         <div class="mini-stat" title="Dividends and interest already credited to the account during the period."><div class="mini-label">Dividends + interest (received)</div><div class="mini-value" id="st-income">—</div></div>
-        <div class="mini-stat" title="Estimated dividends and interest yet to be received this year. Requires forward dividend yield per holding + cash sweep rate (pending data source)."><div class="mini-label">Dividends + interest (pending)</div><div class="mini-value" id="st-income-pending" style="color:var(--gray-mid);font-style:italic;font-size:14px">Pendiente</div></div>
+        <div class="mini-stat" title="Estimated dividends and interest yet to be received this year."><div class="mini-label">Dividends + interest (pending)</div><div class="mini-value" id="st-income-pending" style="color:var(--gray-mid);font-style:italic;font-size:14px">Pendiente</div></div>
         <div class="mini-stat"><div class="mini-label">Withholding tax</div><div class="mini-value" id="st-tax">—</div></div>
       </div>
 
@@ -703,12 +701,11 @@ document.getElementById('btn-prices-backfill').addEventListener('click',async()=
 // ── Dashboard ─────────────────────────────────
 let equityChart = null;
 function fmtUsdShort(n){ if(n==null||isNaN(n)) return '—'; return '$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:0}); }
-function fmtPct(n,dec){ dec=dec||2; if(n==null||isNaN(n)) return '—'; const s=(Number(n)*100).toFixed(dec)+'%'; return s; }
+function fmtPct(n,dec){ dec=dec||2; if(n==null||isNaN(n)) return '—'; return (Number(n)*100).toFixed(dec)+'%'; }
 function signedPct(n,dec){ if(n==null||isNaN(n)) return '—'; const v=Number(n)*100; return (v>=0?'+':'')+v.toFixed(dec||2)+'%'; }
 function signedUsd(n){ if(n==null||isNaN(n)) return '—'; const v=Number(n); return (v>=0?'+$':'−$')+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function setSignClass(el,n){ if(n==null||isNaN(n)){ el.classList.remove('pos','neg'); return;} el.classList.toggle('pos',n>0); el.classList.toggle('neg',n<0); }
 
-// Render pending dividends+interest mini-stat.
 function renderPendingIncome(p){
   const el = document.getElementById('st-income-pending');
   if (!el) return;
@@ -740,167 +737,261 @@ function renderPendingIncome(p){
   }
 }
 
+// IPS Bands — calculated locally from kpis data
+function renderIpsBands(k, holdings){
+  const BANDS = [
+    { label: 'Cash / equivalentes',    min: 0.15, max: 0.25, getValue: (nav,cash) => nav>0 ? cash/nav : 0 },
+    { label: 'Equity — quality',        min: 0.60, max: 0.80, getValue: (nav,cash,mv) => nav>0 ? mv/nav : 0 },
+    { label: 'Equity — special sit',    min: 0.00, max: 0.15, getValue: () => 0 },
+    { label: 'Renta fija / coberturas', min: 0.00, max: 0.10, getValue: () => 0 },
+  ];
+  const nav  = k.nav || 0;
+  const cash = k.cash_usd || 0;
+  const mv   = k.market_value_usd || 0;
+  const tbody = document.getElementById('ips-bands-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = BANDS.map(b => {
+    const current = b.getValue(nav, cash, mv, holdings);
+    const ok = current >= b.min && current <= b.max;
+    return `<tr>
+      <td>${b.label}</td>
+      <td class="right">${fmtPct(b.min)} – ${fmtPct(b.max)}</td>
+      <td class="right">${fmtPct(current)}</td>
+      <td><span class="ips-badge ${ok?'ok':'out'}">${ok?'OK':'OUT'}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('ips-bands-card').style.display = '';
+}
+
 async function loadDashboard(){
-  document.getElementById('dash-loading').classList.remove('hide');
-  document.getElementById('dash-content').classList.add('hide');
+  const loading = document.getElementById('dash-loading');
+  const content = document.getElementById('dash-content');
+  loading.classList.remove('hide');
+  content.classList.add('hide');
+  loading.textContent = 'Loading…';
   try{
-    const r = await fetch('/api/performance-dashboard',{headers:{'x-admin-token':adminToken()}});
-    const j = await r.json();
-    if(!r.ok){ document.getElementById('dash-loading').textContent='Error: '+(j.error||r.status); return; }
+    const tok = adminToken();
+    const hdrs = tok ? { headers:{'x-admin-token':tok} } : {};
+    const [perfRes, pendingRes] = await Promise.all([
+      fetch('/api/performance', hdrs),
+      fetch('/api/dividend-pending', hdrs).catch(()=>null),
+    ]);
+    const j = await perfRes.json();
+    if(!perfRes.ok || !j.ok) throw new Error(j.error || ('HTTP '+perfRes.status));
+    if(!j.kpis){
+      loading.textContent = 'No data yet — import a Schwab CSV or add manual entries below.';
+      return;
+    }
+    // Attach pending dividends
+    if(pendingRes && pendingRes.ok){
+      try{ const jp = await pendingRes.json(); if(jp && jp.ok) j.pending = jp; }catch(_){}
+    }
+    renderDashboard(j);
+    loading.classList.add('hide');
+    content.classList.remove('hide');
+  }catch(e){
+    loading.textContent = 'Failed to load: '+e.message;
+  }
+}
 
-    // ── Headline KPIs ──
-    const navEl = document.getElementById('kpi-nav');
-    navEl.textContent = j.nav!=null ? '$'+fmtUsd(j.nav) : '—';
+function renderDashboard(j){
+  const k = j.kpis || {};
 
-    const twrEl = document.getElementById('kpi-twr');
-    twrEl.textContent = j.twr!=null ? signedPct(j.twr) : '—';
-    setSignClass(twrEl, j.twr);
-    const twrSub = document.getElementById('kpi-twr-sub');
-    twrSub.textContent = j.twr_vs_benchmark!=null
-      ? `vs IWQU.L ${signedPct(j.twr_vs_benchmark)} alpha`
+  // ── Headline KPIs ──
+  document.getElementById('kpi-nav').textContent = fmtUsdShort(k.nav);
+  document.getElementById('kpi-nav-sub').textContent =
+    k.inception_date && k.last_date
+      ? `${k.inception_date} → ${k.last_date} · ${k.days_elapsed} d`
+      : '—';
+
+  const twrEl = document.getElementById('kpi-twr');
+  twrEl.textContent = signedPct(k.twr_cum_pct);
+  setSignClass(twrEl, k.twr_cum_pct);
+  const iwquDelta = (k.twr_cum_pct!=null && k.iwqu_return_pct!=null)
+    ? (k.twr_cum_pct - k.iwqu_return_pct) : null;
+  document.getElementById('kpi-twr-sub').textContent =
+    k.iwqu_return_pct!=null
+      ? `IWQU.L ${signedPct(k.iwqu_return_pct)} · Δ ${signedPct(iwquDelta)}`
       : 'vs IWQU.L —';
 
-    const irrEl = document.getElementById('kpi-irr');
-    irrEl.textContent = j.irr!=null ? signedPct(j.irr) : '—';
-    setSignClass(irrEl, j.irr);
+  const irrEl = document.getElementById('kpi-irr');
+  irrEl.textContent = signedPct(k.irr_pct);
+  setSignClass(irrEl, k.irr_pct);
 
-    const ddEl = document.getElementById('kpi-dd');
-    ddEl.textContent = j.max_drawdown!=null ? fmtPct(j.max_drawdown) : '—';
-    if(j.max_drawdown!=null) ddEl.classList.add('neg');
+  const ddEl = document.getElementById('kpi-dd');
+  ddEl.textContent = k.max_drawdown_pct!=null ? '−'+fmtPct(k.max_drawdown_pct) : '—';
+  if(k.max_drawdown_pct!=null) ddEl.classList.add('neg');
 
-    const invEl = document.getElementById('kpi-inv');
-    invEl.textContent = j.net_invested!=null ? '$'+fmtUsd(j.net_invested) : '—';
+  const invEl = document.getElementById('kpi-inv');
+  invEl.textContent = fmtUsdShort(k.invested_usd);
+  document.getElementById('kpi-inv-sub').textContent =
+    (k.total_contributions!=null && k.total_withdrawals!=null)
+      ? `contrib $${k.total_contributions.toLocaleString('en-US',{maximumFractionDigits:0})} · withdr $${k.total_withdrawals.toLocaleString('en-US',{maximumFractionDigits:0})}`
+      : 'contrib. − withdr.';
 
-    // ── Total P&L (decomposition header) ──
-    const pnlEl = document.getElementById('kpi-pnl');
-    pnlEl.textContent = j.total_pnl!=null ? signedUsd(j.total_pnl) : '—';
-    setSignClass(pnlEl, j.total_pnl);
+  // ── Total P&L (featured card) ──
+  const pnlEl = document.getElementById('kpi-pnl');
+  pnlEl.textContent = signedUsd(k.total_pnl_usd);
+  setSignClass(pnlEl, k.total_pnl_usd);
 
-    // ── Decomposition stats ──
-    const cashEl = document.getElementById('st-cash');
-    cashEl.textContent = j.cash!=null ? '$'+fmtUsd(j.cash) : '—';
+  // ── Decomposition stats ──
+  document.getElementById('st-cash').textContent = fmtUsdShort(k.cash_usd);
+  document.getElementById('st-mv').textContent = fmtUsdShort(k.market_value_usd);
 
-    const mvEl = document.getElementById('st-mv');
-    mvEl.textContent = j.market_value!=null ? '$'+fmtUsd(j.market_value) : '—';
+  const realEl = document.getElementById('st-realized');
+  realEl.textContent = signedUsd(k.realized_pnl);
+  setSignClass(realEl, k.realized_pnl);
 
-    const realEl = document.getElementById('st-realized');
-    realEl.textContent = j.realized_pnl!=null ? signedUsd(j.realized_pnl) : '—';
-    setSignClass(realEl, j.realized_pnl);
+  const unrEl = document.getElementById('st-unrealized');
+  unrEl.textContent = signedUsd(k.unrealized_pnl);
+  setSignClass(unrEl, k.unrealized_pnl);
 
-    const unrEl = document.getElementById('st-unrealized');
-    unrEl.textContent = j.unrealized_pnl!=null ? signedUsd(j.unrealized_pnl) : '—';
-    setSignClass(unrEl, j.unrealized_pnl);
+  document.getElementById('st-income').textContent =
+    (k.total_dividends!=null || k.total_interest!=null)
+      ? '$'+((k.total_dividends||0)+(k.total_interest||0)).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})
+      : '—';
 
-    const incEl = document.getElementById('st-income');
-    incEl.textContent = j.income_received!=null ? '$'+fmtUsd(j.income_received) : '—';
+  renderPendingIncome(j.pending);
 
-    renderPendingIncome(j.income_pending);
+  document.getElementById('st-tax').textContent =
+    k.total_taxes!=null
+      ? '−$'+Math.abs(k.total_taxes).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})
+      : '—';
 
-    const taxEl = document.getElementById('st-tax');
-    taxEl.textContent = j.withholding_tax!=null ? '$'+fmtUsd(j.withholding_tax) : '—';
+  // ── IPS Bands (computed locally) ──
+  renderIpsBands(k, j.holdings || []);
 
-    // ── IPS Bands ──
-    if(j.ips_bands && j.ips_bands.length){
-      document.getElementById('ips-bands-card').style.display='';
-      document.getElementById('ips-bands-tbody').innerHTML = j.ips_bands.map(b=>`
+  // ── Holdings table ──
+  const liveBadge = document.getElementById('holdings-live-badge');
+  if(j.holdings && j.holdings.length){
+    liveBadge.textContent = '○ last close';
+    liveBadge.style.color = 'var(--gray-mid)';
+    document.getElementById('tbl-holdings').innerHTML=`
+      <thead>
         <tr>
-          <td>${b.label}</td>
-          <td class="right">${b.band_lo!=null?fmtPct(b.band_lo):''} – ${b.band_hi!=null?fmtPct(b.band_hi):''}</td>
-          <td class="right">${b.current!=null?fmtPct(b.current):'—'}</td>
-          <td><span class="ips-badge ${b.ok?'ok':'out'}">${b.ok?'OK':'OUT'}</span></td>
-        </tr>`).join('');
-    }
+          <th>Ticker</th><th>Name</th>
+          <th class="r">Shares</th><th class="r">Avg cost</th>
+          <th class="r">Last price</th><th class="r">Market value</th>
+          <th class="r">Unr. P&L</th><th class="r">Unr. %</th>
+          <th class="r">Weight</th>
+        </tr>
+      </thead>
+      <tbody>${j.holdings.map(h=>{
+        const unrCls = h.unrealized_pnl>0?'pos':h.unrealized_pnl<0?'neg':'';
+        return `<tr>
+          <td><a class="ticker-link" href="/company.html?ticker=${h.ticker}" target="_blank"><strong>${h.ticker}</strong></a></td>
+          <td class="muted" style="font-size:11px">${h.name||'—'}</td>
+          <td class="r">${fmtNum(h.shares,4)}</td>
+          <td class="r">$${fmtUsd(h.avg_cost)}</td>
+          <td class="r">$${fmtUsd(h.last_price)}</td>
+          <td class="r"><strong>$${fmtUsd(h.market_value)}</strong></td>
+          <td class="r ${unrCls}">${signedUsd(h.unrealized_pnl)}</td>
+          <td class="r ${unrCls}">${signedPct(h.unrealized_pct)}</td>
+          <td class="r">${h.weight!=null?fmtPct(h.weight):'—'}</td>
+        </tr>`;
+      }).join('')}
+      </tbody>`;
+    // Live price overlay
+    liveOverlay(j.holdings);
+  }else{
+    liveBadge.textContent = '';
+    document.getElementById('tbl-holdings').innerHTML='<tr><td colspan="9" class="nodata">No open positions.</td></tr>';
+  }
 
-    // ── Holdings table ──
-    const liveBadge = document.getElementById('holdings-live-badge');
-    if(j.holdings && j.holdings.length){
-      liveBadge.textContent = j.prices_live ? '● live prices' : '○ last close';
-      liveBadge.style.color = j.prices_live ? 'var(--green)' : 'var(--gray-mid)';
-      document.getElementById('tbl-holdings').innerHTML=`
-        <thead>
-          <tr>
-            <th>Ticker</th><th>Name</th>
-            <th class="r">Shares</th><th class="r">Avg cost</th>
-            <th class="r">Last price</th><th class="r">Market value</th>
-            <th class="r">Unr. P&L</th><th class="r">Unr. %</th>
-            <th class="r">Weight</th>
-          </tr>
-        </thead>
-        <tbody>${j.holdings.map(h=>{
-          const unrCls = h.unrealized_pnl>0?'pos':h.unrealized_pnl<0?'neg':'';
-          return `<tr>
-            <td><a class="ticker-link" href="/company.html?ticker=${h.ticker}" target="_blank"><strong>${h.ticker}</strong></a></td>
-            <td class="muted" style="font-size:11px">${h.name||'—'}</td>
-            <td class="r">${fmtNum(h.shares,4)}</td>
-            <td class="r">$${fmtUsd(h.avg_cost)}</td>
-            <td class="r">$${fmtUsd(h.last_price)}</td>
-            <td class="r"><strong>$${fmtUsd(h.market_value)}</strong></td>
-            <td class="r ${unrCls}">${signedUsd(h.unrealized_pnl)}</td>
-            <td class="r ${unrCls}">${signedPct(h.unrealized_pct)}</td>
-            <td class="r">${h.weight!=null?fmtPct(h.weight):'—'}</td>
-          </tr>`;
-        }).join('')}
-        </tbody>`;
-    } else {
-      liveBadge.textContent = '';
-      document.getElementById('tbl-holdings').innerHTML='<tr><td colspan="9" class="nodata">No open positions.</td></tr>';
-    }
-
-    // ── Equity curve ──
-    if(j.equity_curve && j.equity_curve.dates && j.equity_curve.dates.length){
-      const ctx = document.getElementById('chart-equity').getContext('2d');
-      if(equityChart) equityChart.destroy();
-      equityChart = new Chart(ctx,{
-        type:'line',
-        data:{
-          labels: j.equity_curve.dates,
-          datasets:[
-            {
-              label:'Portfolio TWR',
-              data: j.equity_curve.portfolio,
-              borderColor:'#1b2642',
-              backgroundColor:'rgba(27,38,66,0.06)',
-              borderWidth:2,
-              pointRadius:0,
-              tension:0.2,
-              fill:true,
-            },
-            {
-              label:'IWQU.L',
-              data: j.equity_curve.benchmark,
-              borderColor:'#b88b47',
-              backgroundColor:'transparent',
-              borderWidth:1.5,
-              borderDash:[4,3],
-              pointRadius:0,
-              tension:0.2,
-            }
-          ]
-        },
-        options:{
-          responsive:true,
-          maintainAspectRatio:false,
-          interaction:{mode:'index',intersect:false},
-          plugins:{
-            legend:{display:true,position:'top',labels:{font:{size:11},boxWidth:20}},
-            tooltip:{
-              callbacks:{
-                label:ctx=>`${ctx.dataset.label}: ${signedPct(ctx.parsed.y/100)}`
-              }
-            }
+  // ── Equity curve ──
+  if(j.series && j.series.dates && j.series.dates.length){
+    const ctx = document.getElementById('chart-equity').getContext('2d');
+    if(equityChart) equityChart.destroy();
+    equityChart = new Chart(ctx,{
+      type:'line',
+      data:{
+        labels: j.series.dates,
+        datasets:[
+          {
+            label:'Portfolio TWR',
+            data: j.series.twr_pct.map(v=>v*100),
+            borderColor:'#1b2642',
+            backgroundColor:'rgba(27,38,66,0.06)',
+            borderWidth:2,
+            pointRadius:0,
+            tension:0.2,
+            fill:true,
           },
-          scales:{
-            x:{ticks:{font:{size:10},maxTicksLimit:12},grid:{color:'rgba(27,38,66,0.05)'}},
-            y:{ticks:{font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(27,38,66,0.05)'}}
+          {
+            label:'IWQU.L',
+            data: j.series.iwqu_pct.map(v=>v*100),
+            borderColor:'#b88b47',
+            backgroundColor:'transparent',
+            borderWidth:1.5,
+            borderDash:[4,3],
+            pointRadius:0,
+            tension:0.2,
           }
+        ]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{display:true,position:'top',labels:{font:{size:11},boxWidth:20}},
+          tooltip:{
+            callbacks:{
+              label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}%`
+            }
+          }
+        },
+        scales:{
+          x:{ticks:{font:{size:10},maxTicksLimit:12},grid:{color:'rgba(27,38,66,0.05)'}},
+          y:{ticks:{font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(27,38,66,0.05)'}}
         }
-      });
-    }
+      }
+    });
+  }
+}
 
-    document.getElementById('dash-loading').classList.add('hide');
-    document.getElementById('dash-content').classList.remove('hide');
+// ── Live price overlay (Finnhub) ──────────────
+async function liveOverlay(holdings){
+  const badge = document.getElementById('holdings-live-badge');
+  const EQUITY_RE = /^[A-Z]{1,5}$/;
+  const tickers = holdings.map(h=>h.ticker).filter(t=>EQUITY_RE.test(t));
+  if(!tickers.length){ badge.textContent='○ no equity tickers'; return; }
+  try{
+    const quotes = await Promise.all(tickers.map(t=>
+      fetch(`/api/quote?ticker=${t}`,{headers:{'x-admin-token':adminToken()}})
+        .then(r=>r.ok?r.json():null).catch(()=>null)
+    ));
+    let updated=0;
+    quotes.forEach((q,i)=>{
+      if(!q||q.c==null) return;
+      const h = holdings.find(x=>x.ticker===tickers[i]);
+      if(!h) return;
+      const livePrice = q.c;
+      const liveMv = livePrice * h.shares;
+      const liveUnr = liveMv - (h.avg_cost * h.shares);
+      const liveUnrPct = h.avg_cost>0 ? (livePrice/h.avg_cost)-1 : 0;
+      // update DOM
+      const rows = document.querySelectorAll(`#tbl-holdings tbody tr`);
+      rows.forEach(row=>{
+        const link = row.querySelector('a.ticker-link strong');
+        if(!link || link.textContent!==tickers[i]) return;
+        const tds = row.querySelectorAll('td');
+        if(tds[4]) tds[4].textContent='$'+fmtUsd(livePrice);
+        if(tds[5]) tds[5].innerHTML=`<strong>$${fmtUsd(liveMv)}</strong>`;
+        if(tds[6]){ tds[6].textContent=signedUsd(liveUnr); tds[6].className='r '+(liveUnr>0?'pos':liveUnr<0?'neg':''); }
+        if(tds[7]){ tds[7].textContent=signedPct(liveUnrPct); tds[7].className='r '+(liveUnrPct>0?'pos':liveUnrPct<0?'neg':''); }
+      });
+      updated++;
+    });
+    if(updated>0){
+      const now=new Date();
+      badge.textContent=`● Live · ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+      badge.style.color='var(--green)';
+    }else{
+      badge.textContent='○ live unavailable';
+    }
   }catch(e){
-    document.getElementById('dash-loading').textContent='Network error: '+e.message;
+    badge.textContent='○ live unavailable';
   }
 }
 
@@ -954,7 +1045,6 @@ function applyAdminGate(){
 
 // ── Boot ──────────────────────────────────────
 window.addEventListener('dce-auth-ready',()=>{ applyAdminGate(); loadDashboard(); loadExisting(); loadPricesSummary(); });
-// Fallback if auth fires before listener
 if(window.dceAuth && window.dceAuth.ready && window.dceAuth.ready()){
   applyAdminGate(); loadDashboard(); loadExisting(); loadPricesSummary();
 }
