@@ -272,7 +272,13 @@ module.exports = async (req, res) => {
 
     const heroCells = [
       {
-        label: 'TOTAL NAV',
+        label: 'NET INVESTED',
+        value: fmtUSD(kpis.invested_usd, 0),
+        sub: `Contrib ${fmtUSD(kpis.total_contributions, 0)} · Withdr ${fmtUSD(kpis.total_withdrawals, 0)}`,
+        subColor: GRAY,
+      },
+      {
+        label: 'NAV (USD)',
         value: fmtUSD(kpis.nav, 0),
         sub: `MV ${fmtUSD(kpis.market_value_usd, 0)} · Cash ${fmtUSD(kpis.cash_usd, 0)}`,
         subColor: GRAY,
@@ -287,21 +293,28 @@ module.exports = async (req, res) => {
       {
         label: 'IRR (XIRR)',
         value: fmtPct(kpis.irr_pct),
-        sub: `Max DD ${fmtPctRaw(-Math.abs(kpis.max_drawdown_pct || 0))} · Total ${fmtUSDSigned(kpis.total_pnl_usd)}`,
+        sub: 'since inception',
         valueColor: pctColor(kpis.irr_pct),
+        subColor: GRAY,
+      },
+      {
+        label: 'MAX DRAWDOWN',
+        value: fmtPctRaw(-Math.abs(kpis.max_drawdown_pct || 0)),
+        sub: 'peak-to-trough',
+        valueColor: RED,
         subColor: GRAY,
       },
     ];
 
-    const cellW = CW / 3;
+    const cellW = CW / heroCells.length;
     heroCells.forEach((cell, i) => {
       const x = M + cellW * i;
-      doc.fillColor(GOLD).font('Helvetica').fontSize(7)
-         .text(cell.label, x + 14, y + 16, { characterSpacing: 1.2, width: cellW - 28 });
-      doc.fillColor(cell.valueColor || NAVY).font('Helvetica-Bold').fontSize(20)
-         .text(cell.value, x + 14, y + 32, { width: cellW - 28 });
-      doc.fillColor(cell.subColor || GRAY).font('Helvetica').fontSize(8.5)
-         .text(cell.sub, x + 14, y + 62, { width: cellW - 28 });
+      doc.fillColor(GOLD).font('Helvetica').fontSize(6.5)
+         .text(cell.label, x + 10, y + 16, { characterSpacing: 1.0, width: cellW - 20 });
+      doc.fillColor(cell.valueColor || NAVY).font('Helvetica-Bold').fontSize(15)
+         .text(cell.value, x + 10, y + 30, { width: cellW - 20, lineBreak: false });
+      doc.fillColor(cell.subColor || GRAY).font('Helvetica').fontSize(7.5)
+         .text(cell.sub, x + 10, y + 60, { width: cellW - 20 });
       if (i < heroCells.length - 1) {
         doc.moveTo(x + cellW, y + 14).lineTo(x + cellW, y + 76)
            .strokeColor(LIGHT).lineWidth(0.5).stroke();
@@ -382,40 +395,47 @@ module.exports = async (req, res) => {
        .text(fmtUSD(kpis.market_value_usd, 0), totalsX + 4, y + 6, { width: cols[4].w - 8, align: 'right', lineBreak: false });
     y += 20;
 
-    // ─── CASH/MV/PNL CARDS ────────────────────────────────────────
+    // ─── MINI-STATS GRID (8 cells: composition + P&L generation) ──
     y += 18;
     const cardCols = 4;
     const cardW = (CW - (cardCols - 1) * 8) / cardCols;
     const cardH = 50;
+
+    // Row 1: NAV composition (Cash · Market Value · Dividends received · Dividends pending)
     const cards1 = [
-      { label: 'CASH (USD)',     value: fmtUSD(kpis.cash_usd, 0),         color: NAVY  },
-      { label: 'MARKET VALUE',   value: fmtUSD(kpis.market_value_usd, 0), color: NAVY  },
-      { label: 'REALIZED P&L',   value: fmtUSDSigned(kpis.realized_pnl),  color: pctColor(kpis.realized_pnl) },
-      { label: 'UNREALIZED P&L', value: fmtUSDSigned(kpis.unrealized_pnl),color: pctColor(kpis.unrealized_pnl) },
+      { label: 'CASH (USD)',                value: fmtUSD(kpis.cash_usd, 0),         color: NAVY  },
+      { label: 'MARKET VALUE',              value: fmtUSD(kpis.market_value_usd, 0), color: NAVY  },
+      { label: 'DIVIDENDS + INTEREST',      value: fmtUSD((kpis.total_dividends || 0) + (kpis.total_interest || 0), 2), color: GREEN, sub: 'received' },
+      { label: 'DIVIDENDS + INTEREST',      value: 'Pendiente', color: GRAY, italic: true, sub: 'pending' },
     ];
     cards1.forEach((c, i) => {
       const x = M + i * (cardW + 8);
       doc.rect(x, y, cardW, cardH).fill('#f4eedb').strokeColor(GOLD).lineWidth(0.4).stroke();
-      doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(7.5)
-         .text(c.label, x + 10, y + 9, { characterSpacing: 0.8, width: cardW - 20 });
-      doc.fillColor(c.color).font('Helvetica-Bold').fontSize(14)
-         .text(c.value, x + 10, y + 23, { width: cardW - 20 });
+      doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(7)
+         .text(c.label, x + 10, y + 8, { characterSpacing: 0.8, width: cardW - 20 });
+      if (c.sub) {
+        doc.fillColor(GRAY).font('Helvetica').fontSize(6.5)
+           .text('(' + c.sub + ')', x + 10, y + 18, { width: cardW - 20 });
+      }
+      doc.fillColor(c.color).font(c.italic ? 'Helvetica-Oblique' : 'Helvetica-Bold').fontSize(c.italic ? 11 : 13)
+         .text(c.value, x + 10, y + 30, { width: cardW - 20, lineBreak: false });
     });
     y += cardH + 8;
 
-    // Second row of cards: dividends/interest + withholding tax (only 2 cells)
+    // Row 2: P&L generation (Realized · Unrealized · Withholding · Total P&L)
     const cards2 = [
-      { label: 'DIVIDENDS + INTEREST', value: fmtUSD((kpis.total_dividends || 0) + (kpis.total_interest || 0), 2), color: GREEN },
-      { label: 'WITHHOLDING TAX',      value: fmtUSDSigned(-Math.abs(kpis.total_taxes || 0)), color: RED },
+      { label: 'REALIZED P&L',   value: fmtUSDSigned(kpis.realized_pnl),       color: pctColor(kpis.realized_pnl) },
+      { label: 'UNREALIZED P&L', value: fmtUSDSigned(kpis.unrealized_pnl),     color: pctColor(kpis.unrealized_pnl) },
+      { label: 'WITHHOLDING TAX',value: fmtUSDSigned(-Math.abs(kpis.total_taxes || 0)), color: RED },
+      { label: 'TOTAL P&L',      value: fmtUSDSigned(kpis.total_pnl_usd),      color: pctColor(kpis.total_pnl_usd) },
     ];
-    const card2W = (CW - 8) / 2;
     cards2.forEach((c, i) => {
-      const x = M + i * (card2W + 8);
-      doc.rect(x, y, card2W, cardH).fill('#f4eedb').strokeColor(GOLD).lineWidth(0.4).stroke();
+      const x = M + i * (cardW + 8);
+      doc.rect(x, y, cardW, cardH).fill('#f4eedb').strokeColor(GOLD).lineWidth(0.4).stroke();
       doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(7.5)
-         .text(c.label, x + 10, y + 9, { characterSpacing: 0.8, width: card2W - 20 });
-      doc.fillColor(c.color).font('Helvetica-Bold').fontSize(14)
-         .text(c.value, x + 10, y + 23, { width: card2W - 20 });
+         .text(c.label, x + 10, y + 9, { characterSpacing: 0.8, width: cardW - 20 });
+      doc.fillColor(c.color).font('Helvetica-Bold').fontSize(13)
+         .text(c.value, x + 10, y + 25, { width: cardW - 20, lineBreak: false });
     });
 
     drawFooter(doc, asOfDate);
