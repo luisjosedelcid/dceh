@@ -767,8 +767,10 @@ async function loadDashboard(){
   }
 }
 
+let cachedKpis = null;
 function renderDashboard(j){
   const k = j.kpis;
+  cachedKpis = k;
   // KPI cards
   document.getElementById('kpi-nav').textContent = fmtUsdShort(k.nav);
   document.getElementById('kpi-nav-sub').textContent = `${k.inception_date} → ${k.last_date} · ${k.days_elapsed} d`;
@@ -1091,6 +1093,18 @@ async function liveOverlay(holdings){
     }
     const upEl = document.getElementById('st-unrealized');
     if (upEl) { upEl.textContent = signedUsd(unrealizedAll); setSignClass(upEl, unrealizedAll); }
+
+    // Update NAV hero card (live NAV = Cash + live MV) so it stays consistent with Cash + MV mini-stats
+    if (cachedKpis) {
+      const liveNav = (cachedKpis.cash_usd || 0) + liveTotalMv;
+      const navEl = document.getElementById('kpi-nav');
+      if (navEl) navEl.textContent = fmtUsdShort(liveNav);
+
+      // Update Total P&L mini-stat = realized + live unrealized
+      const totalPnlLive = (cachedKpis.realized_pnl || 0) + unrealizedAll;
+      const totalPnlEl = document.getElementById('st-totalpnl');
+      if (totalPnlEl) { totalPnlEl.textContent = signedUsd(totalPnlLive); setSignClass(totalPnlEl, totalPnlLive); }
+    }
   }
 
   if (badge) {
