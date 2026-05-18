@@ -19,6 +19,77 @@
 const PDFDocument = require('pdfkit');
 const { loadAndCompute } = require('./_perf-load');
 const { computePendingDividends } = require('./dividend-pending');
+const { finnhubQuote } = require('./_prices');
+
+// Apply Finnhub live quotes on top of snapshot holdings (mirrors public/performance.html liveOverlay).
+// Mutates kpis + holdings in place and returns true if any update was applied.
+async function applyLiveOverlay(kpis, holdings) {
+  if (!Array.isArray(holdings) || holdings.length === 0) return false;
+  const tickerRe = /^[A-Z][A-Z0-9.\-]{0,9}$/;
+  const eligible = holdings.filter(h => h.ticker && tickerRe.test(h.ticker));
+  if (eligible.length === 0) return false;
+
+  const quotes = await Promise.all(eligible.map(async (h) => {
+    try {
+      const q = await finnhubQuote(h.ticker);
+      if (!q || !isFinite(q.close_native) || q.close_native <= 0) return null;
+      return { ticker: h.ticker, price: q.close_native };
+    } catch (_) { return null; }
+  }));
+
+  let anyUpdated = false;
+  let liveTotalMv = 0;
+  let liveTotalUnrealized = 0;
+
+  for (let i = 0; i < eligible.length; i++) {
+    const h = eligible[i];
+    const live = quotes[i];
+    if (!live) {
+      if (h.market_value != null) liveTotalMv += h.market_value;
+      if (h.unrealized_pnl != null) liveTotalUnrealized += h.unrealized_pnl;
+      continue;
+    }
+    anyUpdated = true;
+    const newMv = h.qty * live.price;
+    const newPnl = newMv - (h.cost_basis || 0);
+    h.last_price = live.price;
+    h.market_value = newMv;
+    h.unrealized_pnl = newPnl;
+    if (h.days_held && h.cost_basis > 0 && newMv > 0) {
+      const years = h.days_held / 365;
+      if (years > 0) h.irr_annualized = Math.pow(newMv / h.cost_basis, 1/years) - 1;
+    }
+    liveTotalMv += newMv;
+    liveTotalUnrealized += newPnl;
+  }
+
+  // Add non-eligible holdings (CUSIPs etc.) at their snapshot values
+  for (const h of holdings) {
+    if (eligible.find(e => e.ticker === h.ticker)) continue;
+    if (h.market_value != null) liveTotalMv += h.market_value;
+    if (h.unrealized_pnl != null) liveTotalUnrealized += h.unrealized_pnl;
+  }
+
+  // Rebalance per-holding weights against new total
+  if (anyUpdated && liveTotalMv > 0) {
+    for (const h of holdings) {
+      if (h.market_value != null) h.weight_pct = h.market_value / liveTotalMv;
+    }
+  }
+
+  if (anyUpdated) {
+    const oldMv = kpis.market_value_usd || 0;
+    kpis.market_value_usd = liveTotalMv;
+    kpis.unrealized_pnl = liveTotalUnrealized;
+    kpis.nav = (kpis.cash_usd || 0) + liveTotalMv;
+    kpis.total_pnl_usd = (kpis.realized_pnl || 0) + liveTotalUnrealized;
+    if ((kpis.invested_usd || 0) > 0) {
+      kpis.total_return_pct = kpis.total_pnl_usd / kpis.invested_usd;
+    }
+    kpis.live_overlay_applied = true;
+  }
+  return anyUpdated;
+}
 
 // Brand colors
 const NAVY = '#1b2642';
@@ -221,6 +292,18 @@ module.exports = async (req, res) => {
     const result = await loadAndCompute(requestedAsOf ? { endDate: requestedAsOf } : {});
     const kpis = result.kpis;
     const holdings = result.holdings || [];
+
+    // Apply Finnhub live overlay (mirrors dashboard liveOverlay) — only when generating for today
+    // or no specific past date was requested.
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const wantLive = !requestedAsOf || requestedAsOf === todayISO;
+    if (wantLive && kpis) {
+      try {
+        await applyLiveOverlay(kpis, holdings);
+      } catch (e) {
+        console.warn('[generate-daily-report] live overlay skipped:', e.message);
+      }
+    }
 
     // Pending dividends + interest (same source as dashboard mini-stat)
     let pendingDivs = null;
