@@ -18,6 +18,7 @@
 
 const PDFDocument = require('pdfkit');
 const { loadAndCompute } = require('./_perf-load');
+const { computePendingDividends } = require('./dividend-pending');
 
 // Brand colors
 const NAVY = '#1b2642';
@@ -221,6 +222,14 @@ module.exports = async (req, res) => {
     const kpis = result.kpis;
     const holdings = result.holdings || [];
 
+    // Pending dividends + interest (same source as dashboard mini-stat)
+    let pendingDivs = null;
+    try {
+      pendingDivs = await computePendingDividends();
+    } catch (e) {
+      console.warn('[generate-daily-report] pending dividends unavailable:', e.message);
+    }
+
     if (!kpis) {
       res.status(400).json({ error: 'No performance data available yet. Add transactions first.' });
       return;
@@ -406,7 +415,12 @@ module.exports = async (req, res) => {
       { label: 'CASH (USD)',                value: fmtUSD(kpis.cash_usd, 0),         color: NAVY  },
       { label: 'MARKET VALUE',              value: fmtUSD(kpis.market_value_usd, 0), color: NAVY  },
       { label: 'DIVIDENDS + INTEREST',      value: fmtUSD((kpis.total_dividends || 0) + (kpis.total_interest || 0), 2), color: GREEN, sub: 'received' },
-      { label: 'DIVIDENDS + INTEREST',      value: 'Pendiente', color: GRAY, italic: true, sub: 'pending' },
+      { label: 'DIVIDENDS + INTEREST',      value: pendingDivs && typeof pendingDivs.total_pending_usd === 'number'
+                                                ? fmtUSD(pendingDivs.total_pending_usd, 2)
+                                                : 'Pendiente',
+        color: (pendingDivs && pendingDivs.total_pending_usd > 0) ? GREEN : GRAY,
+        italic: !(pendingDivs && pendingDivs.total_pending_usd > 0),
+        sub: 'pending' },
     ];
     cards1.forEach((c, i) => {
       const x = M + i * (cardW + 8);

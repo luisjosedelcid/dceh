@@ -53,7 +53,55 @@ async function getNetSharesByTicker(asOf) {
   return map;
 }
 
-module.exports = async (req, res) => {
+// Core computation (reusable from other server endpoints)
+async function computePendingDividends() {
+  const today = todayStr();
+  const yend = yearEndStr();
+
+  const schedule = await sbSelect(
+    'dividend_schedule',
+    `select=*&payment_date=gte.${today}&payment_date=lte.${yend}&order=payment_date.asc`
+  );
+
+  if (!schedule || schedule.length === 0) {
+    return { ok: true, as_of: today, year_end: yend, total_pending_usd: 0, declared_usd: 0, forecast_usd: 0, interest_pending_usd: 0, breakdown: [] };
+  }
+
+  const shareMap = await getNetSharesByTicker(today);
+  let declared = 0;
+  let forecast = 0;
+  const breakdown = [];
+
+  for (const row of schedule) {
+    const ticker = String(row.ticker || '').toUpperCase();
+    const shares = shareMap[ticker] || 0;
+    if (shares <= 0) continue;
+    const perShare = parseFloat(row.per_share_amount || 0);
+    if (!isFinite(perShare) || perShare <= 0) continue;
+    const amount = +(shares * perShare).toFixed(2);
+    if (row.status === 'declared') declared += amount;
+    else forecast += amount;
+    breakdown.push({
+      ticker, shares, per_share_amount: perShare,
+      currency: row.currency || 'USD',
+      ex_date: row.ex_date, payment_date: row.payment_date,
+      status: row.status, amount_usd: amount,
+      source_url: row.source_url || null,
+    });
+  }
+
+  const interestPending = 0;
+  return {
+    ok: true, as_of: today, year_end: yend,
+    total_pending_usd: +(declared + forecast + interestPending).toFixed(2),
+    declared_usd: +declared.toFixed(2),
+    forecast_usd: +forecast.toFixed(2),
+    interest_pending_usd: interestPending,
+    breakdown,
+  };
+}
+
+const handler = async (req, res) => {
   try {
     const auth = await requireRole(req, ['any']);
     if (!auth.ok) {
@@ -61,72 +109,13 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const today = todayStr();
-    const yend = yearEndStr();
-
-    // Load all dividend_schedule entries with payment_date in [today, year_end]
-    const schedule = await sbSelect(
-      'dividend_schedule',
-      `select=*&payment_date=gte.${today}&payment_date=lte.${yend}&order=payment_date.asc`
-    );
-
-    if (!schedule || schedule.length === 0) {
-      res.status(200).json({
-        ok: true,
-        as_of: today,
-        year_end: yend,
-        total_pending_usd: 0,
-        declared_usd: 0,
-        forecast_usd: 0,
-        interest_pending_usd: 0,
-        breakdown: [],
-      });
-      return;
-    }
-
-    // Determine current net shares per ticker (as of today)
-    const shareMap = await getNetSharesByTicker(today);
-
-    let declared = 0;
-    let forecast = 0;
-    const breakdown = [];
-
-    for (const row of schedule) {
-      const ticker = String(row.ticker || '').toUpperCase();
-      const shares = shareMap[ticker] || 0;
-      if (shares <= 0) continue; // Position closed or never held → no entitlement
-      const perShare = parseFloat(row.per_share_amount || 0);
-      if (!isFinite(perShare) || perShare <= 0) continue;
-      const amount = +(shares * perShare).toFixed(2);
-      if (row.status === 'declared') declared += amount;
-      else forecast += amount;
-      breakdown.push({
-        ticker,
-        shares,
-        per_share_amount: perShare,
-        currency: row.currency || 'USD',
-        ex_date: row.ex_date,
-        payment_date: row.payment_date,
-        status: row.status,
-        amount_usd: amount,
-        source_url: row.source_url || null,
-      });
-    }
-
-    const interestPending = 0; // Awaiting cash_sweep_rate setting
-
-    res.status(200).json({
-      ok: true,
-      as_of: today,
-      year_end: yend,
-      total_pending_usd: +(declared + forecast + interestPending).toFixed(2),
-      declared_usd: +declared.toFixed(2),
-      forecast_usd: +forecast.toFixed(2),
-      interest_pending_usd: interestPending,
-      breakdown,
-    });
+    const result = await computePendingDividends();
+    res.status(200).json(result);
   } catch (err) {
     console.error('[dividend-pending] error:', err);
     res.status(500).json({ ok: false, error: err.message || 'Internal error' });
   }
 };
+
+module.exports = handler;
+module.exports.computePendingDividends = computePendingDividends;
