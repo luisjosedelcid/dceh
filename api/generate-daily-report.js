@@ -430,15 +430,15 @@ module.exports = async (req, res) => {
     y += 38;
 
     const cols = [
-      { label: 'TICKER',   w: 50,  align: 'left'  },
-      { label: 'QTY',      w: 44,  align: 'right' },
-      { label: 'AVG COST', w: 56,  align: 'right' },
-      { label: 'LAST',     w: 50,  align: 'right' },
-      { label: 'MKT VALUE',w: 70,  align: 'right' },
-      { label: 'UNREAL',   w: 70,  align: 'right' },
-      { label: 'IRR (ANN)',w: 56,  align: 'right' },
-      { label: 'WEIGHT',   w: 50,  align: 'right' },
-      { label: 'DAYS',     w: 38,  align: 'right' },
+      { label: 'TICKER',   w: 46,  align: 'left'  },
+      { label: 'QTY',      w: 42,  align: 'right' },
+      { label: 'AVG COST', w: 54,  align: 'right' },
+      { label: 'LAST',     w: 48,  align: 'right' },
+      { label: 'MKT VALUE',w: 66,  align: 'right' },
+      { label: 'UNREAL',   w: 96,  align: 'right' },
+      { label: 'IRR (ANN)',w: 52,  align: 'right' },
+      { label: 'WEIGHT',   w: 48,  align: 'right' },
+      { label: 'DAYS',     w: 32,  align: 'right' },
     ];
     const tableW = cols.reduce((s, c) => s + c.w, 0);
 
@@ -464,14 +464,30 @@ module.exports = async (req, res) => {
         { v: h.avg_cost != null ? `$${h.avg_cost.toFixed(2)}` : '—', color: NEAR_BLACK, font: 'Helvetica' },
         { v: h.last_price != null ? `$${h.last_price.toFixed(2)}` : '—', color: NEAR_BLACK, font: 'Helvetica' },
         { v: fmtUSD(h.market_value, 0), color: NEAR_BLACK, font: 'Helvetica' },
-        { v: `${fmtUSDSigned(h.unrealized_pnl)} (${fmtPct(unrealPct, 1)})`, color: pctColor(h.unrealized_pnl), font: 'Helvetica-Bold' },
+        null, // UNREAL handled separately so the % stays on the same line in smaller gray
         { v: fmtPct(h.irr_annualized, 1), color: pctColor(h.irr_annualized), font: 'Helvetica-Bold' },
         { v: fmtPct(h.weight_pct, 1), color: NEAR_BLACK, font: 'Helvetica' },
         { v: h.days_held != null ? String(h.days_held) : '—', color: GRAY, font: 'Helvetica' },
       ];
       cells.forEach((cell, i) => {
-        doc.fillColor(cell.color).font(cell.font).fontSize(8)
-           .text(cell.v, cx + 4, y + 6, { width: cols[i].w - 8, align: cols[i].align, lineBreak: false });
+        if (cell === null) {
+          // UNREAL cell: render USD amount + % side-by-side, right-aligned
+          const usdStr = fmtUSDSigned(h.unrealized_pnl);
+          const pctStr = unrealPct != null ? ' (' + fmtPct(unrealPct, 1) + ')' : '';
+          doc.font('Helvetica').fontSize(7.5);
+          const pctW = doc.widthOfString(pctStr);
+          doc.font('Helvetica-Bold').fontSize(8);
+          const usdW = doc.widthOfString(usdStr);
+          const totalW = usdW + pctW;
+          const startX = cx + cols[i].w - 4 - totalW;
+          doc.fillColor(pctColor(h.unrealized_pnl)).font('Helvetica-Bold').fontSize(8)
+             .text(usdStr, startX, y + 6, { lineBreak: false });
+          doc.fillColor(GRAY).font('Helvetica').fontSize(7.5)
+             .text(pctStr, startX + usdW, y + 6.5, { lineBreak: false });
+        } else {
+          doc.fillColor(cell.color).font(cell.font).fontSize(8)
+             .text(cell.v, cx + 4, y + 6, { width: cols[i].w - 8, align: cols[i].align, lineBreak: false });
+        }
         cx += cols[i].w;
       });
       y += 20;
