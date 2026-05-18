@@ -1044,9 +1044,28 @@ function applyAdminGate(){
 }
 
 // ── Boot ──────────────────────────────────────
-window.addEventListener('dce-auth-ready',()=>{ applyAdminGate(); loadDashboard(); loadExisting(); loadPricesSummary(); });
-if(window.dceAuth && window.dceAuth.ready && window.dceAuth.ready()){
-  applyAdminGate(); loadDashboard(); loadExisting(); loadPricesSummary();
+// dce-auth.js exposes window.dceAuth synchronously but never fires 'dce-auth-ready'.
+// We boot immediately once the DOM scripts have run, using a flag to prevent double-boot.
+let _booted = false;
+function _boot(){
+  if(_booted) return;
+  _booted = true;
+  applyAdminGate();
+  loadDashboard();
+  loadExisting();
+  loadPricesSummary();
+}
+
+// Primary: event fired by dce-auth.js (future-proof if it ever adds it)
+window.addEventListener('dce-auth-ready', _boot);
+
+// Fallback: boot as soon as this inline script runs (dce-auth.js is defer,
+// so by the time DOMContentLoaded fires both scripts have executed).
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', _boot);
+} else {
+  // Already interactive/complete — fire on next tick so Chart.js defer has loaded
+  setTimeout(_boot, 0);
 }
 </script>
 </body>
