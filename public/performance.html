@@ -769,13 +769,35 @@ async function loadDashboard(){
   loading.classList.remove('hide');
   content.classList.add('hide');
   loading.textContent = 'Loading…';
+
+  // Guard: don't even try to fetch protected data if not authenticated.
+  const tok = adminToken();
+  if(!tok){
+    loading.innerHTML = 'Sign in to view performance. '
+      + '<a href="#" id="dash-login-link" style="color:var(--dce-gold);text-decoration:underline">Admin login</a>';
+    const link = document.getElementById('dash-login-link');
+    if(link) link.addEventListener('click', (ev)=>{
+      ev.preventDefault();
+      if(window.dceAuth && typeof window.dceAuth.openLoginModal === 'function'){
+        window.dceAuth.openLoginModal();
+      }
+    });
+    return;
+  }
+
   try{
-    const tok = adminToken();
-    const hdrs = tok ? { headers:{'x-admin-token':tok} } : {};
+    const hdrs = { headers:{'x-admin-token':tok} };
     const [perfRes, pendingRes] = await Promise.all([
       fetch('/api/performance', hdrs),
       fetch('/api/dividend-pending', hdrs).catch(()=>null),
     ]);
+
+    // Auth failure → friendly message, not raw error.
+    if(perfRes.status === 401 || perfRes.status === 403){
+      loading.textContent = 'Session expired or unauthorized. Please log in again.';
+      return;
+    }
+
     const j = await perfRes.json();
     if(!perfRes.ok || !j.ok) throw new Error(j.error || ('HTTP '+perfRes.status));
     if(!j.kpis){
