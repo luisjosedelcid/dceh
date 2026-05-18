@@ -6,6 +6,7 @@
   ],
   "rewrites": [
     { "source": "/bkng", "destination": "/company.html?ticker=BKNG" },
+    { "source": "/bkng-legacy", "destination": "/bkng-legacy.html" },
     { "source": "/sap", "destination": "/company.html?ticker=SAP" },
     { "source": "/lulu", "destination": "/company.html?ticker=LULU" },
     { "source": "/msft", "destination": "/company.html?ticker=MSFT" },
