@@ -111,8 +111,7 @@
   .nodata{padding:40px 20px;text-align:center;color:var(--gray-mid);font-size:13px}
 
   /* ── Dashboard KPIs ── */
-  .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
-  @media (max-width: 1100px){ .kpi-grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))} }
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
   .kpi{background:var(--cream);border:1px solid var(--rule);padding:16px 18px;display:flex;flex-direction:column;gap:4px;position:relative}
   .kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold)}
   .kpi-label{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid)}
@@ -208,7 +207,6 @@
         <div class="kpi"><div class="kpi-label">IRR (annualized)</div><div class="kpi-value" id="kpi-irr">—</div><div class="kpi-sub" id="kpi-irr-sub">since inception</div></div>
         <div class="kpi"><div class="kpi-label">Max drawdown</div><div class="kpi-value" id="kpi-dd">—</div><div class="kpi-sub" id="kpi-dd-sub">peak-to-trough</div></div>
         <div class="kpi"><div class="kpi-label">Net invested</div><div class="kpi-value" id="kpi-inv">—</div><div class="kpi-sub" id="kpi-inv-sub">contrib. − withdr.</div></div>
-        <div class="kpi"><div class="kpi-label">Total P&amp;L</div><div class="kpi-value" id="kpi-pnl">—</div><div class="kpi-sub" id="kpi-pnl-sub">realized + unrealized</div></div>
       </div>
 
       <!-- IPS Bandas panel -->
@@ -260,6 +258,7 @@
         <div class="mini-stat" title="Dividends and interest already credited to the account during the period."><div class="mini-label">Dividends + interest (received)</div><div class="mini-value" id="st-income">—</div></div>
         <div class="mini-stat" title="Estimated dividends and interest yet to be received this year. Requires forward dividend yield per holding + cash sweep rate (pending data source)."><div class="mini-label">Dividends + interest (pending)</div><div class="mini-value" id="st-income-pending" style="color:var(--gray-mid);font-style:italic;font-size:14px">Pendiente</div></div>
         <div class="mini-stat"><div class="mini-label">Withholding tax</div><div class="mini-value" id="st-tax">—</div></div>
+        <div class="mini-stat" title="Realized + unrealized P&L since inception."><div class="mini-label">Total P&amp;L</div><div class="mini-value" id="st-totalpnl">—</div></div>
       </div>
 
       <div class="actions" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -788,10 +787,8 @@ function renderDashboard(j){
   ddEl.textContent = '−'+fmtPct(k.max_drawdown_pct);
   ddEl.classList.add('neg');
 
-  const pnlEl = document.getElementById('kpi-pnl');
-  pnlEl.textContent = signedUsd(k.total_pnl_usd);
-  setSignClass(pnlEl, k.total_pnl_usd);
-  document.getElementById('kpi-pnl-sub').textContent = `total return ${signedPct(k.total_return_pct)}`;
+  const pnlEl = document.getElementById('st-totalpnl');
+  if (pnlEl) { pnlEl.textContent = signedUsd(k.total_pnl_usd); setSignClass(pnlEl, k.total_pnl_usd); }
 
   document.getElementById('kpi-inv').textContent = fmtUsdShort(k.invested_usd);
   document.getElementById('kpi-inv-sub').textContent = `contrib $${k.total_contributions.toLocaleString('en-US',{maximumFractionDigits:0})} · withdr $${k.total_withdrawals.toLocaleString('en-US',{maximumFractionDigits:0})}`;
