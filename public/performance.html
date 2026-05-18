@@ -64,14 +64,16 @@
   table.tbl tr:nth-child(even) td{background:var(--row-alt)}
   table.tbl td.r,table.tbl th.r{text-align:right}
   table.tbl td.c,table.tbl th.c{text-align:center}
+  /* Per-row P&L colours on tbl tds */
   table.tbl td.pos{color:var(--green)}
   table.tbl td.neg{color:var(--red)}
 
+  /* Ticker link → company dashboard */
   table.tbl a.ticker-link{color:var(--navy);text-decoration:none;border-bottom:1px dotted transparent;transition:color .15s, border-color .15s}
   table.tbl a.ticker-link:hover{color:var(--gold);border-bottom-color:var(--gold)}
   table.tbl a.ticker-link strong{font-weight:700}
 
-  /* ── Alert cells ── */
+  /* ── Alert cells (migrated from /portfolio.html) ───────────────────────── */
   .alert-cell{font-size:12px;font-variant-numeric:tabular-nums;cursor:pointer;user-select:none;padding:4px 6px;border-radius:3px;display:inline-flex;align-items:center;gap:5px;min-width:70px;justify-content:flex-end}
   .alert-cell:hover{background:rgba(184,139,71,0.08)}
   .alert-cell.empty{color:var(--gray-mid);font-weight:400;opacity:0.5}
@@ -108,9 +110,8 @@
   .muted{color:var(--gray-mid)}
   .nodata{padding:40px 20px;text-align:center;color:var(--gray-mid);font-size:13px}
 
-  /* ── Dashboard KPIs — headline row (5 cards) ── */
-  .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
-  @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}}
+  /* ── Dashboard KPIs ── */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
   .kpi{background:var(--cream);border:1px solid var(--rule);padding:16px 18px;display:flex;flex-direction:column;gap:4px;position:relative}
   .kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold)}
   .kpi-label{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid)}
@@ -118,18 +119,6 @@
   .kpi-sub{font-size:11px;color:var(--gray-txt);font-variant-numeric:tabular-nums}
   .kpi-value.pos{color:var(--green)}
   .kpi-value.neg{color:var(--red)}
-
-  /* ── Return decomposition row ── */
-  .decomp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:14px}
-  .mini-stat{background:var(--white);border:1px solid var(--rule);padding:12px 14px;border-left:3px solid var(--navy)}
-  .mini-stat.featured{background:var(--cream);border-color:var(--gold-rule);border-left:3px solid var(--gold)}
-  .mini-label{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:4px}
-  .mini-value{font-size:15px;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums}
-  .mini-value.pos{color:var(--green)} .mini-value.neg{color:var(--red)}
-
-  /* section divider label */
-  .section-label{font-size:9px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:var(--gray-mid);margin-top:24px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
-  .section-label::after{content:'';flex:1;height:1px;background:var(--rule)}
 
   /* ── IPS Bands card ── */
   .ips-card{background:var(--white);border:1px solid var(--rule);margin-top:20px;margin-bottom:0}
@@ -144,6 +133,10 @@
   .ips-badge{display:inline-block;padding:2px 9px;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase}
   .ips-badge.ok{background:rgba(42,122,86,0.12);color:var(--green)}
   .ips-badge.out{background:rgba(155,35,53,0.12);color:var(--red)}
+  .mini-stat{background:var(--cream);border:1px solid var(--rule);padding:12px 14px;border-left:3px solid var(--navy)}
+  .mini-label{font-size:9px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:4px}
+  .mini-value{font-size:15px;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums}
+  .mini-value.pos{color:var(--green)} .mini-value.neg{color:var(--red)}
 
   /* ── Tabs ── */
   .tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin-bottom:24px}
@@ -207,27 +200,14 @@
     <h2>Performance dashboard</h2>
     <div id="dash-loading" class="nodata">Loading…</div>
     <div id="dash-content" class="hide">
-
-      <!-- ── Headline KPIs (5 cards) ── -->
+      <!-- KPI grid -->
       <div class="kpi-grid">
         <div class="kpi"><div class="kpi-label">NAV (USD)</div><div class="kpi-value" id="kpi-nav">—</div><div class="kpi-sub" id="kpi-nav-sub">—</div></div>
         <div class="kpi"><div class="kpi-label">TWR cumulative</div><div class="kpi-value" id="kpi-twr">—</div><div class="kpi-sub" id="kpi-twr-sub">vs IWQU.L —</div></div>
         <div class="kpi"><div class="kpi-label">IRR (annualized)</div><div class="kpi-value" id="kpi-irr">—</div><div class="kpi-sub" id="kpi-irr-sub">since inception</div></div>
         <div class="kpi"><div class="kpi-label">Max drawdown</div><div class="kpi-value" id="kpi-dd">—</div><div class="kpi-sub" id="kpi-dd-sub">peak-to-trough</div></div>
+        <div class="kpi"><div class="kpi-label">Total P&amp;L</div><div class="kpi-value" id="kpi-pnl">—</div><div class="kpi-sub" id="kpi-pnl-sub">realized + unrealized</div></div>
         <div class="kpi"><div class="kpi-label">Net invested</div><div class="kpi-value" id="kpi-inv">—</div><div class="kpi-sub" id="kpi-inv-sub">contrib. − withdr.</div></div>
-      </div>
-
-      <!-- ── Return decomposition ── -->
-      <div class="section-label">Return decomposition</div>
-      <div class="decomp-grid">
-        <div class="mini-stat featured"><div class="mini-label">Total P&amp;L</div><div class="mini-value" id="kpi-pnl">—</div><div style="font-size:10px;color:var(--gray-mid);margin-top:3px">realized + unrealized</div></div>
-        <div class="mini-stat"><div class="mini-label">Cash (USD)</div><div class="mini-value" id="st-cash">—</div></div>
-        <div class="mini-stat"><div class="mini-label">Market value</div><div class="mini-value" id="st-mv">—</div></div>
-        <div class="mini-stat"><div class="mini-label">Realized P&amp;L</div><div class="mini-value" id="st-realized">—</div></div>
-        <div class="mini-stat"><div class="mini-label">Unrealized P&amp;L</div><div class="mini-value" id="st-unrealized">—</div></div>
-        <div class="mini-stat" title="Dividends and interest already credited to the account during the period."><div class="mini-label">Dividends + interest (received)</div><div class="mini-value" id="st-income">—</div></div>
-        <div class="mini-stat" title="Estimated dividends and interest yet to be received this year."><div class="mini-label">Dividends + interest (pending)</div><div class="mini-value" id="st-income-pending" style="color:var(--gray-mid);font-style:italic;font-size:14px">Pendiente</div></div>
-        <div class="mini-stat"><div class="mini-label">Withholding tax</div><div class="mini-value" id="st-tax">—</div></div>
       </div>
 
       <!-- IPS Bandas panel -->
@@ -268,6 +248,17 @@
         <div style="overflow-x:auto;border:1px solid var(--rule)">
           <table class="tbl" id="tbl-holdings"></table>
         </div>
+      </div>
+
+      <!-- Income / Cash detail -->
+      <div style="margin-top:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+        <div class="mini-stat"><div class="mini-label">Cash (USD)</div><div class="mini-value" id="st-cash">—</div></div>
+        <div class="mini-stat"><div class="mini-label">Market value</div><div class="mini-value" id="st-mv">—</div></div>
+        <div class="mini-stat"><div class="mini-label">Realized P&amp;L</div><div class="mini-value" id="st-realized">—</div></div>
+        <div class="mini-stat"><div class="mini-label">Unrealized P&amp;L</div><div class="mini-value" id="st-unrealized">—</div></div>
+        <div class="mini-stat" title="Dividends and interest already credited to the account during the period."><div class="mini-label">Dividends + interest (received)</div><div class="mini-value" id="st-income">—</div></div>
+        <div class="mini-stat" title="Estimated dividends and interest yet to be received this year. Requires forward dividend yield per holding + cash sweep rate (pending data source)."><div class="mini-label">Dividends + interest (pending)</div><div class="mini-value" id="st-income-pending" style="color:var(--gray-mid);font-style:italic;font-size:14px">Pendiente</div></div>
+        <div class="mini-stat"><div class="mini-label">Withholding tax</div><div class="mini-value" id="st-tax">—</div></div>
       </div>
 
       <div class="actions" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -398,6 +389,8 @@
 <script>
 let parsedPayload = null;
 
+// Always re-read window.dceAuth — the helper is loaded with `defer` so it may not
+// be ready when this inline script first runs.
 function auth(){ return window.dceAuth || null; }
 function adminToken(){ const a=auth(); return (a && a.token && a.token()) || ''; }
 function isAdmin(){ const a=auth(); if(!a||!a.isAdmin||!a.isAdmin()) return false; const r=a.role&&a.role(); return r==='admin' || !r; }
@@ -454,6 +447,7 @@ async function handleFile(file){
 function renderPreview(j){
   document.getElementById('preview-area').classList.remove('hide');
   document.getElementById('btn-commit').disabled=false;
+  // Summary
   const dr=j.summary.dateRange;
   const drStr=dr?`${dr.from} → ${dr.to}`:'—';
   const net=j.summary.netContribution||0;
@@ -465,6 +459,7 @@ function renderPreview(j){
     <div class="summary-cell"><div class="lbl">Skipped</div><div class="val small">${j.summary.skipped}</div></div>
     <div class="summary-cell"><div class="lbl">Errors</div><div class="val small ${j.summary.errors?'red':''}">${j.summary.errors}</div></div>
   `;
+  // Transactions table
   document.getElementById('tx-count').textContent=`(${j.transactions.length})`;
   document.getElementById('tbl-tx').innerHTML=`
     <thead><tr><th>Date</th><th>Side</th><th>Symbol</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Fee</th><th class="r">Amount</th></tr></thead>
@@ -479,6 +474,7 @@ function renderPreview(j){
         <td class="r"><strong>$${fmtUsd(t.qty*t.price_native)}</strong></td>
       </tr>`).join('')}
     </tbody>`;
+  // Cashflows table
   document.getElementById('cf-count').textContent=`(${j.cashflows.length})`;
   document.getElementById('tbl-cf').innerHTML=`
     <thead><tr><th>Date</th><th>Type</th><th>Symbol</th><th class="r">Amount</th><th>Notes</th></tr></thead>
@@ -491,6 +487,7 @@ function renderPreview(j){
         <td class="muted" style="font-size:11px">${c.notes||''}</td>
       </tr>`).join('')}
     </tbody>`;
+  // Warnings
   const warnings=[];
   if(j.skipped.length) warnings.push(`Skipped ${j.skipped.length} row(s): ${j.skipped.map(s=>s.action).join(', ')}`);
   if(j.errors.length) warnings.push(`Errors: ${j.errors.map(e=>e.reason||JSON.stringify(e)).join('; ')}`);
@@ -701,11 +698,13 @@ document.getElementById('btn-prices-backfill').addEventListener('click',async()=
 // ── Dashboard ─────────────────────────────────
 let equityChart = null;
 function fmtUsdShort(n){ if(n==null||isNaN(n)) return '—'; return '$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:0}); }
-function fmtPct(n,dec){ dec=dec||2; if(n==null||isNaN(n)) return '—'; return (Number(n)*100).toFixed(dec)+'%'; }
+function fmtPct(n,dec){ dec=dec||2; if(n==null||isNaN(n)) return '—'; const s=(Number(n)*100).toFixed(dec)+'%'; return s; }
 function signedPct(n,dec){ if(n==null||isNaN(n)) return '—'; const v=Number(n)*100; return (v>=0?'+':'')+v.toFixed(dec||2)+'%'; }
 function signedUsd(n){ if(n==null||isNaN(n)) return '—'; const v=Number(n); return (v>=0?'+$':'−$')+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function setSignClass(el,n){ if(n==null||isNaN(n)){ el.classList.remove('pos','neg'); return;} el.classList.toggle('pos',n>0); el.classList.toggle('neg',n<0); }
 
+// Render pending dividends+interest mini-stat.
+// Expects: { total_pending_usd, declared_usd, forecast_usd, interest_pending_usd, breakdown:[{ticker, shares, per_share_amount, payment_date, status, amount_usd, source_url}] }
 function renderPendingIncome(p){
   const el = document.getElementById('st-income-pending');
   if (!el) return;
@@ -720,6 +719,7 @@ function renderPendingIncome(p){
   el.style.fontStyle = '';
   el.style.fontSize = '';
   el.textContent = '$'+p.total_pending_usd.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
+  // Build tooltip with breakdown
   const card = el.closest('.mini-stat');
   if (card) {
     const lines = [];
@@ -730,365 +730,542 @@ function renderPendingIncome(p){
       lines.push('');
       lines.push('Breakdown:');
       for (const b of p.breakdown){
-        lines.push(`  ${b.ticker} · ${b.shares} sh × $${Number(b.per_share_amount||0).toFixed(4)} = $${Number(b.amount_usd||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} (${b.status||'—'}, pay ${b.payment_date||'—'})`);
+        lines.push(`  ${b.ticker} · ${b.shares} sh × $${Number(b.per_share_amount).toFixed(2)} → $${Number(b.amount_usd).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} (${b.status}, pays ${b.payment_date})`);
       }
     }
     card.title = lines.join('\n');
   }
 }
 
-// IPS Bands — calculated locally from kpis data
-function renderIpsBands(k, holdings){
-  const BANDS = [
-    { label: 'Cash / equivalentes',    min: 0.15, max: 0.25, getValue: (nav,cash) => nav>0 ? cash/nav : 0 },
-    { label: 'Equity — quality',        min: 0.60, max: 0.80, getValue: (nav,cash,mv) => nav>0 ? mv/nav : 0 },
-    { label: 'Equity — special sit',    min: 0.00, max: 0.15, getValue: () => 0 },
-    { label: 'Renta fija / coberturas', min: 0.00, max: 0.10, getValue: () => 0 },
-  ];
-  const nav  = k.nav || 0;
-  const cash = k.cash_usd || 0;
-  const mv   = k.market_value_usd || 0;
-  const tbody = document.getElementById('ips-bands-tbody');
-  if (!tbody) return;
-  tbody.innerHTML = BANDS.map(b => {
-    const current = b.getValue(nav, cash, mv, holdings);
-    const ok = current >= b.min && current <= b.max;
-    return `<tr>
-      <td>${b.label}</td>
-      <td class="right">${fmtPct(b.min)} – ${fmtPct(b.max)}</td>
-      <td class="right">${fmtPct(current)}</td>
-      <td><span class="ips-badge ${ok?'ok':'out'}">${ok?'OK':'OUT'}</span></td>
-    </tr>`;
-  }).join('');
-  document.getElementById('ips-bands-card').style.display = '';
-}
-
 async function loadDashboard(){
-  const loading = document.getElementById('dash-loading');
-  const content = document.getElementById('dash-content');
-  loading.classList.remove('hide');
-  content.classList.add('hide');
-  loading.textContent = 'Loading…';
-
-  // Guard: don't even try to fetch protected data if not authenticated.
-  const tok = adminToken();
-  if(!tok){
-    loading.innerHTML = 'Sign in to view performance. '
-      + '<a href="#" id="dash-login-link" style="color:var(--dce-gold);text-decoration:underline">Admin login</a>';
-    const link = document.getElementById('dash-login-link');
-    if(link) link.addEventListener('click', (ev)=>{
-      ev.preventDefault();
-      if(window.dceAuth && typeof window.dceAuth.openLoginModal === 'function'){
-        window.dceAuth.openLoginModal();
-      }
-    });
-    return;
-  }
-
+  document.getElementById('dash-loading').classList.remove('hide');
+  document.getElementById('dash-content').classList.add('hide');
   try{
-    const hdrs = { headers:{'x-admin-token':tok} };
-    const [perfRes, pendingRes] = await Promise.all([
+    const tok = adminToken();
+    const hdrs = tok ? { headers: { 'x-admin-token': tok } } : {};
+    // Load alerts + performance + pending dividends in parallel
+    const [, r, rp] = await Promise.all([
+      loadAlerts(),
       fetch('/api/performance', hdrs),
-      fetch('/api/dividend-pending', hdrs).catch(()=>null),
+      fetch('/api/dividend-pending', hdrs).catch(() => null),
     ]);
-
-    // Auth failure → friendly message, not raw error.
-    if(perfRes.status === 401 || perfRes.status === 403){
-      loading.textContent = 'Session expired or unauthorized. Please log in again.';
-      return;
-    }
-
-    const j = await perfRes.json();
-    if(!perfRes.ok || !j.ok) throw new Error(j.error || ('HTTP '+perfRes.status));
+    const j = await r.json();
+    if(!r.ok || !j.ok) throw new Error(j.error || ('HTTP '+r.status));
     if(!j.kpis){
-      loading.textContent = 'No data yet — import a Schwab CSV or add manual entries below.';
+      document.getElementById('dash-loading').textContent = 'No data yet — import a Schwab CSV or add manual entries below.';
       return;
     }
-    // Attach pending dividends
-    if(pendingRes && pendingRes.ok){
-      try{ const jp = await pendingRes.json(); if(jp && jp.ok) j.pending = jp; }catch(_){}
+    // Optional: attach pending dividends if endpoint responded ok
+    if (rp && rp.ok) {
+      try { const jp = await rp.json(); if (jp && jp.ok) j.pending = jp; } catch(_){}
     }
     renderDashboard(j);
-    loading.classList.add('hide');
-    content.classList.remove('hide');
+    document.getElementById('dash-loading').classList.add('hide');
+    document.getElementById('dash-content').classList.remove('hide');
   }catch(e){
-    loading.textContent = 'Failed to load: '+e.message;
+    document.getElementById('dash-loading').textContent = 'Failed to load: '+e.message;
   }
 }
 
 function renderDashboard(j){
-  const k = j.kpis || {};
-
-  // ── Headline KPIs ──
+  const k = j.kpis;
+  // KPI cards
   document.getElementById('kpi-nav').textContent = fmtUsdShort(k.nav);
-  document.getElementById('kpi-nav-sub').textContent =
-    k.inception_date && k.last_date
-      ? `${k.inception_date} → ${k.last_date} · ${k.days_elapsed} d`
-      : '—';
+  document.getElementById('kpi-nav-sub').textContent = `${k.inception_date} → ${k.last_date} · ${k.days_elapsed} d`;
 
   const twrEl = document.getElementById('kpi-twr');
   twrEl.textContent = signedPct(k.twr_cum_pct);
   setSignClass(twrEl, k.twr_cum_pct);
-  const iwquDelta = (k.twr_cum_pct!=null && k.iwqu_return_pct!=null)
-    ? (k.twr_cum_pct - k.iwqu_return_pct) : null;
-  document.getElementById('kpi-twr-sub').textContent =
-    k.iwqu_return_pct!=null
-      ? `IWQU.L ${signedPct(k.iwqu_return_pct)} · Δ ${signedPct(iwquDelta)}`
-      : 'vs IWQU.L —';
+  const iwquDelta = (k.twr_cum_pct!=null && k.iwqu_return_pct!=null) ? (k.twr_cum_pct - k.iwqu_return_pct) : null;
+  document.getElementById('kpi-twr-sub').textContent = `IWQU.L ${signedPct(k.iwqu_return_pct)} · Δ ${signedPct(iwquDelta)}`;
 
   const irrEl = document.getElementById('kpi-irr');
   irrEl.textContent = signedPct(k.irr_pct);
   setSignClass(irrEl, k.irr_pct);
 
   const ddEl = document.getElementById('kpi-dd');
-  ddEl.textContent = k.max_drawdown_pct!=null ? '−'+fmtPct(k.max_drawdown_pct) : '—';
-  if(k.max_drawdown_pct!=null) ddEl.classList.add('neg');
+  ddEl.textContent = '−'+fmtPct(k.max_drawdown_pct);
+  ddEl.classList.add('neg');
 
-  const invEl = document.getElementById('kpi-inv');
-  invEl.textContent = fmtUsdShort(k.invested_usd);
-  document.getElementById('kpi-inv-sub').textContent =
-    (k.total_contributions!=null && k.total_withdrawals!=null)
-      ? `contrib $${k.total_contributions.toLocaleString('en-US',{maximumFractionDigits:0})} · withdr $${k.total_withdrawals.toLocaleString('en-US',{maximumFractionDigits:0})}`
-      : 'contrib. − withdr.';
-
-  // ── Total P&L (featured card) ──
   const pnlEl = document.getElementById('kpi-pnl');
   pnlEl.textContent = signedUsd(k.total_pnl_usd);
   setSignClass(pnlEl, k.total_pnl_usd);
+  document.getElementById('kpi-pnl-sub').textContent = `total return ${signedPct(k.total_return_pct)}`;
 
-  // ── Decomposition stats ──
+  document.getElementById('kpi-inv').textContent = fmtUsdShort(k.invested_usd);
+  document.getElementById('kpi-inv-sub').textContent = `contrib $${k.total_contributions.toLocaleString('en-US',{maximumFractionDigits:0})} · withdr $${k.total_withdrawals.toLocaleString('en-US',{maximumFractionDigits:0})}`;
+
+  // Mini stats
   document.getElementById('st-cash').textContent = fmtUsdShort(k.cash_usd);
   document.getElementById('st-mv').textContent = fmtUsdShort(k.market_value_usd);
-
-  const realEl = document.getElementById('st-realized');
-  realEl.textContent = signedUsd(k.realized_pnl);
-  setSignClass(realEl, k.realized_pnl);
-
-  const unrEl = document.getElementById('st-unrealized');
-  unrEl.textContent = signedUsd(k.unrealized_pnl);
-  setSignClass(unrEl, k.unrealized_pnl);
-
-  document.getElementById('st-income').textContent =
-    (k.total_dividends!=null || k.total_interest!=null)
-      ? '$'+((k.total_dividends||0)+(k.total_interest||0)).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})
-      : '—';
-
+  const r=document.getElementById('st-realized'); r.textContent = signedUsd(k.realized_pnl); setSignClass(r, k.realized_pnl);
+  const u=document.getElementById('st-unrealized'); u.textContent = signedUsd(k.unrealized_pnl); setSignClass(u, k.unrealized_pnl);
+  document.getElementById('st-income').textContent = '$'+(k.total_dividends + k.total_interest).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   renderPendingIncome(j.pending);
+  document.getElementById('st-tax').textContent = '−$'+Math.abs(k.total_taxes).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 
-  document.getElementById('st-tax').textContent =
-    k.total_taxes!=null
-      ? '−$'+Math.abs(k.total_taxes).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})
-      : '—';
+  // Holdings table
+  renderHoldings(j.holdings);
+  // Layer live Finnhub quotes on top of the static close-of-yesterday snapshot
+  liveOverlay(j.holdings);
 
-  // ── IPS Bands (computed locally) ──
-  renderIpsBands(k, j.holdings || []);
+  // Equity curve
+  renderEquityChart(j.series);
 
-  // ── Holdings table ──
-  const liveBadge = document.getElementById('holdings-live-badge');
-  if(j.holdings && j.holdings.length){
-    liveBadge.textContent = '○ last close';
-    liveBadge.style.color = 'var(--gray-mid)';
-    document.getElementById('tbl-holdings').innerHTML=`
-      <thead>
-        <tr>
-          <th>Ticker</th><th>Name</th>
-          <th class="r">Shares</th><th class="r">Avg cost</th>
-          <th class="r">Last price</th><th class="r">Market value</th>
-          <th class="r">Unr. P&L</th><th class="r">Unr. %</th>
-          <th class="r">Weight</th>
-        </tr>
-      </thead>
-      <tbody>${j.holdings.map(h=>{
-        const unrCls = h.unrealized_pnl>0?'pos':h.unrealized_pnl<0?'neg':'';
-        return `<tr>
-          <td><a class="ticker-link" href="/company.html?ticker=${h.ticker}" target="_blank"><strong>${h.ticker}</strong></a></td>
-          <td class="muted" style="font-size:11px">${h.name||'—'}</td>
-          <td class="r">${fmtNum(h.shares,4)}</td>
-          <td class="r">$${fmtUsd(h.avg_cost)}</td>
-          <td class="r">$${fmtUsd(h.last_price)}</td>
-          <td class="r"><strong>$${fmtUsd(h.market_value)}</strong></td>
-          <td class="r ${unrCls}">${signedUsd(h.unrealized_pnl)}</td>
-          <td class="r ${unrCls}">${signedPct(h.unrealized_pct)}</td>
-          <td class="r">${h.weight!=null?fmtPct(h.weight):'—'}</td>
-        </tr>`;
-      }).join('')}
-      </tbody>`;
-    // Live price overlay
-    liveOverlay(j.holdings);
-  }else{
-    liveBadge.textContent = '';
-    document.getElementById('tbl-holdings').innerHTML='<tr><td colspan="9" class="nodata">No open positions.</td></tr>';
-  }
-
-  // ── Equity curve ──
-  if(j.series && j.series.dates && j.series.dates.length){
-    const ctx = document.getElementById('chart-equity').getContext('2d');
-    if(equityChart) equityChart.destroy();
-    equityChart = new Chart(ctx,{
-      type:'line',
-      data:{
-        labels: j.series.dates,
-        datasets:[
-          {
-            label:'Portfolio TWR',
-            data: j.series.twr_pct.map(v=>v*100),
-            borderColor:'#1b2642',
-            backgroundColor:'rgba(27,38,66,0.06)',
-            borderWidth:2,
-            pointRadius:0,
-            tension:0.2,
-            fill:true,
-          },
-          {
-            label:'IWQU.L',
-            data: j.series.iwqu_pct.map(v=>v*100),
-            borderColor:'#b88b47',
-            backgroundColor:'transparent',
-            borderWidth:1.5,
-            borderDash:[4,3],
-            pointRadius:0,
-            tension:0.2,
-          }
-        ]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        interaction:{mode:'index',intersect:false},
-        plugins:{
-          legend:{display:true,position:'top',labels:{font:{size:11},boxWidth:20}},
-          tooltip:{
-            callbacks:{
-              label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}%`
-            }
-          }
-        },
-        scales:{
-          x:{ticks:{font:{size:10},maxTicksLimit:12},grid:{color:'rgba(27,38,66,0.05)'}},
-          y:{ticks:{font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(27,38,66,0.05)'}}
-        }
-      }
-    });
-  }
+  // IPS Bands panel
+  renderIpsBands(j);
 }
 
-// ── Live price overlay (Finnhub) ──────────────
-async function liveOverlay(holdings){
-  const badge = document.getElementById('holdings-live-badge');
-  const EQUITY_RE = /^[A-Z]{1,5}$/;
-  const tickers = holdings.map(h=>h.ticker).filter(t=>EQUITY_RE.test(t));
-  if(!tickers.length){ badge.textContent='○ no equity tickers'; return; }
-  try{
-    const quotes = await Promise.all(tickers.map(t=>
-      fetch(`/api/quote?ticker=${t}`,{headers:{'x-admin-token':adminToken()}})
-        .then(r=>r.ok?r.json():null).catch(()=>null)
-    ));
-    let updated=0;
-    quotes.forEach((q,i)=>{
-      if(!q||q.c==null) return;
-      const h = holdings.find(x=>x.ticker===tickers[i]);
-      if(!h) return;
-      const livePrice = q.c;
-      const liveMv = livePrice * h.shares;
-      const liveUnr = liveMv - (h.avg_cost * h.shares);
-      const liveUnrPct = h.avg_cost>0 ? (livePrice/h.avg_cost)-1 : 0;
-      // update DOM
-      const rows = document.querySelectorAll(`#tbl-holdings tbody tr`);
-      rows.forEach(row=>{
-        const link = row.querySelector('a.ticker-link strong');
-        if(!link || link.textContent!==tickers[i]) return;
-        const tds = row.querySelectorAll('td');
-        if(tds[4]) tds[4].textContent='$'+fmtUsd(livePrice);
-        if(tds[5]) tds[5].innerHTML=`<strong>$${fmtUsd(liveMv)}</strong>`;
-        if(tds[6]){ tds[6].textContent=signedUsd(liveUnr); tds[6].className='r '+(liveUnr>0?'pos':liveUnr<0?'neg':''); }
-        if(tds[7]){ tds[7].textContent=signedPct(liveUnrPct); tds[7].className='r '+(liveUnrPct>0?'pos':liveUnrPct<0?'neg':''); }
-      });
-      updated++;
-    });
-    if(updated>0){
-      const now=new Date();
-      badge.textContent=`● Live · ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-      badge.style.color='var(--green)';
-    }else{
-      badge.textContent='○ live unavailable';
-    }
-  }catch(e){
-    badge.textContent='○ live unavailable';
-  }
-}
+function renderIpsBands(j) {
+  // Tactical bands per IPS §3.5-3.7
+  const BANDS = [
+    { label: 'Cash / equivalentes',   min: 0.15, max: 0.25, getValue: (nav, cash, mv, holdings) => nav > 0 ? cash / nav : 0 },
+    { label: 'Equity — quality',       min: 0.60, max: 0.80, getValue: (nav, cash, mv, holdings) => nav > 0 ? mv / nav : 0 },
+    { label: 'Equity — special sit',   min: 0.00, max: 0.15, getValue: (nav, cash, mv, holdings) => 0 },
+    { label: 'Renta fija / coberturas', min: 0.00, max: 0.10, getValue: (nav, cash, mv, holdings) => 0 },
+  ];
 
-document.getElementById('btn-dash-reload').addEventListener('click',loadDashboard);
+  const k = j.kpis;
+  const nav  = k ? (k.nav || 0) : 0;
+  const cash = k ? (k.cash_usd || 0) : 0;
+  const mv   = k ? (k.market_value_usd || 0) : 0;
+  const holdings = j.holdings || [];
 
-// ── Snapshot / report ──────────────────────────
-document.getElementById('btn-dash-snapshot').addEventListener('click',async()=>{
-  if(!confirm('Backfill NAV snapshots from all transaction dates? This may take a moment.')) return;
-  setAlert('dash-alert','warn','Backfilling snapshots…');
-  try{
-    const r = await fetch('/api/admin-backfill-snapshots',{method:'POST',headers:{'x-admin-token':adminToken()}});
-    const j = await r.json();
-    if(!r.ok){ setAlert('dash-alert','err','Failed: '+(j.error||r.status)); return; }
-    setAlert('dash-alert','ok',`Snapshots backfilled: ${j.count||'done'}.`);
-  }catch(e){ setAlert('dash-alert','err','Network error: '+e.message); }
-});
+  const tbody = document.getElementById('ips-bands-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
 
-document.getElementById('btn-perf-report').addEventListener('click',async()=>{
-  const asof = document.getElementById('perf-report-asof').value || new Date().toISOString().slice(0,10);
-  const status = document.getElementById('perf-report-status');
-  status.textContent = 'Generating…';
-  try{
-    const r = await fetch(`/api/performance-report?asOf=${asof}`,{headers:{'x-admin-token':adminToken()}});
-    if(!r.ok){ const j=await r.json(); status.textContent='Error: '+(j.error||r.status); return; }
-    const blob = await r.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `DCE_Performance_${asof}.pdf`; a.click();
-    URL.revokeObjectURL(url);
-    status.textContent = 'Downloaded.';
-  }catch(e){ status.textContent='Network error: '+e.message; }
-});
-
-// ── Tab switching ──────────────────────────────
-document.querySelectorAll('.tab-btn').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(btn.dataset.tab).classList.add('active');
+  BANDS.forEach(b => {
+    const reading = b.getValue(nav, cash, mv, holdings);
+    const pct = (reading * 100).toFixed(1) + '%';
+    const bandLabel = b.min === b.max ? (b.min * 100).toFixed(0) + '%'
+                    : (b.min * 100).toFixed(0) + '–' + (b.max * 100).toFixed(0) + '%';
+    const inBand = reading >= b.min && reading <= b.max;
+    const badgeCls = inBand ? 'ok' : 'out';
+    const badgeTxt = inBand ? 'En banda' : 'FUERA';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escHtml(b.label)}</td>
+      <td class="right" style="color:var(--gray-txt)">${bandLabel}</td>
+      <td class="right" style="font-weight:600">${pct}</td>
+      <td><span class="ips-badge ${badgeCls}">${badgeTxt}</span></td>
+    `;
+    tbody.appendChild(tr);
   });
+
+  document.getElementById('ips-bands-card').style.display = '';
+}
+
+function escHtml(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ─── Alerts (price floor / ceiling) ─ migrated from /portfolio.html ──────────
+let ALERTS_BY_TICKER = {};
+
+async function loadAlerts(){
+  try{
+    const r = await fetch('/api/alerts?scope=portfolio');
+    if(!r.ok) return;
+    const data = await r.json();
+    ALERTS_BY_TICKER = data.by_ticker || {};
+  }catch(e){ /* ignore */ }
+}
+
+function renderAlertCell(ticker, type, livePrice){
+  const a = (ALERTS_BY_TICKER[ticker] || {})[type];
+  const admin = isAdmin();
+  const ro = admin ? '' : ' readonly';
+  const onclick = admin ? `onclick="openAlertEditor('${ticker}','${type}', ${livePrice||0})"` : '';
+  if(!a){
+    return `<span class="alert-cell empty${ro}" ${onclick} title="${admin?'Click to set':'Admin only'}">—</span>`;
+  }
+  const th = Number(a.threshold);
+  const fired = !a.active && a.triggered_at;
+  const ico = fired ? '◇' : '◆';
+  let cls = 'armed';
+  if(fired) cls = 'fired';
+  else if(livePrice && th){
+    if(type==='floor'){
+      if(livePrice <= th) cls = 'broken';
+      else if(livePrice <= th*1.05) cls = 'warn';
+    } else {
+      if(livePrice >= th) cls = 'broken';
+      else if(livePrice >= th*0.95) cls = 'warn';
+    }
+  }
+  const titleParts = [];
+  titleParts.push(`${type==='floor'?'↓ Floor':'↑ Ceiling'}: $${th.toFixed(2)}`);
+  if(fired) titleParts.push(`Triggered ${new Date(a.triggered_at).toLocaleString()}`);
+  if(admin) titleParts.push(fired?'Click to re-arm':'Click to edit');
+  return `<span class="alert-cell ${cls}${ro}" ${onclick} title="${titleParts.join(' · ')}">
+    <span class="ico">${ico}</span>$${th.toFixed(2)}
+  </span>`;
+}
+
+async function openAlertEditor(ticker, type, livePrice){
+  if(!isAdmin()){ alert('Admin login required.'); return; }
+  const existing = (ALERTS_BY_TICKER[ticker] || {})[type];
+  const fired = existing && !existing.active && existing.triggered_at;
+  const arrow = type==='floor'?'↓':'↑';
+  const dirLabel = type==='floor'?'floor (alerts when price falls)':'ceiling (alerts when price rises)';
+  let prompt1 = `${ticker} ${arrow} alert ${dirLabel}\n\nLive price: $${(livePrice||0).toFixed(2)}\n`;
+  if(existing) prompt1 += `Current threshold: $${Number(existing.threshold).toFixed(2)}${fired?' (FIRED)':''}\n`;
+  prompt1 += `\nEnter threshold (or empty to delete):`;
+  const val = window.prompt(prompt1, existing?Number(existing.threshold).toFixed(2):(livePrice*(type==='floor'?0.85:1.15)).toFixed(2));
+  if(val===null) return;
+  const trimmed = val.trim();
+  if(trimmed===''){
+    if(!existing) return;
+    if(!confirm(`Delete ${type} alert for ${ticker}?`)) return;
+    const r = await fetch(`/api/admin/alerts?id=${existing.id}`,{method:'DELETE',headers:{'x-admin-token':adminToken()}});
+    if(!r.ok){ alert('Delete failed: '+r.status); return; }
+    await loadAlerts(); loadDashboard(); return;
+  }
+  const num = Number(trimmed);
+  if(!Number.isFinite(num) || num<=0){ alert('Invalid threshold'); return; }
+  const r = await fetch('/api/admin/alerts',{
+    method:'POST',
+    headers:{'x-admin-token':adminToken(),'Content-Type':'application/json'},
+    body:JSON.stringify({ticker,alert_type:type,threshold:num,scope:'portfolio'}),
+  });
+  if(!r.ok){ const d = await r.json().catch(()=>({})); alert('Save failed: '+(d.error||r.status)); return; }
+  await loadAlerts(); loadDashboard();
+}
+window.openAlertEditor = openAlertEditor;
+
+function fmtHoldingPeriod(days){
+  if(days==null) return '—';
+  if(days < 30) return days+'d';
+  const months = Math.floor(days/30);
+  return months+'mo '+(days%30)+'d';
+}
+
+// Tickers with a Columbia dashboard published on the portal.
+// Source of truth: /companies/<ticker>.json files. Update when a new dashboard ships.
+const DASHBOARD_TICKERS = new Set(['BKNG','LULU','MSFT','SAP']);
+function tickerLinkHtml(ticker){
+  if(DASHBOARD_TICKERS.has(ticker)){
+    return `<a href="/${ticker.toLowerCase()}" class="ticker-link" title="Open ${ticker} dashboard"><strong>${ticker}</strong></a>`;
+  }
+  return `<strong>${ticker}</strong>`;
+}
+
+function renderHoldings(holdings){
+  const tbl = document.getElementById('tbl-holdings');
+  if(!holdings || holdings.length===0){ tbl.innerHTML = '<tbody><tr><td>No open positions.</td></tr></tbody>'; return; }
+  let html = '<thead><tr><th>Ticker</th><th class="r">Quantity</th><th class="r">Avg cost</th><th class="r">Last price</th><th class="r">Cost basis</th><th class="r">Market value</th><th class="r">Unrealized P&L</th><th class="r">IRR (Ann.)</th><th class="r">Weight</th><th class="r" title="Alert if price falls to or below this floor">Alert ↓</th><th class="r" title="Alert if price rises to or above this ceiling">Alert ↑</th><th class="r">Holding Period</th></tr></thead><tbody>';
+  for(const h of holdings){
+    const pnl = h.unrealized_pnl;
+    const pnlCls = pnl>0?'pos':(pnl<0?'neg':'');
+    const ret = (h.cost_basis>0 && pnl!=null) ? (pnl/h.cost_basis) : null;
+    const irr = h.irr_annualized;
+    const irrCls = irr>=0.12?'pos':(irr>=0?'':'neg');
+    const irrTxt = irr!=null ? signedPct(irr) : '—';
+    html += `<tr data-ticker="${escapeAttr(h.ticker)}">
+      <td>${tickerLinkHtml(h.ticker)}</td>
+      <td class="r">${Number(h.qty).toLocaleString('en-US',{maximumFractionDigits:4})}</td>
+      <td class="r">${h.avg_cost!=null?Number(h.avg_cost).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4}):'—'}</td>
+      <td class="r" data-cell="last_price">${h.last_price!=null?Number(h.last_price).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4}):'—'}</td>
+      <td class="r">${h.cost_basis!=null?'$'+Number(h.cost_basis).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
+      <td class="r" data-cell="market_value">${h.market_value!=null?'$'+Number(h.market_value).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
+      <td class="r ${pnlCls}" style="font-weight:600" data-cell="unrealized">${signedUsd(pnl)}${ret!=null?' <span style="font-weight:400;color:var(--gray-mid)">('+signedPct(ret,1)+')</span>':''}</td>
+      <td class="r ${irrCls}" style="font-weight:600" data-cell="irr">${irrTxt}</td>
+      <td class="r" data-cell="weight">${h.weight_pct!=null?(h.weight_pct*100).toFixed(2)+'%':'—'}</td>
+      <td class="r">${renderAlertCell(h.ticker,'floor',h.last_price)}</td>
+      <td class="r">${renderAlertCell(h.ticker,'ceiling',h.last_price)}</td>
+      <td class="r">${fmtHoldingPeriod(h.days_held)}</td>
+    </tr>`;
+  }
+  html += '</tbody>';
+  tbl.innerHTML = html;
+  // Cache holdings for the live overlay
+  window.__lastHoldings = holdings;
+}
+
+function escapeAttr(s){ return String(s).replace(/["&<>]/g, c => ({'"':'&quot;','&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+// ── Live price overlay ────────────────────────────────────
+// Supabase prices_daily holds yesterday's official close. While the US market
+// is open today, we layer Finnhub live quotes on top of the holdings table
+// and the Market Value / Unrealized P&L mini-stats. NAV/TWR/IRR (which depend
+// on the historical series) intentionally remain on the official close.
+// Skipped tickers: anything that doesn't look like an equity symbol (e.g.
+// CUSIPs like 91282CBT7), since Finnhub will return c=0 for those.
+async function liveOverlay(holdings){
+  if(!Array.isArray(holdings) || holdings.length === 0) return;
+  const eligible = holdings.filter(h => h.ticker && /^[A-Z][A-Z0-9.\-]{0,9}$/.test(h.ticker));
+  if (eligible.length === 0) return;
+
+  let badge = document.getElementById('holdings-live-badge');
+  if (badge) badge.textContent = '○ fetching live…';
+
+  const results = await Promise.all(eligible.map(async h => {
+    try {
+      const r = await fetch('/api/finnhub-quote?symbol=' + encodeURIComponent(h.ticker));
+      if (!r.ok) return null;
+      const q = await r.json();
+      const px = Number(q && q.c);
+      if (!isFinite(px) || px <= 0) return null;
+      return { ticker: h.ticker, price: px, prev_close: Number(q.pc) || null };
+    } catch (e) { return null; }
+  }));
+
+  // Build live updates per holding and totals
+  let liveTotalMv = 0;
+  let liveTotalCost = 0;
+  let liveTotalUnrealized = 0;
+  let anyUpdated = false;
+  const updates = new Map();
+  for (let i = 0; i < eligible.length; i++) {
+    const h = eligible[i];
+    const live = results[i];
+    if (!live) {
+      // Fall back to whatever the snapshot had
+      if (h.market_value != null) liveTotalMv += h.market_value;
+      if (h.cost_basis != null) liveTotalCost += h.cost_basis;
+      if (h.unrealized_pnl != null) liveTotalUnrealized += h.unrealized_pnl;
+      continue;
+    }
+    anyUpdated = true;
+    const newMv = h.qty * live.price;
+    const newPnl = newMv - (h.cost_basis || 0);
+    liveTotalMv += newMv;
+    liveTotalCost += (h.cost_basis || 0);
+    liveTotalUnrealized += newPnl;
+    // Per-position annualized IRR using new MV
+    let newIrr = h.irr_annualized;
+    if (h.days_held && h.cost_basis > 0 && newMv > 0) {
+      const years = h.days_held / 365;
+      if (years > 0) newIrr = Math.pow(newMv / h.cost_basis, 1/years) - 1;
+    }
+    updates.set(h.ticker, { live, newMv, newPnl, newIrr, h });
+  }
+  // Add MV from non-eligible holdings (CUSIPs etc.) using snapshot values
+  for (const h of holdings) {
+    if (eligible.find(e => e.ticker === h.ticker)) continue;
+    if (h.market_value != null) liveTotalMv += h.market_value;
+  }
+
+  // Apply per-row updates
+  for (const [ticker, u] of updates) {
+    const tr = document.querySelector(`#tbl-holdings tr[data-ticker="${escapeAttr(ticker)}"]`);
+    if (!tr) continue;
+    const lpCell = tr.querySelector('[data-cell="last_price"]');
+    const mvCell = tr.querySelector('[data-cell="market_value"]');
+    const upCell = tr.querySelector('[data-cell="unrealized"]');
+    const irrCell = tr.querySelector('[data-cell="irr"]');
+    const wCell = tr.querySelector('[data-cell="weight"]');
+    if (lpCell) lpCell.textContent = u.live.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4});
+    if (mvCell) mvCell.textContent = '$' + u.newMv.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    if (upCell) {
+      const ret = (u.h.cost_basis > 0) ? u.newPnl / u.h.cost_basis : null;
+      const cls = u.newPnl > 0 ? 'pos' : (u.newPnl < 0 ? 'neg' : '');
+      upCell.className = 'r ' + cls;
+      upCell.style.fontWeight = '600';
+      upCell.innerHTML = signedUsd(u.newPnl) + (ret != null ? ' <span style="font-weight:400;color:var(--gray-mid)">(' + signedPct(ret, 1) + ')</span>' : '');
+    }
+    if (irrCell && u.newIrr != null) {
+      const cls = u.newIrr >= 0.12 ? 'pos' : (u.newIrr >= 0 ? '' : 'neg');
+      irrCell.className = 'r ' + cls;
+      irrCell.style.fontWeight = '600';
+      irrCell.textContent = signedPct(u.newIrr);
+    }
+    if (wCell && liveTotalMv > 0) wCell.textContent = ((u.newMv / liveTotalMv) * 100).toFixed(2) + '%';
+  }
+  // Update weights of non-eligible rows so they stay in sync with the new MV total
+  for (const h of holdings) {
+    if (updates.has(h.ticker)) continue;
+    if (h.market_value == null || liveTotalMv <= 0) continue;
+    const tr = document.querySelector(`#tbl-holdings tr[data-ticker="${escapeAttr(h.ticker)}"]`);
+    if (!tr) continue;
+    const wCell = tr.querySelector('[data-cell="weight"]');
+    if (wCell) wCell.textContent = ((h.market_value / liveTotalMv) * 100).toFixed(2) + '%';
+  }
+
+  if (anyUpdated) {
+    // Update mini-stats: Market Value and Unrealized P&L (and the realized stays as snapshot)
+    const mvEl = document.getElementById('st-mv');
+    if (mvEl) mvEl.textContent = fmtUsdShort(liveTotalMv);
+    // Total unrealized = sum across ALL holdings; for non-eligible we use snapshot value
+    let unrealizedAll = liveTotalUnrealized;
+    for (const h of holdings) {
+      if (eligible.find(e => e.ticker === h.ticker)) continue;
+      if (h.unrealized_pnl != null) unrealizedAll += h.unrealized_pnl;
+    }
+    const upEl = document.getElementById('st-unrealized');
+    if (upEl) { upEl.textContent = signedUsd(unrealizedAll); setSignClass(upEl, unrealizedAll); }
+  }
+
+  if (badge) {
+    if (anyUpdated) {
+      const ts = new Date().toLocaleTimeString('en-US', { hour12:false, hour:'2-digit', minute:'2-digit' });
+      badge.innerHTML = '<span style="color:var(--green)">●</span> Live · ' + ts;
+    } else {
+      badge.textContent = '○ live unavailable';
+    }
+  }
+}
+
+function renderEquityChart(series){
+  if(!window.Chart){ console.warn('Chart.js not yet loaded'); return; }
+  const ctx = document.getElementById('chart-equity').getContext('2d');
+  if(equityChart) equityChart.destroy();
+
+  // Portfolio = (1+twr_cum)*100; benchmark = iwqu_norm*100
+  const labels = series.map(s=>s.date);
+  const portfolio = series.map(s=> (s.twr_cum!=null) ? (1+s.twr_cum)*100 : null);
+  const iwqu = series.map(s=> (s.iwqu_norm!=null) ? s.iwqu_norm*100 : null);
+
+  equityChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Portfolio (TWR)', data: portfolio, borderColor: '#1b2642', backgroundColor: 'rgba(27,38,66,0.06)', borderWidth: 2, fill: true, pointRadius: 0, tension: 0.15 },
+        { label: 'IWQU.L (MSCI World Quality)', data: iwqu, borderColor: '#b88b47', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [4,4], pointRadius: 0, tension: 0.15 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, color: '#1b2642' } },
+        tooltip: {
+          callbacks: {
+            label: (ctx)=> `${ctx.dataset.label}: ${ctx.parsed.y!=null?ctx.parsed.y.toFixed(2):'—'} (${ctx.parsed.y!=null?((ctx.parsed.y/100-1)*100).toFixed(2)+'%':'—'})`,
+          },
+        },
+      },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8, color: '#606060', font:{size:10} }, grid:{color:'rgba(27,38,66,0.05)'} },
+        y: { ticks: { color: '#606060', font:{size:10}, callback:(v)=>v.toFixed(0) }, grid:{color:'rgba(27,38,66,0.05)'}, title:{display:true,text:'Index (inception=100)',font:{size:10},color:'#8a9098'} },
+      },
+    },
+  });
+}
+
+document.getElementById('btn-dash-reload').addEventListener('click', loadDashboard);
+document.getElementById('btn-dash-snapshot').addEventListener('click', async()=>{
+  if(!isAdmin()) return;
+  const btn = document.getElementById('btn-dash-snapshot');
+  const slot = document.getElementById('dash-alert');
+  btn.disabled = true; slot.innerHTML = '<div class="alert">Computing snapshots…</div>';
+  try{
+    const r = await fetch('/api/admin-backfill-snapshots',{method:'POST',headers:{'Authorization':'Bearer '+adminToken()}});
+    const j = await r.json();
+    if(!r.ok || !j.ok) throw new Error(j.error || 'failed');
+    slot.innerHTML = `<div class="alert ok">Snapshots written: ${j.written} (${j.first_date} → ${j.last_date}).</div>`;
+    loadDashboard();
+  }catch(e){
+    slot.innerHTML = `<div class="alert err">${e.message}</div>`;
+  }finally{
+    btn.disabled = false;
+  }
 });
 
-// ── Admin gate ────────────────────────────────
+// ── Generate Performance Snapshot PDF ────────
+// Default the date picker to today on first load
+(function initPerfReportDate(){
+  const input = document.getElementById('perf-report-asof');
+  if (input && !input.value) {
+    input.value = new Date().toISOString().slice(0, 10);
+    input.max = new Date().toISOString().slice(0, 10); // Don't allow future dates
+  }
+})();
+
+document.getElementById('btn-perf-report').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-perf-report');
+  const status = document.getElementById('perf-report-status');
+  const dateInput = document.getElementById('perf-report-asof');
+  const original = btn.textContent;
+  // Get and validate the selected date
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let asOf = (dateInput && dateInput.value) ? dateInput.value : todayStr;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(asOf)) asOf = todayStr;
+  if (asOf > todayStr) asOf = todayStr; // Clamp future dates
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  status.textContent = `Building PDF as of ${asOf}…`;
+  status.style.color = 'var(--gray-mid)';
+  try {
+    const r = await fetch(`/api/generate-daily-report?as_of=${encodeURIComponent(asOf)}`, { method: 'GET' });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${r.status}`);
+    }
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `DCE_Performance_Snapshot_${asOf}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    status.textContent = 'Done — PDF downloaded.';
+    status.style.color = 'var(--green, #1F5F3F)';
+    setTimeout(() => { status.textContent = ''; }, 4000);
+  } catch (e) {
+    status.textContent = `Error: ${e.message}`;
+    status.style.color = 'var(--red, #7A1010)';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+});
+
+// ── Tabs ─────────────────────────────────────
+const TAB_STORAGE_KEY = 'dce-perf-tab';
+function switchTab(tabId){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabId));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('active', p.id===tabId));
+  try{ localStorage.setItem(TAB_STORAGE_KEY, tabId); }catch(e){}
+  // Equity chart resizes correctly only if the canvas is visible when Chart.js measures it.
+  // If switching to dashboard tab and chart already rendered, trigger resize.
+  if(tabId==='tab-dashboard' && equityChart){ try{ equityChart.resize(); }catch(e){} }
+}
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> switchTab(btn.dataset.tab));
+});
+
 function applyAdminGate(){
-  const ok = isAdmin();
-  document.querySelectorAll('.admin-only').forEach(el=>el.style.display=ok?'':'none');
-  document.querySelectorAll('.admin-only-badge').forEach(el=>el.style.display=ok?'':'none');
   refreshAdminBar();
-}
+  const ok = isAdmin();
+  // Hide the entire Data & audit tab for non-admins
+  const dataTabBtn = document.querySelector('.tab-btn[data-tab="tab-data"]');
+  dataTabBtn.style.display = ok ? '' : 'none';
+  // Snapshot button only visible to admins.
+  document.getElementById('btn-dash-snapshot').style.display = ok ? '' : 'none';
 
-// ── Boot ──────────────────────────────────────
-// dce-auth.js exposes window.dceAuth synchronously but never fires 'dce-auth-ready'.
-// We boot immediately once the DOM scripts have run, using a flag to prevent double-boot.
-let _booted = false;
-function _boot(){
-  if(_booted) return;
-  _booted = true;
-  applyAdminGate();
+  if(ok){
+    loadExisting();
+    loadPricesSummary();
+    // Restore preferred tab
+    let preferred = 'tab-dashboard';
+    try{ const v = localStorage.getItem(TAB_STORAGE_KEY); if(v==='tab-data'||v==='tab-dashboard') preferred = v; }catch(e){}
+    switchTab(preferred);
+  }else{
+    const wrap = document.getElementById('existing-tx-wrap');
+    wrap.className = 'nodata';
+    wrap.innerHTML = 'Admin access required. Click <strong>Admin login</strong> above.';
+    // Force back to dashboard if currently on data tab
+    if(document.getElementById('tab-data').classList.contains('active')) switchTab('tab-dashboard');
+  }
   loadDashboard();
-  loadExisting();
-  loadPricesSummary();
 }
-
-// Primary: event fired by dce-auth.js (future-proof if it ever adds it)
-window.addEventListener('dce-auth-ready', _boot);
-
-// Fallback: boot as soon as this inline script runs (dce-auth.js is defer,
-// so by the time DOMContentLoaded fires both scripts have executed).
-if(document.readyState === 'loading'){
-  document.addEventListener('DOMContentLoaded', _boot);
-} else {
-  // Already interactive/complete — fire on next tick so Chart.js defer has loaded
-  setTimeout(_boot, 0);
+// Wait until window.dceAuth is defined (defer-loaded), then wire up.
+function whenAuthReady(cb){
+  if(window.dceAuth){ cb(); return; }
+  let tries=0;
+  const iv=setInterval(()=>{
+    if(window.dceAuth){ clearInterval(iv); cb(); }
+    else if(++tries>50){ clearInterval(iv); cb(); /* give up, run anyway */ }
+  },100);
 }
+whenAuthReady(()=>{
+  const a=auth();
+  if(a && a.onChange) a.onChange(applyAdminGate);
+  applyAdminGate();
+});
 </script>
+<script src="/search.js" defer></script>
 </body>
 </html>
