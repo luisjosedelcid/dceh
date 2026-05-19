@@ -860,36 +860,68 @@
      6. ROIC & CAPITAL
      ══════════════════════════════════════════════════════════ -->
 <div id="tab-roic" class="tab-content">
-  <div class="slbl">Return on Invested Capital &amp; Capital Build-up</div>
-  <div class="g4" style="margin-bottom:20px">
+
+  <!-- 1) HERO — 4 KPI cards -->
+  <div class="slbl">ROIC &amp; Invested Capital</div>
+  <div class="g4" style="margin-bottom:18px">
     <div class="card accent">
-      <div class="clbl">ROIC (Latest FY)</div>
+      <div class="clbl">ROIC <span id="roic-latest-yr" style="font-weight:500">—</span></div>
       <div class="cval green" id="roic-latest">—</div>
+      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px" id="roic-latest-sub">—</div>
     </div>
     <div class="card accent">
-      <div class="clbl">ROIC 3yr Avg (IRR Input)</div>
+      <div class="clbl">ROIC 3yr Avg <span id="roic-3yr-range" style="font-weight:500">—</span></div>
       <div class="cval green" id="roic-3yr">—</div>
+      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px" id="roic-3yr-sub">—</div>
+    </div>
+    <div class="card accent">
+      <div class="clbl">WACC</div>
+      <div class="cval gold" id="roic-wacc">—</div>
+      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px" id="roic-wacc-sub">—</div>
     </div>
     <div class="card accent">
       <div class="clbl">ROIC − WACC Spread</div>
       <div class="cval green" id="roic-spread">—</div>
+      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px" id="roic-spread-sub">Creates economic value ✓</div>
+    </div>
+  </div>
+
+  <!-- 2) CHARTS — Adjusted ROIC vs WACC line + IC composition donut -->
+  <div class="g2" style="margin-bottom:24px">
+    <div class="chart-card"><div class="clbl">Adjusted ROIC vs WACC — History (%)</div><canvas id="c-roic"></canvas></div>
+    <div class="chart-card"><div class="clbl">Invested Capital — Latest FY Composition ($M)</div><canvas id="c-ic-donut"></canvas></div>
+  </div>
+
+  <!-- 3) MARGINAL ROIC — 4 KPI cards -->
+  <div class="slbl">Marginal ROIC — Reinvestment Returns</div>
+  <div class="g4" style="margin-bottom:8px">
+    <div class="card accent">
+      <div class="clbl">Marginal ROIC (1yr Δ)</div>
+      <div class="cval" id="roic-marginal">—</div>
+      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px" id="roic-marginal-sub">—</div>
     </div>
     <div class="card accent">
-      <div class="clbl">Marginal ROIC (1yr)</div>
-      <div class="cval" id="roic-marginal">—</div>
+      <div class="clbl">Acc. Growth CapEx 2yr</div>
+      <div class="cval gold" id="roic-gcapex-2y">—</div>
+      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px">Accumulated growth investment</div>
+    </div>
+    <div class="card accent">
+      <div class="clbl">Acc. Growth CapEx 3yr</div>
+      <div class="cval gold" id="roic-gcapex-3y">—</div>
+      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px">Accumulated growth investment</div>
+    </div>
+    <div class="card accent">
+      <div class="clbl">Selected ROIC (IRR Input)</div>
+      <div class="cval green" id="roic-selected">—</div>
+      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px" id="roic-selected-sub">3yr avg for reinvestment growth</div>
     </div>
   </div>
+  <p id="roic-note" style="font-size:10.5px;font-style:italic;color:var(--gray-mid);margin:6px 2px 22px">Note: Marginal ROIC complements accounting ROIC. When accounting ROIC is distorted by buybacks (negative equity) or aggressive amortisation, Marginal ROIC Accumulated 2yr is the cleaner proxy for real reinvestment returns.</p>
 
-  <div class="slbl">Invested Capital Components (Latest FY)</div>
-  <div class="g4" id="roic-ic-cards" style="margin-bottom:20px"></div>
+  <!-- 4) MAIN TABLE — Invested Capital + ROIC + Marginal ROIC sections (mirrors Excel) -->
+  <div class="slbl">Invested Capital — Historical Build-up ($M)</div>
+  <div class="tbl-wrap" id="tbl-roic" style="margin-bottom:24px"></div>
 
-  <div class="slbl">ROIC &amp; IC History Table</div>
-  <div class="tbl-wrap" id="tbl-roic"></div>
-
-  <div class="g2" style="margin-top:20px">
-    <div class="chart-card"><div class="clbl">ROIC vs WACC (%)</div><canvas id="c-roic"></canvas></div>
-    <div class="chart-card"><div class="clbl">Invested Capital vs NOPAT</div><canvas id="c-ic"></canvas></div>
-  </div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════

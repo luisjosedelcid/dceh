@@ -1553,52 +1553,161 @@ function renderSensitivity() {
 function renderROIC() {
   const roic = D.roic;
   const years = D.financials.years;
+  const waccPct = D.overview.wacc * 100;
+  const N = years.length;
+  const latestYr = years[N-1];
+  const yr3start = years[N-3];
 
-  setEl('roic-latest',  Pct(roic.roicLatest));
-  setEl('roic-3yr',     Pct(roic.roic3yr));
-  const spread = roic.roicLatest - D.overview.wacc*100;
-  setEl('roic-spread',  `${spread >= 0 ? '+' : ''}${Pct(spread)}`);
+  // ===== HERO CARDS =====
+  setEl('roic-latest-yr', `(${latestYr})`);
+  setEl('roic-latest', Pct(roic.roicLatest));
+  setEl('roic-latest-sub', `NOPAT ${M(roic.nopatHistory[N-1])} / IC ${M(roic.icHistory[N-1])}`);
+
+  setEl('roic-3yr-range', `(${yr3start}–${latestYr})`);
+  setEl('roic-3yr', Pct(roic.roic3yr));
+  const last3 = roic.roicHistory.slice(-3);
+  setEl('roic-3yr-sub', last3.map((r,i)=>`${years[N-3+i]}: ${fmtDec(r,1)}%`).join(' · '));
+
+  setEl('roic-wacc', Pct(waccPct));
+  const w = D.wacc;
+  if (w) setEl('roic-wacc-sub', `Rf ${Pct(w.rf*100)} · β ${fmtDec(w.beta,2)} · ERP ${Pct(w.erp*100)}`);
+  else setEl('roic-wacc-sub', '—');
+
+  const spread = roic.roicLatest - waccPct;
+  setEl('roic-spread', `${spread >= 0 ? '+' : ''}${Pct(spread)}`);
+  setEl('roic-spread-sub', spread > 0 ? 'Creates economic value ✓' : 'Destroys economic value ✗');
+
+  // ===== MARGINAL ROIC CARDS =====
   setEl('roic-marginal', Pct(roic.marginalRoic));
-  setEl('roic-ic-latest', M(roic.icHistory ? roic.icHistory[roic.icHistory.length-1] : null));
+  // 1yr deltas
+  const dN = roic.nopatHistory[N-1] - roic.nopatHistory[N-2];
+  const dIC = roic.icHistory[N-1] - roic.icHistory[N-2];
+  setEl('roic-marginal-sub', `ΔNOPAT ${M(dN)} / ΔIC ${M(dIC)}`);
 
-  // IC breakdown cards
-  if (roic.investedCapital) {
-    const icEl = document.getElementById('roic-ic-cards');
-    if (icEl) {
-      icEl.innerHTML = roic.investedCapital.map(c => `
-        <div class="card"><div class="clbl">${c.label}</div>
-        <div class="cval ${c.value < 0 ? 'red':'gold'}">${M(c.value)}</div></div>
-      `).join('');
-    }
-  }
+  setEl('roic-gcapex-2y', roic.growthCapex2y != null ? M(roic.growthCapex2y) : 'Pendiente');
+  setEl('roic-gcapex-3y', roic.growthCapex3y != null ? M(roic.growthCapex3y) : 'Pendiente');
+  setEl('roic-selected', Pct(roic.roic3yr));
 
-  // table
-  renderTable('tbl-roic', roic.icRows, years, D.financials);
-
-  // charts
-  destroyChart('c-roic'); destroyChart('c-ic');
+  // ===== CHARTS =====
+  destroyChart('c-roic'); destroyChart('c-ic-donut');
   const c1 = document.getElementById('c-roic');
   if (c1 && roic.roicHistory) {
     charts['c-roic'] = new Chart(c1, {
       type:'line', data:{ labels:years,
         datasets:[
-          {label:'ROIC %', data:roic.roicHistory, borderColor:'#b88b47', backgroundColor:'rgba(184,139,71,0.1)', tension:0.3, fill:true},
-          {label:'WACC %', data:Array(years.length).fill(D.overview.wacc*100), borderColor:'#9b2335', borderDash:[5,3], pointRadius:0},
+          {label:'ROIC (%)',  data:roic.roicHistory, borderColor:'#b88b47', backgroundColor:'rgba(184,139,71,0.1)', tension:0.3, fill:true, pointRadius:4},
+          {label:`WACC (${fmtDec(waccPct,2)}%)`, data:Array(years.length).fill(waccPct), borderColor:'#9b2335', borderDash:[5,3], pointRadius:0},
         ]},
       options: chartOpts('%','ROIC vs WACC (%)')
     });
   }
-  const c2 = document.getElementById('c-ic');
-  if (c2 && roic.icHistory && roic.nopatHistory) {
-    charts['c-ic'] = new Chart(c2, {
-      type:'bar', data:{ labels:years,
-        datasets:[
-          {label:'Invested Capital', data:roic.icHistory, backgroundColor:'rgba(27,38,66,0.7)', yAxisID:'y'},
-          {label:'NOPAT (DCE)',      data:roic.nopatHistory, backgroundColor:'rgba(184,139,71,0.8)', yAxisID:'y'},
-        ]},
-      options: chartOpts(`${sym()}M`,`Invested Capital vs NOPAT (${sym()}M)`)
+  // IC composition donut
+  const c2 = document.getElementById('c-ic-donut');
+  if (c2 && roic.investedCapital) {
+    const cats = roic.investedCapital.filter(c => c.value !== 0);
+    const totalIC = roic.icHistory[N-1];
+    const sumCats = cats.reduce((a,c)=>a+c.value, 0);
+    const negEquity = totalIC - sumCats;
+    if (Math.abs(negEquity) > 1) cats.push({label:'(Negative Equity)', value: negEquity});
+    charts['c-ic-donut'] = new Chart(c2, {
+      type:'doughnut',
+      data:{
+        labels: cats.map(c => `${c.label} (${M(c.value)})`),
+        datasets:[{
+          data: cats.map(c => Math.abs(c.value)),
+          backgroundColor:['#1B2642','#b88b47','#9b2335','#2a7a56','#c9a96e','#5c6b8a'],
+          borderWidth: 2,
+          borderColor: '#FFFFFF'
+        }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false, cutout:'58%',
+        plugins:{legend:{position:'right', labels:{font:{family:'Helvetica Neue',size:11},color:'#5c6671',boxWidth:12}}}
+      }
     });
   }
+
+  // ===== MAIN TABLE — derived sections: IC build-up | ROIC accounting | Marginal ROIC YoY | Marginal ROIC Acc Growth Capex =====
+  // Build derived rows from history arrays
+  const fin = D.financials;
+  const nopatH = roic.nopatHistory;
+  const icH    = roic.icHistory;
+  const roicH  = roic.roicHistory;
+  // YoY deltas (first year null)
+  const dNopat  = nopatH.map((v,i) => i===0 ? null : v - nopatH[i-1]);
+  const dIcH    = icH.map((v,i)    => i===0 ? null : v - icH[i-1]);
+  const margYoY = dNopat.map((dn,i) => {
+    if (dn == null || dIcH[i] == null || Math.abs(dIcH[i]) < 1) return null;
+    return (dn / dIcH[i]) * 100;
+  });
+  // Accumulated growth capex 2yr rolling — derive capex & D&A from cfRows when not provided directly
+  const findRow = (rows, names) => {
+    if (!Array.isArray(rows)) return null;
+    for (const r of rows) {
+      if (!r || !r.l) continue;
+      const lower = r.l.toLowerCase();
+      if (names.some(n => lower.includes(n))) return Array.isArray(r.v) ? r.v : null;
+    }
+    return null;
+  };
+  const capexH = fin.capexHistory || findRow(fin.cfRows, ['capital expenditure','capex']) || [];
+  const daH    = fin.daHistory    || findRow(fin.cfRows, ['depreciation & amortization','depreciation and amortization','d&a']) || [];
+  const sgaGrowthH = roic.smGrowthHistory || [];   // optional Supabase field
+  const accGCapex2y = years.map((_, i) => {
+    if (i < 1) return null;
+    if (capexH.length === 0 || daH.length === 0) return null;
+    // Growth capex = |capex| − d&a (when positive, else 0). 2yr rolling.
+    const g0 = Math.max(0, Math.abs(capexH[i-1]||0) - (daH[i-1]||0)) + (sgaGrowthH[i-1]||0);
+    const g1 = Math.max(0, Math.abs(capexH[i]||0)   - (daH[i]||0))   + (sgaGrowthH[i]||0);
+    return g0 + g1;
+  });
+  const dNopat2y = nopatH.map((v,i) => i<2 ? null : v - nopatH[i-2]);
+  const margAcc2y = accGCapex2y.map((g,i) => {
+    if (g == null || dNopat2y[i] == null || Math.abs(g) < 1) return null;
+    return (dNopat2y[i] / g) * 100;
+  });
+  const growthCapexYr = years.map((_, i) => {
+    if (capexH.length === 0 || daH.length === 0) return null;
+    return Math.max(0, Math.abs(capexH[i]||0) - (daH[i]||0));
+  });
+
+  // Compose icRows with NEW sections (replacing the old icRows which only had build-up + return)
+  const composedRows = [];
+  // SECTION 1: Invested Capital build-up + ROIC (use existing icRows as base, they already have build-up + RETURN)
+  if (roic.icRows) {
+    roic.icRows.forEach(r => {
+      const cloned = { ...r };
+      // Add Spread vs WACC under ROIC %
+      composedRows.push(cloned);
+      if (cloned.l === 'ROIC %' || cloned.l === 'ROIC' || cloned.l === 'Adjusted ROIC') {
+        composedRows.push({
+          l: `Spread vs WACC (${fmtDec(waccPct,2)}%)`,
+          t: 'normal',
+          v: roicH.map(r => r - waccPct),
+          isPct: true,
+          dim: true
+        });
+      }
+    });
+  }
+  // SECTION 2: Marginal ROIC YoY
+  composedRows.push({ l: 'MARGINAL ROIC — YOY DELTAS', t: 'section' });
+  composedRows.push({ l: 'Δ NOPAT',          t: 'normal', v: dNopat });
+  composedRows.push({ l: 'Δ Invested Capital', t: 'normal', v: dIcH });
+  composedRows.push({ l: 'Marginal ROIC (ΔNOPAT / ΔIC)', t: 'subtotal', v: margYoY, isPct: true });
+  // SECTION 3: Marginal ROIC — Accumulated Growth CapEx 2yr
+  composedRows.push({ l: 'MARGINAL ROIC — ACC. GROWTH CAPEX', t: 'section' });
+  if (capexH.length > 0 && daH.length > 0) {
+    composedRows.push({ l: 'Growth CapEx (CapEx − D&A)',     t: 'normal', v: growthCapexYr });
+    composedRows.push({ l: 'S&M Growth Expense (memo)',       t: 'normal', v: sgaGrowthH.length === N ? sgaGrowthH : Array(N).fill(null) });
+    composedRows.push({ l: 'Accumulated Growth CapEx (2yr rolling)', t: 'normal', v: accGCapex2y });
+    composedRows.push({ l: 'Δ NOPAT (2yr)',                  t: 'normal', v: dNopat2y });
+    composedRows.push({ l: 'Marginal ROIC Accumulated (2yr)', t: 'subtotal', v: margAcc2y, isPct: true });
+  } else {
+    composedRows.push({ l: 'Growth CapEx history not yet loaded in Supabase', t: 'normal', v: Array(N).fill(null), dim: true });
+  }
+
+  renderTable('tbl-roic', composedRows, years, fin);
 }
 
 /* ════════════════════════════════════════════════════════════
