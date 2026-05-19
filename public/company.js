@@ -1382,7 +1382,7 @@ function onEPVSlider(field, val) {
     else display.textContent = `${fmtDec(parseFloat(val),0)}%`;
   }
   updateEPVCalc();
-  renderSensitivity();
+  // Sensitivity matrix is static — it shows deviation from base (default) NOPAT × WACC, not from slider state
 }
 
 function resetEPVAssumptions() {
@@ -1403,12 +1403,33 @@ function renderWACCComponents() {
   setEl('wacc-rf',      Pct(w.rf*100));
   setEl('wacc-beta',    fmtDec(w.beta, 2));
   setEl('wacc-erp',     Pct(w.erp*100));
+  // Ke formula breakdown: Rf + β·ERP
+  const betaErp = w.beta * w.erp * 100;
+  setEl('wacc-ke-formula', `${Pct(w.rf*100)} + ${fmtDec(w.beta,2)}·${Pct(w.erp*100)} = ${Pct(w.rf*100 + betaErp)}`);
   setEl('wacc-ke',      Pct(w.ke*100));
   setEl('wacc-kd-pre',  Pct((w.kdPreTax||0)*100));
   setEl('wacc-kd-post', Pct((w.kdAfterTax||0)*100));
   setEl('wacc-wd',      Pct((w.weightDebt||0)*100));
   setEl('wacc-we',      Pct((w.weightEquity||1)*100));
   setEl('wacc-final',   Pct((w.waccFinal||w.ke)*100));
+
+  // WACC Validation cross-check
+  const v = w.validation || {};
+  setEl('wacc-val-dce',         Pct((w.waccFinal||w.ke)*100));
+  setEl('wacc-val-damodaran',   v.damodaranSector != null ? Pct(v.damodaranSector*100) : 'Pendiente');
+  setEl('wacc-val-peers',       v.peerAvg         != null ? Pct(v.peerAvg*100)         : 'Pendiente');
+  // Implied cost: NOPAT_base / Price·Shares  → if market priced at EPV, what discount rate would equal it?
+  const epv = D.epv;
+  const px  = (typeof currentPrice === 'number' && currentPrice > 0) ? currentPrice : (D.overview.stockPrice || 0);
+  const shares = D.overview.shares;
+  if (epv && px > 0 && shares > 0) {
+    const mktEquity = px * shares;
+    const mktOps    = mktEquity - (epv.excessCash||0) - (epv.ltInv||0) - (epv.debt||0) - (epv.leases||0) - (epv.minorityInterest||0);
+    const implied   = mktOps > 0 ? (epv.nopatBase / mktOps) * 100 : null;
+    setEl('wacc-val-implied', implied != null ? Pct(implied) : 'Pendiente');
+  } else {
+    setEl('wacc-val-implied', 'Pendiente');
+  }
 }
 
 function updateEPVCalc() {
@@ -1477,9 +1498,8 @@ function renderSensitivity() {
       const eq  = ops + (epv.excessCash||0) + (epv.ltInv||0) + (epv.debt||0) + (epv.leases||0) + (epv.minorityInterest||0);
       const ps  = shares > 0 ? eq / shares : 0;
       const ratio = ps > 0 ? px / ps : 0;
-      // Highlight the cell closest to current slider state (not the base) so user sees their override
-      const curMult = epvState.nopat / epv.nopatBase;
-      const isBase = Math.abs(m - curMult) < 0.06 && Math.abs(w - epvState.wacc) < 0.55;
+      // Highlight ALWAYS the center (base case) — sensitivity is a deviation analysis from default
+      const isBase = m === 1.0 && Math.abs(w - baseW) < 0.05;
       // Color: green attractive (≤1.5x), gold fair (≤2.0x), red premium (>2.0x)
       const bg = ratio <= 1.5 ? 'rgba(42,122,86,0.13)' : ratio <= 2.0 ? 'rgba(184,139,71,0.13)' : 'rgba(155,35,53,0.10)';
       html += `<td class="num-cell" style="background:${bg};${isBase?'font-weight:700;border:1px solid #b88b47':''}">${fmtDec(ratio,2)}×</td>`;

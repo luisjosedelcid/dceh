@@ -824,14 +824,24 @@
         <div class="row"><span class="k">Risk-Free Rate (Rf)</span><span class="v" id="wacc-rf">—</span></div>
         <div class="row"><span class="k">Beta (β)</span><span class="v" id="wacc-beta">—</span></div>
         <div class="row"><span class="k">Equity Risk Premium</span><span class="v" id="wacc-erp">—</span></div>
-        <div class="row"><span class="k">Ke (CAPM)</span><span class="v" id="wacc-ke">—</span></div>
-        <div class="row"><span class="k">Kd after-tax</span><span class="v" id="wacc-kd-post">—</span></div>
+        <div class="row"><span class="k dim" style="padding-left:14px;font-size:11.5px">→ Ke = Rf + β·ERP</span><span class="v dim" id="wacc-ke-formula" style="font-size:11.5px">—</span></div>
+        <div class="row"><span class="k fw">Ke (CAPM)</span><span class="v fw" id="wacc-ke">—</span></div>
+        <div class="row" style="margin-top:6px;border-top:1px dashed #e5e1d8;padding-top:8px"><span class="k">Kd after-tax</span><span class="v" id="wacc-kd-post">—</span></div>
         <div class="row"><span class="k">Debt Weight D/(D+E)</span><span class="v" id="wacc-wd">—</span></div>
         <div class="row"><span class="k">Equity Weight E/(D+E)</span><span class="v" id="wacc-we">—</span></div>
-        <div class="row"><span class="k fw" style="color:var(--navy)">WACC Final</span><span class="v fw gold" id="wacc-final">—</span></div>
+        <div class="row" style="margin-top:6px;border-top:1px solid var(--navy);padding-top:8px"><span class="k fw" style="color:var(--navy)">WACC Final</span><span class="v fw gold" id="wacc-final" style="font-size:15px">—</span></div>
       </div>
+
+      <div class="clbl" style="margin-top:18px">WACC Validation — Cross-Check</div>
+      <div class="kv" style="margin-top:6px">
+        <div class="row"><span class="k">DCE WACC (CAPM)</span><span class="v gold fw" id="wacc-val-dce">—</span></div>
+        <div class="row"><span class="k">Damodaran Sector Implied</span><span class="v" id="wacc-val-damodaran">—</span></div>
+        <div class="row"><span class="k">Peer Avg (top 3 comps)</span><span class="v" id="wacc-val-peers">—</span></div>
+        <div class="row"><span class="k">Implied Cost (price = EPV)</span><span class="v" id="wacc-val-implied">—</span></div>
+      </div>
+
       <div style="margin-top:14px;padding:10px 12px;background:rgba(184,139,71,0.07);border-left:2px solid var(--gold);font-size:11px;line-height:1.55;color:var(--gray-txt)">
-        <strong style="color:var(--navy)">Item EPV:</strong> EPV assumes current earnings persist indefinitely with no additional growth. It is the "valuation floor" for a moated business. A Price &gt; EPV implies the market assigns value to future growth.
+        <strong style="color:var(--navy)">Item EPV.</strong> EPV assumes current earnings persist indefinitely with no growth — it is the valuation floor for a moated business. A Price &gt; EPV implies the market is pricing in future growth (franchise value). The sensitivity matrix below quantifies how that floor moves with normalised NOPAT and the required return.
       </div>
       <!-- Hidden sinks for legacy Kd pre-tax ref -->
       <span id="wacc-kd-pre" style="display:none"></span>
