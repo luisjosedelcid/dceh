@@ -1277,9 +1277,11 @@ function updateRVTotals() {
   }
   const equity  = total - liab;
   const equityBook = totalBook - liabBook;
-  const shares  = D.overview.shares > 0 ? D.overview.shares : 1;
+  const shares      = D.overview.shares > 0 ? D.overview.shares : 1;
+  // Columbia book uses different share count (historical avg) when provided
+  const sharesBook  = (D.rv.sharesBook && D.rv.sharesBook > 0) ? D.rv.sharesBook : shares;
   const perShare = equity / shares;
-  const perShareBook = equityBook / shares;
+  const perShareBook = equityBook / sharesBook;
 
   // Update inline subtotals (in case adj % changed)
   function refreshSub(containerId, arr) {
@@ -1304,7 +1306,8 @@ function updateRVTotals() {
   setEl('rv-bu-assets-book',  M(totalBook));   setEl('rv-bu-assets-repro',  M(total));
   setEl('rv-bu-liab-book',    `(${M(liabBook)})`); setEl('rv-bu-liab-repro',    `(${M(liab)})`);
   setEl('rv-bu-equity-book',  M(equityBook));  setEl('rv-bu-equity-repro',  M(equity));
-  setEl('rv-bu-shares',       fmtDec(shares, 2) + ' M');
+  setEl('rv-bu-shares-book',  fmtDec(sharesBook, 2) + ' M');
+  setEl('rv-bu-shares-repro', fmtDec(shares, 2) + ' M');
   setEl('rv-bu-pershare-book',fmtPrice(perShareBook));
   setEl('rv-bu-pershare-repro',fmtPrice(perShare));
 
