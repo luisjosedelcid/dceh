@@ -744,11 +744,12 @@ function renderFinCharts() {
   if (c2) charts['c-nopat'] = new Chart(c2, {
     type:'bar', data:{ labels:years,
       datasets:[
-        {label:'Net Income', data:fin.netIncome, backgroundColor:'rgba(27,38,66,0.7)'},
-        {label:'FCF',        data:fin.fcf,       backgroundColor:'rgba(42,122,86,0.75)'},
+        // Orden lógico: GAAP → normalizado (DCE) → derivado (FCF)
+        {label:'Net Income', data:fin.netIncome,     backgroundColor:'rgba(27,38,66,0.7)'},
         {label:'NOPAT (DCE)',data:fin.nopatAdjusted, backgroundColor:'rgba(184,139,71,0.8)'},
+        {label:'FCF',        data:fin.fcf,           backgroundColor:'rgba(42,122,86,0.75)'},
       ]},
-    options: chartOpts(`${sym()}M`, `Net Income / FCF / NOPAT (${sym()}M)`)
+    options: chartOpts(`${sym()}M`, `Net Income / NOPAT / FCF (${sym()}M)`)
   });
 
   const c3 = document.getElementById('c-margins');
@@ -765,11 +766,12 @@ function renderFinCharts() {
   if (c4) charts['c-cfo'] = new Chart(c4, {
     type:'bar', data:{ labels:years,
       datasets:[
-        {label:'CFO', data:fin.cfo, backgroundColor:'rgba(27,38,66,0.7)'},
-        {label:'FCF', data:fin.fcf, backgroundColor:'rgba(42,122,86,0.75)'},
-        {label:'CapEx', data:fin.fcf.map((f,i)=>fin.cfo[i]-f), backgroundColor:'rgba(155,35,53,0.5)', stack:'stack1'},
+        // Orden lógico: input (CFO) → reinversión (CapEx) → resultado (FCF = CFO − CapEx)
+        {label:'CFO',   data:fin.cfo,                                  backgroundColor:'rgba(27,38,66,0.7)'},
+        {label:'CapEx', data:fin.fcf.map((f,i)=>fin.cfo[i]-f),          backgroundColor:'rgba(155,35,53,0.5)'},
+        {label:'FCF',   data:fin.fcf,                                  backgroundColor:'rgba(42,122,86,0.75)'},
       ]},
-    options: chartOpts(`${sym()}M`, `CFO / FCF / CapEx (${sym()}M)`)
+    options: chartOpts(`${sym()}M`, `CFO / CapEx / FCF (${sym()}M)`)
   });
 }
 
