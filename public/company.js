@@ -776,62 +776,275 @@ function renderFinCharts() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   3. ADJUSTMENTS
+   3. ADJUSTMENTS — CIO DEEP-DIVE
    ════════════════════════════════════════════════════════════ */
 function renderAdj() {
-  const adj = D.adj;
-  const fin = D.financials;
-  const years = D.financials.years;
+  const adj   = D.adj || {};
+  const fin   = D.financials || {};
+  const years = fin.years || [];
 
-  setEl('adj-gaap-oi',   M(adj.gaapOI));
-  setEl('adj-sm-total',  M(adj.mktTotal));
-  setEl('adj-sm-avg',    adj.mkt3yrAvg != null ? M(adj.mkt3yrAvg) : '—');
-  setEl('adj-sm-life',   adj.smLife != null ? `${adj.smLife} years` : '—');
-  setEl('adj-sm-growth', adj.smGrowthExp != null ? M(adj.smGrowthExp) : '—');
-  setEl('adj-sm-asset',  adj.smAsset != null ? M(adj.smAsset) : '—');
-  setEl('adj-rd-status', adj.rdAsset != null ? `YES — ${M(adj.rdAsset)} capitalized` : 'N/A');
-  setEl('adj-rd-life',   adj.rdLife != null ? `${adj.rdLife} years` : 'N/A');
-  setEl('adj-rd-growth', adj.rdGrowthExp != null ? M(adj.rdGrowthExp) : 'N/A');
-  setEl('adj-nr-total',  adj.nrTotal != null ? M(adj.nrTotal) : '—');
+  /* ---------- 1. Fallback derivations from isRows when needed ---------- */
+  const isRows = fin.isRows || [];
+  const findRow = (re) => isRows.find(r => re.test(r.l));
+  const etrRow  = findRow(/Effective Tax Rate/i);
+  const etrHist = (adj.etrHistory && adj.etrHistory.length) ? adj.etrHistory : (etrRow ? etrRow.v.map(v => v) : []);
+  const etrYears = adj.etrYears || years;
+  const etrMedian = etrHist.length ? (() => { const s=[...etrHist].sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2 ? s[m] : (s[m-1]+s[m])/2; })() : null;
+
+  const smGrowthHist = adj.smGrowthHistory || [];
+  const nopatHist    = adj.nopatHistory || [];
+  const cohort       = adj.smCohortMatrix;
+  const bridge       = adj.nopatBridge;
+
+  /* ---------- 2. Hero waterfall (Bloque 1) ---------- */
+  const heroYear = bridge ? bridge.year : (years.length ? years[years.length-1] : '—');
+  setEl('adj-hero-year', heroYear);
+  if (bridge && bridge.steps) {
+    const steps = bridge.steps;
+    let running = 0;
+    const labels = [];
+    const floatBars = [];
+    const colors = [];
+    steps.forEach((s) => {
+      labels.push(s.label);
+      if (s.kind === 'start')       { floatBars.push([0, s.v]);            running = s.v;            colors.push('#1B2642'); }
+      else if (s.kind === 'add')    { floatBars.push([running, running+s.v]); running += s.v;       colors.push('#2A7A56'); }
+      else if (s.kind === 'sub')    { floatBars.push([running+s.v, running]); running += s.v;       colors.push('#9B2335'); }
+      else if (s.kind === 'subtotal'){ floatBars.push([0, s.v]);            running = s.v;          colors.push('rgba(27,38,66,0.6)'); }
+      else if (s.kind === 'end')    { floatBars.push([0, s.v]);             running = s.v;          colors.push('#B88B47'); }
+    });
+    destroyChart('c-nopat-bridge');
+    const ctx = document.getElementById('c-nopat-bridge');
+    if (ctx) {
+      charts['c-nopat-bridge'] = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: labels, datasets: [{
+          label: 'USD M', data: floatBars,
+          backgroundColor: colors, borderColor: colors, borderWidth: 0, borderRadius: 2,
+        }]},
+        options: {
+          responsive: true, maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx2 => {
+              const s = steps[ctx2.dataIndex];
+              return ` ${s.label}: ${sym()}${fmt(s.v)}M`;
+            }}}
+          },
+          scales: {
+            x: { ticks: { font:{size:9}, color:'#606060', maxRotation:25, minRotation:15 }, grid: { display:false } },
+            y: { ticks: { font:{size:10}, color:'#8a9098',
+                  callback: v => `${sym()}${v>=1000?(v/1000).toFixed(1)+'K':v}` },
+                  grid: { color:'rgba(27,38,66,0.05)' }, beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    const sStart = steps.find(s=>s.kind==='start');
+    const sSm    = steps.find(s=>/S&M/.test(s.label));
+    const sNr    = steps.find(s=>/Non-Recurring/i.test(s.label));
+    const sPre   = steps.find(s=>s.kind==='subtotal');
+    const sTax   = steps.find(s=>s.kind==='sub');
+    const sEnd   = steps.find(s=>s.kind==='end');
+    setEl('adj-headline-nopat', sEnd ? M(sEnd.v) : M(adj.nopatFinal));
+    setEl('adj-h-gaap',  sStart ? M(sStart.v) : M(adj.gaapOI));
+    setEl('adj-h-sm',    sSm    ? '+' + M(sSm.v) : '—');
+    setEl('adj-h-nr',    sNr    ? '+' + M(sNr.v) : '—');
+    setEl('adj-h-pre',   sPre   ? M(sPre.v) : '—');
+    setEl('adj-h-tax',   sTax   ? M(Math.abs(sTax.v)) : '—');
+    setEl('adj-h-nopat', sEnd   ? M(sEnd.v) : M(adj.nopatFinal));
+    setEl('adj-hero-caption',
+      `GAAP OI of ${M(adj.gaapOI)} understates economic earnings by ${sSm?M(sSm.v):'—'} in S&M growth investment and ${sNr?M(sNr.v):'—'} in non-recurring impairment; applying the ${Pct(adj.taxRate)} normalized tax rate yields ${M(sEnd?sEnd.v:adj.nopatFinal)} of Adjusted NOPAT — the EPV input.`);
+  } else {
+    setEl('adj-headline-nopat', M(adj.nopatFinal));
+  }
+
+  /* ---------- 3. Parameters cards (Bloque 2) ---------- */
+  setEl('adj-sm-total',     M(adj.mktTotal));
+  setEl('adj-sm-avg',       adj.mkt3yrAvg != null ? M(adj.mkt3yrAvg) : '—');
+  setEl('adj-sm-life',      adj.smLife != null ? `${adj.smLife} yrs` : '—');
+  setEl('adj-sm-growth',    adj.smGrowthExp != null ? '+' + M(adj.smGrowthExp) : '—');
+  setEl('adj-sm-growth-pct',adj.smGrowthPct != null ? Pct(adj.smGrowthPct) : '—');
+  setEl('adj-sm-asset',     adj.smAsset != null ? M(adj.smAsset) : '—');
+
+  const rdCapitalized = (adj.rdAsset != null) && (adj.rdLife != null);
+  setEl('adj-rd-status', rdCapitalized ? `YES — ${M(adj.rdAsset)} capitalized` : 'NOT APPLIED');
+  setEl('adj-rd-life',   adj.rdLife != null ? `${adj.rdLife} yrs` : '—');
+  setEl('adj-rd-growth', adj.rdGrowthExp != null ? '+' + M(adj.rdGrowthExp) : '—');
+  setEl('adj-rd-asset',  adj.rdAsset != null ? M(adj.rdAsset) : '—');
+  if (!rdCapitalized) {
+    setEl('adj-rd-note',
+      `R&D is <strong>not capitalized</strong> for this company. Rationale: revenue durability is driven primarily by brand and customer loyalty rather than a cumulative R&D knowledge stock; reported R&D (if any) is treated as a recurring opex item. Capitalization is reserved for businesses where the intellectual asset is the principal source of competitive advantage.`);
+  }
+
+  setEl('adj-nr-total',    adj.nrTotal != null ? M(adj.nrTotal) : '—');
+  setEl('adj-nr-type',     adj.impairment > 0 ? 'Impairment' : (adj.nrTotal > 0 ? 'Mixed' : 'None'));
+  setEl('adj-tax-rate',    Pct(adj.taxRate));
+  setEl('adj-tax-median',  etrMedian != null ? Pct(etrMedian) : '—');
   setEl('adj-nopat-final', M(adj.nopatFinal));
-  setEl('adj-tax-rate',  Pct(adj.taxRate));
 
-  // ETR chart
+  /* ---------- 4. S&M Cohort Matrix (Bloque 3) ---------- */
+  const cohortEl = document.getElementById('adj-sm-cohort');
+  if (cohortEl && cohort && cohort.rows) {
+    let h = `<table class="fin-tbl"><thead><tr><th>Cohort \\ Year</th>${cohort.amortYears.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>`;
+    cohort.rows.forEach(r => {
+      h += `<tr class="norm-row"><td class="row-lbl">${r.cohort}</td>`;
+      r.row.forEach(v => { h += `<td class="num-cell">${v==null?'<span style="color:#cfc8bf">·</span>':fmt(v)}</td>`; });
+      h += '</tr>';
+    });
+    h += `<tr class="tot-row"><td class="row-lbl">Economic Amortization (Total)</td>`;
+    cohort.totalRow.forEach(v => { h += `<td class="num-cell">${fmt(v)}</td>`; });
+    h += '</tr>';
+    if (smGrowthHist.length) {
+      const aligned = cohort.amortYears.map(ay => {
+        const idx = etrYears.indexOf(ay);
+        return idx >= 0 ? smGrowthHist[idx] : null;
+      });
+      h += `<tr class="mrg-row"><td class="row-lbl">S&amp;M Growth Add-back (Marketing − 3yr Avg)</td>`;
+      aligned.forEach(v => { h += `<td class="num-cell">${v==null?'—':'+'+fmt(v)}</td>`; });
+      h += '</tr>';
+    }
+    h += '</tbody></table>';
+    cohortEl.innerHTML = h;
+    setEl('adj-cm-life', adj.smLife || '—');
+  } else if (cohortEl) {
+    cohortEl.innerHTML = '<div class="csub" style="padding:20px;text-align:center;color:var(--gray-mid)">Cohort matrix not available for this company.</div>';
+  }
+
+  /* ---------- 5. Extended NOPAT Build-up Table (Bloque 4) ---------- */
+  const nopatEl = document.getElementById('adj-nopat-table');
+  if (nopatEl && nopatHist.length) {
+    const yrs = nopatHist.map(h => h.year);
+    const get = key => nopatHist.map(h => h[key]);
+    let h = `<table class="fin-tbl"><thead><tr><th>Step</th>${yrs.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>`;
+    const lines = [
+      { l: 'Reported GAAP Operating Income', v: get('gaap_oi') },
+      { l: '(+) S&amp;M Growth Expense Add-back', v: get('sm_growth'), cls: 'green' },
+      { l: '(+) Non-Recurring Items', v: get('nr'), cls: 'green' },
+      { l: 'Pre-Tax Adjusted Operating Income', v: get('pre_tax'), sub: true },
+      { l: `(×) (1 − Tax ${Pct(adj.taxRate)})`, v: nopatHist.map(hh => Math.round((hh.pre_tax - hh.after_tax) * 10) / 10), dim: true },
+      { l: 'Adjusted NOPAT (DCE)', v: get('after_tax'), bold: true },
+    ];
+    lines.forEach(r => {
+      const cls = r.bold ? 'tot-row' : (r.sub ? 'sub-row' : 'norm-row');
+      h += `<tr class="${cls}"><td class="row-lbl">${r.l}</td>`;
+      r.v.forEach(v => {
+        const display = v==null ? '—' : (r.dim ? `(${fmt(Math.abs(v))})` : (r.cls==='green' && v>0 ? `+${fmt(v)}` : fmt(v)));
+        h += `<td class="num-cell ${r.dim?'dim':''} ${r.cls||''}">${display}</td>`;
+      });
+      h += '</tr>';
+    });
+    h += '</tbody></table>';
+    nopatEl.innerHTML = h;
+  } else if (nopatEl) {
+    const smAdj = isRows.find(r => /S&M Growth/.test(r.l));
+    const nrAdj = isRows.find(r => /Normalization/.test(r.l));
+    let h = `<table class="fin-tbl"><thead><tr><th>Step</th>${years.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>`;
+    const lines = [
+      { l: 'Reported GAAP Operating Income', v: fin.operIncome },
+      smAdj ? { l: '(+) S&amp;M Growth Expense', v: smAdj.v, cls: 'green' } : null,
+      nrAdj ? { l: '(+) Non-Recurring Normalization', v: nrAdj.v, cls: 'green' } : null,
+      { l: 'Adjusted NOPAT (DCE)', v: fin.nopatAdjusted, bold: true },
+    ].filter(Boolean);
+    lines.forEach(r => {
+      const cls = r.bold ? 'tot-row' : 'norm-row';
+      h += `<tr class="${cls}"><td class="row-lbl">${r.l}</td>`;
+      (r.v||[]).forEach(v => { h += `<td class="num-cell ${r.cls||''}">${v==null?'—':fmt(v)}</td>`; });
+      h += '</tr>';
+    });
+    h += '</tbody></table>';
+    nopatEl.innerHTML = h;
+  }
+
+  /* ---------- 6. GAAP OI vs Adjusted NOPAT chart (Bloque 5) ---------- */
+  destroyChart('c-gaap-nopat');
+  const gnCtx = document.getElementById('c-gaap-nopat');
+  if (gnCtx && fin.operIncome && fin.nopatAdjusted) {
+    charts['c-gaap-nopat'] = new Chart(gnCtx, {
+      type: 'line',
+      data: {
+        labels: years,
+        datasets: [
+          { label: 'GAAP Operating Income', data: fin.operIncome, borderColor:'#9B2335', backgroundColor:'rgba(155,35,53,0.08)', tension:0.3, fill:false, borderWidth:2, pointRadius:3 },
+          { label: 'Adjusted NOPAT (DCE)',  data: fin.nopatAdjusted, borderColor:'#B88B47', backgroundColor:'rgba(184,139,71,0.15)', tension:0.3, fill:true, borderWidth:2.5, pointRadius:3 },
+        ]
+      },
+      options: chartOpts(`${sym()}M`, 'Reported OI vs. Adjusted NOPAT')
+    });
+  }
+
+  /* ---------- 7. ETR Chart (Bloque 6 — fixed) ---------- */
   destroyChart('c-etr');
   const etrCtx = document.getElementById('c-etr');
-  if (etrCtx && adj.etrHistory) {
+  if (etrCtx && etrHist.length) {
     charts['c-etr'] = new Chart(etrCtx, {
-      type:'line', data:{ labels:years,
-        datasets:[{ label:'ETR %', data:adj.etrHistory, borderColor:'#b88b47', backgroundColor:'rgba(184,139,71,0.1)', tension:0.3, fill:true }]
+      type:'line',
+      data:{ labels: etrYears,
+        datasets:[
+          { label:'ETR %', data: etrHist, borderColor:'#B88B47', backgroundColor:'rgba(184,139,71,0.12)', tension:0.3, fill:true, borderWidth:2, pointRadius:3 },
+          { label:`Normalized (${Pct(adj.taxRate)})`, data: etrYears.map(()=>adj.taxRate), borderColor:'#1B2642', borderDash:[6,4], borderWidth:1.5, pointRadius:0, fill:false },
+        ]
       },
       options: chartOpts('%','Effective Tax Rate History (%)')
     });
   }
 
-  // NOPAT build-up table
-  const nopatEl = document.getElementById('adj-nopat-table');
-  if (nopatEl) {
-    let html = `<table class="fin-tbl"><thead><tr><th>Step</th>${years.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>`;
-    const smAdj = fin.isRows ? fin.isRows.find(r=>r.l.includes('S&M Growth')) : null;
-    const rdAdj = fin.isRows ? fin.isRows.find(r=>r.l.includes('R&D Growth')) : null;
-    const nrAdj = fin.isRows ? fin.isRows.find(r=>r.l.includes('Normalization')) : null;
-    // Build NOPAT history from nopatAdjusted
-    const rows = [
-      { l: 'Reported GAAP Operating Income', v: fin.operIncome },
-      smAdj ? { l: '(±) S&M Growth Expense Adj', v: smAdj.v } : null,
-      rdAdj ? { l: '(+) R&D Growth Expense Adj', v: rdAdj.v } : null,
-      nrAdj ? { l: '(+) Non-Recurring Normalization', v: nrAdj.v } : null,
-      { l: `× (1 − Tax ${Pct(adj.taxRate)})`, v: fin.nopatAdjusted.map((n,i)=>{ const oi = fin.operIncome[i]; return oi!=null ? Math.round(oi*(1-adj.taxRate/100)) : null; }), dim:true },
-      { l: 'Adjusted NOPAT (DCE)', v: fin.nopatAdjusted, bold:true },
-    ].filter(Boolean);
-    rows.forEach(r => {
-      html += `<tr class="${r.bold?'tot-row':'norm-row'}"><td class="row-lbl">${r.l}</td>`;
-      (r.v||[]).forEach(v=>{ html += `<td class="num-cell ${r.dim?'dim':''}">${v==null?'—':fmt(v)}</td>`; });
-      html += '</tr>';
-    });
-    html += '</tbody></table>';
-    nopatEl.innerHTML = html;
+  /* ---------- 8. Sensitivity Panel (Bloque 7) ---------- */
+  initAdjSensitivity(adj, fin, etrMedian);
+}
+
+/* Sensitivity Panel — interactive sliders */
+function initAdjSensitivity(adj, fin, etrMedian) {
+  const smLife0 = adj.smLife || 3;
+  const rdLife0 = adj.rdLife || 0;
+  const tax0    = adj.taxRate || 28;
+  const gaap    = adj.gaapOI || 0;
+  const nrTot   = adj.nrTotal || 0;
+  const published = adj.nopatFinal;
+  const mktHistFull = adj.mktHistoryFull;
+
+  const smLifeEl = document.getElementById('sens-sm-life');
+  const rdLifeEl = document.getElementById('sens-rd-life');
+  const taxEl    = document.getElementById('sens-tax');
+  if (!smLifeEl || !rdLifeEl || !taxEl) return;
+  smLifeEl.value = smLife0;
+  rdLifeEl.value = rdLife0;
+  taxEl.value    = tax0;
+  document.getElementById('sens-sm-life-val').textContent = smLife0;
+  document.getElementById('sens-rd-life-val').textContent = rdLife0 || '—';
+  document.getElementById('sens-tax-val').textContent     = tax0;
+
+  function recompute() {
+    const L  = parseInt(smLifeEl.value, 10);
+    const Lr = parseInt(rdLifeEl.value, 10);
+    const t  = parseInt(taxEl.value, 10);
+    document.getElementById('sens-sm-life-val').textContent = L;
+    document.getElementById('sens-rd-life-val').textContent = Lr || '—';
+    document.getElementById('sens-tax-val').textContent     = t;
+    let smGrowth = adj.smGrowthExp || 0;
+    if (mktHistFull && mktHistFull.length >= L) {
+      const last = mktHistFull[mktHistFull.length - 1];
+      const window = mktHistFull.slice(-L);
+      const avg = window.reduce((a,b)=>a+b,0) / L;
+      smGrowth = last - avg;
+    }
+    const rdGrowth = Lr > 0 ? (adj.rdGrowthExp || 0) : 0;
+    const pre = gaap + smGrowth + rdGrowth + nrTot;
+    const nopat = pre * (1 - t/100);
+    setEl('sens-gaap', M(gaap));
+    setEl('sens-pre',  M(Math.round(pre)));
+    setEl('sens-nopat',M(Math.round(nopat)));
+    const delta = published ? (nopat - published) : 0;
+    const pct = published ? (delta / published * 100) : 0;
+    const sign = delta >= 0 ? '+' : '−';
+    document.getElementById('sens-delta').innerHTML =
+      `Δ vs published <strong>${M(published)}</strong>: <strong style="color:${delta>=0?'var(--green)':'var(--red)'}">${sign}${sym()}${fmt(Math.abs(Math.round(delta)))}M</strong> (${sign}${Math.abs(pct).toFixed(1)}%) · S&amp;M growth recalc: ${sym()}${fmt(Math.round(smGrowth))}M @ L=${L}yr`;
   }
+  smLifeEl.oninput = recompute;
+  rdLifeEl.oninput = recompute;
+  taxEl.oninput    = recompute;
+  recompute();
 }
 
 /* ════════════════════════════════════════════════════════════

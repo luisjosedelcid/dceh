@@ -504,43 +504,152 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
-     3. ADJUSTMENTS
+     3. ADJUSTMENTS — CIO Deep-Dive
      ══════════════════════════════════════════════════════════ -->
 <div id="tab-adj" class="tab-content">
-  <div class="slbl">NOPAT Construction &amp; DCE Adjustments</div>
-  <div class="g3" style="margin-bottom:24px">
-    <div class="card">
-      <div class="clbl">S&amp;M Capitalization Parameters</div>
-      <div class="kv">
-        <div class="row"><span class="k">GAAP Operating Income</span><span class="v gold" id="adj-gaap-oi">—</span></div>
-        <div class="row"><span class="k">S&amp;M Total Expense</span><span class="v" id="adj-sm-total">—</span></div>
-        <div class="row"><span class="k">S&amp;M 3yr Average</span><span class="v" id="adj-sm-avg">—</span></div>
-        <div class="row"><span class="k">S&amp;M Useful Life</span><span class="v" id="adj-sm-life">—</span></div>
-        <div class="row"><span class="k">S&amp;M Growth Expense</span><span class="v" id="adj-sm-growth">—</span></div>
-        <div class="row"><span class="k">S&amp;M Asset (Unamortized)</span><span class="v gold" id="adj-sm-asset">—</span></div>
-      </div>
+
+  <!-- ▸ BLOQUE 1 — Hero waterfall GAAP OI → Adjusted NOPAT -->
+  <div class="slbl">From GAAP to Economic Earnings — FY <span id="adj-hero-year">—</span></div>
+  <div class="g2" style="grid-template-columns: 1.6fr 1fr; gap:14px; margin-bottom:24px">
+    <div class="chart-card">
+      <div class="clbl">NOPAT Bridge (Waterfall)</div>
+      <canvas id="c-nopat-bridge"></canvas>
+      <div class="csub" id="adj-hero-caption" style="margin-top:10px">—</div>
     </div>
-    <div class="card">
-      <div class="clbl">R&amp;D Capitalization</div>
-      <div class="kv">
-        <div class="row"><span class="k">R&amp;D Capitalization Status</span><span class="v gold" id="adj-rd-status">—</span></div>
-        <div class="row"><span class="k">R&amp;D Useful Life</span><span class="v" id="adj-rd-life">—</span></div>
-        <div class="row"><span class="k">R&amp;D Growth Expense</span><span class="v" id="adj-rd-growth">—</span></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="clbl">Normalization &amp; Final NOPAT</div>
-      <div class="kv">
-        <div class="row"><span class="k">Non-Recurring Items</span><span class="v" id="adj-nr-total">—</span></div>
-        <div class="row"><span class="k">Normalized Tax Rate</span><span class="v" id="adj-tax-rate">—</span></div>
-        <div class="row"><span class="k">NOPAT Final (EPV Input)</span><span class="v gold" id="adj-nopat-final">—</span></div>
+    <div class="card accent">
+      <div class="clbl">Headline Adjustment</div>
+      <div class="cval gold" id="adj-headline-nopat">—</div>
+      <div class="csub">Adjusted NOPAT (EPV input)</div>
+      <div class="kv" style="margin-top:14px">
+        <div class="row"><span class="k">GAAP Operating Income</span><span class="v" id="adj-h-gaap">—</span></div>
+        <div class="row"><span class="k">(+) S&amp;M Growth Add-back</span><span class="v green" id="adj-h-sm">—</span></div>
+        <div class="row"><span class="k">(+) Non-Recurring Add-back</span><span class="v green" id="adj-h-nr">—</span></div>
+        <div class="row"><span class="k">Pre-Tax Adjusted OI</span><span class="v" id="adj-h-pre">—</span></div>
+        <div class="row"><span class="k">(−) Tax</span><span class="v red" id="adj-h-tax">—</span></div>
+        <div class="row"><span class="k">NOPAT after tax</span><span class="v gold" id="adj-h-nopat">—</span></div>
       </div>
     </div>
   </div>
-  <div class="slbl">NOPAT Build-up Table</div>
-  <div class="tbl-wrap" id="adj-nopat-table"></div>
-  <div class="g2" style="margin-top:20px">
+
+  <!-- ▸ BLOQUE 2 — Parameters S&M / R&D side-by-side -->
+  <div class="slbl">Capitalization Parameters &amp; Methodology</div>
+  <div class="g3" style="margin-bottom:24px">
+    <div class="card">
+      <div class="clbl">S&amp;M Capitalization — Brand Building</div>
+      <div class="kv">
+        <div class="row"><span class="k">S&amp;M Total Expense (LTM)</span><span class="v" id="adj-sm-total">—</span></div>
+        <div class="row"><span class="k">3-Year Rolling Average</span><span class="v" id="adj-sm-avg">—</span></div>
+        <div class="row"><span class="k">Useful Life (years)</span><span class="v gold" id="adj-sm-life">—</span></div>
+        <div class="row"><span class="k">Growth Expense (Add-back)</span><span class="v green" id="adj-sm-growth">—</span></div>
+        <div class="row"><span class="k">Growth % of S&amp;M</span><span class="v" id="adj-sm-growth-pct">—</span></div>
+        <div class="row"><span class="k">Unamortized Asset</span><span class="v gold" id="adj-sm-asset">—</span></div>
+      </div>
+      <div class="csub" style="margin-top:12px;font-style:italic">
+        Formula: <strong>Growth_t = S&amp;M_t − Avg(S&amp;M_{t−2}..t)</strong>. The recurring portion (3-yr avg) is treated as economic amortization of brand asset; the incremental spend is reclassified to investment and added back to NOPAT.
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">R&amp;D Capitalization — Intellectual Asset</div>
+      <div class="kv">
+        <div class="row"><span class="k">Capitalization Status</span><span class="v gold" id="adj-rd-status">—</span></div>
+        <div class="row"><span class="k">Useful Life (years)</span><span class="v" id="adj-rd-life">—</span></div>
+        <div class="row"><span class="k">Growth Expense (Add-back)</span><span class="v" id="adj-rd-growth">—</span></div>
+        <div class="row"><span class="k">Unamortized Asset</span><span class="v" id="adj-rd-asset">—</span></div>
+      </div>
+      <div class="csub" style="margin-top:12px;font-style:italic" id="adj-rd-note">
+        R&amp;D is capitalized only when (i) it represents recurring product/technology investment and (ii) revenue durability is dependent on the cumulative knowledge stock. Useful life calibrated to product cycle (typically 3–5 years for consumer hardware, 7–10 for capital goods).
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">Normalization &amp; Tax Treatment</div>
+      <div class="kv">
+        <div class="row"><span class="k">Non-Recurring Items (Pre-Tax)</span><span class="v" id="adj-nr-total">—</span></div>
+        <div class="row"><span class="k">Type</span><span class="v" id="adj-nr-type">—</span></div>
+        <div class="row"><span class="k">Normalized Tax Rate</span><span class="v gold" id="adj-tax-rate">—</span></div>
+        <div class="row"><span class="k">5-yr ETR Median</span><span class="v" id="adj-tax-median">—</span></div>
+        <div class="row"><span class="k">NOPAT Final (EPV Input)</span><span class="v gold" id="adj-nopat-final">—</span></div>
+      </div>
+      <div class="csub" style="margin-top:12px;font-style:italic">
+        Non-recurring items (impairments, restructuring, litigation) are added back pre-tax. Tax rate normalized to the 5-yr historical median to dampen one-time distortions (TCJA, deferred reversals, regional mix).
+      </div>
+    </div>
+  </div>
+
+  <!-- ▸ BLOQUE 3 — S&M Cohort Matrix -->
+  <div class="slbl">S&amp;M Cohort Matrix — Vintage Amortization View</div>
+  <div class="tbl-wrap" id="adj-sm-cohort" style="margin-bottom:24px"></div>
+  <div class="csub" style="margin:-8px 4px 24px;color:var(--gray-mid);font-style:italic">
+    Each cohort year's marketing spend is depreciated 1/L per period across L = <span id="adj-cm-life">—</span> years. Column totals reproduce the economic amortization charge embedded in adjusted operating income. Source: build-up implicit in the Columbia model.
+  </div>
+
+  <!-- ▸ BLOQUE 4 — Extended NOPAT Build-up Table -->
+  <div class="slbl">NOPAT Build-up — Historical Series</div>
+  <div class="tbl-wrap" id="adj-nopat-table" style="margin-bottom:24px"></div>
+
+  <!-- ▸ BLOQUE 5 — GAAP OI vs Adjusted NOPAT evolution chart -->
+  <div class="slbl">GAAP Operating Income vs. Adjusted NOPAT — Economic Earnings Gap</div>
+  <div class="g2" style="grid-template-columns: 1.4fr 1fr; gap:14px; margin-bottom:24px">
+    <div class="chart-card"><div class="clbl">Reported OI vs. Adjusted NOPAT (USD M)</div><canvas id="c-gaap-nopat"></canvas></div>
     <div class="chart-card"><div class="clbl">Effective Tax Rate History (%)</div><canvas id="c-etr"></canvas></div>
+  </div>
+
+  <!-- ▸ BLOQUE 7 — Sensitivity Panel -->
+  <div class="slbl">Sensitivity Panel — Adjusted NOPAT Drivers</div>
+  <div class="g3" style="margin-bottom:18px">
+    <div class="card">
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">S&amp;M Useful Life</span>
+          <span class="inp-val-display"><span id="sens-sm-life-val">3</span> yrs</span>
+        </div>
+        <input type="range" id="sens-sm-life" class="slider" min="3" max="7" step="1" value="3">
+        <div class="inp-range-labels"><span>3 yrs</span><span>7 yrs</span></div>
+        <div class="inp-formula">Longer life → smaller add-back → lower NOPAT</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">R&amp;D Useful Life</span>
+          <span class="inp-val-display"><span id="sens-rd-life-val">—</span> yrs</span>
+        </div>
+        <input type="range" id="sens-rd-life" class="slider" min="0" max="10" step="1" value="0">
+        <div class="inp-range-labels"><span>off</span><span>10 yrs</span></div>
+        <div class="inp-formula">Set 0 to disable R&amp;D capitalization</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">Normalized Tax Rate</span>
+          <span class="inp-val-display"><span id="sens-tax-val">28</span>%</span>
+        </div>
+        <input type="range" id="sens-tax" class="slider" min="15" max="40" step="1" value="28">
+        <div class="inp-range-labels"><span>15%</span><span>40%</span></div>
+        <div class="inp-formula">Default = 5-yr ETR median</div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="clbl">Live Recalculation</div>
+    <div class="g3" style="margin:6px 0 0;gap:12px">
+      <div><div class="csub">GAAP OI (LTM)</div><div class="cval" id="sens-gaap" style="font-size:20px">—</div></div>
+      <div><div class="csub">Pre-Tax Adjusted OI</div><div class="cval" id="sens-pre" style="font-size:20px">—</div></div>
+      <div><div class="csub">Recalculated NOPAT</div><div class="cval gold" id="sens-nopat" style="font-size:20px">—</div></div>
+    </div>
+    <div class="csub" id="sens-delta" style="margin-top:10px;font-style:italic">Δ vs published: —</div>
+  </div>
+
+  <!-- ▸ BLOQUE 8 — Methodology Footnotes -->
+  <div class="slbl">Methodology — Columbia / Greenwald Framework</div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="csub" style="font-size:12px;color:var(--gray-txt);line-height:1.6;font-weight:300">
+      <p style="margin:0 0 10px"><strong style="color:var(--navy)">1. From accounting earnings to economic earnings.</strong> GAAP operating income understates true profitability for businesses that fund growth through expensed line items (S&amp;M, R&amp;D, customer acquisition). The DCE adjustment isolates the <em>maintenance</em> portion of these expenses — which should remain in opex — from the <em>growth</em> portion, which is reclassified as investment.</p>
+      <p style="margin:0 0 10px"><strong style="color:var(--navy)">2. Greenwald rolling-average method.</strong> The 3-year (or L-year) rolling average of marketing/R&amp;D spend approximates the recurring expense required to maintain existing revenue and brand equity. Any spend above this baseline is treated as growth capex and added back pre-tax.</p>
+      <p style="margin:0 0 10px"><strong style="color:var(--navy)">3. Cohort-based asset reconstruction.</strong> Each year's spend creates an intangible asset that depreciates linearly over L years. The unamortized stock at any point in time equals the sum of remaining book value across active cohorts and is added to the EPV asset base.</p>
+      <p style="margin:0 0 10px"><strong style="color:var(--navy)">4. Non-recurring normalization.</strong> Items unlikely to repeat (impairments, restructuring, litigation settlements, gains on dispositions) are removed pre-tax. The threshold for inclusion is materiality (&gt;1% of revenue) and infrequency (not in the prior 3 years).</p>
+      <p style="margin:0"><strong style="color:var(--navy)">5. Tax normalization.</strong> The applied rate is the 5-yr historical median ETR, which smooths one-off effects from TCJA timing, deferred tax reversals, audit settlements, and geographic mix changes. Reference: Greenwald, Kahn, Sonkin &amp; van Biema (2001), <em>Value Investing: From Graham to Buffett and Beyond</em>; Damodaran (2009), <em>Research and Development Expenses: Implications for Profitability</em>.</p>
+    </div>
   </div>
 </div>
 
