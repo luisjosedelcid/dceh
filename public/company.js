@@ -335,6 +335,9 @@ function renderOverview() {
   setEl('md-leases-sub', ov.leasesNote || '—');
   setEl('md-cash',     M(ov.cash));
   setEl('md-cash-sub', ov.cashNote || '—');
+  const netDebt = (Number(ov.debt) || 0) + (Number(ov.leases) || 0) - (Number(ov.cash) || 0);
+  setEl('md-netdebt',     M(netDebt));
+  setEl('md-netdebt-sub', ov.netDebtNote || 'Debt + Leases − Cash');
 
   /* ----- 3. Key Financials (FY cerrado) ----- */
   setEl('kf-fy-label', `Métricas Financieras Clave (${D.fiscalYear || 'FY'})`);

@@ -60,7 +60,8 @@
       "pFcf": 17.7,
       "priceBook": 3.34,
       "dividendYield": 0.0
-    }
+    },
+    "netDebtNote": "Debt + Leases − Cash"
   },
   "financials": {
     "years": [
