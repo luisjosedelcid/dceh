@@ -816,14 +816,62 @@ function renderAdj() {
     destroyChart('c-nopat-bridge');
     const ctx = document.getElementById('c-nopat-bridge');
     if (ctx) {
+      // Custom plugin: draw value labels on top of each bar + connector lines
+      const waterfallLabels = {
+        id: 'waterfallLabels',
+        afterDatasetsDraw(chart) {
+          const { ctx: cc, data } = chart;
+          const meta = chart.getDatasetMeta(0);
+          cc.save();
+          cc.font = '600 11px "Helvetica Neue", Helvetica, Arial';
+          cc.fillStyle = '#1B2642';
+          cc.textAlign = 'center';
+          meta.data.forEach((bar, i) => {
+            const s = steps[i];
+            const val = s.v;
+            const sign = s.kind === 'add' ? '+' : (s.kind === 'sub' ? '' : '');
+            const display = `${sign}${sym()}${fmt(Math.abs(val))}M`;
+            const { x, y } = bar.tooltipPosition();
+            // For sub bars (tax), the top of visible bar is at y of upper of the float range -> use bar.y
+            const topY = bar.y - 6;
+            cc.fillText(display, x, topY);
+          });
+          // Connector dashed lines between consecutive bars
+          cc.strokeStyle = 'rgba(27,38,66,0.3)';
+          cc.lineWidth = 1;
+          cc.setLineDash([3, 3]);
+          for (let i = 0; i < meta.data.length - 1; i++) {
+            const cur = meta.data[i];
+            const nxt = meta.data[i+1];
+            const f1 = floatBars[i];
+            const f2 = floatBars[i+1];
+            // For 'add' the top of current is running value; for 'sub' bottom of current is end value; etc.
+            const curTop = cur.base !== undefined ? Math.min(cur.y, cur.base) : cur.y;
+            const nxtBot = nxt.base !== undefined ? Math.max(nxt.y, nxt.base) : nxt.y;
+            // Simpler: connect from end of current bar (the running value after step) to start of next bar
+            const curRight = cur.x + cur.width/2;
+            const nxtLeft = nxt.x - nxt.width/2;
+            // Running value y for current step:
+            const runY = cur.base !== undefined ? (steps[i].kind === 'sub' ? cur.y : (steps[i].kind === 'add' ? cur.y : cur.y)) : cur.y;
+            cc.beginPath();
+            cc.moveTo(curRight, runY);
+            cc.lineTo(nxtLeft, runY);
+            cc.stroke();
+          }
+          cc.setLineDash([]);
+          cc.restore();
+        }
+      };
       charts['c-nopat-bridge'] = new Chart(ctx, {
         type: 'bar',
         data: { labels: labels, datasets: [{
           label: 'USD M', data: floatBars,
           backgroundColor: colors, borderColor: colors, borderWidth: 0, borderRadius: 2,
+          barPercentage: 0.6, categoryPercentage: 0.85,
         }]},
         options: {
           responsive: true, maintainAspectRatio: true,
+          layout: { padding: { top: 24, right: 8, left: 8, bottom: 8 } },
           plugins: {
             legend: { display: false },
             tooltip: { callbacks: { label: ctx2 => {
@@ -837,7 +885,8 @@ function renderAdj() {
                   callback: v => `${sym()}${v>=1000?(v/1000).toFixed(1)+'K':v}` },
                   grid: { color:'rgba(27,38,66,0.05)' }, beginAtZero: true }
           }
-        }
+        },
+        plugins: [waterfallLabels]
       });
     }
 
