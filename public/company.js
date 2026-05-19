@@ -1477,7 +1477,9 @@ function renderSensitivity() {
       const eq  = ops + (epv.excessCash||0) + (epv.ltInv||0) + (epv.debt||0) + (epv.leases||0) + (epv.minorityInterest||0);
       const ps  = shares > 0 ? eq / shares : 0;
       const ratio = ps > 0 ? px / ps : 0;
-      const isBase = Math.abs(m-1.0)<0.01 && Math.abs(w - epv.waccBase)<0.5;
+      // Highlight the cell closest to current slider state (not the base) so user sees their override
+      const curMult = epvState.nopat / epv.nopatBase;
+      const isBase = Math.abs(m - curMult) < 0.06 && Math.abs(w - epvState.wacc) < 0.55;
       // Color: green attractive (≤1.5x), gold fair (≤2.0x), red premium (>2.0x)
       const bg = ratio <= 1.5 ? 'rgba(42,122,86,0.13)' : ratio <= 2.0 ? 'rgba(184,139,71,0.13)' : 'rgba(155,35,53,0.10)';
       html += `<td class="num-cell" style="background:${bg};${isBase?'font-weight:700;border:1px solid #b88b47':''}">${fmtDec(ratio,2)}×</td>`;
