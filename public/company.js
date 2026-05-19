@@ -1711,85 +1711,231 @@ function renderROIC() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   7. IMPLIED IRR
+   7. IMPLIED IRR — BKNG-style: 6 sliders + EV/Dist/Reinv decomp
    ════════════════════════════════════════════════════════════ */
 let irrState = {};
+let irrBase  = {};
 
 function renderIrr() {
-  const irr = D.irr;
+  const irr = D.irr || {};
   irrState = { ...irr };
+  irrBase  = { ...irr };
 
-  // sliders
-  setSlider('sl-irr-roic',  irr.selectedRoic, 5, 200, 0.5);
-  setSlider('sl-irr-organic', irr.organicGrowth, 0, 15, 0.5);
-  setSlider('sl-irr-exit',  irr.exitMultiple, 8, 50, 1);
-  setSlider('sl-irr-buybacks', irr.buybacks || 0, 0, Math.round(irr.ev * 0.1 / 1000) * 1000, 100);
-  setSlider('sl-irr-horizon', irr.horizon, 3, 10, 1);
+  // Slider bounds (consistent with Excel sensitivity ranges)
+  const buyMax = Math.max(2000, Math.round((irr.buybacks || 500) * 3 / 100) * 100);
+  const sliders = [
+    { id:'sl-irr-roic',     field:'selectedRoic',  val:irr.selectedRoic,  min:5,    max:60,  step:0.5, fmt:v=>`${fmtDec(v,1)}%`, note:'Capital efficiency on new investments (3yr avg pre-tax ROIC)' },
+    { id:'sl-irr-organic',  field:'organicGrowth', val:irr.organicGrowth, min:0,    max:15,  step:0.5, fmt:v=>`${fmtDec(v,1)}%`, note:'Same-store / pricing growth without new capital' },
+    { id:'sl-irr-exit',     field:'exitMultiple',  val:irr.exitMultiple,  min:8,    max:35,  step:1,   fmt:v=>`${v}×`,            note:'Exit EV/NOPAT multiple at end of horizon' },
+    { id:'sl-irr-buybacks', field:'buybacks',      val:irr.buybacks || 0, min:0,    max:buyMax, step:50, fmt:v=>`${sym()}${fmt(v)}M`, note:'Annual sustainable buybacks (USD millions)' },
+    { id:'sl-irr-horizon',  field:'horizon',       val:irr.horizon,       min:3,    max:10,  step:1,   fmt:v=>`${v} yr`,         note:'Investment horizon for IRR calc' },
+    { id:'sl-irr-hurdle',   field:'hurdle',        val:irr.hurdle,        min:6,    max:18,  step:0.5, fmt:v=>`${fmtDec(v,1)}%`, note:'DCE minimum return required to deploy capital' }
+  ];
+  sliders.forEach(sl => {
+    setSlider(sl.id, sl.val, sl.min, sl.max, sl.step);
+    const key = sl.id.replace('sl-irr-','');
+    setEl(`sl-irr-${key}-val`, sl.fmt(sl.val));
+    const minEl = document.getElementById(`sl-irr-${key}-min`);
+    const maxEl = document.getElementById(`sl-irr-${key}-max`);
+    if (minEl) minEl.textContent = sl.fmt(sl.min);
+    if (maxEl) maxEl.textContent = sl.fmt(sl.max);
+    const noteEl = document.getElementById(`sl-irr-${key}-note`);
+    if (noteEl) noteEl.textContent = sl.note;
+  });
+
   updateIRRCalc();
 }
 
 function onIRRSlider(field, val) {
   irrState[field] = parseFloat(val);
-  const dispEl = document.getElementById(`sl-irr-${field}-val`);
+  // Map field → slider key (most are direct, some shorter)
+  const keyMap = { selectedRoic:'roic', organicGrowth:'organic', exitMultiple:'exit', buybacks:'buybacks', horizon:'horizon', hurdle:'hurdle' };
+  const key = keyMap[field] || field;
+  const dispEl = document.getElementById(`sl-irr-${key}-val`);
   if (dispEl) {
-    if (field === 'buybacks') dispEl.textContent = `${sym()}${fmt(val)}M`;
-    else if (field === 'exit') dispEl.textContent = `${val}×`;
-    else if (field === 'horizon') dispEl.textContent = `${val} yr`;
-    else dispEl.textContent = `${fmtDec(parseFloat(val),1)}%`;
+    if (field === 'buybacks')         dispEl.textContent = `${sym()}${fmt(val)}M`;
+    else if (field === 'exitMultiple') dispEl.textContent = `${val}×`;
+    else if (field === 'horizon')      dispEl.textContent = `${val} yr`;
+    else                                dispEl.textContent = `${fmtDec(parseFloat(val),1)}%`;
   }
   updateIRRCalc();
 }
 
+function resetIRRAssumptions() {
+  irrState = { ...irrBase };
+  renderIrr();
+}
+
 function updateIRRCalc() {
-  const s = irrState;
-  const nopat = D.epv.nopatBase;
-  const ev = s.ev || D.irr.ev;
+  const s    = irrState;
+  const irr  = D.irr || {};
+  const ov   = D.overview || {};
+  const fin  = D.financials || {};
+  const epv  = D.epv || {};
 
-  // Distribution yield = (dividends + buybacks + interest) / EV
-  const divs = s.dividends || 0;
-  const bks  = s.buybacks  || 0;
-  const int_ = s.interest  || 0;
-  const distYield = (divs + bks + int_) / ev * 100;
+  // ===== Core inputs =====
+  const nopat = irr.nopat || epv.nopatBase || 0;
+  const ev    = irr.ev   || ov.ev || 0;
+  const mcap  = ov.marketCap || (ev - (ov.debt||0) - (ov.leases||0) + (ov.cash||0));
+  const debt  = ov.debt || 0;
+  const leases = ov.leases || 0;
+  const cash = ov.cash || 0;
+  const actualMult = nopat > 0 ? ev / nopat : 0;
 
-  // Reinvestment growth = reinvRate * selectedROIC
-  const reinvGrowth = (s.reinvRate || s.reinvGrowth || 0) * (s.selectedRoic / 100);
-
-  // Multiple impact (annualized) = (exitMult/actualMult)^(1/horizon) - 1
-  const actualMult = ev / nopat;
-  const multImpact = (Math.pow(s.exitMultiple / actualMult, 1/s.horizon) - 1) * 100;
-
-  // Organic growth
-  const organic = s.organicGrowth;
-
-  // D/E effect = deRatio * netBorrowCost (typically negative for high-debt)
-  const deEffect = (s.dCapital || 0) / 100 * (s.netBorrowCost || 0);
-
-  // Total equity return
-  const totalIRR = distYield + reinvGrowth + organic + multImpact - deEffect;
-  const mos = totalIRR - s.hurdle;
-
-  const irrColor = totalIRR >= s.hurdle ? 'var(--green)' : 'var(--red)';
-  const mosSign  = mos >= 0 ? '+' : '';
-  const mosCls   = mos >= 0 ? 'green' : 'red';
-
-  setEl('irr-dist-yield',   Pct(distYield));
-  setEl('irr-reinv-growth', Pct(reinvGrowth));
-  setEl('irr-organic',      Pct(organic));
-  setEl('irr-mult-impact',  Pct(multImpact));
-  setEl('irr-total',        `<span style="color:${irrColor};font-size:24px;font-weight:700">${Pct(totalIRR)}</span>`);
-  setEl('irr-hurdle',       Pct(s.hurdle));
-  setEl('irr-mos',          `<span class="${mosCls}">${mosSign}${Pct(mos)}</span>`);
-
-  // bar widths (normalize to 25% = 100%)
-  function barW(val) { return Math.min(100, Math.max(0, Math.abs(val) / 25 * 100)); }
-  ['dist-yield','reinv-growth','organic','mult-impact'].forEach(k => {
-    const bar = document.getElementById(`irr-bar-${k}`);
-    if (bar) {
-      const v = k==='dist-yield' ? distYield : k==='reinv-growth' ? reinvGrowth : k==='organic' ? organic : multImpact;
-      bar.style.width = barW(v) + '%';
-      bar.style.backgroundColor = v >= 0 ? '#2a7a56' : '#9b2335';
+  // ===== Auto-derive financial inputs from cfRows =====
+  const findRow = (rows, names) => {
+    if (!Array.isArray(rows)) return null;
+    for (const r of rows) {
+      if (!r || !r.l) continue;
+      const lower = r.l.toLowerCase();
+      if (names.some(n => lower.includes(n))) return Array.isArray(r.v) ? r.v : null;
     }
-  });
+    return null;
+  };
+  const last = (arr) => Array.isArray(arr) && arr.length ? arr[arr.length-1] : null;
+  const capexH = fin.capexHistory || findRow(fin.cfRows, ['capital expenditure','capex']) || [];
+  const daH    = fin.daHistory    || findRow(fin.cfRows, ['depreciation & amortization','depreciation and amortization','d&a']) || [];
+  const wcH    = findRow(fin.cfRows, ['changes in working capital','working capital']) || [];
+  const dividendsH = fin.dividends || findRow(fin.cfRows, ['dividends paid','dividends']) || [];
+  const interestH  = findRow(fin.isRows, ['interest expense']) || [];
+
+  // Latest FY values (use absolute for outflows so we display positive)
+  const capexLatest = Math.abs(last(capexH) || 0);
+  const daLatest    = Math.abs(last(daH) || 0);
+  const growthCapex = Math.max(0, capexLatest - daLatest);
+  const dWC         = Math.abs(last(wcH) || 0);                       // proxy for ΔWC
+  const divLatest   = Math.abs(last(dividendsH) || irr.dividends || 0);
+  const intLatest   = Math.abs(last(interestH) || irr.interest || 0);
+  const smGrowth    = 0;   // pendiente: requiere break-out de S&M growth en Supabase
+  const rdGrowth    = 0;   // pendiente: idem para R&D
+
+  // ===== Distributions (uses slider buybacks; div/int from latest FY) =====
+  const buybacks = s.buybacks  || 0;
+  const dist     = divLatest + buybacks + intLatest;
+  const distYield = ev > 0 ? (dist / ev) * 100 : 0;
+  const payoutRate = nopat > 0 ? (dist / nopat) * 100 : 0;
+
+  // ===== Reinvestment =====
+  const totalReinv = growthCapex + dWC + smGrowth + rdGrowth;
+  const reinvRate  = nopat > 0 ? (totalReinv / nopat) * 100 : 0;
+
+  // ===== Growth decomposition =====
+  const reinvGrowth = reinvRate * (s.selectedRoic / 100);   // pp
+  const totalGrowth = reinvGrowth + s.organicGrowth;
+
+  // ===== Multiple adjustment (annualized) =====
+  const multImpact = actualMult > 0 && s.horizon > 0
+    ? (Math.pow(s.exitMultiple / actualMult, 1/s.horizon) - 1) * 100
+    : 0;
+
+  // ===== Leverage Equity (MM lever-up) =====
+  // Equity return ≈ EV return + (D/E) × (EV return − pre-tax cost of debt)
+  // For LULU: zero net debt → leverage ≈ 0. For levered names, deRatio>0.
+  const evReturn = distYield + totalGrowth + multImpact;
+  const netDebt  = debt + leases - cash;
+  const eqVal    = Math.max(1, mcap);
+  const dOverE   = netDebt / eqVal;
+  const preTaxCost = irr.netBorrowCost || 0;
+  const leverageEq = dOverE * (evReturn - preTaxCost);     // pp; negative if net cash
+
+  // ===== Total equity return =====
+  const totalIRR = evReturn + leverageEq;
+  const mos      = totalIRR - s.hurdle;
+
+  // ===== HERO =====
+  const heroColor = totalIRR >= s.hurdle ? 'var(--green)' : 'var(--red)';
+  setEl('irr-total', `<span style="color:${heroColor}">${Pct(totalIRR)}</span>`);
+  const mosCls  = mos >= 0 ? 'green' : 'red';
+  const mosSign = mos >= 0 ? '+' : '';
+  setEl('irr-mos', `<span class="${mosCls}">${mosSign}${Pct(mos)}</span>`);
+  setEl('irr-mos-sub', `vs. Hurdle Rate ${Pct(s.hurdle)}`);
+  setEl('irr-actual-mult', `${fmtDec(actualMult,1)}×`);
+  setEl('irr-actual-mult-sub', `Exit ${s.exitMultiple}× → ${Pct(multImpact)} p.a.`);
+
+  // ===== DECOMPOSITION BARS =====
+  const maxAbs = Math.max(8, Math.abs(distYield), Math.abs(s.organicGrowth), Math.abs(reinvGrowth), Math.abs(multImpact), Math.abs(leverageEq), Math.abs(totalIRR));
+  function setBar(barId, pctId, val) {
+    const bar = document.getElementById(barId);
+    if (bar) {
+      bar.style.width = Math.min(100, Math.abs(val)/maxAbs*100) + '%';
+      bar.style.backgroundColor = val >= 0 ? '#2a7a56' : '#9b2335';
+    }
+    const pct = document.getElementById(pctId);
+    if (pct) {
+      const sign = val > 0 ? '+' : '';
+      pct.textContent = `${sign}${Pct(val)}`;
+      pct.className = `ipct ${val >= 0 ? 'green' : 'red'}`;
+    }
+  }
+  setBar('irr-bar-dist-yield',   'irr-dist-yield',   distYield);
+  setBar('irr-bar-organic',      'irr-organic',      s.organicGrowth);
+  setBar('irr-bar-reinv-growth', 'irr-reinv-growth', reinvGrowth);
+  setBar('irr-bar-mult-impact',  'irr-mult-impact',  multImpact);
+  setBar('irr-bar-leverage',     'irr-leverage',     leverageEq);
+  // Total bar (always navy)
+  const totBar = document.getElementById('irr-bar-total');
+  if (totBar) totBar.style.width = Math.min(100, Math.abs(totalIRR)/maxAbs*100) + '%';
+  const totEl = document.getElementById('irr-total-bar');
+  if (totEl) {
+    totEl.textContent = Pct(totalIRR);
+    totEl.className = `ipct ${totalIRR >= 0 ? 'green' : 'red'}`;
+    totEl.style.fontWeight = '700';
+  }
+
+  // ===== EV BUILD =====
+  const M = (v) => v == null ? '—' : `${sym()}${fmt(v)}M`;
+  setEl('irr-ev-mcap',   M(mcap));
+  setEl('irr-ev-debt',   M(debt));
+  setEl('irr-ev-leases', M(leases));
+  setEl('irr-ev-cash',   `(${M(cash)})`);
+  setEl('irr-ev-total',  M(ev));
+  setEl('irr-ev-mult',   `${fmtDec(actualMult,1)}×`);
+
+  // ===== DISTRIBUTIONS =====
+  setEl('irr-dist-div',         M(divLatest));
+  setEl('irr-dist-buy',         M(buybacks));
+  setEl('irr-dist-int',         M(intLatest));
+  setEl('irr-dist-total',       M(dist));
+  setEl('irr-dist-yield-calc',  Pct(distYield));
+  setEl('irr-dist-payout',      Pct(payoutRate));
+
+  // ===== REINVESTMENT =====
+  if (capexH.length === 0 || daH.length === 0) {
+    setEl('irr-reinv-gcapex', '<span class="dim">Pendiente</span>');
+  } else {
+    setEl('irr-reinv-gcapex', M(growthCapex));
+  }
+  setEl('irr-reinv-wc',    M(dWC));
+  setEl('irr-reinv-sm',    smGrowth > 0 ? M(smGrowth) : '<span class="dim">Pendiente</span>');
+  setEl('irr-reinv-rd',    rdGrowth > 0 ? M(rdGrowth) : '<span class="dim">N/A</span>');
+  setEl('irr-reinv-total', M(totalReinv));
+  setEl('irr-reinv-rate',  Pct(reinvRate));
+
+  // ===== GROWTH DECOMPOSITION =====
+  setEl('irr-gd-roic',        Pct(s.selectedRoic));
+  setEl('irr-gd-reinv',       Pct(reinvRate));
+  setEl('irr-gd-reinvgrowth', Pct(reinvGrowth));
+  setEl('irr-gd-organic',     Pct(s.organicGrowth));
+  setEl('irr-gd-total',       Pct(totalGrowth));
+
+  // ===== CASH SANITY CHECK =====
+  const netCash = nopat - totalReinv - dist;
+  const netCashPct = nopat > 0 ? (netCash / nopat) * 100 : 0;
+  setEl('irr-cs-nopat', M(nopat));
+  setEl('irr-cs-reinv', `(${M(totalReinv)})`);
+  setEl('irr-cs-dist',  `(${M(dist)})`);
+  const netCls = netCash >= 0 ? 'green' : 'red';
+  setEl('irr-cs-net',   `<span class="${netCls}">${M(netCash)}</span>`);
+  setEl('irr-cs-pct',   `<span class="${netCls}">${Pct(netCashPct)}</span>`);
+  let note;
+  if (netCash >= 0 && netCashPct < 20) {
+    note = 'Reinversión + distribución absorben casi todo el NOPAT — sostenible pero sin colchón. Si se materializa un downturn, hay que reducir buybacks antes que CapEx de crecimiento.';
+  } else if (netCash >= 0) {
+    note = 'Sobra cash después de reinvertir y distribuir — colchón saludable para opcionalidad (M&A, debt paydown, buybacks oportunísticos).';
+  } else {
+    note = 'Atención: NOPAT no cubre Reinversión + Distribución actual. O bien el supuesto de buybacks no es sostenible, o la empresa está apalancando para distribuir.';
+  }
+  setEl('irr-cs-note', note);
 }
 
 /* ════════════════════════════════════════════════════════════

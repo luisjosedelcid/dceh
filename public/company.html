@@ -928,92 +928,199 @@
      7. IMPLIED IRR
      ══════════════════════════════════════════════════════════ -->
 <div id="tab-irr" class="tab-content">
-  <div class="slbl">Implied Equity IRR — Return Decomposition</div>
-  <div class="g2">
-    <!-- Sliders -->
-    <div class="card">
-      <div class="clbl">IRR Calculators</div>
-      <div style="display:grid;gap:18px;margin-top:8px">
-        <div class="inp-group">
-          <div class="inp-header">
-            <span class="inp-label">Selected ROIC (Reinvestment)</span>
-            <span class="inp-val-display" id="sl-irr-roic-val">—</span>
-          </div>
-          <input id="sl-irr-roic" class="slider" type="range" oninput="onIRRSlider('selectedRoic',this.value);document.getElementById('sl-irr-roic-val').textContent=parseFloat(this.value).toFixed(1)+'%'">
-        </div>
-        <div class="inp-group">
-          <div class="inp-header">
-            <span class="inp-label">Organic Growth Rate</span>
-            <span class="inp-val-display" id="sl-irr-organic-val">—</span>
-          </div>
-          <input id="sl-irr-organic" class="slider" type="range" oninput="onIRRSlider('organicGrowth',this.value);document.getElementById('sl-irr-organic-val').textContent=parseFloat(this.value).toFixed(1)+'%'">
-        </div>
-        <div class="inp-group">
-          <div class="inp-header">
-            <span class="inp-label">Exit Multiple (EV/NOPAT)</span>
-            <span class="inp-val-display" id="sl-irr-exit-val">—</span>
-          </div>
-          <input id="sl-irr-exit" class="slider" type="range" oninput="onIRRSlider('exitMultiple',this.value);document.getElementById('sl-irr-exit-val').textContent=parseFloat(this.value).toFixed(0)+'×'">
-        </div>
-        <div class="inp-group">
-          <div class="inp-header">
-            <span class="inp-label">Sustainable Buybacks / yr</span>
-            <span class="inp-val-display" id="sl-irr-buybacks-val">—</span>
-          </div>
-          <input id="sl-irr-buybacks" class="slider" type="range" oninput="onIRRSlider('buybacks',this.value);document.getElementById('sl-irr-buybacks-val').textContent=(window.sym?.()||'$')+window.fmt?.(this.value)+'M'||this.value">
-        </div>
-        <div class="inp-group">
-          <div class="inp-header">
-            <span class="inp-label">Investment Horizon (years)</span>
-            <span class="inp-val-display" id="sl-irr-horizon-val">—</span>
-          </div>
-          <input id="sl-irr-horizon" class="slider" type="range" oninput="onIRRSlider('horizon',this.value);document.getElementById('sl-irr-horizon-val').textContent=parseFloat(this.value).toFixed(0)+' yr'">
-        </div>
-      </div>
+
+  <!-- 1) HERO — 3 KPI cards -->
+  <div class="slbl">Implied IRR — Total Shareholder Return</div>
+  <div class="g3" style="margin-bottom:18px">
+    <div class="card accent">
+      <div class="clbl">Total Equity Return</div>
+      <div class="cval green" id="irr-total">—</div>
+      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px">Recalculado en tiempo real</div>
     </div>
-    <!-- Decomposition bars -->
-    <div>
-      <div class="irrwrap">
-        <div class="irow">
-          <div class="ilbl">Distribution Yield (Div+Buyback+Int / EV)</div>
-          <div class="itrack"><div class="ifill" id="irr-bar-dist-yield" style="width:0%"></div></div>
-          <div class="ipct" id="irr-dist-yield">—</div>
+    <div class="card accent">
+      <div class="clbl">Margin of Safety</div>
+      <div class="cval" id="irr-mos">—</div>
+      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px" id="irr-mos-sub">vs. Hurdle Rate —</div>
+    </div>
+    <div class="card accent">
+      <div class="clbl">EV / NOPAT Actual</div>
+      <div class="cval gold" id="irr-actual-mult">—</div>
+      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px" id="irr-actual-mult-sub">—</div>
+    </div>
+  </div>
+
+  <!-- 2) ASSUMPTIONS — 6 sliders in 3x2 grid -->
+  <div class="slbl">Assumptions — Edit &amp; See Impact in Real Time</div>
+  <div class="card" style="margin-bottom:18px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px 24px">
+
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">Selected ROIC (Reinvestment)</span>
+          <span class="inp-val-display" id="sl-irr-roic-val">—</span>
         </div>
-        <div class="irow">
-          <div class="ilbl">Reinvestment Growth (ReinvRate × ROIC)</div>
-          <div class="itrack"><div class="ifill" id="irr-bar-reinv-growth" style="width:0%"></div></div>
-          <div class="ipct" id="irr-reinv-growth">—</div>
-        </div>
-        <div class="irow">
-          <div class="ilbl">Organic Growth</div>
-          <div class="itrack"><div class="ifill" id="irr-bar-organic" style="width:0%"></div></div>
-          <div class="ipct" id="irr-organic">—</div>
-        </div>
-        <div class="irow">
-          <div class="ilbl">Multiple Expansion / Compression (ann.)</div>
-          <div class="itrack"><div class="ifill" id="irr-bar-mult-impact" style="width:0%"></div></div>
-          <div class="ipct" id="irr-mult-impact">—</div>
-        </div>
-        <div class="itotal">
-          <div class="ilbl" style="font-weight:700;color:var(--ink)">Total Equity Return (IRR)</div>
-          <div style="flex:1"></div>
-          <div style="text-align:right">
-            <div id="irr-total">—</div>
-          </div>
-        </div>
+        <input id="sl-irr-roic" class="slider" type="range" oninput="onIRRSlider('selectedRoic',this.value)">
+        <div class="slider-bounds"><span id="sl-irr-roic-min">—</span><span id="sl-irr-roic-max">—</span></div>
+        <div class="slider-note" id="sl-irr-roic-note">—</div>
       </div>
-      <div class="g2">
-        <div class="card accent">
-          <div class="clbl">Hurdle Rate</div>
-          <div class="cval gold" id="irr-hurdle">—</div>
+
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">Organic Growth</span>
+          <span class="inp-val-display" id="sl-irr-organic-val">—</span>
         </div>
-        <div class="card accent">
-          <div class="clbl">Margin of Safety</div>
-          <div class="cval" id="irr-mos">—</div>
+        <input id="sl-irr-organic" class="slider" type="range" oninput="onIRRSlider('organicGrowth',this.value)">
+        <div class="slider-bounds"><span id="sl-irr-organic-min">—</span><span id="sl-irr-organic-max">—</span></div>
+        <div class="slider-note" id="sl-irr-organic-note">—</div>
+      </div>
+
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">Exit Multiple (EV/NOPAT)</span>
+          <span class="inp-val-display" id="sl-irr-exit-val">—</span>
         </div>
+        <input id="sl-irr-exit" class="slider" type="range" oninput="onIRRSlider('exitMultiple',this.value)">
+        <div class="slider-bounds"><span id="sl-irr-exit-min">—</span><span id="sl-irr-exit-max">—</span></div>
+        <div class="slider-note" id="sl-irr-exit-note">—</div>
+      </div>
+
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">Sustainable Buybacks ($M)</span>
+          <span class="inp-val-display" id="sl-irr-buybacks-val">—</span>
+        </div>
+        <input id="sl-irr-buybacks" class="slider" type="range" oninput="onIRRSlider('buybacks',this.value)">
+        <div class="slider-bounds"><span id="sl-irr-buybacks-min">—</span><span id="sl-irr-buybacks-max">—</span></div>
+        <div class="slider-note" id="sl-irr-buybacks-note">—</div>
+      </div>
+
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">Horizon (years)</span>
+          <span class="inp-val-display" id="sl-irr-horizon-val">—</span>
+        </div>
+        <input id="sl-irr-horizon" class="slider" type="range" oninput="onIRRSlider('horizon',this.value)">
+        <div class="slider-bounds"><span id="sl-irr-horizon-min">—</span><span id="sl-irr-horizon-max">—</span></div>
+        <div class="slider-note">Investment horizon</div>
+      </div>
+
+      <div class="inp-group">
+        <div class="inp-header">
+          <span class="inp-label">DCE Hurdle Rate</span>
+          <span class="inp-val-display" id="sl-irr-hurdle-val">—</span>
+        </div>
+        <input id="sl-irr-hurdle" class="slider" type="range" oninput="onIRRSlider('hurdle',this.value)">
+        <div class="slider-bounds"><span id="sl-irr-hurdle-min">—</span><span id="sl-irr-hurdle-max">—</span></div>
+        <div class="slider-note" id="sl-irr-hurdle-note">Minimum return required</div>
+      </div>
+
+    </div>
+    <div style="margin-top:18px;display:flex;align-items:center;gap:14px">
+      <button class="reset-btn" onclick="resetIRRAssumptions()">↻ RESET TO BASE ASSUMPTIONS</button>
+      <span style="font-size:11px;font-style:italic;color:var(--gray-mid)">Base assumptions correspond to the latest CIO-approved model.</span>
+    </div>
+  </div>
+
+  <!-- 3) RETURN DECOMPOSITION — horizontal bars -->
+  <div class="slbl">Return Decomposition</div>
+  <div class="card" style="margin-bottom:18px">
+    <div class="irrwrap">
+      <div class="irow">
+        <div class="ilbl">Distribution Yield</div>
+        <div class="itrack"><div class="ifill" id="irr-bar-dist-yield" style="width:0%"></div></div>
+        <div class="ipct" id="irr-dist-yield">—</div>
+      </div>
+      <div class="irow">
+        <div class="ilbl">Organic Growth</div>
+        <div class="itrack"><div class="ifill" id="irr-bar-organic" style="width:0%"></div></div>
+        <div class="ipct" id="irr-organic">—</div>
+      </div>
+      <div class="irow">
+        <div class="ilbl">Reinvestment Growth</div>
+        <div class="itrack"><div class="ifill" id="irr-bar-reinv-growth" style="width:0%"></div></div>
+        <div class="ipct" id="irr-reinv-growth">—</div>
+      </div>
+      <div class="irow">
+        <div class="ilbl">Multiple Adjustment</div>
+        <div class="itrack"><div class="ifill" id="irr-bar-mult-impact" style="width:0%"></div></div>
+        <div class="ipct" id="irr-mult-impact">—</div>
+      </div>
+      <div class="irow">
+        <div class="ilbl">Leverage Equity</div>
+        <div class="itrack"><div class="ifill" id="irr-bar-leverage" style="width:0%"></div></div>
+        <div class="ipct" id="irr-leverage">—</div>
+      </div>
+      <div class="itotal">
+        <div class="ilbl" style="font-weight:700;color:var(--ink)">Total Equity Return</div>
+        <div class="itrack"><div class="ifill" id="irr-bar-total" style="width:0%;background:#1B2642"></div></div>
+        <div class="ipct" id="irr-total-bar" style="font-weight:700">—</div>
       </div>
     </div>
   </div>
+
+  <!-- 4) ENTERPRISE-FIRST RETURN FRAMEWORK — 3 cards -->
+  <div class="slbl">Enterprise-First Return Framework (Modigliani–Miller Lever-up)</div>
+  <div class="g3" style="margin-bottom:18px">
+    <div class="card">
+      <div class="clbl">Enterprise Value Build</div>
+      <div class="kv" style="margin-top:6px">
+        <div class="row"><span class="k">Market Cap</span><span class="v" id="irr-ev-mcap">—</span></div>
+        <div class="row"><span class="k">(+) Total Debt</span><span class="v" id="irr-ev-debt">—</span></div>
+        <div class="row"><span class="k">(+) Lease Liabilities</span><span class="v" id="irr-ev-leases">—</span></div>
+        <div class="row"><span class="k">(−) Cash &amp; STI</span><span class="v red" id="irr-ev-cash">—</span></div>
+        <div class="row" style="margin-top:6px;border-top:1px solid var(--navy);padding-top:8px"><span class="k fw" style="color:var(--navy)">Enterprise Value</span><span class="v fw gold" id="irr-ev-total">—</span></div>
+        <div class="row"><span class="k">EV / NOPAT Multiple</span><span class="v" id="irr-ev-mult">—</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">Distributions ($M)</div>
+      <div class="kv" style="margin-top:6px">
+        <div class="row"><span class="k">Dividends Paid (Latest FY)</span><span class="v" id="irr-dist-div">—</span></div>
+        <div class="row"><span class="k">Sustainable Buybacks</span><span class="v" id="irr-dist-buy">—</span></div>
+        <div class="row"><span class="k">Interest Expense (pre-tax)</span><span class="v" id="irr-dist-int">—</span></div>
+        <div class="row" style="margin-top:6px;border-top:1px solid var(--navy);padding-top:8px"><span class="k fw" style="color:var(--navy)">Total Distributions</span><span class="v fw gold" id="irr-dist-total">—</span></div>
+        <div class="row"><span class="k">Distribution Yield (Dist/EV)</span><span class="v" id="irr-dist-yield-calc">—</span></div>
+        <div class="row"><span class="k">Payout Rate (Dist/NOPAT)</span><span class="v" id="irr-dist-payout">—</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">Reinvestment ($M)</div>
+      <div class="kv" style="margin-top:6px">
+        <div class="row"><span class="k">Growth CapEx (CapEx − D&amp;A)</span><span class="v" id="irr-reinv-gcapex">—</span></div>
+        <div class="row"><span class="k">Δ Working Capital (est.)</span><span class="v" id="irr-reinv-wc">—</span></div>
+        <div class="row"><span class="k">S&amp;M Growth Expense</span><span class="v" id="irr-reinv-sm">—</span></div>
+        <div class="row"><span class="k">R&amp;D Growth (N/A)</span><span class="v" id="irr-reinv-rd">—</span></div>
+        <div class="row" style="margin-top:6px;border-top:1px solid var(--navy);padding-top:8px"><span class="k fw" style="color:var(--navy)">Total Reinvestment</span><span class="v fw gold" id="irr-reinv-total">—</span></div>
+        <div class="row"><span class="k">Reinvestment Rate</span><span class="v" id="irr-reinv-rate">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5) GROWTH DECOMPOSITION + CASH SANITY CHECK — 2 cards -->
+  <div class="g2" style="margin-bottom:18px">
+    <div class="card">
+      <div class="clbl">Growth Decomposition</div>
+      <div class="kv" style="margin-top:6px">
+        <div class="row"><span class="k">Selected ROIC (3yr avg)</span><span class="v" id="irr-gd-roic">—</span></div>
+        <div class="row"><span class="k">× Reinvestment Rate</span><span class="v" id="irr-gd-reinv">—</span></div>
+        <div class="row"><span class="k fw">= Reinvestment Growth</span><span class="v fw green" id="irr-gd-reinvgrowth">—</span></div>
+        <div class="row"><span class="k">(+) Organic Growth</span><span class="v" id="irr-gd-organic">—</span></div>
+        <div class="row" style="margin-top:6px;border-top:1px solid var(--navy);padding-top:8px"><span class="k fw" style="color:var(--navy)">Total Growth</span><span class="v fw gold" id="irr-gd-total">—</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">Cash Sanity Check</div>
+      <div class="kv" style="margin-top:6px">
+        <div class="row"><span class="k">Normalized NOPAT</span><span class="v" id="irr-cs-nopat">—</span></div>
+        <div class="row"><span class="k">(−) Total Reinvestment</span><span class="v red" id="irr-cs-reinv">—</span></div>
+        <div class="row"><span class="k">(−) Total Distributions</span><span class="v red" id="irr-cs-dist">—</span></div>
+        <div class="row" style="margin-top:6px;border-top:1px solid var(--navy);padding-top:8px"><span class="k fw" style="color:var(--navy)">NOPAT − Reinv. − Dist.</span><span class="v fw" id="irr-cs-net">—</span></div>
+        <div class="row"><span class="k">% of NOPAT</span><span class="v" id="irr-cs-pct">—</span></div>
+      </div>
+      <p id="irr-cs-note" style="font-size:10.5px;font-style:italic;color:var(--gray-mid);margin:10px 2px 0">—</p>
+    </div>
+  </div>
+
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
