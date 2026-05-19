@@ -1222,7 +1222,12 @@ function renderHealth() {
     charts['c-radar'] = new Chart(rc, {
       type: 'radar',
       data: {
-        labels: hc.radarLabels.map(l => String(l).split('\\n').join('\n')),
+        // Chart.js radar requires labels as arrays of strings for multi-line.
+        // Support both literal '\\n' (escaped, from JSON) and real '\n' (from Supabase jsonb).
+        labels: hc.radarLabels.map(l => {
+          const s = String(l).replace(/\\n/g, '\n');
+          return s.includes('\n') ? s.split('\n') : s;
+        }),
         datasets: [{
           label: D.ticker,
           data: hc.radarScores,
