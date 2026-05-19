@@ -193,8 +193,13 @@
   .memo-row .mk { color: var(--gray-mid); font-weight: 300; }
   .memo-row .mv { font-weight: 600; color: var(--ink); }
 
-  /* RV TABLE */
-  .rv-tbl th:last-child, .rv-tbl td:last-child { text-align: left; max-width: 260px; font-size: 10px; }
+  /* RV TABLE — fixed column widths so Book/Adj/Repro line up across Tangible/Intangible/Other/Liabilities */
+  .rv-tbl { table-layout: fixed; width: 100%; }
+  .rv-tbl th:nth-child(1), .rv-tbl td:nth-child(1) { width: auto; }                           /* Label */
+  .rv-tbl th:nth-child(2), .rv-tbl td:nth-child(2) { width: 130px; text-align: right; }       /* Book Value */
+  .rv-tbl th:nth-child(3), .rv-tbl td:nth-child(3) { width: 110px; text-align: right; }       /* Adj % */
+  .rv-tbl th:nth-child(4), .rv-tbl td:nth-child(4) { width: 130px; text-align: right; }       /* Repro Value */
+  .rv-tbl th:nth-child(5), .rv-tbl td:nth-child(5) { width: 280px; text-align: left; font-size: 10px; }  /* Method */
 
   /* DOC TILE */
   .doc-tile { background: var(--white); border: 1px solid var(--rule); border-top: 2px solid var(--gold); padding: 28px 30px; display: flex; flex-direction: column; gap: 12px; }
@@ -695,30 +700,12 @@
     </table>
   </div>
 
-  <!-- Headline cards -->
-  <div class="g3" style="margin-top:8px">
-    <div class="card accent">
-      <div class="clbl">Reproduction Value (Equity)</div>
-      <div class="cval gold" id="rv-equity">—</div>
-      <div class="csub">Cost to replicate the asset base today, net of liabilities</div>
-      <div style="margin-top:14px">
-        <div class="clbl">RV per Share</div>
-        <div class="cval" id="rv-per-share">—</div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="clbl">Moat Test — EPV / RV</div>
-      <div class="cval gold" id="rv-moat-ratio">—</div>
-      <div class="csub" id="rv-moat-label">EPV / RV ratio</div>
-      <div class="csub" style="margin-top:10px;font-size:11px;line-height:1.5">
-        <strong>EPV &gt; RV →</strong> incumbent earns above cost of replication → evidence of franchise. <strong>EPV ≈ RV →</strong> commodity returns. <strong>EPV &lt; RV →</strong> destroyer of capital.
-      </div>
-    </div>
-    <div class="card">
-      <div class="clbl">Methodology Note</div>
-      <div class="csub" style="font-size:12px;color:var(--gray-txt);line-height:1.55;font-style:italic" id="rv-note">—</div>
-    </div>
-  </div>
+  <!-- Hidden sinks for legacy setEl calls (avoid console errors) -->
+  <span id="rv-equity" style="display:none"></span>
+  <span id="rv-per-share" style="display:none"></span>
+  <span id="rv-moat-ratio" style="display:none"></span>
+  <span id="rv-moat-label" style="display:none"></span>
+  <span id="rv-note" style="display:none"></span>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
