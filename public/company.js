@@ -1339,13 +1339,33 @@ function renderEPV() {
     wacc:  epv.waccBase,
     tax:   epv.taxBase
   };
-  // sliders
-  setSlider('sl-nopat', epv.nopatBase, Math.round(epv.nopatBase * 0.5), Math.round(epv.nopatBase * 1.8), 50);
+  // Slider ranges
+  const nopatMin = Math.round(epv.nopatBase * 0.5);
+  const nopatMax = Math.round(epv.nopatBase * 1.8);
+  setSlider('sl-nopat', epv.nopatBase, nopatMin, nopatMax, 50);
   setSlider('sl-wacc',  epv.waccBase,  3, 20, 0.1);
   setSlider('sl-tax',   epv.taxBase,   10, 45, 1);
+  // Bounds labels
+  setEl('sl-nopat-min', `${sym()}${fmt(nopatMin)}M`);
+  setEl('sl-nopat-max', `${sym()}${fmt(nopatMax)}M`);
+  setEl('sl-wacc-min', '3%');
+  setEl('sl-wacc-max', '20%');
+  setEl('sl-tax-min', '10%');
+  setEl('sl-tax-max', '45%');
+  // Footnotes (from Supabase if present)
+  const fn = epv.assumptionsFootnotes || {};
+  setEl('sl-nopat-note', fn.nopat || '');
+  setEl('sl-wacc-note',  fn.wacc  || '');
+  setEl('sl-tax-note',   fn.tax   || '');
+  // Initial display values
+  setEl('sl-nopat-val', `${sym()}${fmt(epv.nopatBase)}M`);
+  setEl('sl-wacc-val',  `${fmtDec(epv.waccBase,2)}%`);
+  setEl('sl-tax-val',   `${fmtDec(epv.taxBase,0)}%`);
+
   updateEPVCalc();
   renderEPVBridge();
   renderSensitivity();
+  renderWACCComponents();
 }
 
 function setSlider(id, val, min, max, step) {
@@ -1358,27 +1378,60 @@ function onEPVSlider(field, val) {
   const display = document.getElementById(`sl-${field}-val`);
   if (display) {
     if (field === 'nopat') display.textContent = `${sym()}${fmt(val)}M`;
-    else display.textContent = `${fmtDec(parseFloat(val),1)}%`;
+    else if (field === 'wacc') display.textContent = `${fmtDec(parseFloat(val),2)}%`;
+    else display.textContent = `${fmtDec(parseFloat(val),0)}%`;
   }
   updateEPVCalc();
+  renderSensitivity();
+}
+
+function resetEPVAssumptions() {
+  const epv = D.epv;
+  epvState = { nopat: epv.nopatBase, wacc: epv.waccBase, tax: epv.taxBase };
+  const slN = document.getElementById('sl-nopat'); if (slN) slN.value = epv.nopatBase;
+  const slW = document.getElementById('sl-wacc');  if (slW) slW.value = epv.waccBase;
+  const slT = document.getElementById('sl-tax');   if (slT) slT.value = epv.taxBase;
+  setEl('sl-nopat-val', `${sym()}${fmt(epv.nopatBase)}M`);
+  setEl('sl-wacc-val',  `${fmtDec(epv.waccBase,2)}%`);
+  setEl('sl-tax-val',   `${fmtDec(epv.taxBase,0)}%`);
+  updateEPVCalc();
+  renderSensitivity();
+}
+
+function renderWACCComponents() {
+  const w = D.wacc; if (!w) return;
+  setEl('wacc-rf',      Pct(w.rf*100));
+  setEl('wacc-beta',    fmtDec(w.beta, 2));
+  setEl('wacc-erp',     Pct(w.erp*100));
+  setEl('wacc-ke',      Pct(w.ke*100));
+  setEl('wacc-kd-pre',  Pct((w.kdPreTax||0)*100));
+  setEl('wacc-kd-post', Pct((w.kdAfterTax||0)*100));
+  setEl('wacc-wd',      Pct((w.weightDebt||0)*100));
+  setEl('wacc-we',      Pct((w.weightEquity||1)*100));
+  setEl('wacc-final',   Pct((w.waccFinal||w.ke)*100));
 }
 
 function updateEPVCalc() {
   const { nopat, wacc, tax } = epvState;
   const epv = D.epv;
-  const nopatAdj = nopat * (1 - tax/100) / (1 - D.epv.taxBase/100); // rescale if tax changes
-  // recompute: EPV Ops = NOPAT / WACC (D&A − MaintCapex net zero)
+  // EPV Ops = NOPAT / WACC (D&A − MaintCapex net zero)
   const epvOps = (nopat / (wacc / 100));
   const epvEq  = epvOps + (epv.excessCash||0) + (epv.ltInv||0) + (epv.debt||0) + (epv.leases||0) + (epv.minorityInterest||0);
   const shares = D.overview.shares;
   const epvPs  = shares > 0 ? epvEq / shares : 0;
-  const priceEpv = currentPrice / epvPs;
+  const px     = (typeof currentPrice === 'number' && currentPrice > 0) ? currentPrice : (D.overview.stockPrice || 0);
+  const priceEpv = epvPs > 0 ? px / epvPs : 0;
   const priceColor = priceEpv <= 1 ? 'var(--green)' : priceEpv <= 1.5 ? 'var(--gold)' : 'var(--red)';
+  const priceLabel = priceEpv <= 1
+    ? 'Trading below EPV — margin of safety'
+    : priceEpv <= 1.5 ? 'Trading near EPV — fair value' : 'Market paying implied growth premium';
 
   setEl('epv-ops',    M(Math.round(epvOps)));
   setEl('epv-equity', M(Math.round(epvEq)));
   setEl('epv-ps',     fmtPrice(epvPs));
-  setEl('epv-price-ratio', `<span style="color:${priceColor}">Price / EPV = ${fmtDec(priceEpv,2)}×</span>`);
+  setEl('epv-share-sub', `${fmtDec(shares,2)}M diluted shares`);
+  setEl('epv-price-ratio', `<span style="color:${priceColor}">${fmtDec(priceEpv,2)}×</span>`);
+  setEl('epv-price-label', priceLabel);
 
   // update bridge display values
   setEl('bridge-nopat',    `${sym()}${fmt(Math.round(nopat))}M`);
@@ -1407,25 +1460,31 @@ function renderSensitivity() {
   if (!el) return;
   const epv = D.epv;
   const shares = D.overview.shares;
-  const waccVals = [5,6,7,8,9,10,11,12];
-  const nopatMults = [0.7, 0.85, 1.0, 1.15, 1.3];
+  const px = (typeof currentPrice === 'number' && currentPrice > 0) ? currentPrice : (D.overview.stockPrice || 0);
+  // Build WACC vals around base ±2.5 pts (5 cols, 0.5pt step)
+  const baseW = epv.waccBase;
+  const waccVals = [baseW - 2, baseW - 1, baseW, baseW + 1, baseW + 2].map(v => Math.round(v*10)/10);
+  // NOPAT rows: 5 levels, ±20% around base in 10% increments
+  const nopatMults = [0.8, 0.9, 1.0, 1.1, 1.2];
   let html = `<table class="fin-tbl sens-tbl">
-    <thead><tr><th>NOPAT\\WACC</th>${waccVals.map(w=>`<th>${w}%</th>`).join('')}</tr></thead><tbody>`;
+    <thead><tr><th>NOPAT \\ WACC</th>${waccVals.map(w=>`<th>${fmtDec(w,1)}%</th>`).join('')}</tr></thead><tbody>`;
   nopatMults.forEach(m => {
     const n = epv.nopatBase * m;
-    html += `<tr><th class="row-lbl">${sym()}${fmt(Math.round(n))}M</th>`;
+    const nLbl = n >= 1000 ? `${sym()}${fmtDec(n/1000,1)}B` : `${sym()}${fmt(Math.round(n))}M`;
+    html += `<tr><th class="row-lbl">${nLbl}</th>`;
     waccVals.forEach(w => {
       const ops = n / (w/100);
       const eq  = ops + (epv.excessCash||0) + (epv.ltInv||0) + (epv.debt||0) + (epv.leases||0) + (epv.minorityInterest||0);
       const ps  = shares > 0 ? eq / shares : 0;
+      const ratio = ps > 0 ? px / ps : 0;
       const isBase = Math.abs(m-1.0)<0.01 && Math.abs(w - epv.waccBase)<0.5;
-      const ratio = currentPrice / ps;
-      const bg = ratio <= 0.9 ? 'rgba(42,122,86,0.15)' : ratio <= 1.1 ? 'rgba(184,139,71,0.15)' : 'rgba(155,35,53,0.12)';
-      html += `<td class="num-cell" style="background:${bg};${isBase?'font-weight:700;border:1px solid #b88b47':''}">${fmtPrice(ps)}</td>`;
+      // Color: green attractive (≤1.5x), gold fair (≤2.0x), red premium (>2.0x)
+      const bg = ratio <= 1.5 ? 'rgba(42,122,86,0.13)' : ratio <= 2.0 ? 'rgba(184,139,71,0.13)' : 'rgba(155,35,53,0.10)';
+      html += `<td class="num-cell" style="background:${bg};${isBase?'font-weight:700;border:1px solid #b88b47':''}">${fmtDec(ratio,2)}×</td>`;
     });
     html += '</tr>';
   });
-  html += '</tbody></table><p style="font-size:10px;color:#8a9098;margin-top:6px">Green = Price < EPV · Gold = ±10% · Red = Price > EPV</p>';
+  html += '</tbody></table><p style="font-size:10px;color:#8a9098;margin-top:8px;padding:4px 8px"><span style="display:inline-block;width:10px;height:10px;background:rgba(42,122,86,0.5);vertical-align:middle;margin-right:4px"></span>≤1.5× attractive price · <span style="display:inline-block;width:10px;height:10px;background:rgba(184,139,71,0.5);vertical-align:middle;margin:0 4px 0 8px"></span>≤2.0× fair price · <span style="display:inline-block;width:10px;height:10px;background:rgba(155,35,53,0.4);vertical-align:middle;margin:0 4px 0 8px"></span>&gt;2.0× growth premium</p>';
   el.innerHTML = html;
 }
 
