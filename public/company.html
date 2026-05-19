@@ -813,12 +813,15 @@
 
   <!-- 3) BRIDGE EPV + WACC COMPONENTS — SIDE BY SIDE -->
   <div class="slbl" style="margin-top:8px">Bridge EPV — EBIT → Equity</div>
-  <div class="g2" style="margin-bottom:18px;align-items:start">
-    <div class="card">
+  <div class="g2" style="margin-bottom:18px">
+    <div class="card" style="display:flex;flex-direction:column">
       <div class="clbl">EPV Build ($M)</div>
-      <div id="epv-bridge" style="margin-top:8px"></div>
+      <div id="epv-bridge" style="margin-top:8px;flex:1"></div>
+      <div style="margin-top:14px;padding:10px 12px;background:rgba(27,38,66,0.04);border-left:2px solid var(--navy);font-size:11px;line-height:1.55;color:var(--gray-txt)">
+        <strong style="color:var(--navy)">EPV bridge.</strong> Starts from normalised EBIT, taxes it at the long-run effective rate, and capitalises NOPAT at WACC. Bridge to equity adjusts for cash, non-operating assets, debt and lease liabilities. No growth assumed.
+      </div>
     </div>
-    <div class="card">
+    <div class="card" style="display:flex;flex-direction:column">
       <div class="clbl">WACC — Components</div>
       <div class="kv" style="margin-top:6px">
         <div class="row"><span class="k">Risk-Free Rate (Rf)</span><span class="v" id="wacc-rf">—</span></div>
@@ -833,7 +836,7 @@
       </div>
 
       <div class="clbl" style="margin-top:18px">WACC Validation — Cross-Check</div>
-      <div class="kv" style="margin-top:6px">
+      <div class="kv" style="margin-top:6px;flex:1">
         <div class="row"><span class="k">DCE WACC (CAPM)</span><span class="v gold fw" id="wacc-val-dce">—</span></div>
         <div class="row"><span class="k">Damodaran Sector Implied</span><span class="v" id="wacc-val-damodaran">—</span></div>
         <div class="row"><span class="k">Peer Avg (top 3 comps)</span><span class="v" id="wacc-val-peers">—</span></div>
@@ -841,7 +844,7 @@
       </div>
 
       <div style="margin-top:14px;padding:10px 12px;background:rgba(184,139,71,0.07);border-left:2px solid var(--gold);font-size:11px;line-height:1.55;color:var(--gray-txt)">
-        <strong style="color:var(--navy)">Item EPV.</strong> EPV assumes current earnings persist indefinitely with no growth — it is the valuation floor for a moated business. A Price &gt; EPV implies the market is pricing in future growth (franchise value). The sensitivity matrix below quantifies how that floor moves with normalised NOPAT and the required return.
+        <strong style="color:var(--navy)">Item EPV.</strong> EPV assumes current earnings persist indefinitely with no growth — it is the valuation floor for a moated business. A Price &gt; EPV implies the market is pricing in future growth (franchise value).
       </div>
       <!-- Hidden sinks for legacy Kd pre-tax ref -->
       <span id="wacc-kd-pre" style="display:none"></span>
