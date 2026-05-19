@@ -1806,8 +1806,15 @@ function updateIRRCalc() {
   const dWC         = Math.abs(last(wcH) || 0);                       // proxy for ΔWC
   const divLatest   = Math.abs(last(dividendsH) || irr.dividends || 0);
   const intLatest   = Math.abs(last(interestH) || irr.interest || 0);
-  const smGrowth    = 0;   // pendiente: requiere break-out de S&M growth en Supabase
-  const rdGrowth    = 0;   // pendiente: idem para R&D
+  // Excel parity: incluir S&M Growth Expense + R&D Growth Expense en Total Reinversión
+  const adj = D.adj || {};
+  const lastNonNull = (arr) => {
+    if (!Array.isArray(arr)) return 0;
+    for (let i = arr.length - 1; i >= 0; i--) { if (arr[i] != null) return arr[i]; }
+    return 0;
+  };
+  const smGrowth    = adj.smGrowthExp != null ? adj.smGrowthExp : lastNonNull(adj.smGrowthHistory);
+  const rdGrowth    = adj.rdGrowthExp != null ? adj.rdGrowthExp : lastNonNull(adj.rdGrowthHistory);
 
   // ===== Distributions (uses slider buybacks; div/int from latest FY) =====
   const buybacks = s.buybacks  || 0;
@@ -1830,13 +1837,13 @@ function updateIRRCalc() {
 
   // ===== Leverage Equity (MM lever-up) =====
   // Equity return ≈ EV return + (D/E) × (EV return − pre-tax cost of debt)
-  // For LULU: zero net debt → leverage ≈ 0. For levered names, deRatio>0.
+  // Excel parity: D/E (Mercado) = (Debt + Leases) / MCap (gross leverage, incluyendo leases)
   const evReturn = distYield + totalGrowth + multImpact;
-  const netDebt  = debt + leases - cash;
+  const grossDebt  = debt + leases;
   const eqVal    = Math.max(1, mcap);
-  const dOverE   = netDebt / eqVal;
+  const dOverE   = grossDebt / eqVal;
   const preTaxCost = irr.netBorrowCost || 0;
-  const leverageEq = dOverE * (evReturn - preTaxCost);     // pp; negative if net cash
+  const leverageEq = dOverE * (evReturn - preTaxCost);     // pp
 
   // ===== Total equity return =====
   const totalIRR = evReturn + leverageEq;
@@ -2257,12 +2264,16 @@ function computeImpliedIrr() {
   const interestH  = findRow(fin.isRows, ['interest expense']) || [];
   const growthCapex = Math.max(0, Math.abs(last(capexH)) - Math.abs(last(daH)));
   const dWC         = Math.abs(last(wcH));
+  // Excel parity: Total Reinversión = Growth CapEx + ΔWC + S&M Growth Expense + R&D Growth Expense
+  const smGrowthExp = (D.adj && (D.adj.smGrowthExp != null ? D.adj.smGrowthExp
+                                                          : (Array.isArray(D.adj.smGrowthHistory) ? last(D.adj.smGrowthHistory.filter(x=>x!=null)) : 0))) || 0;
+  const rdGrowthExp = (D.adj && (D.adj.rdGrowthExp != null ? D.adj.rdGrowthExp : 0)) || 0;
   const divLatest   = Math.abs(last(dividendsH) || irr.dividends || 0);
   const intLatest   = Math.abs(last(interestH)  || irr.interest  || 0);
   const buybacks    = irr.buybacks || 0;
   const dist        = divLatest + buybacks + intLatest;
   const distYield   = ev > 0 ? (dist / ev) * 100 : 0;
-  const totalReinv  = growthCapex + dWC;
+  const totalReinv  = growthCapex + dWC + smGrowthExp + rdGrowthExp;
   const reinvRate   = nopat > 0 ? (totalReinv / nopat) * 100 : 0;
   const reinvGrowth = reinvRate * ((irr.selectedRoic || 0) / 100);
   const totalGrowth = reinvGrowth + (irr.organicGrowth || 0);
@@ -2271,9 +2282,10 @@ function computeImpliedIrr() {
     ? (Math.pow((irr.exitMultiple || actualMult) / actualMult, 1/irr.horizon) - 1) * 100
     : 0;
   const evReturn    = distYield + totalGrowth + multImpact;
-  const netDebt     = (ov.debt||0) + (ov.leases||0) - (ov.cash||0);
+  // Excel parity: D/E (Mercado) = (Debt + Leases) / MCap (gross leverage, not net)
+  const grossDebt   = (ov.debt||0) + (ov.leases||0);
   const eqVal       = Math.max(1, mcap);
-  const dOverE      = netDebt / eqVal;
+  const dOverE      = grossDebt / eqVal;
   const leverageEq  = dOverE * (evReturn - (irr.netBorrowCost || 0));
   return {
     totalIRR: evReturn + leverageEq,
