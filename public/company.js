@@ -702,17 +702,18 @@ function renderTable(containerId, rows, years, fin) {
     if (r.t === 'spacer') { html += `<tr class="spacer-row"><td colspan="${years.length+1}"></td></tr>`; return; }
     if (r.t === 'section') { html += `<tr class="sec-row"><td colspan="${years.length+1}">${r.l}</td></tr>`; return; }
     const cls = r.t === 'total' ? 'tot-row' : r.t === 'subtotal' ? 'sub-row' : r.t === 'margin' ? 'mrg-row' : 'norm-row';
-    html += `<tr class="${cls}"><td class="row-lbl">${r.l}</td>`;
+    // Margin rows render indented so they read as a child of the driver row above
+    const lblStyle = r.t === 'margin' ? ' style="padding-left:22px"' : '';
+    html += `<tr class="${cls}"><td class="row-lbl"${lblStyle}>${r.l}</td>`;
     (r.v || Array(years.length).fill(null)).forEach(v => {
       if (v == null) { html += `<td class="num-cell dim">—</td>`; return; }
       let disp;
       if (r.t === 'margin') {
-        disp = `${v >= 0 ? '' : ''}${fmtDec(v,1)}%`;
+        disp = `${fmtDec(v,1)}%`;
       } else {
         disp = v < 0 ? `(${fmt(Math.abs(v))})` : fmt(v);
       }
       const neg = (r.neg && v > 0) || v < 0;
-      const color = r.t === 'margin' ? '' : '';
       html += `<td class="num-cell ${r.t==='total'||r.t==='subtotal'?'fw':''}${neg&&r.t!=='margin'?' dim':''}">${disp}</td>`;
     });
     html += `</tr>`;
