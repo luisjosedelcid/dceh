@@ -201,12 +201,13 @@
   .rv-tbl th:nth-child(4), .rv-tbl td:nth-child(4) { width: 130px; text-align: right; }       /* Repro Value */
   .rv-tbl th:nth-child(5), .rv-tbl td:nth-child(5) { width: 280px; text-align: left; font-size: 10px; }  /* Method */
 
-  /* BUILD-UP TABLE — mirrors RV col widths so Book lines up with (Book+Adj) and Repro lines up with Repro */
+  /* BUILD-UP TABLE — mirrors RV col widths exactly: Book in col2, blank col3 (where Adj % sits above), Repro in col4 */
   .bu-tbl { table-layout: fixed; width: 100%; }
   .bu-tbl th:nth-child(1), .bu-tbl td:nth-child(1) { width: auto; }                           /* Step label */
-  .bu-tbl th:nth-child(2), .bu-tbl td:nth-child(2) { width: 240px; text-align: right; }       /* Book Value (130+110 from RV tbl) */
-  .bu-tbl th:nth-child(3), .bu-tbl td:nth-child(3) { width: 130px; text-align: right; }       /* Repro Value */
-  .bu-tbl th:nth-child(4), .bu-tbl td:nth-child(4) { width: 280px; }                          /* spacer matches Method col */
+  .bu-tbl th:nth-child(2), .bu-tbl td:nth-child(2) { width: 130px; text-align: right; }       /* Book Value */
+  .bu-tbl th:nth-child(3), .bu-tbl td:nth-child(3) { width: 110px; }                          /* blank — mirrors Adj % */
+  .bu-tbl th:nth-child(4), .bu-tbl td:nth-child(4) { width: 130px; text-align: right; }       /* Repro Value */
+  .bu-tbl th:nth-child(5), .bu-tbl td:nth-child(5) { width: 280px; }                          /* spacer mirrors Method */
 
   /* DOC TILE */
   .doc-tile { background: var(--white); border: 1px solid var(--rule); border-top: 2px solid var(--gold); padding: 28px 30px; display: flex; flex-direction: column; gap: 12px; }
@@ -687,26 +688,31 @@
   <div class="slbl">Reproduction Value Build-up — From Assets to Per-Share Value</div>
   <div class="tbl-wrap" style="margin-bottom:18px">
     <table class="fin-tbl bu-tbl">
-      <thead><tr><th>Step</th><th>Book Value</th><th>Reproduction Cost</th><th></th></tr></thead>
+      <thead><tr><th>Step</th><th>Book Value</th><th></th><th>Reproduction Cost</th><th></th></tr></thead>
       <tbody>
         <tr class="norm-row"><td class="row-lbl">Total Assets</td>
           <td class="num-cell" id="rv-bu-assets-book">—</td>
+          <td></td>
           <td class="num-cell" id="rv-bu-assets-repro">—</td>
           <td></td></tr>
         <tr class="norm-row"><td class="row-lbl">(−) Total Liabilities</td>
           <td class="num-cell red" id="rv-bu-liab-book">—</td>
+          <td></td>
           <td class="num-cell red" id="rv-bu-liab-repro">—</td>
           <td></td></tr>
         <tr class="sub-row"><td class="row-lbl">= Equity Value ($M)</td>
           <td class="num-cell fw" id="rv-bu-equity-book">—</td>
+          <td></td>
           <td class="num-cell fw gold" id="rv-bu-equity-repro">—</td>
           <td></td></tr>
         <tr class="norm-row"><td class="row-lbl">÷ Diluted Shares Outstanding</td>
           <td class="num-cell dim" id="rv-bu-shares-book">—</td>
+          <td></td>
           <td class="num-cell dim" id="rv-bu-shares-repro">—</td>
           <td></td></tr>
         <tr class="tot-row"><td class="row-lbl">= Value per Share</td>
           <td class="num-cell fw" id="rv-bu-pershare-book">—</td>
+          <td></td>
           <td class="num-cell fw gold" id="rv-bu-pershare-repro">—</td>
           <td></td></tr>
       </tbody>
