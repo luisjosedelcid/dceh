@@ -1482,31 +1482,68 @@ function renderSensitivity() {
   const epv = D.epv;
   const shares = D.overview.shares;
   const px = (typeof currentPrice === 'number' && currentPrice > 0) ? currentPrice : (D.overview.stockPrice || 0);
-  // Build WACC vals around base ±2.5 pts (5 cols, 0.5pt step)
+  // Build WACC vals around base ±2 pts (5 cols, 1pt step)
   const baseW = epv.waccBase;
   const waccVals = [baseW - 2, baseW - 1, baseW, baseW + 1, baseW + 2].map(v => Math.round(v*10)/10);
   // NOPAT rows: 5 levels, ±20% around base in 10% increments
   const nopatMults = [0.8, 0.9, 1.0, 1.1, 1.2];
-  let html = `<table class="fin-tbl sens-tbl">
-    <thead><tr><th>NOPAT \\ WACC</th>${waccVals.map(w=>`<th>${fmtDec(w,1)}%</th>`).join('')}</tr></thead><tbody>`;
-  nopatMults.forEach(m => {
+
+  // First pass: compute all ratios + find the base ratio (center cell) for relative coloring
+  const grid = [];
+  let baseRatio = null;
+  nopatMults.forEach((m, i) => {
     const n = epv.nopatBase * m;
-    const nLbl = n >= 1000 ? `${sym()}${fmtDec(n/1000,1)}B` : `${sym()}${fmt(Math.round(n))}M`;
-    html += `<tr><th class="row-lbl">${nLbl}</th>`;
+    const row = [];
     waccVals.forEach(w => {
       const ops = n / (w/100);
       const eq  = ops + (epv.excessCash||0) + (epv.ltInv||0) + (epv.debt||0) + (epv.leases||0) + (epv.minorityInterest||0);
       const ps  = shares > 0 ? eq / shares : 0;
       const ratio = ps > 0 ? px / ps : 0;
-      // Highlight ALWAYS the center (base case) — sensitivity is a deviation analysis from default
+      row.push(ratio);
+      if (m === 1.0 && Math.abs(w - baseW) < 0.05) baseRatio = ratio;
+    });
+    grid.push(row);
+  });
+  if (!baseRatio) baseRatio = 1.0;  // fallback
+
+  // Coloring: RELATIVE to base case so dispersion is always visible
+  //   ratio <= base × 0.85  → strong green  (notably cheaper than base)
+  //   ratio <= base × 1.00  → light green   (cheaper or equal to base)
+  //   ratio <= base × 1.15  → light gold    (slightly above base)
+  //   ratio <= base × 1.40  → gold          (clearly above base)
+  //   ratio >  base × 1.40  → red           (premium territory)
+  // Plus absolute floor: ratio > 2.0 always red (paying for growth regardless of base)
+  const colorFor = (r) => {
+    if (r > 2.0) return 'rgba(155,35,53,0.18)';
+    const rel = r / baseRatio;
+    if (rel <= 0.85) return 'rgba(42,122,86,0.22)';
+    if (rel <= 1.00) return 'rgba(42,122,86,0.10)';
+    if (rel <= 1.15) return 'rgba(184,139,71,0.10)';
+    if (rel <= 1.40) return 'rgba(184,139,71,0.22)';
+    return 'rgba(155,35,53,0.18)';
+  };
+
+  let html = `<table class="fin-tbl sens-tbl">
+    <thead><tr><th>NOPAT \\ WACC</th>${waccVals.map(w=>`<th>${fmtDec(w,1)}%</th>`).join('')}</tr></thead><tbody>`;
+  nopatMults.forEach((m, i) => {
+    const n = epv.nopatBase * m;
+    const nLbl = n >= 1000 ? `${sym()}${fmtDec(n/1000,1)}B` : `${sym()}${fmt(Math.round(n))}M`;
+    html += `<tr><th class="row-lbl">${nLbl}</th>`;
+    waccVals.forEach((w, j) => {
+      const ratio = grid[i][j];
       const isBase = m === 1.0 && Math.abs(w - baseW) < 0.05;
-      // Color: green attractive (≤1.5x), gold fair (≤2.0x), red premium (>2.0x)
-      const bg = ratio <= 1.5 ? 'rgba(42,122,86,0.13)' : ratio <= 2.0 ? 'rgba(184,139,71,0.13)' : 'rgba(155,35,53,0.10)';
-      html += `<td class="num-cell" style="background:${bg};${isBase?'font-weight:700;border:1px solid #b88b47':''}">${fmtDec(ratio,2)}×</td>`;
+      const bg = colorFor(ratio);
+      html += `<td class="num-cell" style="background:${bg};${isBase?'font-weight:700;border:1.5px solid #b88b47':''}">${fmtDec(ratio,2)}×</td>`;
     });
     html += '</tr>';
   });
-  html += '</tbody></table><p style="font-size:10px;color:#8a9098;margin-top:8px;padding:4px 8px"><span style="display:inline-block;width:10px;height:10px;background:rgba(42,122,86,0.5);vertical-align:middle;margin-right:4px"></span>≤1.5× attractive price · <span style="display:inline-block;width:10px;height:10px;background:rgba(184,139,71,0.5);vertical-align:middle;margin:0 4px 0 8px"></span>≤2.0× fair price · <span style="display:inline-block;width:10px;height:10px;background:rgba(155,35,53,0.4);vertical-align:middle;margin:0 4px 0 8px"></span>&gt;2.0× growth premium</p>';
+  html += `</tbody></table>
+    <p style="font-size:10px;color:#8a9098;margin-top:8px;padding:4px 8px">
+      Legend (relative to base case <strong>${fmtDec(baseRatio,2)}×</strong>):
+      <span style="display:inline-block;width:10px;height:10px;background:rgba(42,122,86,0.5);vertical-align:middle;margin:0 4px 0 8px"></span>cheaper than base ·
+      <span style="display:inline-block;width:10px;height:10px;background:rgba(184,139,71,0.5);vertical-align:middle;margin:0 4px 0 8px"></span>above base (≤1.4× relative) ·
+      <span style="display:inline-block;width:10px;height:10px;background:rgba(155,35,53,0.4);vertical-align:middle;margin:0 4px 0 8px"></span>premium / &gt;2.0× absolute
+    </p>`;
   el.innerHTML = html;
 }
 
