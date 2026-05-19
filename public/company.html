@@ -454,6 +454,13 @@
     </table>
   </div>
 
+  <!-- MARKET CONTEXT (CIO view: precio vs EPV + múltiplo histórico) -->
+  <div class="slbl">Market Context<span id="mctx-flag" style="font-size:9px;font-weight:500;letter-spacing:0.15em;color:var(--gray-mid);margin-left:14px;text-transform:none">5Y · daily closes</span></div>
+  <div class="g2" style="margin-bottom:24px">
+    <div class="chart-card"><div class="clbl">Stock Price (5Y) vs EPV &amp; BUY Zone</div><canvas id="c-price"></canvas><div id="c-price-note" style="font-size:10px;color:var(--gray-mid);margin-top:8px;text-align:center">—</div></div>
+    <div class="chart-card"><div class="clbl">P/E Histórico (TTM proxy, 5Y)</div><canvas id="c-pe"></canvas><div id="c-pe-note" style="font-size:10px;color:var(--gray-mid);margin-top:8px;text-align:center">—</div></div>
+  </div>
+
   <!-- HISTORICAL CHARTS -->
   <div class="slbl">Historical Trends</div>
   <div class="g2">

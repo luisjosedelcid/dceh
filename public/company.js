@@ -439,6 +439,8 @@ function renderOverview() {
 
   // charts
   renderOverviewCharts();
+  // market context charts (price 5Y vs EPV, P/E hist) — async
+  renderMarketContext().catch(err => console.warn('[market-context]', err));
 }
 
 function renderOverviewCharts() {
@@ -518,6 +520,137 @@ function renderOverviewCharts() {
         plugins: { legend: { position: 'bottom', labels: { font: {size:11}, color:'#606060' } } }
       }
     });
+  }
+}
+
+
+/* ───── Market Context: Stock Price 5Y vs EPV + P/E histórico ───── */
+async function renderMarketContext() {
+  const ticker = (D && D.ticker) || (D && D.overview && D.overview.ticker);
+  if (!ticker) return;
+  const priceCtx = document.getElementById('c-price');
+  const peCtx    = document.getElementById('c-pe');
+  if (!priceCtx && !peCtx) return;
+
+  let payload;
+  try {
+    const r = await fetch(`/api/company-price-series?ticker=${encodeURIComponent(ticker)}&years=5`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    payload = await r.json();
+  } catch (e) {
+    setEl('c-price-note', 'Datos de precio no disponibles');
+    setEl('c-pe-note', 'Datos de precio no disponibles');
+    return;
+  }
+  const { dates, prices, pe, reference } = payload;
+  if (!Array.isArray(dates) || !dates.length) {
+    setEl('c-price-note', 'Sin datos históricos');
+    setEl('c-pe-note', 'Sin datos históricos');
+    return;
+  }
+
+  // A. Stock Price 5Y vs EPV vs BUY zone
+  destroyChart('c-price');
+  if (priceCtx) {
+    const epv = reference && reference.epvPerShare;
+    const buy = reference && reference.buyZone;
+    const datasets = [{
+      label: 'Precio',
+      data: prices,
+      borderColor: '#1b2642',
+      backgroundColor: 'rgba(27,38,66,0.06)',
+      borderWidth: 1.6,
+      tension: 0.15,
+      pointRadius: 0,
+      fill: true,
+    }];
+    if (epv) datasets.push({
+      label: `EPV / Share ($${epv.toFixed(2)})`,
+      data: prices.map(() => epv),
+      borderColor: '#b88b47',
+      borderWidth: 1.3,
+      borderDash: [6, 4],
+      pointRadius: 0,
+      fill: false,
+    });
+    if (buy) datasets.push({
+      label: `BUY Zone (≤$${buy.toFixed(2)})`,
+      data: prices.map(() => buy),
+      borderColor: '#2a7a56',
+      borderWidth: 1.3,
+      borderDash: [4, 4],
+      pointRadius: 0,
+      fill: false,
+    });
+    charts['c-price'] = new Chart(priceCtx, {
+      type: 'line',
+      data: { labels: dates, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'bottom', labels: { font: {size:10}, color:'#606060', boxWidth: 14 } },
+          tooltip: { callbacks: { label: (c) => `${c.dataset.label}: $${Number(c.parsed.y).toFixed(2)}` } },
+        },
+        scales: {
+          x: { ticks: { maxTicksLimit: 6, font: {size:10}, color:'#999' }, grid: { display: false } },
+          y: { ticks: { font: {size:10}, color:'#999', callback: (v) => '$'+v }, grid: { color:'#f0f0f0' } },
+        },
+      },
+    });
+    const last = prices[prices.length - 1];
+    const mosNow = (epv && last) ? ((epv - last) / epv * 100) : null;
+    const mosTxt = mosNow != null ? `· MoS hoy: ${mosNow >= 0 ? '+' : ''}${mosNow.toFixed(1)}%` : '';
+    setEl('c-price-note', `Último: $${(last||0).toFixed(2)} · EPV: $${(epv||0).toFixed(2)} · BUY ≤ $${(buy||0).toFixed(2)} ${mosTxt}`);
+  }
+
+  // B. P/E TTM proxy (5Y)
+  destroyChart('c-pe');
+  if (peCtx) {
+    const peClean = pe.map(v => (v != null && isFinite(v)) ? v : null);
+    const median  = reference && reference.peMedian;
+    const current = reference && reference.peCurrent;
+    const datasets = [{
+      label: 'P/E TTM proxy',
+      data: peClean,
+      borderColor: '#1b2642',
+      backgroundColor: 'rgba(27,38,66,0.06)',
+      borderWidth: 1.6,
+      tension: 0.15,
+      pointRadius: 0,
+      fill: true,
+      spanGaps: true,
+    }];
+    if (median) datasets.push({
+      label: `Mediana 5Y (${median.toFixed(1)}×)`,
+      data: peClean.map(() => median),
+      borderColor: '#b88b47',
+      borderWidth: 1.3,
+      borderDash: [6, 4],
+      pointRadius: 0,
+      fill: false,
+    });
+    charts['c-pe'] = new Chart(peCtx, {
+      type: 'line',
+      data: { labels: dates, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'bottom', labels: { font: {size:10}, color:'#606060', boxWidth: 14 } },
+          tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${Number(c.parsed.y).toFixed(2)}×` } },
+        },
+        scales: {
+          x: { ticks: { maxTicksLimit: 6, font: {size:10}, color:'#999' }, grid: { display: false } },
+          y: { ticks: { font: {size:10}, color:'#999', callback: (v) => v+'×' }, grid: { color:'#f0f0f0' } },
+        },
+      },
+    });
+    const vsMed = (current && median) ? ((current - median) / median * 100) : null;
+    const vsTxt = vsMed != null ? `· ${vsMed >= 0 ? '+' : ''}${vsMed.toFixed(0)}% vs mediana` : '';
+    setEl('c-pe-note', `Actual: ${(current||0).toFixed(1)}× · Mediana 5Y: ${(median||0).toFixed(1)}× ${vsTxt}`);
   }
 }
 
