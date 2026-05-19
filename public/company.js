@@ -1154,12 +1154,48 @@ function buildRVTable(containerId, assets, subtotalLabel) {
 function buildRVLiabilities() {
   const el = document.getElementById('rv-liabilities');
   if (!el || !D.rv.liabilities) return;
-  let html = `<table class="fin-tbl">
-    <thead><tr><th>Liability</th><th>Value</th><th>Method</th></tr></thead><tbody>`;
+  // Normalize legacy format: if item has `value` but no `bookValue`, treat value as bookValue at 100%
   D.rv.liabilities.forEach(l => {
-    html += `<tr><td class="row-lbl">${l.label}</td><td class="num-cell">(${sym()}${fmt(l.value)}M)</td><td class="num-cell dim" style="font-size:11px">${l.method}</td></tr>`;
+    if (l.bookValue == null && l.value != null) {
+      l.bookValue   = l.value;
+      l.adjustable  = (l.adjustable !== false);
+      l.defaultAdj  = l.defaultAdj != null ? l.defaultAdj : 100;
+      l.reproValue  = l.reproValue != null ? l.reproValue : l.value;
+    }
   });
-  html += `<tr class="tot-row"><td class="row-lbl">Total Liabilities</td><td class="num-cell">(${sym()}${fmt(D.rv.totalLiabilities)}M)</td><td></td></tr>`;
+  let html = `<table class="fin-tbl rv-tbl">
+    <thead><tr><th>Liability</th><th>Book Value</th><th>Adj %</th><th>Repro Value</th><th>Method</th></tr></thead><tbody>`;
+  let subBook = 0, subRepro = 0;
+  let anyBook = false;
+  D.rv.liabilities.forEach((l, i) => {
+    const adj = l.defaultAdj != null ? l.defaultAdj : 100;
+    const repro = l.bookValue != null ? Math.round(l.bookValue * adj / 100) : (l.reproValue != null ? l.reproValue : 0);
+    if (l.bookValue != null) { subBook += l.bookValue; anyBook = true; }
+    subRepro += repro;
+    const bookCell = l.bookValue != null
+      ? `(${sym()}${fmt(l.bookValue)}M)`
+      : `<span style="color:var(--gray-mid)">N/A</span>`;
+    const adjCell = l.adjustable === false
+      ? `<span class="dim" style="font-size:11px">—</span>`
+      : `<input type="number" min="0" max="200" value="${adj}"
+          style="width:58px;border:1px solid #e6e6e6;padding:2px 4px;font-family:inherit;font-size:12px;text-align:right;background:#faf8f4"
+          onchange="onRVLiabAdj(this,${i})"
+        />%`;
+    html += `<tr data-rv-cat="rv-liabilities" data-rv-idx="${i}">
+      <td class="row-lbl">${l.label}</td>
+      <td class="num-cell">${bookCell}</td>
+      <td class="num-cell">${adjCell}</td>
+      <td class="num-cell fw" id="rv-val-rv-liabilities-${i}">(${sym()}${fmt(repro)}M)</td>
+      <td class="num-cell dim" style="font-size:11px">${l.method || ''}</td>
+    </tr>`;
+  });
+  html += `<tr class="tot-row" id="rv-sub-rv-liabilities">
+    <td class="row-lbl">Total Liabilities</td>
+    <td class="num-cell">${anyBook ? '('+sym()+fmt(subBook)+'M)' : '—'}</td>
+    <td></td>
+    <td class="num-cell fw">(${sym()}${fmt(subRepro)}M)</td>
+    <td></td>
+  </tr>`;
   html += '</tbody></table>';
   el.innerHTML = html;
 }
@@ -1176,6 +1212,18 @@ function onRVAdj(inputEl, cat, idx) {
   const asset = assetArr[idx];
   const newRepro = asset.bookValue != null ? Math.round(asset.bookValue * newAdj / 100) : (newAdj || 0);
   setEl(`rv-val-${cat}-${idx}`, `${sym()}${fmt(newRepro)}M`);
+  updateRVTotals();
+}
+
+function onRVLiabAdj(inputEl, idx) {
+  const newAdj = parseFloat(inputEl.value) || 0;
+  const arr = D.rv.liabilities;
+  if (!arr || !arr[idx]) return;
+  arr[idx].defaultAdj = newAdj;
+  const l = arr[idx];
+  const newRepro = l.bookValue != null ? Math.round(l.bookValue * newAdj / 100) : (newAdj || 0);
+  arr[idx].reproValue = newRepro;
+  setEl(`rv-val-rv-liabilities-${idx}`, `(${sym()}${fmt(newRepro)}M)`);
   updateRVTotals();
 }
 
@@ -1202,9 +1250,33 @@ function updateRVTotals() {
   const otherBook = sumBook(D.rv.otherAssets);
   const totalBook = tangBook + intanBook + otherBook;
 
-  const liab    = D.rv.totalLiabilities;
+  // Liabilities: sum from per-item bookValue × defaultAdj when array exists, fallback to totalLiabilities
+  function sumLiabRepro(arr) {
+    if (!arr || !arr.length) return null;
+    return arr.reduce((s, l) => {
+      const bv = l.bookValue != null ? l.bookValue : l.value;
+      const adj = l.defaultAdj != null ? l.defaultAdj : 100;
+      const r = bv != null ? Math.round(bv * adj / 100) : (l.reproValue != null ? l.reproValue : 0);
+      return s + r;
+    }, 0);
+  }
+  function sumLiabBook(arr) {
+    if (!arr || !arr.length) return null;
+    return arr.reduce((s, l) => s + (l.bookValue != null ? l.bookValue : (l.value != null ? l.value : 0)), 0);
+  }
+  const liabBookFromArr  = sumLiabBook(D.rv.liabilities);
+  const liabReproFromArr = sumLiabRepro(D.rv.liabilities);
+  const liabBook  = liabBookFromArr  != null ? liabBookFromArr  : D.rv.totalLiabilities;
+  const liab      = liabReproFromArr != null ? liabReproFromArr : D.rv.totalLiabilities;
+  // Refresh liabilities subtotal row in place
+  const liabSubRow = document.getElementById('rv-sub-rv-liabilities');
+  if (liabSubRow && liabBookFromArr != null) {
+    const tds = liabSubRow.querySelectorAll('td');
+    if (tds[1]) tds[1].innerHTML = '('+sym()+fmt(liabBook)+'M)';
+    if (tds[3]) tds[3].innerHTML = '('+sym()+fmt(liab)+'M)';
+  }
   const equity  = total - liab;
-  const equityBook = totalBook - liab;
+  const equityBook = totalBook - liabBook;
   const shares  = D.overview.shares > 0 ? D.overview.shares : 1;
   const perShare = equity / shares;
   const perShareBook = equityBook / shares;
@@ -1237,7 +1309,7 @@ function updateRVTotals() {
 
   // Reproduction Value Build-up card
   setEl('rv-bu-assets-book',  M(totalBook));   setEl('rv-bu-assets-repro',  M(total));
-  setEl('rv-bu-liab-book',    `(${M(liab)})`); setEl('rv-bu-liab-repro',    `(${M(liab)})`);
+  setEl('rv-bu-liab-book',    `(${M(liabBook)})`); setEl('rv-bu-liab-repro',    `(${M(liab)})`);
   setEl('rv-bu-equity-book',  M(equityBook));  setEl('rv-bu-equity-repro',  M(equity));
   setEl('rv-bu-shares',       fmtDec(shares, 2) + ' M');
   setEl('rv-bu-pershare-book',fmtPrice(perShareBook));
