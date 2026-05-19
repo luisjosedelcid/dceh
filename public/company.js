@@ -1239,14 +1239,16 @@ function renderHealth() {
         }]
       },
       options: {
-        responsive: true, maintainAspectRatio: true,
+        responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 8, bottom: 8, left: 12, right: 12 } },
         scales: { r: {
           beginAtZero: true, max: 100,
-          ticks: { font: {size: 9}, color: '#8a9098', stepSize: 25 },
-          pointLabels: { font: {size: 10}, color: '#1b2642' },
+          ticks: { font: {size: 10}, color: '#8a9098', stepSize: 25, backdropColor: 'transparent' },
+          pointLabels: { font: {size: 12, weight: '500'}, color: '#1b2642' },
           grid: { color: 'rgba(27,38,66,0.08)' },
           angleLines: { color: 'rgba(27,38,66,0.08)' },
         }},
+        elements: { line: { borderWidth: 2 }, point: { radius: 5, hoverRadius: 7 } },
         plugins: {
           legend: { display: false },
           tooltip: {

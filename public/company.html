@@ -82,6 +82,12 @@
   .csub { font-size: 11px; color: var(--gray-mid); margin-top: 6px; font-weight: 300; }
   .chart-card { background: var(--white); border: 1px solid var(--rule); padding: 20px 22px; }
   .chart-card canvas { max-height: 250px; }
+  /* Quality Radar — larger, vertically balanced */
+  .radar-card { display: flex; flex-direction: column; min-height: 480px; position: sticky; top: 16px; align-self: start; }
+  .radar-card .radar-wrap { flex: 1; min-height: 420px; display: flex; align-items: center; justify-content: center; padding: 8px 0; }
+  .radar-card canvas { max-height: 440px !important; width: 100% !important; height: 100% !important; }
+  .radar-legend { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; font-size: 10px; color: var(--gray-mid); letter-spacing: 0.05em; padding-top: 12px; border-top: 1px solid var(--rule); margin-top: 4px; }
+  .radar-legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
 
   /* BADGE */
   .badge { display: inline-block; font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; margin-left: 6px; }
@@ -839,9 +845,16 @@
         <tbody id="hc-table-body"></tbody>
       </table>
     </div>
-    <div class="chart-card">
+    <div class="chart-card radar-card">
       <div class="clbl">Quality Radar</div>
-      <canvas id="c-radar" style="max-height:320px"></canvas>
+      <div class="radar-wrap">
+        <canvas id="c-radar"></canvas>
+      </div>
+      <div class="radar-legend">
+        <span><span class="dot" style="background:#b88b47"></span>PASS (≥ 90)</span>
+        <span><span class="dot" style="background:#d4a259"></span>MONITOR (60–89)</span>
+        <span><span class="dot" style="background:#9b2335"></span>FAIL (&lt; 60)</span>
+      </div>
     </div>
   </div>
 </div>
