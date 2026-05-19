@@ -33,7 +33,34 @@
     "revenueCagr3yr": 0.2106,
     "fcfCagr3yr": 0.142,
     "ebitda": 2760.0,
-    "netIncome": 1686.0
+    "netIncome": 1686.0,
+    "sector": "Consumer Discretionary / Apparel & Athleisure",
+    "businessModel": "Athleisure premium DTC + Wholesale + Retail",
+    "fiscalYearEnd": "~1 de febrero (52/53 semanas)",
+    "priceNote": "Cotización 03-May-2026",
+    "sharesNote": "10-K FY2025",
+    "marketCapNote": "Precio × Acciones",
+    "debtNote": "LULU sin deuda LP",
+    "leasesNote": "Suma corriente + LP FY2025",
+    "cashNote": "BS FY2025",
+    "evNote": "MCap + Debt + Leases − Cash",
+    "operatingIncome": 2346.0,
+    "epsDiluted": 14.2,
+    "cfo": 1603.0,
+    "capex": 681.0,
+    "da": 414.0,
+    "sbc": 50.0,
+    "revenueGrowthYoY": 0.154,
+    "ebitdaGrowthYoY": 0.0892,
+    "fcfGrowthYoY": -0.2072,
+    "multiples": {
+      "peTtm": 9.68,
+      "evEbitda": 5.92,
+      "evRevenue": 1.47,
+      "pFcf": 17.7,
+      "priceBook": 3.34,
+      "dividendYield": 0.0
+    }
   },
   "financials": {
     "years": [

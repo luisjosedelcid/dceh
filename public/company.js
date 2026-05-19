@@ -297,37 +297,124 @@ function renderTab(id) {
 function renderOverview() {
   const ov = D.overview;
   const sym_ = sym();
+  const mult = ov.multiples || {};
 
-  // KPI cards
-  setEl('ov-mktcap', B(ov.marketCap));
-  setEl('ov-mktcap-sub', `${fmt(ov.shares)}${ov.shares < 100 ? 'M' : 'M'} diluted shares`);
-  setEl('ov-ev', B(ov.ev));
-  setEl('ov-nopat', M(ov.nopatNorm));
-  setEl('ov-nopat-sub', `Rev ${B(ov.revenue)} × ${Pct(ov.operMargin*100)} norm. margin × (1−${Pct(ov.taxRate*100)})`);
-  setEl('ov-fcf', M(ov.fcfLatest));
-  setEl('ov-fcf-sub', `FCF Margin ${Pct(ov.fcfMargin*100)}`);
+  /* ----- 1. Company Profile ----- */
+  setEl('prof-name',      D.name || '—');
+  setEl('prof-ticker',    `${D.ticker || '—'} / ${D.exchange || '—'}`);
+  setEl('prof-sector',    ov.sector || D.industry || '—');
+  setEl('prof-bizmodel',  ov.businessModel || '—');
+  setEl('prof-fye',       ov.fiscalYearEnd || '—');
+  setEl('prof-ceo',       ov.ceo || '—');
+  setEl('prof-hq',        ov.headquarters || '—');
+  setEl('prof-employees', ov.employees != null ? `~${fmt(ov.employees)}` : '—');
+  setEl('prof-valdate',   D.valuationDate || '—');
 
-  // metrics
-  const irrColor = D.irr.impliedIrr >= D.irr.hurdle ? 'green' : 'red';
-  const mosSign  = D.irr.mos >= 0 ? '+' : '';
-  const mosCls   = D.irr.mos >= 0 ? 'bg' : 'br';
-  setEl('ov-irr', `<span class="cval ${irrColor}">${Pct(D.irr.impliedIrr)}</span>`);
-  setEl('ov-mos', `<span class="badge ${mosCls}">MoS ${mosSign}${Pct(D.irr.mos)}</span>`);
-  setEl('ov-hurdle-sub', `Hurdle ${Pct(D.irr.hurdle)}`);
-  setEl('ov-roic3yr', Pct(ov.roic3yr * (ov.roic3yr > 2 ? 1 : 100)));
-  const spreadRaw = (ov.roic3yr > 2 ? ov.roic3yr*100 : ov.roic3yr) - ov.wacc*100;
-  setEl('ov-roic-sub', `vs. WACC ${Pct(ov.wacc*100)} · Spread +${Pct(spreadRaw)}`);
-  setEl('ov-wacc', Pct(ov.wacc*100));
-  setEl('ov-wacc-sub', `β ${D.wacc.beta} · Ke ${Pct(D.wacc.ke*100)} · ERP ${Pct(D.wacc.erp*100)}`);
+  /* ----- 2. Market Data ----- */
+  // Use live currentPrice if available, else snapshot stockPrice
+  const livePrice = (typeof currentPrice === 'number' && currentPrice > 0) ? currentPrice : ov.stockPrice;
+  const isLive = (livePrice != null && ov.stockPrice != null && Math.abs(livePrice - ov.stockPrice) > 0.01);
+  setEl('md-price', fmtPrice(livePrice));
+  setEl('md-price-sub', isLive
+    ? `Live · snapshot ${fmtPrice(ov.stockPrice)} (${D.valuationDate || ''})`
+    : (ov.priceNote || `Cotización ${D.valuationDate || ''}`));
+  setEl('md-shares', fmtDec(ov.shares, 1));
+  setEl('md-shares-sub', ov.sharesNote || `10-K ${D.fiscalYear || ''}`);
 
-  // model inputs
+  // Recalculate market cap & EV with live price
+  const mcapLive = (ov.shares != null && livePrice != null) ? ov.shares * livePrice : ov.marketCap;
+  const evLive   = mcapLive + (ov.debt || 0) + (ov.leases || 0) - (ov.cash || 0);
+  setEl('md-mcap', B(mcapLive));
+  setEl('md-mcap-sub', isLive ? `Snapshot ${B(ov.marketCap)} · live` : (ov.marketCapNote || 'Precio × Acciones'));
+  setEl('md-ev', B(evLive));
+  setEl('md-ev-sub', isLive ? `Snapshot ${B(ov.ev)} · live` : (ov.evNote || 'MCap + Debt + Leases − Cash'));
+
+  setEl('md-debt',     M(ov.debt));
+  setEl('md-debt-sub', ov.debtNote || '—');
+  setEl('md-leases',   M(ov.leases));
+  setEl('md-leases-sub', ov.leasesNote || '—');
+  setEl('md-cash',     M(ov.cash));
+  setEl('md-cash-sub', ov.cashNote || '—');
+
+  /* ----- 3. Key Financials (FY cerrado) ----- */
+  setEl('kf-fy-label', `Métricas Financieras Clave (${D.fiscalYear || 'FY'})`);
+  setEl('kf-revenue',   M(ov.revenue));
+  setEl('kf-opinc',     M(ov.operatingIncome));
+  setEl('kf-opmargin',  ov.operMargin != null ? Pct(ov.operMargin*100) : '—');
+  setEl('kf-ebitda',    M(ov.ebitda));
+  setEl('kf-ni',        M(ov.netIncome));
+  setEl('kf-eps',       ov.epsDiluted != null ? `${sym_}${fmtDec(ov.epsDiluted, 2)}` : '—');
+  setEl('kf-cfo',       M(ov.cfo));
+  setEl('kf-capex',     M(ov.capex));
+  setEl('kf-fcf',       M(ov.fcfLatest));
+  setEl('kf-fcfmargin', ov.fcfMargin != null ? Pct(ov.fcfMargin*100) : '—');
+  setEl('kf-da',        M(ov.da));
+  setEl('kf-sbc',       M(ov.sbc));
+
+  function yoyHtml(v) {
+    if (v == null) return '<span class="v" style="color:var(--gray-mid)">Pendiente</span>';
+    const sign = v >= 0 ? '+' : '';
+    const cls  = v >= 0 ? 'green' : 'red';
+    return `<span class="${cls}">${sign}${(v*100).toFixed(1)}%</span>`;
+  }
+  setEl('kf-rev-yoy',    yoyHtml(ov.revenueGrowthYoY));
+  setEl('kf-ebitda-yoy', yoyHtml(ov.ebitdaGrowthYoY));
+  setEl('kf-fcf-yoy',    yoyHtml(ov.fcfGrowthYoY));
+
+  /* ----- 4. Valuation Multiples (snapshot + live) ----- */
+  setEl('mult-snap-date', `(${D.valuationDate || ''})`);
+  // Live recalculations using live mcap / ev, but FY denominators unchanged
+  const liveMult = {
+    peTtm:    (mcapLive != null && ov.netIncome) ? mcapLive / ov.netIncome : null,
+    evEbitda: (evLive != null && ov.ebitda)     ? evLive / ov.ebitda      : null,
+    evRevenue:(evLive != null && ov.revenue)    ? evLive / ov.revenue     : null,
+    pFcf:     (mcapLive != null && ov.fcfLatest)? mcapLive / ov.fcfLatest : null,
+    priceBook: null,   // requires book value, not derivable here
+    dividendYield: null
+  };
+  const multRows = [
+    { key:'peTtm',         label:'P/E (TTM)',      kind:'mul' },
+    { key:'evEbitda',      label:'EV / EBITDA',    kind:'mul' },
+    { key:'evRevenue',     label:'EV / Revenue',   kind:'mul' },
+    { key:'pFcf',          label:'P / FCF',        kind:'mul' },
+    { key:'priceBook',     label:'Price / Book',   kind:'mul' },
+    { key:'dividendYield', label:'Dividend Yield', kind:'pct' }
+  ];
+  function fmtMul(v, kind) {
+    if (v == null) return '<span style="color:var(--gray-mid);font-style:italic">Pendiente</span>';
+    return kind === 'pct' ? `${(v*100).toFixed(2)}%` : `${v.toFixed(2)}×`;
+  }
+  function deltaHtml(snap, live) {
+    if (snap == null || live == null) return '<span style="color:var(--gray-mid)">—</span>';
+    const d = (live - snap) / snap;
+    if (Math.abs(d) < 0.005) return '<span style="color:var(--gray-mid)">flat</span>';
+    const sign = d >= 0 ? '+' : '';
+    const cls = d >= 0 ? 'red' : 'green';  // re-rating up = caro (rojo), down = barato (verde)
+    return `<span class="${cls}">${sign}${(d*100).toFixed(1)}%</span>`;
+  }
+  let multBodyHtml = '';
+  multRows.forEach((r,i) => {
+    const snap = mult[r.key];
+    const live = liveMult[r.key] != null ? liveMult[r.key] : snap;  // fallback to snapshot if not derivable
+    const isLiveDerived = liveMult[r.key] != null;
+    const liveCell = isLiveDerived
+      ? fmtMul(live, r.kind)
+      : '<span style="color:var(--gray-mid);font-style:italic">—</span>';
+    multBodyHtml += `
+      <tr style="border-bottom:1px solid var(--rule)">
+        <td style="padding:9px 18px;color:var(--gray-txt)">${r.label}</td>
+        <td style="padding:9px 18px;text-align:right;font-weight:600">${fmtMul(snap, r.kind)}</td>
+        <td style="padding:9px 18px;text-align:right;font-weight:600">${liveCell}</td>
+        <td style="padding:9px 18px;text-align:right">${isLiveDerived ? deltaHtml(snap, live) : '<span style="color:var(--gray-mid)">—</span>'}</td>
+      </tr>`;
+  });
+  setEl('mult-tbody', multBodyHtml);
+
+  /* ----- 5. Model inputs (moved to Summary tab but rendered here for safety) ----- */
   const adj = D.adj;
   const irr = D.irr;
   const cio  = D.cioDecisions;
   function cioVal(id) { const r = cio.find(c=>c.id===id); return r ? r.value : '—'; }
-  const smRow   = cio.find(c=>c.id==='DP2');
-  const rdStatus = smRow ? smRow.value : '—';
-
   setEl('ov-inputs-nopat',    M(D.epv.nopatBase));
   setEl('ov-inputs-revenue',  M(ov.revenue));
   setEl('ov-inputs-margin',   Pct(ov.operMargin*100));
@@ -1241,6 +1328,30 @@ function renderSummary() {
   fillRows('summary-identity',   identity);
   fillRows('summary-valuation',  valuation);
   fillRows('summary-operations', operations);
+
+  // Key Model Inputs (moved from Overview tab)
+  const adj = D.adj;
+  const irr = D.irr;
+  const cio = D.cioDecisions;
+  const cioVal = (id) => { const r = cio.find(c=>c.id===id); return r ? r.value : '—'; };
+  setEl('ov-inputs-nopat',    M(D.epv.nopatBase));
+  setEl('ov-inputs-revenue',  M(ov.revenue));
+  setEl('ov-inputs-margin',   Pct(ov.operMargin*100));
+  setEl('ov-inputs-tax',      Pct(ov.taxRate*100));
+  setEl('ov-inputs-wacc',     Pct(ov.wacc*100));
+  setEl('ov-inputs-shares',   fmt(ov.shares));
+  setEl('ov-irr-roic',     Pct(irr.selectedRoic));
+  setEl('ov-irr-organic',  Pct(irr.organicGrowth));
+  setEl('ov-irr-reinvg',   Pct(irr.reinvGrowth));
+  setEl('ov-irr-exit',     `${irr.exitMultiple}× EV/NOPAT`);
+  setEl('ov-irr-buybacks', M(irr.buybacks));
+  setEl('ov-irr-horizon',  `${irr.horizon} years`);
+  setEl('ov-cap-sm',     cioVal('DP3') + (adj.smLife ? ` (${adj.smLife}yr)` : ''));
+  setEl('ov-cap-rd',     cioVal('DP2'));
+  setEl('ov-cap-sbc',    cioVal('DP5'));
+  setEl('ov-cap-window', cioVal('DP6'));
+  setEl('ov-cap-norm',   cioVal('DP7'));
+  setEl('ov-cap-gw',     cioVal('DP12'));
 
   // Columbia ladder
   renderLadder();

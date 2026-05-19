@@ -329,87 +329,127 @@
 <main>
 
 <!-- ══════════════════════════════════════════════════════════
-     1. OVERVIEW
+     1. OVERVIEW — Company profile, market data, FY financials & multiples
      ══════════════════════════════════════════════════════════ -->
 <div id="tab-overview" class="tab-content active">
-  <div class="slbl">Executive Summary</div>
-  <div class="g4">
+
+  <!-- COMPANY PROFILE -->
+  <div class="slbl">Company Profile</div>
+  <div class="card" style="margin-bottom:20px;padding:24px 28px">
+    <div class="g3" style="gap:0 28px;margin-bottom:0">
+      <div class="kv">
+        <div class="row"><span class="k">Nombre</span><span class="v" id="prof-name">—</span></div>
+        <div class="row"><span class="k">Ticker / Bolsa</span><span class="v" id="prof-ticker">—</span></div>
+        <div class="row"><span class="k">Sector (GICS)</span><span class="v" id="prof-sector">—</span></div>
+      </div>
+      <div class="kv">
+        <div class="row"><span class="k">Modelo de Negocio</span><span class="v" id="prof-bizmodel">—</span></div>
+        <div class="row"><span class="k">Fiscal Year End</span><span class="v" id="prof-fye">—</span></div>
+        <div class="row"><span class="k">CEO</span><span class="v" id="prof-ceo">—</span></div>
+      </div>
+      <div class="kv">
+        <div class="row"><span class="k">Sede</span><span class="v" id="prof-hq">—</span></div>
+        <div class="row"><span class="k">Empleados</span><span class="v" id="prof-employees">—</span></div>
+        <div class="row"><span class="k">Fecha de Valoración</span><span class="v gold" id="prof-valdate">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MARKET DATA -->
+  <div class="slbl">Market Data</div>
+  <div class="g4" style="margin-bottom:14px">
+    <div class="card">
+      <div class="clbl">Precio Actual</div>
+      <div class="cval" id="md-price">—</div>
+      <div class="csub" id="md-price-sub">—</div>
+    </div>
+    <div class="card">
+      <div class="clbl">Acciones Diluidas (M)</div>
+      <div class="cval" id="md-shares">—</div>
+      <div class="csub" id="md-shares-sub">—</div>
+    </div>
     <div class="card accent">
       <div class="clbl">Market Cap</div>
-      <div class="cval gold" id="ov-mktcap">—</div>
-      <div class="csub" id="ov-mktcap-sub">—</div>
+      <div class="cval gold" id="md-mcap">—</div>
+      <div class="csub" id="md-mcap-sub">—</div>
     </div>
-    <div class="card">
+    <div class="card accent">
       <div class="clbl">Enterprise Value</div>
-      <div class="cval" id="ov-ev">—</div>
-      <div class="csub">MktCap + Debt + Leases − Cash</div>
-    </div>
-    <div class="card">
-      <div class="clbl">Normalized NOPAT</div>
-      <div class="cval" id="ov-nopat">—</div>
-      <div class="csub" id="ov-nopat-sub">—</div>
-    </div>
-    <div class="card">
-      <div class="clbl">FCF (Latest FY)</div>
-      <div class="cval" id="ov-fcf">—</div>
-      <div class="csub" id="ov-fcf-sub">—</div>
+      <div class="cval gold" id="md-ev">—</div>
+      <div class="csub" id="md-ev-sub">—</div>
     </div>
   </div>
-  <div class="g3">
-    <div class="card accent">
-      <div class="clbl">Implied IRR (Equity)</div>
-      <div id="ov-irr">—</div>
-      <div class="csub" id="ov-hurdle-sub">—&nbsp;<span id="ov-mos"></span></div>
-    </div>
-    <div class="card accent">
-      <div class="clbl">ROIC 3yr Avg</div>
-      <div class="cval green" id="ov-roic3yr">—</div>
-      <div class="csub" id="ov-roic-sub">—</div>
-    </div>
-    <div class="card accent">
-      <div class="clbl">WACC</div>
-      <div class="cval gold" id="ov-wacc">—</div>
-      <div class="csub" id="ov-wacc-sub">—</div>
-    </div>
-  </div>
-
-  <div class="slbl" style="margin-top:8px">Key Model Inputs — Single Source of Truth</div>
   <div class="g3" style="margin-bottom:20px">
     <div class="card">
-      <div class="clbl">Valuation Inputs</div>
-      <div class="kv">
-        <div class="row"><span class="k">Normalized NOPAT</span><span class="v gold" id="ov-inputs-nopat">—</span></div>
-        <div class="row"><span class="k">Revenue Base</span><span class="v" id="ov-inputs-revenue">—</span></div>
-        <div class="row"><span class="k">Normalized Op Margin</span><span class="v" id="ov-inputs-margin">—</span></div>
-        <div class="row"><span class="k">Tax Rate (Normalized)</span><span class="v" id="ov-inputs-tax">—</span></div>
-        <div class="row"><span class="k">WACC</span><span class="v gold" id="ov-inputs-wacc">—</span></div>
-        <div class="row"><span class="k">Diluted Shares (M)</span><span class="v" id="ov-inputs-shares">—</span></div>
-      </div>
+      <div class="clbl">Total Deuda</div>
+      <div class="cval" id="md-debt">—</div>
+      <div class="csub" id="md-debt-sub">—</div>
     </div>
     <div class="card">
-      <div class="clbl">IRR Assumptions</div>
-      <div class="kv">
-        <div class="row"><span class="k">Selected ROIC (reinv. growth)</span><span class="v gold" id="ov-irr-roic">—</span></div>
-        <div class="row"><span class="k">Organic Growth (DP17)</span><span class="v" id="ov-irr-organic">—</span></div>
-        <div class="row"><span class="k">Reinvestment Growth</span><span class="v" id="ov-irr-reinvg">—</span></div>
-        <div class="row"><span class="k">Exit Multiple (DP15)</span><span class="v" id="ov-irr-exit">—</span></div>
-        <div class="row"><span class="k">Sustainable Buybacks / Divs</span><span class="v" id="ov-irr-buybacks">—</span></div>
-        <div class="row"><span class="k">Investment Horizon</span><span class="v" id="ov-irr-horizon">—</span></div>
-      </div>
+      <div class="clbl">Lease Liabilities</div>
+      <div class="cval" id="md-leases">—</div>
+      <div class="csub" id="md-leases-sub">—</div>
     </div>
     <div class="card">
-      <div class="clbl">Capital &amp; Adjustments</div>
+      <div class="clbl">Cash + STI</div>
+      <div class="cval" id="md-cash">—</div>
+      <div class="csub" id="md-cash-sub">—</div>
+    </div>
+  </div>
+
+  <!-- KEY FINANCIALS -->
+  <div class="slbl"><span id="kf-fy-label">Métricas Financieras Clave</span></div>
+  <div class="card" style="margin-bottom:20px;padding:22px 26px">
+    <div class="g4" style="gap:0 28px;margin-bottom:14px">
       <div class="kv">
-        <div class="row"><span class="k">S&amp;M Capitalization</span><span class="v" id="ov-cap-sm">—</span></div>
-        <div class="row"><span class="k">R&amp;D Capitalization</span><span class="v" id="ov-cap-rd">—</span></div>
-        <div class="row"><span class="k">SBC Treatment</span><span class="v" id="ov-cap-sbc">—</span></div>
-        <div class="row"><span class="k">Normalization Window</span><span class="v" id="ov-cap-window">—</span></div>
-        <div class="row"><span class="k">Items Normalized</span><span class="v" id="ov-cap-norm">—</span></div>
-        <div class="row"><span class="k">Goodwill in RV (DP12)</span><span class="v red" id="ov-cap-gw">—</span></div>
+        <div class="row"><span class="k">Net Revenue</span><span class="v" id="kf-revenue">—</span></div>
+        <div class="row"><span class="k">Operating Income</span><span class="v" id="kf-opinc">—</span></div>
+        <div class="row"><span class="k">Operating Margin</span><span class="v" id="kf-opmargin">—</span></div>
+      </div>
+      <div class="kv">
+        <div class="row"><span class="k">EBITDA</span><span class="v" id="kf-ebitda">—</span></div>
+        <div class="row"><span class="k">Net Income</span><span class="v" id="kf-ni">—</span></div>
+        <div class="row"><span class="k">EPS Diluted</span><span class="v" id="kf-eps">—</span></div>
+      </div>
+      <div class="kv">
+        <div class="row"><span class="k">CFO</span><span class="v" id="kf-cfo">—</span></div>
+        <div class="row"><span class="k">CapEx</span><span class="v" id="kf-capex">—</span></div>
+        <div class="row"><span class="k">FCF</span><span class="v gold" id="kf-fcf">—</span></div>
+      </div>
+      <div class="kv">
+        <div class="row"><span class="k">FCF Margin</span><span class="v" id="kf-fcfmargin">—</span></div>
+        <div class="row"><span class="k">D&amp;A</span><span class="v" id="kf-da">—</span></div>
+        <div class="row"><span class="k">SBC</span><span class="v" id="kf-sbc">—</span></div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--rule);padding-top:14px;margin-top:6px">
+      <div class="clbl" style="margin-bottom:10px">Growth YoY</div>
+      <div class="g3" style="margin-bottom:0">
+        <div class="kv"><div class="row" style="border:none;padding:0"><span class="k">Revenue</span><span class="v" id="kf-rev-yoy">—</span></div></div>
+        <div class="kv"><div class="row" style="border:none;padding:0"><span class="k">EBITDA</span><span class="v" id="kf-ebitda-yoy">—</span></div></div>
+        <div class="kv"><div class="row" style="border:none;padding:0"><span class="k">FCF</span><span class="v" id="kf-fcf-yoy">—</span></div></div>
       </div>
     </div>
   </div>
 
+  <!-- VALUATION MULTIPLES -->
+  <div class="slbl">Valuation Multiples<span id="mult-live-flag" style="font-size:9px;font-weight:500;letter-spacing:0.15em;color:var(--gray-mid);margin-left:14px;text-transform:none">Snapshot vs Live</span></div>
+  <div class="card" style="margin-bottom:24px;padding:0;overflow:hidden">
+    <table class="fin-tbl" style="width:100%">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:10px 18px">Múltiplo</th>
+          <th style="text-align:right;padding:10px 18px">Snapshot <span style="font-weight:400;opacity:0.7;font-size:10px" id="mult-snap-date">(val date)</span></th>
+          <th style="text-align:right;padding:10px 18px">Live <span style="font-weight:400;opacity:0.7;font-size:10px">(now)</span></th>
+          <th style="text-align:right;padding:10px 18px">Δ Re-rating</th>
+        </tr>
+      </thead>
+      <tbody id="mult-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- HISTORICAL CHARTS -->
+  <div class="slbl">Historical Trends</div>
   <div class="g2">
     <div class="chart-card"><div class="clbl">Revenue &amp; NOPAT (DCE Adj)</div><canvas id="c1"></canvas></div>
     <div class="chart-card"><div class="clbl">Operating &amp; Net Margins (%)</div><canvas id="c2"></canvas></div>
@@ -848,6 +888,44 @@
       <div class="memo-section" style="margin-bottom:0">
         <h3>Operations</h3>
         <div id="summary-operations"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Model Inputs (moved from Overview) -->
+  <div class="slbl" style="margin-top:8px">Key Model Inputs — Single Source of Truth</div>
+  <div class="g3" style="margin-bottom:24px">
+    <div class="card">
+      <div class="clbl">Valuation Inputs</div>
+      <div class="kv">
+        <div class="row"><span class="k">Normalized NOPAT</span><span class="v gold" id="ov-inputs-nopat">—</span></div>
+        <div class="row"><span class="k">Revenue Base</span><span class="v" id="ov-inputs-revenue">—</span></div>
+        <div class="row"><span class="k">Normalized Op Margin</span><span class="v" id="ov-inputs-margin">—</span></div>
+        <div class="row"><span class="k">Tax Rate (Normalized)</span><span class="v" id="ov-inputs-tax">—</span></div>
+        <div class="row"><span class="k">WACC</span><span class="v gold" id="ov-inputs-wacc">—</span></div>
+        <div class="row"><span class="k">Diluted Shares (M)</span><span class="v" id="ov-inputs-shares">—</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">IRR Assumptions</div>
+      <div class="kv">
+        <div class="row"><span class="k">Selected ROIC (reinv. growth)</span><span class="v gold" id="ov-irr-roic">—</span></div>
+        <div class="row"><span class="k">Organic Growth (DP17)</span><span class="v" id="ov-irr-organic">—</span></div>
+        <div class="row"><span class="k">Reinvestment Growth</span><span class="v" id="ov-irr-reinvg">—</span></div>
+        <div class="row"><span class="k">Exit Multiple (DP15)</span><span class="v" id="ov-irr-exit">—</span></div>
+        <div class="row"><span class="k">Sustainable Buybacks / Divs</span><span class="v" id="ov-irr-buybacks">—</span></div>
+        <div class="row"><span class="k">Investment Horizon</span><span class="v" id="ov-irr-horizon">—</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">Capital &amp; Adjustments</div>
+      <div class="kv">
+        <div class="row"><span class="k">S&amp;M Capitalization</span><span class="v" id="ov-cap-sm">—</span></div>
+        <div class="row"><span class="k">R&amp;D Capitalization</span><span class="v" id="ov-cap-rd">—</span></div>
+        <div class="row"><span class="k">SBC Treatment</span><span class="v" id="ov-cap-sbc">—</span></div>
+        <div class="row"><span class="k">Normalization Window</span><span class="v" id="ov-cap-window">—</span></div>
+        <div class="row"><span class="k">Items Normalized</span><span class="v" id="ov-cap-norm">—</span></div>
+        <div class="row"><span class="k">Goodwill in RV (DP12)</span><span class="v red" id="ov-cap-gw">—</span></div>
       </div>
     </div>
   </div>
