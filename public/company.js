@@ -2228,6 +2228,59 @@ function renderAudit() {
 /* ════════════════════════════════════════════════════════════
    10. SUMMARY
    ════════════════════════════════════════════════════════════ */
+// Helper: normalize ROIC value — if it's a fraction (<1) multiply by 100; if already %, leave it.
+function roicPct(v) { return v == null ? null : (v < 1 ? v * 100 : v); }
+
+// Helper: replicate IRR tab calc using base assumptions so Summary stays in sync.
+function computeImpliedIrr() {
+  const irr = D.irr || {};
+  const ov  = D.overview || {};
+  const fin = D.financials || {};
+  const epv = D.epv || {};
+  const nopat = irr.nopat || epv.nopatBase || 0;
+  const ev    = irr.ev   || ov.ev || 0;
+  const mcap  = ov.marketCap || 0;
+  const findRow = (rows, names) => {
+    if (!Array.isArray(rows)) return null;
+    for (const r of rows) {
+      if (!r || !r.l) continue;
+      const lower = r.l.toLowerCase();
+      if (names.some(n => lower.includes(n))) return Array.isArray(r.v) ? r.v : null;
+    }
+    return null;
+  };
+  const last = (a) => Array.isArray(a) && a.length ? a[a.length-1] : 0;
+  const capexH = fin.capexHistory || findRow(fin.cfRows, ['capital expenditure','capex']) || [];
+  const daH    = fin.daHistory    || findRow(fin.cfRows, ['depreciation & amortization','depreciation and amortization','d&a']) || [];
+  const wcH    = findRow(fin.cfRows, ['changes in working capital','working capital']) || [];
+  const dividendsH = fin.dividends || findRow(fin.cfRows, ['dividends paid','dividends']) || [];
+  const interestH  = findRow(fin.isRows, ['interest expense']) || [];
+  const growthCapex = Math.max(0, Math.abs(last(capexH)) - Math.abs(last(daH)));
+  const dWC         = Math.abs(last(wcH));
+  const divLatest   = Math.abs(last(dividendsH) || irr.dividends || 0);
+  const intLatest   = Math.abs(last(interestH)  || irr.interest  || 0);
+  const buybacks    = irr.buybacks || 0;
+  const dist        = divLatest + buybacks + intLatest;
+  const distYield   = ev > 0 ? (dist / ev) * 100 : 0;
+  const totalReinv  = growthCapex + dWC;
+  const reinvRate   = nopat > 0 ? (totalReinv / nopat) * 100 : 0;
+  const reinvGrowth = reinvRate * ((irr.selectedRoic || 0) / 100);
+  const totalGrowth = reinvGrowth + (irr.organicGrowth || 0);
+  const actualMult  = nopat > 0 ? ev / nopat : 0;
+  const multImpact  = actualMult > 0 && irr.horizon > 0
+    ? (Math.pow((irr.exitMultiple || actualMult) / actualMult, 1/irr.horizon) - 1) * 100
+    : 0;
+  const evReturn    = distYield + totalGrowth + multImpact;
+  const netDebt     = (ov.debt||0) + (ov.leases||0) - (ov.cash||0);
+  const eqVal       = Math.max(1, mcap);
+  const dOverE      = netDebt / eqVal;
+  const leverageEq  = dOverE * (evReturn - (irr.netBorrowCost || 0));
+  return {
+    totalIRR: evReturn + leverageEq,
+    reinvGrowth, reinvRate, distYield, totalGrowth, multImpact, leverageEq, actualMult
+  };
+}
+
 function renderSummary() {
   const ts = D.thesisSummary;
   const ov = D.overview;
@@ -2235,23 +2288,28 @@ function renderSummary() {
 
   setEl('memo-narrative', ts.narrative || '');
 
+  // Recompute IRR dynamically so Summary matches IRR tab (no stale static value).
+  const irrCalc   = computeImpliedIrr();
+  const irrDyn    = irrCalc.totalIRR;
+  const mosIrrDyn = irrDyn - (D.irr.hurdle || 0);
+
   // ── KPI Hero strip (6 numbers that matter) ─────────────────
-  const mosRaw = ts.marginOfSafety;
-  const mosColor = mosRaw >= 0 ? 'var(--green)' : 'var(--red)';
-  const irrColor = ts.impliedIrr >= D.irr.hurdle ? 'var(--green)' : 'var(--red)';
+  const mosEpv   = ts.marginOfSafety;
+  const mosColor = mosEpv >= 0 ? 'var(--green)' : 'var(--red)';
+  const irrColor = irrDyn >= D.irr.hurdle ? 'var(--green)' : 'var(--red)';
   const peRatio  = ts.priceEpvRatio;
   const peColor  = peRatio < 1 ? 'var(--green)' : peRatio < 1.2 ? 'var(--gold)' : 'var(--red)';
-  const roicVal  = ov.roic3yr > 2 ? ov.roic3yr*100 : ov.roic3yr;
+  const roicVal  = roicPct(ov.roic3yr);
   const wacc3    = D.overview.wacc*100;
   const roicColor = roicVal > wacc3 ? 'var(--green)' : 'var(--gray-mid)';
 
   const kpis = [
-    { lbl:'Margin of Safety', val:`${mosRaw>=0?'+':''}${Pct(mosRaw)}`, color:mosColor, sub:`vs. hurdle ${Pct(D.irr.hurdle)}` },
-    { lbl:'Implied IRR',      val:Pct(ts.impliedIrr),                  color:irrColor, sub:`Hurdle ${Pct(D.irr.hurdle)}` },
-    { lbl:'Price / EPV',      val:Mul(peRatio),                        color:peColor,  sub:`EPV ${fmtPrice(epv.epvPerShare)}` },
-    { lbl:'EPV / RV',         val:Mul(ts.epvRvRatio),                  color:'var(--navy)', sub:`Quality lens` },
-    { lbl:'ROIC 3yr avg',     val:Pct(roicVal),                        color:roicColor, sub:`WACC ${Pct(wacc3)}` },
-    { lbl:'Market Cap',       val:B(ov.marketCap),                     color:'var(--navy)', sub:`EV ${B(ov.ev)}` },
+    { lbl:'MoS (Price / EPV)', val:`${mosEpv>=0?'+':''}${Pct(mosEpv)}`, color:mosColor,     sub:`EPV ${fmtPrice(epv.epvPerShare)}` },
+    { lbl:'Implied IRR',       val:Pct(irrDyn),                          color:irrColor,     sub:`MoS ${mosIrrDyn>=0?'+':''}${Pct(mosIrrDyn)} vs hurdle ${Pct(D.irr.hurdle)}` },
+    { lbl:'Price / EPV',       val:Mul(peRatio),                         color:peColor,      sub:`EPV ${fmtPrice(epv.epvPerShare)}` },
+    { lbl:'EPV / RV',          val:Mul(ts.epvRvRatio),                   color:'var(--navy)',sub:`RV ${fmtPrice(D.rv.rvPerShare)}` },
+    { lbl:'ROIC 3yr avg',      val:Pct(roicVal),                         color:roicColor,    sub:`WACC ${Pct(wacc3)}` },
+    { lbl:'Market Cap',        val:B(ov.marketCap),                      color:'var(--navy)',sub:`EV ${B(ov.ev)}` },
   ];
   const kpiEl = document.getElementById('summary-kpis');
   if (kpiEl) {
@@ -2279,17 +2337,18 @@ function renderSummary() {
     ['RV / Share',     fmtPrice(D.rv.rvPerShare)],
     ['Price / EPV',    Mul(ts.priceEpvRatio)],
     ['EPV / RV',       Mul(ts.epvRvRatio)],
-    ['Implied IRR',    Pct(ts.impliedIrr)],
-    ['Hurdle Rate',    Pct(D.irr.hurdle)],
-    ['MoS',            `${mosRaw>=0?'+':''}${Pct(mosRaw)}`],
-    ['WACC',           Pct(wacc3)],
+    ['Implied IRR',      Pct(irrDyn)],
+    ['Hurdle Rate',      Pct(D.irr.hurdle)],
+    ['MoS (Price/EPV)',  `${mosEpv>=0?'+':''}${Pct(mosEpv)}`],
+    ['MoS (IRR/Hurdle)', `${mosIrrDyn>=0?'+':''}${Pct(mosIrrDyn)}`],
+    ['WACC',             Pct(wacc3)],
   ];
   const operations = [
     ['Revenue FY2025', M(ov.revenue)],
     ['Op Margin',      Pct(ov.operMargin*100)],
     ['FCF FY2025',     M(ov.fcfLatest)],
     ['FCF Margin',     Pct(ov.fcfMargin*100)],
-    ['ROIC (latest)',  Pct(ov.roicLatest > 2 ? ov.roicLatest*100 : ov.roicLatest)],
+    ['ROIC (latest)',  Pct(roicPct(ov.roicLatest))],
     ['ROIC 3yr avg',   Pct(roicVal)],
   ];
 
@@ -2319,7 +2378,7 @@ function renderSummary() {
   setEl('ov-inputs-shares',   fmt(ov.shares));
   setEl('ov-irr-roic',     Pct(irr.selectedRoic));
   setEl('ov-irr-organic',  Pct(irr.organicGrowth));
-  setEl('ov-irr-reinvg',   Pct(irr.reinvGrowth));
+  setEl('ov-irr-reinvg',   Pct(irrCalc.reinvGrowth));
   setEl('ov-irr-exit',     `${irr.exitMultiple}× EV/NOPAT`);
   setEl('ov-irr-buybacks', M(irr.buybacks));
   setEl('ov-irr-horizon',  `${irr.horizon} years`);
