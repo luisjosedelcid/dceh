@@ -1183,12 +1183,29 @@ function renderHealth() {
         html += `<tr class="cat"><td colspan="5">${m.category}</td></tr>`;
         lastCat = m.category;
       }
-      const statusCls = m.status === 'pass' ? 'pass' : m.status === 'fail' ? 'fail' : 'monitor bo';
+      const statusCls = m.status === 'pass' ? 'pass' : m.status === 'fail' ? 'fail' : 'monitor';
       const statusLbl = m.status === 'pass' ? '✓ PASS' : m.status === 'fail' ? '✗ FAIL' : '≈ MONITOR';
+      // v4.2: si vienen los 3 umbrales, los mostramos compactos en la columna Threshold
+      // resaltando el del estado actual; si no, fallback a m.threshold legacy.
+      let thresholdCell;
+      if (m.passThreshold || m.monitorThreshold || m.failThreshold) {
+        const p = m.passThreshold    || '—';
+        const w = m.monitorThreshold || '—';
+        const f = m.failThreshold    || '—';
+        const hi = (s) => s === 'pass' ? 'pass' : s === 'fail' ? 'fail' : 'monitor';
+        const wrap = (val, s) => m.status === s
+          ? `<strong class="${hi(s)}">${val}</strong>`
+          : `<span class="dim">${val}</span>`;
+        thresholdCell = `<span style="font-size:11px;line-height:1.4">`
+          + `${wrap(p, 'pass')} · ${wrap(w, 'monitor')} · ${wrap(f, 'fail')}`
+          + `</span>`;
+      } else {
+        thresholdCell = m.threshold || '';
+      }
       html += `<tr>
         <td>${m.label}</td>
         <td class="num-cell">${m.value}</td>
-        <td class="num-cell">${m.threshold}</td>
+        <td class="num-cell">${thresholdCell}</td>
         <td><span class="${statusCls}">${statusLbl}</span></td>
         <td class="dim">${m.rationale || ''}</td>
       </tr>`;
