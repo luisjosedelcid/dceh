@@ -1100,35 +1100,53 @@ function initAdjSensitivity(adj, fin, etrMedian) {
    4. REPRODUCTION VALUE
    ════════════════════════════════════════════════════════════ */
 function renderRV() {
-  buildRVTable('rv-tangible',    D.rv.tangibleAssets);
-  buildRVTable('rv-intangible',  D.rv.intangibleAssets);
-  buildRVTable('rv-other',       D.rv.otherAssets);
+  buildRVTable('rv-tangible',    D.rv.tangibleAssets,   'Subtotal Tangibles');
+  buildRVTable('rv-intangible',  D.rv.intangibleAssets, 'Subtotal Intangibles (Reproduction)');
+  buildRVTable('rv-other',       D.rv.otherAssets,      'Subtotal Other Assets');
   buildRVLiabilities();
   updateRVTotals();
   setEl('rv-note', D.rv.note || '');
 }
 
-function buildRVTable(containerId, assets) {
+function buildRVTable(containerId, assets, subtotalLabel) {
   const el = document.getElementById(containerId);
   if (!el || !assets) return;
   let html = `<table class="fin-tbl rv-tbl">
     <thead><tr><th>Asset</th><th>Book Value</th><th>Adj %</th><th>Repro Value</th><th>Method</th></tr></thead><tbody>`;
+  let subBook = 0, subRepro = 0;
+  let anyBook = false;
   assets.forEach((a, i) => {
     const adj = a.defaultAdj;
-    const repro = a.bookValue != null ? Math.round(a.bookValue * adj / 100) : (adj || 0);
-    html += `<tr data-rv-cat="${containerId}" data-rv-idx="${i}">
-      <td class="row-lbl">${a.label}${a.estimated ? ' <span class="badge bo">EST</span>' : ''}</td>
-      <td class="num-cell">${a.bookValue != null ? `${sym()}${fmt(a.bookValue)}M` : 'N/A'}</td>
-      <td class="num-cell">
-        <input type="number" min="0" max="200" value="${adj}"
+    const repro = a.bookValue != null ? Math.round(a.bookValue * adj / 100) : (a.reproValue != null ? a.reproValue : 0);
+    if (a.bookValue != null) { subBook += a.bookValue; anyBook = true; }
+    subRepro += repro;
+    const bookCell = a.bookValue != null
+      ? `${sym()}${fmt(a.bookValue)}M`
+      : `<span style="color:var(--gray-mid)">N/A</span>`;
+    const adjCell = a.adjustable === false
+      ? `<span class="dim" style="font-size:11px">—</span>`
+      : `<input type="number" min="0" max="200" value="${adj}"
           style="width:58px;border:1px solid #e6e6e6;padding:2px 4px;font-family:inherit;font-size:12px;text-align:right;background:#faf8f4"
           onchange="onRVAdj(this,'${containerId}',${i})"
-        />%
-      </td>
+        />%`;
+    html += `<tr data-rv-cat="${containerId}" data-rv-idx="${i}">
+      <td class="row-lbl">${a.label}${a.estimated ? ' <span class="badge bo">EST</span>' : ''}</td>
+      <td class="num-cell">${bookCell}</td>
+      <td class="num-cell">${adjCell}</td>
       <td class="num-cell fw" id="rv-val-${containerId}-${i}">${sym()}${fmt(repro)}M</td>
       <td class="num-cell dim" style="font-size:11px">${a.method}</td>
     </tr>`;
   });
+  // Subtotal row by category
+  if (subtotalLabel) {
+    html += `<tr class="sub-row" id="rv-sub-${containerId}">
+      <td class="row-lbl">${subtotalLabel}</td>
+      <td class="num-cell">${anyBook ? sym()+fmt(subBook)+'M' : '—'}</td>
+      <td></td>
+      <td class="num-cell fw">${sym()}${fmt(subRepro)}M</td>
+      <td></td>
+    </tr>`;
+  }
   html += '</tbody></table>';
   el.innerHTML = html;
 }
@@ -1162,36 +1180,83 @@ function onRVAdj(inputEl, cat, idx) {
 }
 
 function updateRVTotals() {
-  function sumCat(arr) {
-    return (arr||[]).reduce((s,a,i) => {
+  function sumRepro(arr) {
+    return (arr||[]).reduce((s,a) => {
       const bv = a.bookValue;
       const adj = a.defaultAdj;
-      const repro = bv != null ? Math.round(bv * adj / 100) : (adj || 0);
+      const repro = bv != null ? Math.round(bv * adj / 100) : (a.reproValue != null ? a.reproValue : 0);
       return s + repro;
     }, 0);
   }
-  const tang = sumCat(D.rv.tangibleAssets);
-  const intan = sumCat(D.rv.intangibleAssets);
-  const other = sumCat(D.rv.otherAssets);
+  function sumBook(arr) {
+    return (arr||[]).reduce((s,a) => s + (a.bookValue != null ? a.bookValue : 0), 0);
+  }
+  // Repro
+  const tang  = sumRepro(D.rv.tangibleAssets);
+  const intan = sumRepro(D.rv.intangibleAssets);
+  const other = sumRepro(D.rv.otherAssets);
   const total = tang + intan + other;
-  const liab  = D.rv.totalLiabilities;
-  const equity = total - liab;
-  const perShare = D.overview.shares > 0 ? equity / D.overview.shares : 0;
+  // Book
+  const tangBook  = sumBook(D.rv.tangibleAssets);
+  const intanBook = sumBook(D.rv.intangibleAssets);
+  const otherBook = sumBook(D.rv.otherAssets);
+  const totalBook = tangBook + intanBook + otherBook;
 
-  setEl('rv-total-tang',  M(tang));
-  setEl('rv-total-intan', M(intan));
-  setEl('rv-total-other', M(other));
-  setEl('rv-total-assets', M(total));
-  setEl('rv-total-liab',  `(${M(liab)})`);
+  const liab    = D.rv.totalLiabilities;
+  const equity  = total - liab;
+  const equityBook = totalBook - liab;
+  const shares  = D.overview.shares > 0 ? D.overview.shares : 1;
+  const perShare = equity / shares;
+  const perShareBook = equityBook / shares;
+
+  // Update inline subtotals (in case adj % changed)
+  function refreshSub(containerId, arr) {
+    const subRow = document.getElementById(`rv-sub-${containerId}`);
+    if (!subRow) return;
+    let bk = 0, rp = 0, anyBook=false;
+    arr.forEach(a => {
+      const adj = a.defaultAdj;
+      const repro = a.bookValue != null ? Math.round(a.bookValue * adj / 100) : (a.reproValue != null ? a.reproValue : 0);
+      if (a.bookValue != null) { bk += a.bookValue; anyBook = true; }
+      rp += repro;
+    });
+    const tds = subRow.querySelectorAll('td');
+    tds[1].innerHTML = anyBook ? sym()+fmt(bk)+'M' : '—';
+    tds[3].innerHTML = sym()+fmt(rp)+'M';
+  }
+  refreshSub('rv-tangible', D.rv.tangibleAssets);
+  refreshSub('rv-intangible', D.rv.intangibleAssets);
+  refreshSub('rv-other', D.rv.otherAssets);
+
+  // Asset Summary card (Book vs Repro side by side)
+  setEl('rv-sum-tang-book',  M(tangBook));   setEl('rv-sum-tang-repro',  M(tang));
+  setEl('rv-sum-intan-book', anyBookIntan(D.rv.intangibleAssets) ? M(intanBook) : '—');
+  setEl('rv-sum-intan-repro', M(intan));
+  setEl('rv-sum-other-book', M(otherBook));  setEl('rv-sum-other-repro', M(other));
+  setEl('rv-sum-total-book', M(totalBook));  setEl('rv-sum-total-repro', M(total));
+
+  // Reproduction Value Build-up card
+  setEl('rv-bu-assets-book',  M(totalBook));   setEl('rv-bu-assets-repro',  M(total));
+  setEl('rv-bu-liab-book',    `(${M(liab)})`); setEl('rv-bu-liab-repro',    `(${M(liab)})`);
+  setEl('rv-bu-equity-book',  M(equityBook));  setEl('rv-bu-equity-repro',  M(equity));
+  setEl('rv-bu-shares',       fmtDec(shares, 2) + ' M');
+  setEl('rv-bu-pershare-book',fmtPrice(perShareBook));
+  setEl('rv-bu-pershare-repro',fmtPrice(perShare));
+
+  // Headline equity
   setEl('rv-equity',      M(equity));
   setEl('rv-per-share',   fmtPrice(perShare));
 
-  // moat test
+  // Moat test
   const epvPs = D.epv.epvPerShare;
   const ratio  = epvPs / perShare;
   const moatColor = ratio >= 1.5 ? 'var(--green)' : ratio >= 1 ? 'var(--gold)' : 'var(--red)';
   setEl('rv-moat-ratio', `<span style="color:${moatColor}">${fmtDec(ratio,2)}×</span>`);
   setEl('rv-moat-label', ratio >= 1.5 ? 'Strong Moat' : ratio >= 1.0 ? 'Some Moat' : 'Questionable');
+}
+
+function anyBookIntan(arr) {
+  return (arr||[]).some(a => a.bookValue != null);
 }
 
 /* ════════════════════════════════════════════════════════════

@@ -671,22 +671,62 @@
   <div class="slbl" style="margin-top:12px;border:none">Liabilities (100% at Par)</div>
   <div class="tbl-wrap" id="rv-liabilities"></div>
 
-  <!-- Totals summary -->
-  <div class="g3" style="margin-top:20px">
-    <div class="card">
-      <div class="clbl">Asset Summary</div>
-      <div class="kv">
-        <div class="row"><span class="k">Tangible Assets</span><span class="v" id="rv-total-tang">—</span></div>
-        <div class="row"><span class="k">Intangible Assets</span><span class="v" id="rv-total-intan">—</span></div>
-        <div class="row"><span class="k">Other Assets</span><span class="v" id="rv-total-other">—</span></div>
-        <div class="row"><span class="k">Total Reproduction Assets</span><span class="v gold fw" id="rv-total-assets">—</span></div>
-        <div class="row"><span class="k">Total Liabilities</span><span class="v red" id="rv-total-liab">—</span></div>
-      </div>
-    </div>
+  <!-- Asset Summary — Book vs Repro side by side -->
+  <div class="slbl" style="margin-top:18px">Asset Summary — Book Value vs. Reproduction Cost</div>
+  <div class="tbl-wrap" style="margin-bottom:18px">
+    <table class="fin-tbl">
+      <thead><tr><th>Category</th><th style="text-align:right">Book Value</th><th style="text-align:right">Reproduction Cost</th><th>Comment</th></tr></thead>
+      <tbody>
+        <tr class="norm-row"><td class="row-lbl">Tangible Assets</td>
+          <td class="num-cell" id="rv-sum-tang-book">—</td>
+          <td class="num-cell" id="rv-sum-tang-repro">—</td>
+          <td class="num-cell dim" style="font-size:11px">Mostly at book; PP&amp;E uplift to replacement</td></tr>
+        <tr class="norm-row"><td class="row-lbl">Intangible Assets (reconstructed)</td>
+          <td class="num-cell" id="rv-sum-intan-book">—</td>
+          <td class="num-cell" id="rv-sum-intan-repro">—</td>
+          <td class="num-cell dim" style="font-size:11px">Brand &amp; S&amp;M Asset reconstructed; Goodwill removed (double-count)</td></tr>
+        <tr class="norm-row"><td class="row-lbl">Other Assets</td>
+          <td class="num-cell" id="rv-sum-other-book">—</td>
+          <td class="num-cell" id="rv-sum-other-repro">—</td>
+          <td class="num-cell dim" style="font-size:11px">Lease assets and DTA marked down for transferability</td></tr>
+        <tr class="tot-row"><td class="row-lbl">Total Assets</td>
+          <td class="num-cell" id="rv-sum-total-book">—</td>
+          <td class="num-cell" id="rv-sum-total-repro">—</td>
+          <td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Reproduction Value Build-up — final calc -->
+  <div class="slbl">Reproduction Value Build-up — From Assets to Per-Share Value</div>
+  <div class="tbl-wrap" style="margin-bottom:18px">
+    <table class="fin-tbl">
+      <thead><tr><th>Step</th><th style="text-align:right">Book Value (Columbia)</th><th style="text-align:right">Reproduction Cost (DCE)</th></tr></thead>
+      <tbody>
+        <tr class="norm-row"><td class="row-lbl">Total Assets</td>
+          <td class="num-cell" id="rv-bu-assets-book">—</td>
+          <td class="num-cell" id="rv-bu-assets-repro">—</td></tr>
+        <tr class="norm-row"><td class="row-lbl">(−) Total Liabilities</td>
+          <td class="num-cell red" id="rv-bu-liab-book">—</td>
+          <td class="num-cell red" id="rv-bu-liab-repro">—</td></tr>
+        <tr class="sub-row"><td class="row-lbl">= Equity Value ($M)</td>
+          <td class="num-cell fw" id="rv-bu-equity-book">—</td>
+          <td class="num-cell fw gold" id="rv-bu-equity-repro">—</td></tr>
+        <tr class="norm-row"><td class="row-lbl">÷ Diluted Shares Outstanding</td>
+          <td class="num-cell dim" colspan="2" id="rv-bu-shares" style="text-align:right">—</td></tr>
+        <tr class="tot-row"><td class="row-lbl">= Value per Share</td>
+          <td class="num-cell fw" id="rv-bu-pershare-book">—</td>
+          <td class="num-cell fw gold" id="rv-bu-pershare-repro">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Headline cards -->
+  <div class="g3" style="margin-top:8px">
     <div class="card accent">
-      <div class="clbl">Equity Value</div>
+      <div class="clbl">Reproduction Value (Equity)</div>
       <div class="cval gold" id="rv-equity">—</div>
-      <div class="csub">Reproduction Value Equity</div>
+      <div class="csub">Cost to replicate the asset base today, net of liabilities</div>
       <div style="margin-top:14px">
         <div class="clbl">RV per Share</div>
         <div class="cval" id="rv-per-share">—</div>
@@ -696,7 +736,13 @@
       <div class="clbl">Moat Test — EPV / RV</div>
       <div class="cval gold" id="rv-moat-ratio">—</div>
       <div class="csub" id="rv-moat-label">EPV / RV ratio</div>
-      <div style="margin-top:16px;font-size:12px;color:var(--gray-txt);font-style:italic;line-height:1.5" id="rv-note"></div>
+      <div class="csub" style="margin-top:10px;font-size:11px;line-height:1.5">
+        <strong>EPV &gt; RV →</strong> incumbent earns above cost of replication → evidence of franchise. <strong>EPV ≈ RV →</strong> commodity returns. <strong>EPV &lt; RV →</strong> destroyer of capital.
+      </div>
+    </div>
+    <div class="card">
+      <div class="clbl">Methodology Note</div>
+      <div class="csub" style="font-size:12px;color:var(--gray-txt);line-height:1.55;font-style:italic" id="rv-note">—</div>
     </div>
   </div>
 </div>
