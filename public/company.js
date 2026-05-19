@@ -1300,13 +1300,6 @@ function updateRVTotals() {
   refreshSub('rv-intangible', D.rv.intangibleAssets);
   refreshSub('rv-other', D.rv.otherAssets);
 
-  // Asset Summary card (Book vs Repro side by side)
-  setEl('rv-sum-tang-book',  M(tangBook));   setEl('rv-sum-tang-repro',  M(tang));
-  setEl('rv-sum-intan-book', anyBookIntan(D.rv.intangibleAssets) ? M(intanBook) : '—');
-  setEl('rv-sum-intan-repro', M(intan));
-  setEl('rv-sum-other-book', M(otherBook));  setEl('rv-sum-other-repro', M(other));
-  setEl('rv-sum-total-book', M(totalBook));  setEl('rv-sum-total-repro', M(total));
-
   // Reproduction Value Build-up card
   setEl('rv-bu-assets-book',  M(totalBook));   setEl('rv-bu-assets-repro',  M(total));
   setEl('rv-bu-liab-book',    `(${M(liabBook)})`); setEl('rv-bu-liab-repro',    `(${M(liab)})`);
