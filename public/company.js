@@ -499,25 +499,54 @@ function renderOverviewCharts() {
     });
   }
 
-  // c4: Capital Deployment donut (FY latest)
+  // c4: Capital Deployment donut (FY latest) — base CFO, 4 usos
   destroyChart('c4');
   const ctx4 = document.getElementById('c4');
   if (ctx4) {
-    const bk  = fin.buybacks[fin.buybacks.length-1] || 0;
-    const div = fin.dividends[fin.dividends.length-1] || 0;
-    const fcf = fin.fcf[fin.fcf.length-1] || 0;
-    const ret = Math.max(0, fcf - bk - div);
+    const last = (arr) => Array.isArray(arr) && arr.length ? (arr[arr.length-1] || 0) : 0;
+    const cfo   = last(fin.cfo);
+    const capex = Math.abs(last(fin.capex || fin.capExpenditures || [])) || 0;
+    // CapEx can come negative in CF; in this dashboard fin.capex isn't separately exposed.
+    // Derive from CFO - FCF (since FCF = CFO - CapEx) if not available.
+    const capexDerived = capex || Math.max(0, last(fin.cfo) - last(fin.fcf));
+    const bk    = Math.abs(last(fin.buybacks));
+    const div   = Math.abs(last(fin.dividends));
+    const used  = capexDerived + bk + div;
+    const netCash = cfo - used; // positivo: incrementa caja / paga deuda; negativo: financiado con caja
+    const labels = ['CapEx', 'Buybacks', 'Dividends'];
+    const data   = [capexDerived, bk, div];
+    const colors = ['#7a5a2e', '#b88b47', '#2a7a56'];
+    if (netCash >= 0) {
+      labels.push('Net Cash / Debt Paydown');
+      data.push(netCash);
+      colors.push('#1b2642');
+    } else {
+      labels.push('Financed from Cash');
+      data.push(Math.abs(netCash));
+      colors.push('#b91c1c');
+    }
     charts['c4'] = new Chart(ctx4, {
       type: 'doughnut',
-      data: {
-        labels: ['Buybacks', 'Dividends', 'Retained/Debt'],
-        datasets: [{ data: [bk, div, ret],
-          backgroundColor: ['#b88b47', '#2a7a56', '#1b2642'],
-          borderWidth: 0 }]
-      },
+      data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
       options: {
         responsive: true, maintainAspectRatio: true,
-        plugins: { legend: { position: 'bottom', labels: { font: {size:11}, color:'#606060' } } }
+        plugins: {
+          legend: { position: 'bottom', labels: { font: {size:11}, color:'#606060', boxWidth: 12 } },
+          tooltip: {
+            callbacks: {
+              label: (c) => {
+                const v = Number(c.parsed) || 0;
+                const pct = cfo > 0 ? (v / cfo * 100).toFixed(0) : '0';
+                return `${c.label}: ${sym()}${fmt(v)}M (${pct}% del CFO)`;
+              }
+            }
+          },
+          title: {
+            display: true,
+            text: `Base: CFO ${sym()}${fmt(cfo)}M`,
+            color: '#606060', font: { size: 10, weight: 'normal' }, padding: { bottom: 4 }
+          }
+        }
       }
     });
   }
