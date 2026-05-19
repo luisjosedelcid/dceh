@@ -1213,20 +1213,23 @@ function renderHealth() {
     el.innerHTML = html;
   }
 
-  // radar chart
+  // radar chart — labels derived from Health Check categories (converter v2.2)
+  // Point color reflects axis status: PASS-tier (≥ 90) gold, MONITOR-tier (60–89) amber, FAIL-tier (<60) red.
   destroyChart('c-radar');
   const rc = document.getElementById('c-radar');
-  if (rc && hc.radarLabels && hc.radarScores) {
+  if (rc && hc.radarLabels && hc.radarScores && hc.radarLabels.length === hc.radarScores.length) {
+    const pointColor = (s) => s >= 90 ? '#b88b47' : s >= 60 ? '#d4a259' : '#9b2335';
     charts['c-radar'] = new Chart(rc, {
       type: 'radar',
       data: {
-        labels: hc.radarLabels.map(l => l.replace('\\n', '\n')),
+        labels: hc.radarLabels.map(l => String(l).split('\\n').join('\n')),
         datasets: [{
           label: D.ticker,
           data: hc.radarScores,
           borderColor: '#b88b47',
           backgroundColor: 'rgba(184,139,71,0.15)',
-          pointBackgroundColor: '#b88b47',
+          pointBackgroundColor: hc.radarScores.map(pointColor),
+          pointBorderColor: hc.radarScores.map(pointColor),
           pointRadius: 4,
         }]
       },
@@ -1239,7 +1242,18 @@ function renderHealth() {
           grid: { color: 'rgba(27,38,66,0.08)' },
           angleLines: { color: 'rgba(27,38,66,0.08)' },
         }},
-        plugins: { legend: { display: false } }
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const v = ctx.parsed.r;
+                const tier = v >= 90 ? 'PASS' : v >= 60 ? 'MONITOR' : 'FAIL';
+                return `${v} / 100 (${tier})`;
+              }
+            }
+          }
+        }
       }
     });
   }
