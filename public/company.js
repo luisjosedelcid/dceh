@@ -709,7 +709,10 @@ function renderTable(containerId, rows, years, fin) {
       if (v == null) { html += `<td class="num-cell dim">—</td>`; return; }
       let disp;
       if (r.t === 'margin') {
-        disp = `${fmtDec(v,1)}%`;
+        // BS Current Ratio se muestra como 1.42x (sin %)
+        disp = r.isRatio ? `${fmtDec(v,2)}x` : `${fmtDec(v,1)}%`;
+      } else if (r.fmt === 'price') {
+        disp = `$${fmtDec(v,2)}`;
       } else {
         disp = v < 0 ? `(${fmt(Math.abs(v))})` : fmt(v);
       }
