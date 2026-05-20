@@ -28,7 +28,7 @@
   .sub{font-size:12px;color:var(--gray-mid);font-weight:300;margin-bottom:6px}
   .meta{font-size:10px;color:var(--gray-mid);font-weight:300;margin-bottom:28px;font-style:italic}
 
-  /* MODE TABS (Screener / Idea Feed / Superinvestors / Sector Tracker / Watchlist) */
+  /* MODE TABS (Screener / Idea Feed / Superinvestors / Sector Tracker / Shortlist) */
   .mode-tabs{display:flex;gap:0;margin-bottom:28px;border-bottom:1px solid var(--rule)}
   .mode-tab{font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;padding:14px 28px;background:none;border:none;border-bottom:2px solid transparent;color:var(--gray-mid);cursor:pointer;transition:all .2s;margin-bottom:-1px}
   .mode-tab:hover{color:var(--navy)}
@@ -139,7 +139,7 @@
     <button class="mode-tab" data-mode="sectors" onclick="showMode('sectors',this)">Sector Tracker</button>
     <button class="mode-tab active" data-mode="ideafeed" onclick="showMode('ideafeed',this)">Idea Feed <span class="count" id="ideafeed-count">—</span></button>
     <button class="mode-tab" data-mode="superinvestors" onclick="showMode('superinvestors',this)">Superinvestors <span class="count">10</span></button>
-    <button class="mode-tab" data-mode="watchlist" onclick="showMode('watchlist',this)">Watchlist <span class="count" id="watchlist-count">—</span></button>
+    <button class="mode-tab" data-mode="shortlist" onclick="showMode('shortlist',this)">Shortlist <span class="count" id="shortlist-count">—</span></button>
   </div>
 
   <!-- ════════════════════════════════════════════════════════════ -->
@@ -153,7 +153,7 @@
       <div style="font-size:12px;color:var(--gray-mid);max-width:560px;margin:0 auto;line-height:1.6">
         Daily ROIC.ai snapshot of the US universe into Supabase, with 15+ filters grouped by size,
         valuation, quality, growth, leverage and capital allocation. Results feed directly into
-        Watchlist. Schema, cron and UI to be wired in subsequent commits.
+        Shortlist. Schema, cron and UI to be wired in subsequent commits.
       </div>
     </div>
   </div>
@@ -173,9 +173,9 @@
   </div>
 
   <!-- ════════════════════════════════════════════════════════════ -->
-  <!-- MODE 2: WATCHLIST                                             -->
+  <!-- MODE 2: SHORTLIST                                             -->
   <!-- ════════════════════════════════════════════════════════════ -->
-  <div class="mode-pane" id="mode-watchlist">
+  <div class="mode-pane" id="mode-shortlist">
     <div class="meta">Names on the radar — quick view, no Columbia model required. Synced live to Supabase (table <code style="font-family:Menlo,monospace;font-size:11px">radar</code>) + Finnhub quotes.</div>
 
     <!-- ADD ROW (admin only) -->
@@ -201,7 +201,7 @@
           <th>Added</th>
           <th></th>
         </tr></thead>
-        <tbody id="watchlist-body">
+        <tbody id="shortlist-body">
           <tr><td colspan="9" style="text-align:center;color:var(--gray-mid);font-style:italic;padding:24px">Loading…</td></tr>
         </tbody>
       </table>
@@ -256,7 +256,7 @@
     <div class="sup-controls" style="margin-top:14px">
       <label>View:</label>
       <select id="if-view" onchange="loadIdeaFeed()">
-        <option value="tickers" selected>Tickers — table (watchlist style)</option>
+        <option value="tickers" selected>Tickers — table (shortlist style)</option>
         <option value="news">News — chronological feed</option>
       </select>
       <label style="margin-left:14px">Window:</label>
@@ -653,7 +653,7 @@ function initSortableTables() {
 initSortableTables();
 
 // ═══════════════════════════════════════════════════════════════════
-// WATCHLIST — quick view, live data only (no Columbia)
+// SHORTLIST — quick view, live data only (no Columbia)
 // ═══════════════════════════════════════════════════════════════════
 function fmtMktCap(mc) {
   // Finnhub returns market cap in USD millions
@@ -667,8 +667,8 @@ function escapeHtmlW(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// ─── Watchlist (Radar) ─── backed by Supabase `radar` table via /api/admin/radar
-// Public read uses ADBE-only fallback to /data/watchlist.json if API fails (e.g. logged out).
+// ─── Shortlist (Radar) ─── backed by Supabase `radar` table via /api/admin/radar
+// Public read uses ADBE-only fallback to /data/shortlist.json if API fails (e.g. logged out).
 
 function _wlAuthToken() {
   return (window.dceAuth && window.dceAuth.token) ? window.dceAuth.token() : null;
@@ -699,7 +699,7 @@ async function _wlFetchItems() {
   }
   // Fallback: legacy static file (read-only). Used when not authenticated.
   try {
-    const r = await fetch('/data/watchlist.json', { cache: 'no-store' });
+    const r = await fetch('/data/shortlist.json', { cache: 'no-store' });
     const data = await r.json();
     return (data.items || []).map(it => ({
       id: null,
@@ -712,12 +712,12 @@ async function _wlFetchItems() {
   } catch { return []; }
 }
 
-async function loadWatchlist() {
-  const tbody = document.getElementById('watchlist-body');
+async function loadShortlist() {
+  const tbody = document.getElementById('shortlist-body');
   _wlToggleAddRow();
   try {
     const items = await _wlFetchItems();
-    document.getElementById('watchlist-count').textContent = items.length;
+    document.getElementById('shortlist-count').textContent = items.length;
 
     if (items.length === 0) {
       const msg = _wlAuthToken()
@@ -769,8 +769,8 @@ async function loadWatchlist() {
       </tr>`;
     }).join('');
   } catch (e) {
-    console.error('Watchlist load error:', e);
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);padding:24px">Error loading watchlist</td></tr>`;
+    console.error('Shortlist load error:', e);
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);padding:24px">Error loading shortlist</td></tr>`;
   }
 }
 
@@ -804,7 +804,7 @@ async function addToRadar() {
     msgEl.style.color = 'var(--green, #2a7a56)';
     msgEl.textContent = '✓ ' + ticker + ' added to radar';
     setTimeout(() => { msgEl.textContent = ''; }, 2500);
-    await loadWatchlist();
+    await loadShortlist();
   } catch (e) {
     msgEl.style.color = 'var(--red)';
     msgEl.textContent = 'Error: ' + e.message;
@@ -822,7 +822,7 @@ async function deleteFromRadar(id, ticker) {
       headers: { 'x-admin-token': tk },
     });
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    await loadWatchlist();
+    await loadShortlist();
   } catch (e) {
     alert('Error: ' + e.message);
   }
@@ -834,15 +834,15 @@ window.deleteFromRadar = deleteFromRadar;
 // poll briefly for it.
 (function _wlHookAuth() {
   if (window.dceAuth && window.dceAuth.onChange) {
-    window.dceAuth.onChange(() => { loadWatchlist(); });
+    window.dceAuth.onChange(() => { loadShortlist(); });
     // Re-render once dceAuth is available (login state may already be true)
-    loadWatchlist();
+    loadShortlist();
   } else {
     setTimeout(_wlHookAuth, 100);
   }
 })();
 
-loadWatchlist();
+loadShortlist();
 // Auto-load Idea Feed (default tab on page load)
 if (typeof loadIdeaFeed === 'function') { loadIdeaFeed(); window._ifLoaded = true; }
 else { document.addEventListener('DOMContentLoaded', () => { loadIdeaFeed(); window._ifLoaded = true; }); }
@@ -1442,7 +1442,7 @@ async function loadIdeaFeed() {
   cont.innerHTML = html;
 }
 
-// ─── Idea Feed: aggregate items by ticker and render watchlist-style table ───
+// ─── Idea Feed: aggregate items by ticker and render shortlist-style table ───
 async function renderIdeaFeedTickers(items, status, cont) {
   // 1. Aggregate. Items are sorted by published_at desc, so mentions[0] = latest.
   const map = new Map(); // ticker -> { ticker, mentions:[], sources:Set }
