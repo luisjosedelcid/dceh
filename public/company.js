@@ -218,6 +218,7 @@ function buildNav() {
     {id:'overview',    label:'Overview'},
     {id:'health',      label:'Health Checks'},
     {id:'financials',  label:'Financials'},
+    {id:'sales',       label:'Sales', salesGuard: true},
     {id:'audit',       label:'CIO Decisions'},
     {id:'adj',         label:'Adjustments'},
     {id:'rv',          label:'Reproduction Value'},
@@ -235,6 +236,9 @@ function buildNav() {
   nav.innerHTML = tabs.map(t => {
     if (t.versionSlot) {
       return `<div id="version-selector" style="display:none;align-items:center;gap:8px;padding:0 14px 0 0;margin-right:8px;border-right:1px solid var(--line)"></div>`;
+    }
+    if (t.salesGuard && (!D.sales || !D.sales.years)) {
+      return '';
     }
     if (t.external) {
       if (t.external) {
@@ -279,6 +283,7 @@ function renderTab(id) {
   switch(id) {
     case 'overview':   renderOverview(); break;
     case 'financials': renderFinancials(); break;
+    case 'sales':      renderSales(); break;
     case 'adj':        renderAdj(); break;
     case 'rv':         renderRV(); break;
     case 'epv':        renderEPV(); break;
@@ -772,6 +777,78 @@ function renderFinCharts() {
         {label:'FCF',   data:fin.fcf,                                  backgroundColor:'rgba(42,122,86,0.75)'},
       ]},
     options: chartOpts(`${sym()}M`, `CFO / CapEx / FCF (${sym()}M)`)
+  });
+}
+
+/* ════════════════════════════════════════════════════════════
+   2b. SALES — Revenue por segmento, geografía, canal y sourcing
+   ════════════════════════════════════════════════════════════ */
+function renderSales() {
+  const s = D.sales;
+  if (!s || !s.years) return;
+  const years = s.years;
+
+  // --- 1. Tablas (segment, geo, channel, sourcing) ---
+  const buildHistTable = (rows, withComp) => {
+    let html = `<table class="fin-tbl"><thead><tr><th>Item</th>${years.map(y=>`<th>${y}</th>`).join('')}<th>% FY25</th>${withComp?'<th>Crecimiento / Comp</th>':''}</tr></thead><tbody>`;
+    rows.forEach(r => {
+      html += `<tr class="norm-row"><td class="row-lbl">${r.label}</td>`;
+      r.values.forEach(v => { html += `<td class="num-cell">${fmt(v)}</td>`; });
+      html += `<td class="num-cell fw">${r.pctFY25}%</td>`;
+      if (withComp) html += `<td class="num-cell" style="text-align:left;padding-left:14px;font-size:12px;color:var(--gray-mid)">${r.comp || '—'}</td>`;
+      html += `</tr>`;
+    });
+    // Totals row
+    const totals = years.map((_,i) => rows.reduce((a,r) => a + (r.values[i]||0), 0));
+    html += `<tr class="tot-row"><td class="row-lbl">Total</td>`;
+    totals.forEach(v => { html += `<td class="num-cell fw">${fmt(v)}</td>`; });
+    html += `<td class="num-cell fw">100%</td>`;
+    if (withComp) html += `<td></td>`;
+    html += `</tr></tbody></table>`;
+    return html;
+  };
+
+  const buildMixTable = (rows) => {
+    let html = `<table class="fin-tbl"><thead><tr><th>Item</th><th>% FY25</th><th style="text-align:left;padding-left:14px">Nota</th></tr></thead><tbody>`;
+    rows.forEach(r => {
+      html += `<tr class="norm-row"><td class="row-lbl">${r.label}</td><td class="num-cell fw">${r.pctFY25}%</td><td class="num-cell" style="text-align:left;padding-left:14px;font-size:12px;color:var(--gray-mid)">${r.note||'—'}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+    return html;
+  };
+
+  setEl('tbl-sales-segment',  buildHistTable(s.bySegment, false));
+  setEl('tbl-sales-geo',      buildHistTable(s.byGeography, true));
+  setEl('tbl-sales-channel',  buildMixTable(s.byChannel));
+  setEl('tbl-sales-sourcing', buildMixTable(s.bySourcing));
+
+  // --- 2. Notas + source ---
+  const ul = document.getElementById('sales-notes');
+  if (ul) ul.innerHTML = (s.notes || []).map(n => `<li>${n}</li>`).join('');
+  setTxt('sales-source', s.source || '');
+
+  // --- 3. Charts (stacked bar segment, stacked bar geo) ---
+  destroyChart('c-sales-seg'); destroyChart('c-sales-geo');
+  const palette = ['rgba(27,38,66,0.85)', 'rgba(184,139,71,0.85)', 'rgba(42,122,86,0.85)', 'rgba(155,35,53,0.7)', 'rgba(107,79,160,0.75)'];
+
+  const cSeg = document.getElementById('c-sales-seg');
+  if (cSeg) charts['c-sales-seg'] = new Chart(cSeg, {
+    type:'bar', data:{ labels: years,
+      datasets: s.bySegment.map((r,i) => ({ label: r.label, data: r.values, backgroundColor: palette[i % palette.length] }))
+    },
+    options: { ...chartOpts(`${sym()}M`, `Revenue por Segmento (${sym()}M)`),
+      scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: v => fmt(v) } } }
+    }
+  });
+
+  const cGeo = document.getElementById('c-sales-geo');
+  if (cGeo) charts['c-sales-geo'] = new Chart(cGeo, {
+    type:'bar', data:{ labels: years,
+      datasets: s.byGeography.map((r,i) => ({ label: r.label, data: r.values, backgroundColor: palette[i % palette.length] }))
+    },
+    options: { ...chartOpts(`${sym()}M`, `Revenue por Geografía (${sym()}M)`),
+      scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: v => fmt(v) } } }
+    }
   });
 }
 
