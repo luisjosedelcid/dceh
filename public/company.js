@@ -218,7 +218,7 @@ function buildNav() {
     {id:'overview',    label:'Overview'},
     {id:'health',      label:'Health Checks'},
     {id:'financials',  label:'Financials'},
-    {id:'sales',       label:'Sales', salesGuard: true},
+    {id:'sales',       label:'Revenue', salesGuard: true},
     {id:'audit',       label:'CIO Decisions'},
     {id:'adj',         label:'Adjustments'},
     {id:'rv',          label:'Reproduction Value'},
