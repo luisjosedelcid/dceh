@@ -798,9 +798,11 @@ function renderSales() {
       if (withComp) html += `<td class="num-cell" style="text-align:left;padding-left:14px;font-size:12px;color:var(--gray-mid)">${r.comp || '—'}</td>`;
       html += `</tr>`;
     });
-    // Totals row
-    const totals = years.map((_,i) => rows.reduce((a,r) => a + (r.values[i]||0), 0));
-    html += `<tr class="tot-row"><td class="row-lbl">Total</td>`;
+    // Totals row — usar totalRevenue oficial del 10-K (no la suma de estimaciones por segmento)
+    const totals = s.totalRevenue && s.totalRevenue.length === years.length
+      ? s.totalRevenue
+      : years.map((_,i) => rows.reduce((a,r) => a + (r.values[i]||0), 0));
+    html += `<tr class="tot-row"><td class="row-lbl">Total Revenue (10-K)</td>`;
     totals.forEach(v => { html += `<td class="num-cell fw">${fmt(v)}</td>`; });
     html += `<td class="num-cell fw">100%</td>`;
     if (withComp) html += `<td></td>`;
