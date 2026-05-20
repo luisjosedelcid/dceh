@@ -1,7 +1,7 @@
 {
   "_meta": {
     "description": "Single source of truth para el Data Room de dceholdings.app. Se actualiza automaticamente por las skills DCE al generar nuevos entregables. Estructura alineada con Operations Manual v3 seccion 3.4.",
-    "last_updated": "2026-05-12",
+    "last_updated": "2026-05-20",
     "naming_convention": "AAAA-MM - Tipo - Detalle.ext (Operations Manual v3 §3.4)",
     "owner": "CIO"
   },
@@ -13,31 +13,61 @@
       "access": "Read-only para Analyst",
       "files": [
         {
-          "name": "Investment Charter v3.1",
+          "name": "Investment Charter v3.2",
+          "filename": "DCE_Holdings_Investment_Charter_v3-2.docx",
+          "type": "docx",
+          "detail": "Version vigente. Elimina la capa de Comite de Inversiones bajo el regimen actual de AUM bajo: el CIO concentra la ultima responsabilidad sobre BUY/PASS/SELL/FOLLOW/RECALIBRATE y el Investment Associate firma la exactitud tecnica del research package (Columbia, Valuation, Thesis Breaker, Munger Digital). Incorpora el Governance Recalibration Trigger en §3.1: cuando el AUM consolidado supere USD 10 millones, el documento se revisa para reinstaurar la capa de Comite de Inversiones (composicion, quorum, cadencia y regimen de votacion a definir en la enmienda correspondiente).",
+          "url": "/docs/DCE_Holdings_Investment_Charter_v3-2.docx",
+          "uploaded": "2026-05-20",
+          "version": "v3.2"
+        },
+        {
+          "name": "Investment Policy Statement v11.0",
+          "filename": "DCE_Holdings_IPS_v11.docx",
+          "type": "docx",
+          "detail": "Version vigente. Elimina la capa de Comite de Inversiones manteniendo las 4 decisiones BUY/FOLLOW/PASS/SELL bajo ratificacion del CIO con apoyo tecnico del Associate. Renombra §4.6 a 'Horizonte, decisiones de inversion y reglas de salida'. Incorpora el Governance Recalibration Trigger en §4.0.1 con trigger AUM > USD 10M. Bandas de tamano, hurdles, criterios cuantitativos y filosofia Columbia + GARP intactos.",
+          "url": "/docs/DCE_Holdings_IPS_v11.docx",
+          "uploaded": "2026-05-20",
+          "version": "v11.0"
+        },
+        {
+          "name": "Governance & Succession Framework v5.1",
+          "filename": "DCE_Holdings_Governance_v5-1.docx",
+          "type": "docx",
+          "detail": "Version vigente. Elimina la seccion 3 entera de Comite de Inversiones y la reemplaza por la Estructura de autoridad CIO-led (CIO ultima autoridad, Associate firma exactitud tecnica, sin quorum ni votacion). Nueva seccion 4 Governance Recalibration Trigger con reactivacion del CI cuando AUM > USD 10M. Sucesion del CIO y del rol analitico senior ratificadas por ownership del holding. Incapacidad temporal del CIO: Associate continua produccion analitica pero suspende decisiones nuevas; ownership designa CIO interino.",
+          "url": "/docs/DCE_Holdings_Governance_v5-1.docx",
+          "uploaded": "2026-05-20",
+          "version": "v5.1"
+        },
+        {
+          "name": "Investment Charter v3.1 (historico)",
           "filename": "DCE_Holdings_Investment_Charter_v3-1.docx",
           "type": "docx",
-          "detail": "Version vigente. Alinea el Charter a la estructura organizacional transitoria 2026 formalizada en Operations Manual v3.5: el rol analitico senior (Director of Investment Research en estructura objetivo) es absorbido por el Investment Associate durante 2026, con clausula de evolucion al incorporarse un segundo perfil analitico. Reescritura de seccion 3.3 (rol analitico senior), 3.4 (area de analisis como concepto), 4.2 (delegacion funcional) y 4.3 (regimen transitorio de doble firma extendido al supuesto de Associate unico).",
+          "detail": "Version reemplazada por v3.2 (Mayo 2026). Mantenia la capa de Comite de Inversiones bajo regimen transitorio.",
           "url": "/docs/DCE_Holdings_Investment_Charter_v3-1.docx",
           "uploaded": "2026-05-12",
-          "version": "v3.1"
+          "version": "v3.1",
+          "historico": true
         },
         {
-          "name": "Investment Policy Statement v10.0",
+          "name": "Investment Policy Statement v10.0 (historico)",
           "filename": "DCE_Holdings_IPS_v10.docx",
           "type": "docx",
-          "detail": "Version vigente. Alinea el IPS al proceso de inversion consolidado en Operations Manual v3.5. Cambios sustantivos: seccion 4.6 reescrita como Horizonte, decisiones del comite y reglas de salida, con incorporacion formal de las cuatro decisiones del Comite de Inversiones (BUY / FOLLOW / PASS / SELL) con identico estandar documental y el Decision Journal como registro vivo. Seccion 4.7 Entregables de monitoreo: reemplazo del Investment Fact Sheet (IFS), Scorecard de posicion y Desconfirmacion independiente por el Quarterly Re-Underwriting de ocho secciones alineado al ciclo 10-K/10-Q.",
+          "detail": "Version reemplazada por v11.0 (Mayo 2026). Mantenia las decisiones BUY/FOLLOW/PASS/SELL como decisiones del Comite de Inversiones.",
           "url": "/docs/DCE_Holdings_IPS_v10.docx",
           "uploaded": "2026-05-12",
-          "version": "v10.0"
+          "version": "v10.0",
+          "historico": true
         },
         {
-          "name": "Governance & Succession Framework v5.0",
+          "name": "Governance & Succession Framework v5.0 (historico)",
           "filename": "DCE_Holdings_Governance_v5-0.docx",
           "type": "docx",
-          "detail": "Version vigente. Alinea el Framework a la estructura organizacional transitoria 2026. Cambios: seccion 3.1 Composicion del CI bajo regimen transitorio 2026 (CIO + miembro externo, con Associate como invitado tecnico sin voz ni voto); seccion 3.2 Funcionamiento (CI Pack producido por el rol analitico senior con doble denominacion y registro de decisiones BUY/FOLLOW/PASS/SELL en el Decision Journal); seccion 5 Sucesion del rol analitico senior generalizada; seccion 6 Incapacidad temporal del CIO: bajo regimen transitorio el CI presidido por el miembro externo asume coordinacion en modo de preservacion mientras el Associate continua produccion analitica regular sin autoridad de decision.",
+          "detail": "Version reemplazada por v5.1 (Mayo 2026). Mantenia la composicion y funcionamiento del Comite de Inversiones bajo regimen transitorio 2026.",
           "url": "/docs/DCE_Holdings_Governance_v5-0.docx",
           "uploaded": "2026-05-12",
-          "version": "v5.0"
+          "version": "v5.0",
+          "historico": true
         },
         {
           "name": "Investment Charter v3.1.3 (historico)",
@@ -70,14 +100,25 @@
           "historico": true
         },
         {
-          "name": "2026-05 - Operations Manual v3.5",
+          "name": "2026-05 - Operations Manual v3.6",
+          "filename": "2026-05_Operations_Manual_v3-6.docx",
+          "type": "docx",
+          "detail": "Version vigente. Elimina la capa de Comite de Inversiones: la cadena de decision termina en el CIO con apoyo tecnico del Associate. Renombra 'CI Pack' por 'Investment Decision Pack' a lo largo del documento (21 menciones). Flujo de tesis simplificado: Munger Digital + decision_inputs.json -> ratificacion directa del CIO, sin paso colegiado. Incorpora el Governance Recalibration Trigger en §3.4 con trigger AUM > USD 10M. Conserva el principio de delegacion analitica v3.5 (CIO valida tesis, Associate valida exactitud tecnica), cadencia semanal de dos reuniones, Decision Journal, 8 secciones del Re-Underwriting, Pre-Mortem, Kill Criteria, Data Room y naming convention.",
+          "url": "/docs/2026-05_Operations_Manual_v3-6.docx",
+          "uploaded": "2026-05-20",
+          "version": "v3.6",
+          "doc_type": "Operations Manual"
+        },
+        {
+          "name": "2026-05 - Operations Manual v3.5 (historico)",
           "filename": "2026-05_Operations_Manual_v3-5.docx",
           "type": "docx",
-          "detail": "Version vigente. Formaliza el principio de delegacion analitica entre CIO e Investment Associate: el Associate firma con responsabilidad propia sobre la exactitud tecnica y numerica; el CIO valida la tesis y la decision, no audita los modelos linea por linea. Calibra la meta operativa de cartera en ~10 posiciones a 24 meses.",
+          "detail": "Version reemplazada por v3.6 (Mayo 2026). Formalizaba el principio de delegacion analitica entre CIO e Investment Associate manteniendo la capa de Comite de Inversiones.",
           "url": "/docs/2026-05_Operations_Manual_v3-5.docx",
           "uploaded": "2026-05-12",
           "version": "v3.5",
-          "doc_type": "Operations Manual"
+          "doc_type": "Operations Manual",
+          "historico": true
         },
         {
           "name": "2026-05 - Operations Manual v3.4 (historico)",
@@ -288,11 +329,11 @@
         }
       ]
     },
-    "04_ci_pack_actas": {
-      "name": "04 CI Pack y Actas",
+    "04_decision_pack": {
+      "name": "04 Investment Decision Pack",
       "order": 4,
-      "description": "CI Pack trimestral (performance, riesgos, scorecards, IFS, desconfirmaciones) y Actas del Comite de Inversiones.",
-      "access": "Read-write para Analyst, firma CIO",
+      "description": "Investment Decision Pack trimestral (performance, riesgos, re-underwritings, scorecards agregados) y memos de ratificacion del CIO. Reemplaza la carpeta historica '04 CI Pack y Actas' tras la eliminacion de la capa de Comite de Inversiones (Charter v3.2 / IPS v11 / Governance v5.1 / Operations Manual v3.6, Mayo 2026).",
+      "access": "Read-write para Associate, firma CIO",
       "files": []
     },
     "05_annual_close": {
@@ -394,7 +435,7 @@
     "07_legal": {
       "name": "07 Nombramientos y Legal",
       "order": 7,
-      "description": "Nombramientos del CI, Successor, contratos relevantes.",
+      "description": "Nombramientos del CIO, Successor del CIO, designacion del Investment Associate, contratos relevantes.",
       "access": "Read CIO only",
       "files": []
     },
