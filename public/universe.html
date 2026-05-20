@@ -683,9 +683,40 @@ function onPriceChange(ticker, val) {
   }
 }
 
+// ═══ FUNNEL STAGE SYNC ═══
+// Source of truth: pipeline_cards.stage (kanban).
+// Mapping kanban -> universe tabs:
+//   invested -> invested ; followed -> watchlist ; passed -> passed
+//   backlog/analysis/review/decision -> not shown in covered universe (pre-research)
+const STAGE_TO_FUNNEL = {
+  invested: 'invested',
+  followed: 'watchlist',
+  passed:   'passed',
+};
+
+async function syncFunnelStagesFromKanban() {
+  try {
+    const r = await fetch('/api/pipeline-stages');
+    if (!r.ok) return;
+    const data = await r.json();
+    const byTicker = {};
+    (data.items || []).forEach(it => { byTicker[it.ticker] = it.stage; });
+    UNIVERSE.forEach(c => {
+      const kanbanStage = byTicker[c.ticker];
+      if (!kanbanStage) return; // not in kanban yet, keep hardcoded default
+      const mapped = STAGE_TO_FUNNEL[kanbanStage];
+      if (mapped) c.funnelStage = mapped;
+      else c.funnelStage = '__hidden__'; // pre-research stages: don't show in any tab
+    });
+  } catch (e) {
+    console.warn('syncFunnelStagesFromKanban failed:', e);
+  }
+}
+
 // Initial render (alerts will be loaded after, then re-render)
 renderTable();
 loadAlerts().then(() => renderTable());
+syncFunnelStagesFromKanban().then(() => renderTable());
 
 // ═══ LIVE PRICE FETCH (Finnhub) ═══
 // Finnhub quotes go through /api/finnhub-quote (server-side, key in env var)
