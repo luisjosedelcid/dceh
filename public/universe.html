@@ -120,6 +120,11 @@
   .watch-add-btn:hover { background:var(--navy-deep); }
   .watch-add-btn:disabled { opacity:0.4; cursor:not-allowed; }
   .watch-section-title { font-size:9px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--gray-mid); margin:24px 0 10px; }
+  .watch-section-title .count { display:inline-block; background:var(--gold-dim); color:var(--gold); font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; margin-left:8px; letter-spacing:0; }
+  .watch-section-divider { margin:36px 0 4px; padding-top:24px; border-top:1px solid var(--gray-line); }
+  .watch-section-divider-title { font-family:'Archivo',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--navy); }
+  .watch-section-divider-sub { font-size:12px; color:var(--gray-mid); margin-top:4px; }
+  .funnel-empty { padding:48px 24px; text-align:center; color:var(--gray-mid); font-size:13px; border:1px dashed var(--gray-line); border-radius:8px; margin-top:8px; }
   .watch-cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:14px; }
   .watch-card { background:var(--white); border:1px solid var(--rule); border-left:3px solid var(--gold-rule); padding:18px 20px; transition:border-color .2s; position:relative; }
   .watch-card.triggered { border-left-color:var(--green); background:rgba(42,122,86,0.04); }
@@ -203,50 +208,105 @@
   <p class="page-sub">Columbia Framework valuation summary. Edit price to recalculate IRR and Margin of Safety in real time. <span id="live-note" style="font-size:11px;font-weight:500;color:var(--gray-mid)">Fetching live prices...</span></p>
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="all">All Universe</button>
-    <button class="tab-btn" data-tab="watch">Watchlist <span class="count" id="watch-count">0</span></button>
+    <button class="tab-btn active" data-tab="invested">Invested <span class="count" id="invested-count">0</span></button>
+    <button class="tab-btn" data-tab="watchlist">Watchlist <span class="count" id="watchlist-count">0</span></button>
+    <button class="tab-btn" data-tab="passed">Passed <span class="count" id="passed-count">0</span></button>
   </div>
 
-  <div class="tab-pane active" id="pane-all">
-  <div style="overflow-x:auto;">
-    <table class="universe-tbl" id="universe-table">
-      <thead>
-        <tr>
-          <th>Company</th>
-          <th>Market Cap</th>
-          <th>EV</th>
-          <th class="col-price">Price</th>
-          <th>EPV / Share</th>
-          <th>Price / EPV</th>
-          <th>NOPAT Mult.</th>
-          <th>Implied IRR</th>
-          <th>MoS</th>
-          <th>Moat (EPV/RV)</th>
-          <th title="Alert if price falls to or below this floor">Alert ↓</th>
-          <th title="Alert if price rises to or above this ceiling">Alert ↑</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="universe-body">
-      </tbody>
-    </table>
-  </div>
-  </div><!-- /pane-all -->
+  <div class="tab-pane active" id="pane-invested">
+    <div style="overflow-x:auto;">
+      <table class="universe-tbl" id="universe-table-invested">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Market Cap</th>
+            <th>EV</th>
+            <th class="col-price">Price</th>
+            <th>EPV / Share</th>
+            <th>Price / EPV</th>
+            <th>NOPAT Mult.</th>
+            <th>Implied IRR</th>
+            <th>MoS</th>
+            <th>Moat (EPV/RV)</th>
+            <th title="Alert if price falls to or below this floor">Alert ↓</th>
+            <th title="Alert if price rises to or above this ceiling">Alert ↑</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="universe-body-invested"></tbody>
+      </table>
+    </div>
+    <div id="empty-invested" class="funnel-empty" style="display:none;">No invested positions yet.</div>
+  </div><!-- /pane-invested -->
 
-  <div class="tab-pane" id="pane-watch">
+  <div class="tab-pane" id="pane-watchlist">
+    <div style="overflow-x:auto;">
+      <table class="universe-tbl" id="universe-table-watchlist">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Market Cap</th>
+            <th>EV</th>
+            <th class="col-price">Price</th>
+            <th>EPV / Share</th>
+            <th>Price / EPV</th>
+            <th>NOPAT Mult.</th>
+            <th>Implied IRR</th>
+            <th>MoS</th>
+            <th>Moat (EPV/RV)</th>
+            <th title="Alert if price falls to or below this floor">Alert ↓</th>
+            <th title="Alert if price rises to or above this ceiling">Alert ↑</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="universe-body-watchlist"></tbody>
+      </table>
+    </div>
+    <div id="empty-watchlist" class="funnel-empty" style="display:none;">No companies in watchlist yet.</div>
+
+    <div class="watch-section-divider">
+      <div class="watch-section-divider-title">Buy-Zone Discipline</div>
+      <div class="watch-section-divider-sub">A watch fires when price ≤ target AND MoS vs anchor (RV/EPV) ≥ required.</div>
+    </div>
     <div class="watch-toolbar">
-      <div style="font-size:13px; color:var(--gray-mid);">Disciplined buy-zone tracking. A watch fires when price ≤ target AND MoS vs anchor (RV/EPV) ≥ required.</div>
+      <div style="font-size:13px; color:var(--gray-mid);">Active price triggers for the followed names above.</div>
       <button id="watch-add-btn" class="watch-add-btn" disabled title="Admin login required">+ Add Watch</button>
     </div>
     <div id="watch-active-section">
-      <div class="watch-section-title">Active</div>
+      <div class="watch-section-title">Active <span class="count" id="watch-count">0</span></div>
       <div id="watch-cards-active" class="watch-cards"></div>
     </div>
     <div id="watch-triggered-section" style="display:none;">
       <div class="watch-section-title">Triggered — Buy Zone</div>
       <div id="watch-cards-triggered" class="watch-cards"></div>
     </div>
-  </div><!-- /pane-watch -->
+  </div><!-- /pane-watchlist -->
+
+  <div class="tab-pane" id="pane-passed">
+    <div style="overflow-x:auto;">
+      <table class="universe-tbl" id="universe-table-passed">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Market Cap</th>
+            <th>EV</th>
+            <th class="col-price">Price</th>
+            <th>EPV / Share</th>
+            <th>Price / EPV</th>
+            <th>NOPAT Mult.</th>
+            <th>Implied IRR</th>
+            <th>MoS</th>
+            <th>Moat (EPV/RV)</th>
+            <th title="Alert if price falls to or below this floor">Alert ↓</th>
+            <th title="Alert if price rises to or above this ceiling">Alert ↑</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="universe-body-passed"></tbody>
+      </table>
+    </div>
+    <div id="empty-passed" class="funnel-empty" style="display:none;">No passed companies in the covered universe yet.</div>
+  </div><!-- /pane-passed -->
 
   <!-- Watchlist modal -->
   <div id="watch-modal" class="modal-overlay" role="dialog" aria-modal="true">
@@ -336,6 +396,7 @@ const UNIVERSE = [
     // Moat
     rvPerShare: 505.58,
     badge: 'Conditional',
+    funnelStage: 'watchlist',
   },
   {
     ticker: 'SAP',
@@ -362,6 +423,7 @@ const UNIVERSE = [
     netBorrowCost: 0.03,
     rvPerShare: 33.47,
     badge: 'Pass',
+    funnelStage: 'watchlist',
   },
   {
     ticker: 'LULU',
@@ -388,6 +450,7 @@ const UNIVERSE = [
     netBorrowCost: 0.0,
     rvPerShare: 44.27,
     badge: 'Conditional',
+    funnelStage: 'invested',
   },
   {
     ticker: 'MSFT',
@@ -414,6 +477,7 @@ const UNIVERSE = [
     netBorrowCost: 0.0191,
     rvPerShare: 58.90,
     badge: 'Conditional',
+    funnelStage: 'invested',
   },
 ];
 
@@ -577,16 +641,30 @@ async function openAlertEditor(ticker, type, livePrice) {
 
 window.openAlertEditor = openAlertEditor;
 
+const FUNNEL_STAGES = ['invested', 'watchlist', 'passed'];
+
 function renderTable() {
-  const tbody = document.getElementById('universe-body');
-  let html = '';
+  const buckets = { invested: [], watchlist: [], passed: [] };
   UNIVERSE.forEach(c => {
+    const stage = c.funnelStage;
+    if (!buckets[stage]) return; // ignore unknown stages
     const priceEl = document.querySelector(`input[data-ticker="${c.ticker}"]`);
     const price = priceEl ? parseFloat(priceEl.value) || c.defaultPrice : c.defaultPrice;
     const vals = calcCompany(c, price);
-    html += renderRow(c, vals);
+    buckets[stage].push(renderRow(c, vals));
   });
-  tbody.innerHTML = html;
+  FUNNEL_STAGES.forEach(stage => {
+    const tbody = document.getElementById('universe-body-' + stage);
+    const empty = document.getElementById('empty-' + stage);
+    const wrap = tbody ? tbody.closest('div[style*="overflow"]') : null;
+    if (!tbody) return;
+    const rows = buckets[stage];
+    tbody.innerHTML = rows.join('');
+    const countEl = document.getElementById(stage + '-count');
+    if (countEl) countEl.textContent = rows.length;
+    if (empty) empty.style.display = rows.length === 0 ? '' : 'none';
+    if (wrap) wrap.style.display = rows.length === 0 ? 'none' : '';
+  });
 }
 
 function onPriceChange(ticker, val) {
@@ -594,9 +672,12 @@ function onPriceChange(ticker, val) {
   if (!c) return;
   const price = parseFloat(val) || c.defaultPrice;
   const vals = calcCompany(c, price);
-  // Re-render just this row
-  const rows = document.getElementById('universe-body').querySelectorAll('tr');
-  const idx = UNIVERSE.findIndex(u => u.ticker === ticker);
+  // Re-render just this row inside its stage's tbody
+  const tbody = document.getElementById('universe-body-' + c.funnelStage);
+  if (!tbody) return;
+  const stageEntries = UNIVERSE.filter(u => u.funnelStage === c.funnelStage);
+  const idx = stageEntries.findIndex(u => u.ticker === ticker);
+  const rows = tbody.querySelectorAll('tr');
   if (rows[idx]) {
     rows[idx].outerHTML = renderRow(c, vals);
   }
@@ -670,7 +751,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     const target = btn.dataset.tab;
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     wmEl(`pane-${target}`).classList.add('active');
-    if (target === 'watch' && !watchState.loaded) loadWatchlist();
+    if (target === 'watchlist' && !watchState.loaded) loadWatchlist();
   });
 });
 
