@@ -36,7 +36,15 @@
     "netIncome": 1605.0,
     "revenueGrowthYoY": 0.0702,
     "ebitdaGrowthYoY": 0.1225,
-    "fcfGrowthYoY": -0.212
+    "fcfGrowthYoY": -0.212,
+    "multiples": {
+      "peTtm": 35.29,
+      "evEbitda": 20.94,
+      "evRevenue": 8.12,
+      "pFcf": 21.32,
+      "priceBook": 128.73,
+      "dividendYield": 0.0187
+    }
   },
   "financials": {
     "years": [
@@ -2074,13 +2082,5 @@
       }
     ],
     "sourcingLabel": "Mix por Línea de Producto (FY2025)"
-  },
-  "valuationMultiples": {
-    "peTtm": 35.29,
-    "evEbitda": 20.94,
-    "evRevenue": 8.12,
-    "pFcf": 21.32,
-    "priceBook": 128.73,
-    "dividendYield": 0.0187
   }
 }

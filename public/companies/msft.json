@@ -33,7 +33,16 @@
     "revenueCagr3yr": 0.1242,
     "fcfCagr3yr": 0.0639,
     "ebitda": 162681.0,
-    "netIncome": 101832.0
+    "netIncome": 101832.0,
+    "revenueGrowthYoY": 0.1493,
+    "ebitdaGrowthYoY": 0.1575,
+    "fcfGrowthYoY": null,
+    "multiples": {
+      "peTtm": 30.38,
+      "evEbitda": 19.02,
+      "evRevenue": 10.86,
+      "pFcf": 43.2
+    }
   },
   "financials": {
     "years": [
