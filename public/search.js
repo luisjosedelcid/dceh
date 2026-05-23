@@ -27,17 +27,22 @@
   const STATIC_DOCS = [
     { title: 'BKNG · Company Brief',  url: '/docs/DCE_BKNG_Valuation_Report.pdf', ticker: 'BKNG', kind: 'Company Brief' },
     { title: 'BKNG · Thesis Breaker',    url: '/docs/DCE_BKNG_Thesis_Breaker.pdf',   ticker: 'BKNG', kind: 'Thesis Breaker'   },
+    { title: 'BKNG · Thesis Builder',    url: '/docs/DCE_BKNG_Thesis_Builder.pdf',   ticker: 'BKNG', kind: 'Thesis Builder'   },
     { title: 'BKNG · Munger Digital',    url: '/docs/DCE_BKNG_Munger_Digital.pdf',   ticker: 'BKNG', kind: 'Munger Digital'   },
     { title: 'SAP · Company Brief',   url: '/docs/DCE_SAP_Valuation_Report.pdf',  ticker: 'SAP',  kind: 'Company Brief' },
     { title: 'SAP · Thesis Breaker',     url: '/docs/DCE_SAP_Thesis_Breaker.pdf',    ticker: 'SAP',  kind: 'Thesis Breaker'   },
+    { title: 'SAP · Thesis Builder',     url: '/docs/DCE_SAP_Thesis_Builder.pdf',    ticker: 'SAP',  kind: 'Thesis Builder'   },
     { title: 'SAP · Munger Digital',     url: '/docs/DCE_SAP_Munger_Digital.pdf',    ticker: 'SAP',  kind: 'Munger Digital'   },
     { title: 'LULU · Company Brief',  url: '/docs/DCE_LULU_Valuation_Report.pdf', ticker: 'LULU', kind: 'Company Brief' },
     { title: 'LULU · Thesis Breaker',    url: '/docs/DCE_LULU_Thesis_Breaker.pdf',   ticker: 'LULU', kind: 'Thesis Breaker'   },
+    { title: 'LULU · Thesis Builder',    url: '/docs/DCE_LULU_Thesis_Builder.pdf',   ticker: 'LULU', kind: 'Thesis Builder'   },
     { title: 'LULU · Munger Digital',    url: '/docs/DCE_LULU_Munger_Digital.pdf',   ticker: 'LULU', kind: 'Munger Digital'   },
     { title: 'MSFT · Company Brief',  url: '/docs/DCE_MSFT_Valuation_Report.pdf', ticker: 'MSFT', kind: 'Company Brief' },
     { title: 'MSFT · Thesis Breaker',    url: '/docs/DCE_MSFT_Thesis_Breaker.pdf',   ticker: 'MSFT', kind: 'Thesis Breaker'   },
+    { title: 'MSFT · Thesis Builder',    url: '/docs/DCE_MSFT_Thesis_Builder.pdf',   ticker: 'MSFT', kind: 'Thesis Builder'   },
     { title: 'MSFT · Munger Digital',    url: '/docs/DCE_MSFT_Munger_Digital.pdf',   ticker: 'MSFT', kind: 'Munger Digital'   },
     { title: 'RACE · Company Brief',  url: '/docs/DCE_RACE_Valuation_Report.docx', ticker: 'RACE', kind: 'Company Brief' },
+    { title: 'RACE · Thesis Builder',    url: '/docs/DCE_RACE_Thesis_Builder.pdf',   ticker: 'RACE', kind: 'Thesis Builder'   },
     { title: 'RACE · Columbia Model',    url: '/docs/DCE_RACE_Columbia_Model.xlsx',   ticker: 'RACE', kind: 'Columbia Model'   },
   ];
 

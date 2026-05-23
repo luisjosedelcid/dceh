@@ -2041,6 +2041,7 @@
   "documents": {
     "valuationReportUrl": "/docs/DCE_BKNG_Valuation_Report.pdf",
     "thesisBreakerUrl": "/docs/DCE_BKNG_Thesis_Breaker.pdf",
+    "thesisBuilderUrl": "/docs/DCE_BKNG_Thesis_Builder.pdf",
     "mungerDigitalUrl": "/docs/DCE_BKNG_Munger_Digital.pdf"
   },
   "thesisSummary": {

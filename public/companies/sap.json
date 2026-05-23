@@ -2031,6 +2031,7 @@
   "documents": {
     "valuationReportUrl": "/docs/DCE_SAP_Valuation_Report.pdf",
     "thesisBreakerUrl": "/docs/DCE_SAP_Thesis_Breaker.pdf",
+    "thesisBuilderUrl": "/docs/DCE_SAP_Thesis_Builder.pdf",
     "mungerDigitalUrl": "/docs/DCE_SAP_Munger_Digital.pdf"
   },
   "thesisSummary": {
