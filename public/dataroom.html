@@ -69,6 +69,13 @@
   .folder-actions button:hover{background:var(--gold-dim)}
   .folder-actions button.del{color:var(--red);border-color:rgba(155,35,53,0.30)}
   .folder-actions button.del:hover{background:rgba(155,35,53,0.06)}
+  .folder[draggable="true"]{cursor:grab}
+  .folder[draggable="true"]:active{cursor:grabbing}
+  .folder.dragging{opacity:0.4}
+  .folder.drag-over{border-top-color:var(--navy);box-shadow:0 0 0 2px var(--navy) inset}
+  .subfolder[draggable="true"]{cursor:grab}
+  .subfolder.dragging{opacity:0.4}
+  .subfolder.drag-over{border-left-color:var(--navy);box-shadow:0 0 0 2px var(--navy) inset}
 
 
   /* SUBFOLDER GRID */
@@ -507,6 +514,85 @@ function renderBreadcrumb() {
   bc.innerHTML = head + ' ' + rest;
 }
 
+// ─── Drag & Drop reordering ───────────────────────────────────────
+let dndState = null; // { fromId, list, parentId, container, selector }
+
+function attachDnD(container, selector, list, parentId) {
+  const cards = container.querySelectorAll(selector);
+  // Allow drop on empty space at end
+  container.addEventListener('dragover', (e) => {
+    if (!dndState || dndState.container !== container) return;
+    if (e.target === container) { e.preventDefault(); }
+  });
+  container.addEventListener('drop', async (e) => {
+    if (!dndState || dndState.container !== container) return;
+    if (e.target !== container) return;
+    e.preventDefault();
+    const arr = dndState.list;
+    const fromIdx = arr.findIndex(x => x.id === dndState.fromId);
+    if (fromIdx < 0) return;
+    const [moved] = arr.splice(fromIdx, 1);
+    arr.push(moved);
+    render();
+    await persistOrder(arr);
+  });
+  cards.forEach(card => {
+    card.addEventListener('dragstart', (e) => {
+      e.stopPropagation();
+      const id = card.getAttribute('data-id');
+      dndState = { fromId: id, list, parentId, container, selector };
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', id);
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    });
+    card.addEventListener('dragover', (e) => {
+      if (!dndState || dndState.container !== container) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      container.querySelectorAll('.drag-over').forEach(el => { if (el !== card) el.classList.remove('drag-over'); });
+      card.classList.add('drag-over');
+    });
+    card.addEventListener('dragleave', () => {
+      card.classList.remove('drag-over');
+    });
+    card.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!dndState || dndState.container !== container) return;
+      const toId = card.getAttribute('data-id');
+      const fromId = dndState.fromId;
+      if (fromId === toId) return;
+      const arr = dndState.list;
+      const fromIdx = arr.findIndex(x => x.id === fromId);
+      const toIdx = arr.findIndex(x => x.id === toId);
+      if (fromIdx < 0 || toIdx < 0) return;
+      const [moved] = arr.splice(fromIdx, 1);
+      arr.splice(toIdx, 0, moved);
+      // Re-render immediately
+      render();
+      // Persist new order_index for every sibling
+      await persistOrder(arr);
+    });
+  });
+}
+
+async function persistOrder(arr) {
+  try {
+    await Promise.all(arr.map((f, i) => fetch('/api/admin/dataroom-folders?id=' + encodeURIComponent(f.id), {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ order_index: i + 1 }),
+    }).then(r => { if (r.ok) f.order_index = i + 1; })));
+  } catch (e) {
+    console.warn('Reorder persist failed:', e);
+    alert('No se pudo guardar el nuevo orden: ' + e.message);
+  }
+}
+
 function renderRoot() {
   document.getElementById('root-view').style.display = 'block';
   document.getElementById('folder-view').style.display = 'none';
@@ -517,7 +603,7 @@ function renderRoot() {
   const grid = document.getElementById('folder-grid');
   const admin = isAdmin();
   grid.innerHTML = ROOTS.map((f, idx) => {
-    const num = String(f.order_index || idx + 1).padStart(2, '0');
+    const num = String(idx + 1).padStart(2, '0');
     const count = countFilesRecursive(f);
     const subCount = childrenOf(f.id).length;
     const meta = subCount > 0 ? `${count} ${count === 1 ? 'file' : 'files'} · ${subCount} sub` : `${count} ${count === 1 ? 'file' : 'files'}`;
@@ -527,7 +613,7 @@ function renderRoot() {
            <button class="del" onclick="deleteFolder('${f.id}')">×</button>
          </div>` : '';
     const cleanName = f.name.replace(/^\d+\s*/, '');
-    return `<div class="folder" onclick="openFolder('${f.id}')">
+    return `<div class="folder" data-id="${f.id}"${admin ? ' draggable="true"' : ''} onclick="openFolder('${f.id}')">
       ${actions}
       <div class="folder-num">${num}</div>
       <div class="folder-name">${escapeHtml(cleanName)}</div>
@@ -538,6 +624,7 @@ function renderRoot() {
       </div>
     </div>`;
   }).join('');
+  if (admin) attachDnD(grid, '.folder', ROOTS, null);
 }
 
 function renderFolder(id) {
@@ -573,7 +660,7 @@ function renderFolder(id) {
              <button onclick="openEditModal('${sf.id}')">Edit</button>
              <button class="del" onclick="deleteFolder('${sf.id}')">×</button>
            </div>` : '';
-      return `<div class="subfolder" onclick="openFolder('${sf.id}')">
+      return `<div class="subfolder" data-id="${sf.id}"${admin ? ' draggable="true"' : ''} onclick="openFolder('${sf.id}')">
         ${actions}
         <div class="subfolder-name">${escapeHtml(sf.name)}</div>
         <div class="subfolder-detail">${escapeHtml(detail)}</div>
@@ -582,6 +669,13 @@ function renderFolder(id) {
       </div>`;
     }).join('');
     html += '</div>';
+    if (admin) {
+      // attach after innerHTML applied below
+      setTimeout(() => {
+        const container = content.querySelector('.subfolder-grid');
+        if (container) attachDnD(container, '.subfolder', subs, id);
+      }, 0);
+    }
   }
 
   if (files.length > 0) {
