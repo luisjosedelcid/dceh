@@ -527,14 +527,14 @@
 
   <div class="slbl">Revenue Mix — FY2025 Snapshot</div>
   <div class="g2" style="margin-bottom:24px">
-    <div class="chart-card"><div class="clbl">Revenue por Segmento (USD M)</div><canvas id="c-sales-seg"></canvas></div>
-    <div class="chart-card"><div class="clbl">Revenue por Geografía (USD M)</div><canvas id="c-sales-geo"></canvas></div>
+    <div class="chart-card"><div class="clbl" id="clbl-sales-seg">Revenue por Segmento</div><canvas id="c-sales-seg"></canvas></div>
+    <div class="chart-card"><div class="clbl" id="clbl-sales-geo">Revenue por Geografía</div><canvas id="c-sales-geo"></canvas></div>
   </div>
 
-  <div class="slbl" style="margin-top:8px">Ventas por Segmento (USD M)</div>
+  <div class="slbl" id="slbl-sales-segment" style="margin-top:8px">Ventas por Segmento</div>
   <div class="tbl-wrap" id="tbl-sales-segment"></div>
 
-  <div class="slbl" style="margin-top:20px">Ventas por Geografía (USD M)</div>
+  <div class="slbl" id="slbl-sales-geo" style="margin-top:20px">Ventas por Geografía</div>
   <div class="tbl-wrap" id="tbl-sales-geo"></div>
 
   <div class="g2" style="margin-top:20px">
@@ -543,7 +543,7 @@
       <div class="tbl-wrap" id="tbl-sales-channel"></div>
     </div>
     <div>
-      <div class="slbl">Sourcing de Manufactura (FY2025)</div>
+      <div class="slbl" id="slbl-sales-sourcing">Sourcing de Manufactura (FY2025)</div>
       <div class="tbl-wrap" id="tbl-sales-sourcing"></div>
     </div>
   </div>

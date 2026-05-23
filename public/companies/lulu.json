@@ -1506,5 +1506,146 @@
     "marginOfSafety": 2.62,
     "narrative": "Lululemon es una compañía premium athleisure asset-light con ROIC sostenido ~35% (3yr avg ~37%) muy por encima del WACC (10.2%). El moat reside en marca, comunidad y producto técnico, no en activos físicos. Precio actual $137.70 vs EPV $141.41 → MoS de 2.6% (insuficiente para BUY). Implied IRR equity 46.6% supera holgadamente el hurdle 12% por reinversión a alto ROIC, pero el margen de seguridad sobre EPV es muy estrecho. Capital allocation excelente: zero deuda, $1.18B buybacks FY2025. Riesgo principal: pérdida de cuota US Women's. Watchlist con trigger de compra en pullback ≤ $110 (≈22% MoS sobre EPV)."
   },
-  "finnhubSymbol": "LULU"
+  "finnhubSymbol": "LULU",
+  "sales": {
+    "source": "DCE Valuation Report §2.3 y §2.4 — estimaciones derivadas de 10-K + peer benchmarks",
+    "years": [
+      "FY2020",
+      "FY2022",
+      "FY2023",
+      "FY2024",
+      "FY2025"
+    ],
+    "totalRevenue": [
+      3979,
+      6257,
+      8111,
+      9617,
+      11103
+    ],
+    "bySegment": [
+      {
+        "label": "Women's",
+        "values": [
+          2500,
+          3945,
+          5110,
+          6061,
+          6991
+        ],
+        "pctFY25": 63
+      },
+      {
+        "label": "Men's",
+        "values": [
+          955,
+          1500,
+          1950,
+          2309,
+          2664
+        ],
+        "pctFY25": 24
+      },
+      {
+        "label": "Accessories",
+        "values": [
+          520,
+          810,
+          1050,
+          1247,
+          1442
+        ],
+        "pctFY25": 13
+      }
+    ],
+    "byGeography": [
+      {
+        "label": "Americas",
+        "values": [
+          3308,
+          4848,
+          6210,
+          7160,
+          7765
+        ],
+        "pctFY25": 70,
+        "comp": "-3% FY25 / guide -1% a -3% FY26"
+      },
+      {
+        "label": "China Mainland",
+        "values": [
+          145,
+          640,
+          960,
+          1300,
+          1665
+        ],
+        "pctFY25": 15,
+        "comp": "+24% a +46% trimestral FY25"
+      },
+      {
+        "label": "Rest of World",
+        "values": [
+          526,
+          769,
+          941,
+          1157,
+          1673
+        ],
+        "pctFY25": 15,
+        "comp": "Franquicia EMEA + India"
+      }
+    ],
+    "byChannel": [
+      {
+        "label": "Stores (DTC propias)",
+        "pctFY25": 58,
+        "note": "811 tiendas globales cierre FY2025"
+      },
+      {
+        "label": "Digital / E-commerce",
+        "pctFY25": 40,
+        "note": "Plataforma propia + membership"
+      },
+      {
+        "label": "Wholesale / Showrooms / Temp.",
+        "pctFY25": 2,
+        "note": "Canal residual"
+      }
+    ],
+    "bySourcing": [
+      {
+        "label": "Vietnam",
+        "pctFY25": 40,
+        "note": "Concentración principal"
+      },
+      {
+        "label": "Sri Lanka",
+        "pctFY25": 12,
+        "note": ""
+      },
+      {
+        "label": "Bangladesh",
+        "pctFY25": 12,
+        "note": ""
+      },
+      {
+        "label": "China",
+        "pctFY25": 10,
+        "note": "Exposición tariff alta"
+      },
+      {
+        "label": "Otros",
+        "pctFY25": 26,
+        "note": "Diversificación remanente"
+      }
+    ],
+    "notes": [
+      "Americas representa 70% del revenue total pero su crecimiento es negativo",
+      "China Mainland es el único motor de crecimiento sólido",
+      "Tariff exposure FY26 $380M brutos por concentración manufactura",
+      "Modelo asset-light: sin manufactura propia",
+      "Total Revenue por año se toma del 10-K (auditado); valores por segmento son estimaciones derivadas"
+    ]
+  }
 }

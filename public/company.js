@@ -824,6 +824,15 @@ function renderSales() {
   setEl('tbl-sales-channel',  buildMixTable(s.byChannel));
   setEl('tbl-sales-sourcing', buildMixTable(s.bySourcing));
 
+  // Override sourcing block label if JSON provides a custom one (e.g. "Mix de Producto" for luxury)
+  if (s.sourcingLabel) setTxt('slbl-sales-sourcing', s.sourcingLabel);
+  // Override segment/geo block labels if provided (mostly to swap currency in heading text)
+  const curM = `(${sym()}M)`;
+  setTxt('slbl-sales-segment', `Ventas por Segmento ${curM}`);
+  setTxt('slbl-sales-geo',     `Ventas por Geografía ${curM}`);
+  setTxt('clbl-sales-seg',     `Revenue por Segmento ${curM}`);
+  setTxt('clbl-sales-geo',     `Revenue por Geografía ${curM}`);
+
   // --- 2. Notas + source ---
   const ul = document.getElementById('sales-notes');
   if (ul) ul.innerHTML = (s.notes || []).map(n => `<li>${n}</li>`).join('');

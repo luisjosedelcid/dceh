@@ -21,7 +21,7 @@
   ];
 
   // Built-in tickers — extend as we add company JSONs
-  const KNOWN_TICKERS = ['BKNG', 'SAP', 'LULU', 'MSFT'];
+  const KNOWN_TICKERS = ['BKNG', 'SAP', 'LULU', 'MSFT', 'RACE'];
 
   // Static documents in the GitHub repo (BKNG/SAP institutional deliverables)
   const STATIC_DOCS = [
@@ -37,6 +37,8 @@
     { title: 'MSFT · Valuation Report',  url: '/docs/DCE_MSFT_Valuation_Report.pdf', ticker: 'MSFT', kind: 'Valuation Report' },
     { title: 'MSFT · Thesis Breaker',    url: '/docs/DCE_MSFT_Thesis_Breaker.pdf',   ticker: 'MSFT', kind: 'Thesis Breaker'   },
     { title: 'MSFT · Munger Digital',    url: '/docs/DCE_MSFT_Munger_Digital.pdf',   ticker: 'MSFT', kind: 'Munger Digital'   },
+    { title: 'RACE · Investment Memo',   url: '/docs/DCE_RACE_Valuation_Report.docx', ticker: 'RACE', kind: 'Investment Memo'  },
+    { title: 'RACE · Columbia Model',    url: '/docs/DCE_RACE_Columbia_Model.xlsx',   ticker: 'RACE', kind: 'Columbia Model'   },
   ];
 
   // ──────────────────────────────────────────────────────────

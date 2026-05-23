@@ -479,6 +479,33 @@ const UNIVERSE = [
     badge: 'Conditional',
     funnelStage: 'invested',
   },
+  {
+    ticker: 'RACE',
+    name: 'Ferrari N.V.',
+    sector: 'NYSE / EXM · Luxury Automobiles',
+    link: '/race',
+    currency: '€',
+    finnhubSymbol: 'RACE',
+    shares: 178.321,                     // M diluted
+    debt: 2722 + 162,                    // Total Debt + Leases (€M)
+    cash: 1472,                          // Cash + STI (€M)
+    defaultPrice: 317.63,
+    nopatNorm: 1929,                     // Normalized NOPAT (€M) = Rev base 7146 * 27%
+    wacc: 0.0775,
+    excessCash: 1200,                    // (€M, post buffer)
+    bridgeAdj: 1200 - 2722 - 162,        // excess - debt - leases
+    distYield: 0.011,                    // dividend + buyback yield proxy
+    reinvGrowth: 0.075,                  // reinvestment growth from CMD 2030 plan
+    organicGrowth: 0.020,
+    exitMult: 32,                        // 32x NOPAT (DP#15)
+    horizon: 5,
+    hurdle: 0.12,
+    de: 0.0510,                          // D/E
+    netBorrowCost: 0.0276,               // Kd after tax
+    rvPerShare: 70.19,
+    badge: 'Conditional',
+    funnelStage: 'pipeline',
+  },
 ];
 
 function fmt(v, dec) { return v.toLocaleString('en-US', { minimumFractionDigits: dec||0, maximumFractionDigits: dec||0 }); }
