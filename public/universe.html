@@ -209,6 +209,7 @@
 
   <div class="tabs">
     <button class="tab-btn active" data-tab="invested">Invested <span class="count" id="invested-count">0</span></button>
+    <button class="tab-btn" data-tab="research">In Research <span class="count" id="research-count">0</span></button>
     <button class="tab-btn" data-tab="watchlist">Watchlist <span class="count" id="watchlist-count">0</span></button>
     <button class="tab-btn" data-tab="passed">Passed <span class="count" id="passed-count">0</span></button>
   </div>
@@ -238,6 +239,32 @@
     </div>
     <div id="empty-invested" class="funnel-empty" style="display:none;">No invested positions yet.</div>
   </div><!-- /pane-invested -->
+
+  <div class="tab-pane" id="pane-research">
+    <div style="overflow-x:auto;">
+      <table class="universe-tbl" id="universe-table-research">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Market Cap</th>
+            <th>EV</th>
+            <th class="col-price">Price</th>
+            <th>EPV / Share</th>
+            <th>Price / EPV</th>
+            <th>NOPAT Mult.</th>
+            <th>Implied IRR</th>
+            <th>MoS</th>
+            <th>Moat (EPV/RV)</th>
+            <th title="Alert if price falls to or below this floor">Alert ↓</th>
+            <th title="Alert if price rises to or above this ceiling">Alert ↑</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="universe-body-research"></tbody>
+      </table>
+    </div>
+    <div id="empty-research" class="funnel-empty" style="display:none;">No companies currently in research.</div>
+  </div><!-- /pane-research -->
 
   <div class="tab-pane" id="pane-watchlist">
     <div style="overflow-x:auto;">
@@ -504,7 +531,7 @@ const UNIVERSE = [
     netBorrowCost: 0.0276,               // Kd after tax
     rvPerShare: 70.19,
     badge: 'Conditional',
-    funnelStage: 'pipeline',
+    funnelStage: 'research',
   },
 ];
 
@@ -668,10 +695,10 @@ async function openAlertEditor(ticker, type, livePrice) {
 
 window.openAlertEditor = openAlertEditor;
 
-const FUNNEL_STAGES = ['invested', 'watchlist', 'passed'];
+const FUNNEL_STAGES = ['invested', 'research', 'watchlist', 'passed'];
 
 function renderTable() {
-  const buckets = { invested: [], watchlist: [], passed: [] };
+  const buckets = { invested: [], research: [], watchlist: [], passed: [] };
   UNIVERSE.forEach(c => {
     const stage = c.funnelStage;
     if (!buckets[stage]) return; // ignore unknown stages
@@ -714,11 +741,16 @@ function onPriceChange(ticker, val) {
 // Source of truth: pipeline_cards.stage (kanban).
 // Mapping kanban -> universe tabs:
 //   invested -> invested ; followed -> watchlist ; passed -> passed
-//   backlog/analysis/review/decision -> not shown in covered universe (pre-research)
+//   analysis/review/decision/approved -> research (currently being analyzed, no decision yet)
+//   backlog -> not shown in covered universe (pre-research)
 const STAGE_TO_FUNNEL = {
   invested: 'invested',
   followed: 'watchlist',
   passed:   'passed',
+  analysis: 'research',
+  review:   'research',
+  decision: 'research',
+  approved: 'research',
 };
 
 async function syncFunnelStagesFromKanban() {
