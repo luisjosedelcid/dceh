@@ -100,14 +100,6 @@
       581.0,
       1341.0
     ],
-    "dividends": [
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-    ],
     "totalAssets": [
       6161.0,
       6511.0,
@@ -496,6 +488,29 @@
           0.0,
           0.0,
           0.0
+        ]
+      },
+      {
+        "label": "Interest Expense",
+        "values": [
+          12,
+          14,
+          18,
+          24,
+          32,
+          38
+        ]
+      },
+      {
+        "l": "Interest Expense",
+        "t": "is",
+        "v": [
+          12,
+          14,
+          18,
+          24,
+          32,
+          41
         ]
       }
     ],
@@ -924,12 +939,12 @@
         "l": "Depreciation & Amortization",
         "t": "normal",
         "v": [
-          336.0,
-          348.0,
-          428.0,
-          463.0,
-          561.0,
-          642.0
+          427,
+          456,
+          546,
+          662,
+          667,
+          1137
         ]
       },
       {
@@ -948,12 +963,12 @@
         "l": "Stock-Based Compensation",
         "t": "normal",
         "v": [
-          -221.0,
-          -160.0,
-          -146.0,
-          -358.0,
-          -383.0,
-          -148.0
+          0,
+          0,
+          0,
+          0,
+          0,
+          6
         ]
       },
       {
@@ -973,11 +988,11 @@
         "t": "normal",
         "neg": true,
         "v": [
-          0,
-          0,
-          0,
-          0,
-          0,
+          -221,
+          -160,
+          -146,
+          -358,
+          -383,
           0
         ]
       },
@@ -1002,12 +1017,12 @@
         "t": "normal",
         "neg": true,
         "v": [
-          9.0,
-          -63.0,
-          -45.0,
-          -31.0,
-          -211.0,
-          22.0
+          -709,
+          -737,
+          -805,
+          -869,
+          -989,
+          -1522
         ]
       },
       {
@@ -1052,6 +1067,18 @@
         ]
       },
       {
+        "l": "Dividends Paid",
+        "t": "normal",
+        "v": [
+          -208,
+          -160,
+          -250,
+          -329,
+          -440,
+          -1059
+        ]
+      },
+      {
         "l": "FREE CASH FLOW",
         "t": "section"
       },
@@ -1067,6 +1094,30 @@
           6306.0
         ]
       }
+    ],
+    "capexHistory": [
+      709,
+      737,
+      805,
+      869,
+      989,
+      1522
+    ],
+    "daHistory": [
+      427,
+      456,
+      546,
+      662,
+      667,
+      700
+    ],
+    "dividends": [
+      208,
+      160,
+      250,
+      329,
+      440,
+      1059
     ]
   },
   "rv": {
@@ -1800,16 +1851,30 @@
     "smLife": null,
     "smGrowthPct": 27.06,
     "taxRate": 20,
-    "smGrowthExp": 122.0,
+    "smGrowthExp": 121.63,
     "smAsset": 122.0,
     "nrTotal": 449.0,
     "nopatFinal": 0.8,
     "rdTotal": null,
     "rdLife": null,
-    "rdGrowthExp": null,
+    "rdGrowthExp": 71.2,
     "rdAsset": null,
     "normalizationAdj": 0.0,
-    "etrHistory": []
+    "etrHistory": [],
+    "smGrowthHistory": [
+      125.23,
+      138.43,
+      116.63,
+      129.13,
+      121.63
+    ],
+    "rdGrowthHistory": [
+      333.0,
+      185.8,
+      115.4,
+      88.6,
+      71.2
+    ]
   },
   "documents": {
     "valuationReportUrl": "/docs/DCE_RACE_Valuation_Report.docx",
