@@ -44,7 +44,19 @@
       "pFcf": 21.32,
       "priceBook": 128.73,
       "dividendYield": 0.0187
-    }
+    },
+    "businessModel": "Luxury sports cars + F1 racing",
+    "fiscalYearEnd": "31 diciembre",
+    "debtNote": "Bonds + bank loans",
+    "leasesNote": "IFRS 16 — operating + finance leases",
+    "cashNote": "Cash + short-term investments",
+    "netDebtNote": "Debt + Leases − Cash",
+    "operatingIncome": 2110,
+    "cfo": 4179,
+    "capex": 1522,
+    "da": 1137,
+    "sbc": 6,
+    "epsDiluted": 8.96
   },
   "financials": {
     "years": [
@@ -88,20 +100,20 @@
       2740.0
     ],
     "fcf": [
-      1567.0,
-      2229.0,
-      2568.0,
-      3020.0,
-      3372.0,
-      6306.0
+      129,
+      546,
+      598,
+      848,
+      938,
+      2657
     ],
     "cfo": [
-      1558.0,
-      2292.0,
-      2613.0,
-      3051.0,
-      3583.0,
-      6284.0
+      838,
+      1283,
+      1403,
+      1717,
+      1927,
+      4179
     ],
     "buybacks": [
       130.0,
@@ -1129,6 +1141,14 @@
       329,
       440,
       1059
+    ],
+    "eps": [
+      3.28,
+      4.5,
+      5.09,
+      6.9,
+      8.46,
+      8.96
     ]
   },
   "rv": {
@@ -1885,6 +1905,38 @@
       115.4,
       88.6,
       71.2
+    ],
+    "capexHistory": [
+      709,
+      737,
+      805,
+      869,
+      989,
+      1522
+    ],
+    "daHistory": [
+      427,
+      456,
+      546,
+      662,
+      667,
+      700.0
+    ],
+    "sbcHistory": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      6
+    ],
+    "epsHistory": [
+      3.28,
+      4.5,
+      5.09,
+      6.9,
+      8.46,
+      8.96
     ]
   },
   "documents": {
