@@ -1,7 +1,7 @@
 {
   "_meta": {
     "description": "Single source of truth para el Data Room de dceholdings.app. Se actualiza automaticamente por las skills DCE al generar nuevos entregables. Estructura alineada con Operations Manual v3 seccion 3.4.",
-    "last_updated": "2026-05-20",
+    "last_updated": "2026-05-23",
     "naming_convention": "AAAA-MM - Tipo - Detalle.ext (Operations Manual v3 §3.4)",
     "owner": "CIO"
   },
@@ -416,6 +416,32 @@
               "url": "/docs/DCE_SAP_Munger_Digital.pdf",
               "uploaded": "2026-04-28",
               "doc_type": "Munger Digital"
+            }
+          ]
+        },
+        "RACE": {
+          "name": "RACE - Ferrari N.V.",
+          "ticker": "RACE",
+          "company": "Ferrari N.V.",
+          "status": "analysis",
+          "files": [
+            {
+              "name": "2026-05 - Columbia Model - Ferrari (RACE)",
+              "filename": "DCE_RACE_Columbia_Model.xlsx",
+              "type": "xlsx",
+              "detail": "Modelo de valoración Columbia (14 hojas, EUR, base case auditado)",
+              "url": "/docs/DCE_RACE_Columbia_Model.xlsx",
+              "uploaded": "2026-05-23",
+              "doc_type": "Columbia Model"
+            },
+            {
+              "name": "2026-05 - Investment Memo - Ferrari (RACE)",
+              "filename": "DCE_RACE_Valuation_Report.docx",
+              "type": "docx",
+              "detail": "Company Brief v2.0 (base case auditado, Phase 4 audit PASS)",
+              "url": "/docs/DCE_RACE_Valuation_Report.docx",
+              "uploaded": "2026-05-23",
+              "doc_type": "Investment Memo"
             }
           ]
         }
