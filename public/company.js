@@ -226,7 +226,7 @@ function buildNav() {
     {id:'roic',        label:'ROIC and Capital'},
     {id:'irr',         label:'Implied IRR'},
     {id:'thesis',      label:'Thesis Health'},
-    {id:'vr',          label:'Valuation Report', external: D.documents.valuationReportUrl, style:'color:var(--gold);font-weight:600'},
+    {id:'vr',          label:'Company Brief',   external: D.documents.valuationReportUrl, style:'color:var(--gold);font-weight:600'},
     {id:'tb',          label:'Thesis Breaker',    external: D.documents.thesisBreakerUrl,  style:'color:var(--red);font-weight:600'},
     {id:'munger',      label:'Munger Digital',    external: D.documents.mungerDigitalUrl,  style:'color:#6b4fa0;font-weight:600'},
     {id:'summary',     label:'Summary'},

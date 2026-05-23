@@ -25,19 +25,19 @@
 
   // Static documents in the GitHub repo (BKNG/SAP institutional deliverables)
   const STATIC_DOCS = [
-    { title: 'BKNG · Valuation Report',  url: '/docs/DCE_BKNG_Valuation_Report.pdf', ticker: 'BKNG', kind: 'Valuation Report' },
+    { title: 'BKNG · Company Brief',  url: '/docs/DCE_BKNG_Valuation_Report.pdf', ticker: 'BKNG', kind: 'Company Brief' },
     { title: 'BKNG · Thesis Breaker',    url: '/docs/DCE_BKNG_Thesis_Breaker.pdf',   ticker: 'BKNG', kind: 'Thesis Breaker'   },
     { title: 'BKNG · Munger Digital',    url: '/docs/DCE_BKNG_Munger_Digital.pdf',   ticker: 'BKNG', kind: 'Munger Digital'   },
-    { title: 'SAP · Valuation Report',   url: '/docs/DCE_SAP_Valuation_Report.pdf',  ticker: 'SAP',  kind: 'Valuation Report' },
+    { title: 'SAP · Company Brief',   url: '/docs/DCE_SAP_Valuation_Report.pdf',  ticker: 'SAP',  kind: 'Company Brief' },
     { title: 'SAP · Thesis Breaker',     url: '/docs/DCE_SAP_Thesis_Breaker.pdf',    ticker: 'SAP',  kind: 'Thesis Breaker'   },
     { title: 'SAP · Munger Digital',     url: '/docs/DCE_SAP_Munger_Digital.pdf',    ticker: 'SAP',  kind: 'Munger Digital'   },
-    { title: 'LULU · Valuation Report',  url: '/docs/DCE_LULU_Valuation_Report.pdf', ticker: 'LULU', kind: 'Valuation Report' },
+    { title: 'LULU · Company Brief',  url: '/docs/DCE_LULU_Valuation_Report.pdf', ticker: 'LULU', kind: 'Company Brief' },
     { title: 'LULU · Thesis Breaker',    url: '/docs/DCE_LULU_Thesis_Breaker.pdf',   ticker: 'LULU', kind: 'Thesis Breaker'   },
     { title: 'LULU · Munger Digital',    url: '/docs/DCE_LULU_Munger_Digital.pdf',   ticker: 'LULU', kind: 'Munger Digital'   },
-    { title: 'MSFT · Valuation Report',  url: '/docs/DCE_MSFT_Valuation_Report.pdf', ticker: 'MSFT', kind: 'Valuation Report' },
+    { title: 'MSFT · Company Brief',  url: '/docs/DCE_MSFT_Valuation_Report.pdf', ticker: 'MSFT', kind: 'Company Brief' },
     { title: 'MSFT · Thesis Breaker',    url: '/docs/DCE_MSFT_Thesis_Breaker.pdf',   ticker: 'MSFT', kind: 'Thesis Breaker'   },
     { title: 'MSFT · Munger Digital',    url: '/docs/DCE_MSFT_Munger_Digital.pdf',   ticker: 'MSFT', kind: 'Munger Digital'   },
-    { title: 'RACE · Investment Memo',   url: '/docs/DCE_RACE_Valuation_Report.docx', ticker: 'RACE', kind: 'Investment Memo'  },
+    { title: 'RACE · Company Brief',  url: '/docs/DCE_RACE_Valuation_Report.docx', ticker: 'RACE', kind: 'Company Brief' },
     { title: 'RACE · Columbia Model',    url: '/docs/DCE_RACE_Columbia_Model.xlsx',   ticker: 'RACE', kind: 'Columbia Model'   },
   ];
 
