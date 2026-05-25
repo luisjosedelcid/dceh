@@ -326,17 +326,7 @@
       "order": 3,
       "description": "Cierre mensual: NAV, retorno YTD, liquidez, FX, movimientos, riesgos emergentes, tesis activas.",
       "access": "Read-write para Analyst",
-      "files": [
-        {
-          "name": "2026-03 - Monthly Close",
-          "filename": "2026-03_Monthly_Close.pdf",
-          "type": "pdf",
-          "detail": "Cierre mensual del portafolio",
-          "url": "/docs/2026-03_Monthly_Close.pdf",
-          "uploaded": "2026-03-31",
-          "doc_type": "Monthly Close"
-        }
-      ]
+      "files": []
     },
     "05_annual_close": {
       "name": "05 Annual Close y Carta Anual",
