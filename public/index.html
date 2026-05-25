@@ -8,53 +8,44 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --navy:     #0d1b2a;
+    --navy:     #1b2642;
     --navy-mid: #162435;
     --navy-lt:  #1e3048;
     --gold:     #b88b47;
-    --gold-lt:  #d4a85a;
-    --gold-rule:#b88b47;
-    --white:    #f5f2ec;
-    --ink:      #1a1a1a;
-    --gray-mid: #8a8a8a;
-    --rule:     #e0dbd0;
-    --green:    #2e7d52;
-    --red:      #c0392b;
+    --gold-lt:  #d4aa6a;
+    --gold-rule:rgba(184,139,71,0.30);
+    --gold-dim: rgba(184,139,71,0.10);
+    --cream:    #f5f1eb;
+    --white:    #ffffff;
+    --ink:      #1b2642;
+    --gray-mid: #8a9098;
+    --gray-txt: #606060;
+    --rule:     rgba(27,38,66,0.09);
+    --green:    #2a7a56;
+    --red:      #9b2335;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background: var(--navy);
-    color: var(--white);
+    background: var(--cream);
+    color: var(--ink);
     font-family: 'Archivo', sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
   }
 
-  /* ── BACKGROUND TEXTURE ── */
+  /* ── BACKGROUND TEXTURE (subtle paper feel on cream) ── */
   body::before {
     content: '';
     position: fixed; inset: 0; z-index: 0;
     background:
-      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(184,139,71,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 40% 40% at 90% 80%, rgba(184,139,71,0.05) 0%, transparent 50%);
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(184,139,71,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 90% 80%, rgba(184,139,71,0.04) 0%, transparent 50%);
     pointer-events: none;
   }
 
-  /* ── DIAGONAL LINES ── */
-  body::after {
-    content: '';
-    position: fixed; inset: 0; z-index: 0;
-    background-image: repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 40px,
-      rgba(184,139,71,0.025) 40px,
-      rgba(184,139,71,0.025) 41px
-    );
-    pointer-events: none;
-  }
+  body::after { display: none; }
 
   /* ── PASSWORD GATE ── */
   /* Reset visited link color globally so the navy nav stays consistent */
@@ -168,10 +159,11 @@
   }
   #main.visible { opacity: 1; }
 
-  /* ── HEADER ── */
+  /* ── HEADER (navy band, like dataroom) ── */
   header {
-    padding: 32px 60px 28px;
-    border-bottom: 1px solid rgba(184,139,71,0.2);
+    padding: 24px 60px;
+    background: var(--navy);
+    border-bottom: 2px solid var(--gold);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -191,7 +183,7 @@
     color: var(--gold);
     letter-spacing: 0.02em;
   }
-  .h-logo strong { color: var(--white); font-weight: 700; }
+  .h-logo strong { color: #ffffff; font-weight: 700; }
 
   /* Canonical nav (grouped by /dce-auth.js into 7 items) */
   .hnav { display:flex; align-items:center; gap:0; }
@@ -236,7 +228,7 @@
   /* ── HERO ── */
   .hero {
     padding: 64px 60px 48px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid var(--rule);
   }
 
   .hero-eyebrow {
@@ -261,18 +253,18 @@
     font-size: 42px;
     font-weight: 400;
     line-height: 1.15;
-    color: var(--white);
+    color: var(--navy);
     max-width: 600px;
     margin-bottom: 20px;
   }
   .hero-title em {
     font-style: italic;
-    color: var(--gold-lt);
+    color: var(--gold);
   }
 
   .hero-desc {
     font-size: 12px;
-    color: rgba(255,255,255,0.45);
+    color: var(--gray-txt);
     line-height: 1.8;
     max-width: 480px;
     letter-spacing: 0.02em;
@@ -288,17 +280,18 @@
     font-size: 9px;
     letter-spacing: 0.3em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.3);
+    color: var(--gold);
     margin-bottom: 32px;
     display: flex;
     align-items: center;
     gap: 14px;
+    font-weight: 600;
   }
   .section-label::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: rgba(255,255,255,0.08);
+    background: var(--rule);
   }
 
   .cards-grid {
@@ -309,8 +302,8 @@
 
   /* ── COMPANY CARD ── */
   .company-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
+    background: var(--white);
+    border: 1px solid var(--rule);
     border-top: 2px solid var(--gold);
     padding: 28px 28px 24px;
     cursor: pointer;
@@ -325,17 +318,16 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(184,139,71,0.04) 0%, transparent 60%);
+    background: linear-gradient(135deg, rgba(184,139,71,0.05) 0%, transparent 60%);
     opacity: 0;
     transition: opacity 0.25s;
   }
 
   .company-card:hover {
-    border-color: rgba(184,139,71,0.5);
+    border-color: var(--gold-rule);
     border-top-color: var(--gold-lt);
-    background: rgba(255,255,255,0.055);
     transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    box-shadow: 0 8px 24px rgba(27,38,66,0.10);
   }
   .company-card:hover::before { opacity: 1; }
 
@@ -350,7 +342,7 @@
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-size: 28px;
     font-weight: 700;
-    color: var(--white);
+    color: var(--navy);
     line-height: 1;
   }
 
@@ -363,14 +355,14 @@
     border: 1px solid;
   }
 
-  .badge-condicional { color: #e6a817; border-color: rgba(230,168,23,0.4); background: rgba(230,168,23,0.08); }
-  .badge-alta { color: var(--green); border-color: rgba(46,125,82,0.4); background: rgba(46,125,82,0.08); }
-  .badge-insuf { color: var(--red); border-color: rgba(192,57,43,0.4); background: rgba(192,57,43,0.08); }
-  .badge-pending { color: rgba(255,255,255,0.35); border-color: rgba(255,255,255,0.15); }
+  .badge-condicional { color: #b45309; border-color: rgba(180,83,9,0.4); background: rgba(180,83,9,0.08); }
+  .badge-alta { color: var(--green); border-color: rgba(42,122,86,0.4); background: rgba(42,122,86,0.08); }
+  .badge-insuf { color: var(--red); border-color: rgba(155,35,53,0.4); background: rgba(155,35,53,0.08); }
+  .badge-pending { color: var(--gray-mid); border-color: var(--rule); }
 
   .card-name {
     font-size: 11px;
-    color: rgba(255,255,255,0.45);
+    color: var(--gray-txt);
     letter-spacing: 0.05em;
     margin-bottom: 20px;
     margin-top: -4px;
@@ -382,25 +374,25 @@
     gap: 16px;
     margin-bottom: 22px;
     padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
+    border-bottom: 1px solid var(--rule);
   }
 
   .metric-val {
     font-size: 15px;
     font-weight: 700;
-    color: var(--white);
+    color: var(--navy);
     line-height: 1;
     margin-bottom: 4px;
   }
-  .metric-val.green { color: #4aaa6a; }
-  .metric-val.gold  { color: var(--gold-lt); }
-  .metric-val.red   { color: #e05555; }
+  .metric-val.green { color: var(--green); }
+  .metric-val.gold  { color: var(--gold); }
+  .metric-val.red   { color: var(--red); }
 
   .metric-lbl {
     font-size: 8px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.3);
+    color: var(--gray-mid);
   }
 
   .card-footer {
@@ -411,7 +403,7 @@
 
   .card-date {
     font-size: 9px;
-    color: rgba(255,255,255,0.25);
+    color: var(--gray-mid);
     letter-spacing: 0.08em;
   }
 
@@ -426,9 +418,9 @@
 
   /* ── PLACEHOLDER CARD ── */
   .card-placeholder {
-    background: rgba(255,255,255,0.015);
-    border: 1px dashed rgba(255,255,255,0.08);
-    border-top: 2px solid rgba(184,139,71,0.2);
+    background: rgba(184,139,71,0.03);
+    border: 1px dashed var(--gold-rule);
+    border-top: 2px solid var(--gold-rule);
     padding: 28px;
     display: flex;
     align-items: center;
@@ -442,20 +434,20 @@
 
   .placeholder-inner .plus {
     font-size: 20px;
-    color: rgba(184,139,71,0.3);
+    color: var(--gold);
     margin-bottom: 10px;
   }
   .placeholder-inner .txt {
     font-size: 9px;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.15);
+    color: var(--gray-mid);
   }
 
   /* ── FOOTER ── */
   footer {
     padding: 20px 60px;
-    border-top: 1px solid rgba(255,255,255,0.05);
+    border-top: 1px solid var(--rule);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -463,15 +455,16 @@
 
   .footer-txt {
     font-size: 9px;
-    color: rgba(255,255,255,0.2);
+    color: var(--gray-mid);
     letter-spacing: 0.1em;
   }
 
   .footer-framework {
     font-size: 9px;
-    color: rgba(184,139,71,0.4);
+    color: var(--gold);
     letter-spacing: 0.15em;
     text-transform: uppercase;
+    font-weight: 600;
   }
 
   /* ── ANIMATIONS ── */
@@ -491,8 +484,8 @@
     display: flex;
     align-items: stretch;
     gap: 0;
-    background: rgba(255,255,255,0.025);
-    border: 1px solid rgba(184,139,71,0.18);
+    background: var(--white);
+    border: 1px solid var(--rule);
     border-left: 3px solid var(--gold);
     margin-bottom: 32px;
     overflow: hidden;
@@ -500,7 +493,7 @@
   }
   .ew-label {
     padding: 14px 22px;
-    border-right: 1px solid rgba(184,139,71,0.15);
+    border-right: 1px solid var(--rule);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -517,7 +510,7 @@
   .ew-title {
     font-size: 13px;
     font-weight: 600;
-    color: var(--white);
+    color: var(--navy);
     letter-spacing: -0.01em;
   }
   .ew-list {
@@ -533,14 +526,14 @@
     align-items: center;
     gap: 10px;
     padding: 10px 14px;
-    border-right: 1px solid rgba(255,255,255,0.04);
+    border-right: 1px solid var(--rule);
     flex-shrink: 0;
   }
   .ew-item:last-child { border-right: none; }
   .ew-date {
     font-size: 18px;
     font-weight: 700;
-    color: var(--white);
+    color: var(--navy);
     font-family: 'Archivo', monospace;
     line-height: 1;
   }
@@ -561,11 +554,11 @@
   }
   .ew-meta {
     font-size: 10px;
-    color: rgba(255,255,255,0.45);
+    color: var(--gray-txt);
   }
   .ew-cta {
     padding: 14px 22px;
-    border-left: 1px solid rgba(184,139,71,0.15);
+    border-left: 1px solid var(--rule);
     display: flex;
     align-items: center;
     text-decoration: none;
@@ -584,10 +577,55 @@
     flex: 1;
     padding: 14px 22px;
     font-size: 11px;
-    color: rgba(255,255,255,0.35);
+    color: var(--gray-mid);
     font-style: italic;
     display: flex;
     align-items: center;
+  }
+
+  /* ── NAV CARDS (Find / Analyze / Own) ── */
+  .nav-card {
+    text-decoration: none;
+    display: block;
+    background: var(--white);
+    border: 1px solid var(--rule);
+    border-top: 2px solid var(--gold);
+    padding: 28px 24px;
+    transition: all .25s;
+    color: inherit;
+  }
+  .nav-card:hover {
+    border-color: var(--gold-rule);
+    border-top-color: var(--gold-lt);
+    box-shadow: 0 8px 24px rgba(27,38,66,0.08);
+    transform: translateY(-2px);
+  }
+  .nav-card-eyebrow {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .nav-card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .nav-card-desc {
+    font-size: 12px;
+    color: var(--gray-txt);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .nav-card-cta {
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 600;
+    letter-spacing: 0.1em;
   }
   .ew-today {
     background: rgba(184,139,71,0.08);
@@ -624,14 +662,14 @@
 <div id="main">
 
   <!-- WAVE DECORATIONS (brandbook) -->
-  <svg class="wave-deco" style="position:fixed;top:-60px;right:-80px;width:500px;opacity:0.04;pointer-events:none;z-index:0" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg class="wave-deco" style="position:fixed;top:-60px;right:-80px;width:500px;opacity:0.06;pointer-events:none;z-index:0" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M50 350 Q150 250 100 150 Q50 50 200 20 Q350 -10 380 150 Q410 310 250 350 Q90 390 50 350Z" stroke="#b88b47" stroke-width="0.8" fill="none"/>
     <path d="M70 330 Q160 240 120 150 Q80 60 210 35 Q340 10 365 160 Q390 300 240 340 Q100 370 70 330Z" stroke="#b88b47" stroke-width="0.6" fill="none"/>
     <path d="M90 310 Q170 230 140 150 Q110 70 220 50 Q330 30 350 170 Q370 290 230 330 Q110 350 90 310Z" stroke="#b88b47" stroke-width="0.5" fill="none"/>
     <path d="M110 290 Q180 220 160 150 Q140 80 230 65 Q320 50 335 180 Q350 280 220 320 Q120 330 110 290Z" stroke="#b88b47" stroke-width="0.4" fill="none"/>
     <path d="M130 270 Q190 210 180 150 Q170 90 240 80 Q310 70 320 190 Q330 270 210 310 Q130 310 130 270Z" stroke="#b88b47" stroke-width="0.3" fill="none"/>
   </svg>
-  <svg class="wave-deco" style="position:fixed;bottom:-80px;left:-60px;width:450px;opacity:0.035;pointer-events:none;z-index:0;transform:rotate(180deg)" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg class="wave-deco" style="position:fixed;bottom:-80px;left:-60px;width:450px;opacity:0.05;pointer-events:none;z-index:0;transform:rotate(180deg)" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M50 350 Q150 250 100 150 Q50 50 200 20 Q350 -10 380 150 Q410 310 250 350 Q90 390 50 350Z" stroke="#b88b47" stroke-width="0.8" fill="none"/>
     <path d="M70 330 Q160 240 120 150 Q80 60 210 35 Q340 10 365 160 Q390 300 240 340 Q100 370 70 330Z" stroke="#b88b47" stroke-width="0.6" fill="none"/>
     <path d="M90 310 Q170 230 140 150 Q110 70 220 50 Q330 30 350 170 Q370 290 230 330 Q110 350 90 310Z" stroke="#b88b47" stroke-width="0.5" fill="none"/>
@@ -671,23 +709,23 @@
   </div>
 
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:40px">
-      <a href="/screener.html" style="text-decoration:none;display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(184,139,71,0.15);border-top:2px solid var(--gold);padding:28px 24px;transition:all .3s;animation:fadeUp 0.5s ease 0.1s both" onmouseover="this.style.borderColor='var(--gold)';this.style.background='rgba(184,139,71,0.06)'" onmouseout="this.style.borderColor='rgba(184,139,71,0.15)';this.style.background='rgba(255,255,255,0.03)';this.style.borderTopColor='var(--gold)'">
-        <div style="font-size:9px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Sectors · Superinvestors</div>
-        <div style="font-size:18px;font-weight:700;color:var(--white);letter-spacing:-0.01em;margin-bottom:6px">Find</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6;margin-bottom:16px">Screen sectors and track quality-value smart money.</div>
-        <div style="font-size:11px;color:var(--gold);font-weight:600;letter-spacing:0.1em">Open →</div>
+      <a class="nav-card" href="/screener.html" style="animation:fadeUp 0.5s ease 0.1s both">
+        <div class="nav-card-eyebrow">Sectors · Superinvestors</div>
+        <div class="nav-card-title">Find</div>
+        <div class="nav-card-desc">Screen sectors and track quality-value smart money.</div>
+        <div class="nav-card-cta">Open →</div>
       </a>
-      <a href="/universe.html" style="text-decoration:none;display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(184,139,71,0.15);border-top:2px solid var(--gold);padding:28px 24px;transition:all .3s;animation:fadeUp 0.5s ease 0.2s both" onmouseover="this.style.borderColor='var(--gold)';this.style.background='rgba(184,139,71,0.06)'" onmouseout="this.style.borderColor='rgba(184,139,71,0.15)';this.style.background='rgba(255,255,255,0.03)';this.style.borderTopColor='var(--gold)'">
-        <div style="font-size:9px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Covered Universe</div>
-        <div style="font-size:18px;font-weight:700;color:var(--white);letter-spacing:-0.01em;margin-bottom:6px">Analyze</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6;margin-bottom:16px">Columbia models with live IRR and margin of safety.</div>
-        <div style="font-size:11px;color:var(--gold);font-weight:600;letter-spacing:0.1em">Open →</div>
+      <a class="nav-card" href="/universe.html" style="animation:fadeUp 0.5s ease 0.2s both">
+        <div class="nav-card-eyebrow">Covered Universe</div>
+        <div class="nav-card-title">Analyze</div>
+        <div class="nav-card-desc">Columbia models with live IRR and margin of safety.</div>
+        <div class="nav-card-cta">Open →</div>
       </a>
-      <a href="/portfolio.html" style="text-decoration:none;display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(184,139,71,0.15);border-top:2px solid var(--gold);padding:28px 24px;transition:all .3s;animation:fadeUp 0.5s ease 0.3s both" onmouseover="this.style.borderColor='var(--gold)';this.style.background='rgba(184,139,71,0.06)'" onmouseout="this.style.borderColor='rgba(184,139,71,0.15)';this.style.background='rgba(255,255,255,0.03)';this.style.borderTopColor='var(--gold)'">
-        <div style="font-size:9px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Portfolio</div>
-        <div style="font-size:18px;font-weight:700;color:var(--white);letter-spacing:-0.01em;margin-bottom:6px">Own</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6;margin-bottom:16px">Positions, P&L, and allocation. Live prices.</div>
-        <div style="font-size:11px;color:var(--gold);font-weight:600;letter-spacing:0.1em">Open →</div>
+      <a class="nav-card" href="/portfolio.html" style="animation:fadeUp 0.5s ease 0.3s both">
+        <div class="nav-card-eyebrow">Portfolio</div>
+        <div class="nav-card-title">Own</div>
+        <div class="nav-card-desc">Positions, P&L, and allocation. Live prices.</div>
+        <div class="nav-card-cta">Open →</div>
       </a>
     </div>
 
@@ -1107,7 +1145,7 @@ window.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="card-footer">
             <span class="card-date">No Columbia model yet</span>
-            <button type="button" class="card-arrow" data-action="start-study" data-ticker="${tk}" style="background:transparent;border:1px solid var(--gold);color:var(--gold);padding:6px 12px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;font-family:inherit">+ Start study</button>
+            <button type="button" class="card-arrow" data-action="start-study" data-ticker="${tk}" style="background:transparent;border:1px solid var(--gold);color:var(--gold);padding:6px 12px;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;font-family:inherit">+ Start study</button>
           </div>
         `;
         grid.insertBefore(card, emptyEl);
