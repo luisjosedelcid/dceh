@@ -175,6 +175,7 @@
     <button class="tab active" data-tab="activity" type="button" id="tab-activity">Activity log</button>
     <button class="tab" data-tab="ideafeed" type="button" id="tab-ideafeed">Idea Feed sources</button>
     <button class="tab admin-only" data-tab="users" type="button" id="tab-users" style="display:none">Users</button>
+    <button class="tab admin-only" data-tab="analysts" type="button" id="tab-analysts" style="display:none">Analysts</button>
     <button class="tab" data-tab="account" type="button" id="tab-account">My account</button>
     <button class="tab" data-tab="discipline" type="button" id="tab-discipline">Discipline rules</button>
   </div>
@@ -255,6 +256,34 @@
       </div>
     </div>
   </div><!-- /tab-panel users -->
+
+  <!-- TAB: ANALYSTS -->
+  <div class="tab-panel" data-panel="analysts">
+    <div class="section" style="border-top-color:var(--gold)">
+      <div class="section-head">
+        <div class="section-name">Analysts</div>
+        <div class="section-meta">Assignable as Kanban card owners</div>
+      </div>
+      <div class="section-desc">
+        Catalog of analysts who can be assigned as <strong>owner</strong> on pipeline cards. Independent from the auth Users table — someone can be an assignable owner without having login credentials.
+      </div>
+      <div style="padding:0 24px 22px">
+        <div id="an-list" style="margin-bottom:18px"><div class="loading-files">Sign in as admin to manage analysts</div></div>
+
+        <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:18px 0 10px">Add new analyst</h4>
+        <form onsubmit="return addAnalyst(event)" style="display:grid;grid-template-columns:1.5fr 0.6fr 1.4fr 0.6fr;gap:10px;font-size:12px;align-items:center">
+          <input type="text" name="name" required placeholder="Full name" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <input type="text" name="initials" required maxlength="3" placeholder="LC" style="padding:8px;border:1px solid var(--rule);font-family:inherit;text-transform:uppercase;letter-spacing:0.08em">
+          <input type="email" name="email" placeholder="name@dceholdings.com (optional)" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <input type="color" name="color" value="#b88b47" title="Avatar color" style="padding:4px;border:1px solid var(--rule);font-family:inherit;height:34px;width:100%;cursor:pointer">
+          <div style="display:flex;gap:10px;align-items:center;justify-content:flex-end;grid-column:span 4">
+            <span id="an-add-status" style="font-size:11px;font-style:italic"></span>
+            <button class="btn" type="submit">Add analyst</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div><!-- /tab-panel analysts -->
 
   <!-- TAB: MY ACCOUNT -->
   <div class="tab-panel" data-panel="account">
@@ -542,6 +571,7 @@ document.querySelectorAll('.tab').forEach(t => {
     if (t.dataset.tab === 'activity') loadAudit();
     if (t.dataset.tab === 'ideafeed') loadIdeaFeedSources();
     if (t.dataset.tab === 'users') loadUsersAdmin();
+    if (t.dataset.tab === 'analysts') loadAnalystsAdmin();
     if (t.dataset.tab === 'account') loadMyAccount();
     if (t.dataset.tab === 'discipline') loadDisciplineRules();
   });
@@ -870,6 +900,138 @@ async function loadUsersAdmin() {
   } catch (e) {
     cont.innerHTML = '<div class="loading-files" style="color:var(--red)">Error: ' + escapeHtml(e.message) + '</div>';
   }
+}
+
+// ── ANALYSTS ───────────────────────────────────────────────────────────────────────────────────────────
+async function loadAnalystsAdmin() {
+  const cont = document.getElementById('an-list');
+  if (!cont) return;
+  const u = currentUser();
+  if (!isAdmin() || !u || u.role !== 'admin') {
+    cont.innerHTML = '<div class="loading-files">Sign in as admin to manage analysts</div>';
+    return;
+  }
+  cont.innerHTML = '<div class="loading-files">Loading…</div>';
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const r = await fetch('/api/admin/analysts', { headers: { 'x-admin-token': token } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    const items = data.items || [];
+    if (items.length === 0) {
+      cont.innerHTML = '<div class="loading-files">No analysts yet. Add one below.</div>';
+      return;
+    }
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--navy);color:var(--white)">'
+      + '<th style="text-align:left;padding:8px 10px">Analyst</th>'
+      + '<th style="text-align:left;padding:8px 10px">Initials</th>'
+      + '<th style="text-align:left;padding:8px 10px">Email</th>'
+      + '<th style="padding:8px 10px">Color</th>'
+      + '<th style="padding:8px 10px">Active</th>'
+      + '<th style="padding:8px 10px"></th>'
+      + '</tr></thead><tbody>';
+    for (const it of items) {
+      const sid = encodeURIComponent(it.id);
+      const initials = (it.initials || '?').toString().toUpperCase();
+      const color = (it.color || '#b88b47');
+      const avatar = `<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:${escapeHtml(color)};color:#fff;font-size:10px;font-weight:700;letter-spacing:0.02em;margin-right:8px;vertical-align:middle">${escapeHtml(initials)}</span>`;
+      html += `<tr style="border-bottom:1px solid var(--rule);${it.active ? '' : 'opacity:0.5'}">
+        <td style="padding:8px 10px">${avatar}<strong>${escapeHtml(it.name)}</strong></td>
+        <td style="padding:8px 10px;font-family:'Helvetica Neue',monospace;font-weight:700;letter-spacing:0.05em">${escapeHtml(initials)}</td>
+        <td style="padding:8px 10px;font-size:11px;color:var(--gray-mid)">${escapeHtml(it.email || '—')}</td>
+        <td style="padding:8px 10px;text-align:center">
+          <input type="color" value="${escapeHtml(color)}" onchange="updateAnalystColor('${sid}', this.value)" style="width:30px;height:24px;border:1px solid var(--rule);padding:0;cursor:pointer;background:none">
+        </td>
+        <td style="padding:8px 10px;text-align:center">
+          <label style="cursor:pointer"><input type="checkbox" ${it.active ? 'checked' : ''} onchange="toggleAnalystActive('${sid}', this.checked)"></label>
+        </td>
+        <td style="padding:8px 10px;text-align:right;white-space:nowrap">
+          <button class="btn" style="font-size:10px;padding:4px 10px" onclick="renameAnalyst('${sid}', '${escapeHtml(it.name).replace(/'/g, "\\'")}')">Rename</button>
+          <button class="btn" style="font-size:10px;padding:4px 10px;margin-left:6px;color:var(--red);border-color:rgba(155,35,53,0.30)" onclick="deleteAnalyst('${sid}', '${escapeHtml(it.name).replace(/'/g, "\\'")}')">Delete</button>
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    cont.innerHTML = html;
+  } catch (e) {
+    cont.innerHTML = '<div class="loading-files" style="color:var(--red)">Error: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function addAnalyst(ev) {
+  ev.preventDefault();
+  const f = ev.target;
+  const status = document.getElementById('an-add-status');
+  status.textContent = 'Saving…'; status.style.color = 'var(--gray-mid)';
+  const token = localStorage.getItem(TOKEN_KEY);
+  try {
+    const r = await fetch('/api/admin/analysts', {
+      method: 'POST',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: f.name.value.trim(),
+        initials: f.initials.value.trim().toUpperCase(),
+        email: f.email.value.trim().toLowerCase() || null,
+        color: f.color.value,
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    status.textContent = 'Saved'; status.style.color = 'var(--green)';
+    f.reset(); f.color.value = '#b88b47';
+    loadAnalystsAdmin();
+  } catch (e) {
+    status.textContent = e.message; status.style.color = 'var(--red)';
+  }
+  return false;
+}
+
+async function patchAnalyst(id, body) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const r = await fetch(`/api/admin/analysts?id=${id}`, {
+    method: 'PATCH',
+    headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || 'Error');
+  return data;
+}
+
+async function updateAnalystColor(id, color) {
+  try { await patchAnalyst(id, { color }); loadAnalystsAdmin(); }
+  catch (e) { alert('Error: ' + e.message); }
+}
+
+async function toggleAnalystActive(id, active) {
+  try { await patchAnalyst(id, { active }); loadAnalystsAdmin(); }
+  catch (e) { alert('Error: ' + e.message); loadAnalystsAdmin(); }
+}
+
+async function renameAnalyst(id, currentName) {
+  const name = prompt('Full name', currentName);
+  if (name == null) return;
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  const initials = prompt('Initials (1-3 chars)', '');
+  const patch = { name: trimmed };
+  if (initials && initials.trim()) patch.initials = initials.trim().toUpperCase();
+  try { await patchAnalyst(id, patch); loadAnalystsAdmin(); }
+  catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteAnalyst(id, name) {
+  if (!confirm(`Delete analyst "${name}"? Cards owned by them will become Unassigned.`)) return;
+  const token = localStorage.getItem(TOKEN_KEY);
+  try {
+    const r = await fetch(`/api/admin/analysts?id=${id}&hard=1`, {
+      method: 'DELETE',
+      headers: { 'x-admin-token': token },
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    loadAnalystsAdmin();
+  } catch (e) { alert('Error: ' + e.message); }
 }
 
 async function addUser(ev) {

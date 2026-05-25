@@ -82,6 +82,13 @@ module.exports = async (req, res) => {
         created_by: actor,
         updated_by: actor,
       };
+      if (body.owner_id !== undefined && body.owner_id !== null) {
+        const oid = String(body.owner_id);
+        if (!/^[0-9a-f-]{36}$/i.test(oid)) {
+          res.status(400).json({ error: 'Invalid owner_id' }); return;
+        }
+        row.owner_id = oid;
+      }
 
       const result = await sbInsert('pipeline_cards', row);
       const item = Array.isArray(result) ? result[0] : result;
@@ -127,6 +134,17 @@ module.exports = async (req, res) => {
         patch.valuation = v;
       }
       if (body.irr !== undefined) patch.irr = body.irr ? String(body.irr).trim() : null;
+      if (body.owner_id !== undefined) {
+        if (body.owner_id === null || body.owner_id === '') {
+          patch.owner_id = null;
+        } else {
+          const oid = String(body.owner_id);
+          if (!/^[0-9a-f-]{36}$/i.test(oid)) {
+            res.status(400).json({ error: 'Invalid owner_id' }); return;
+          }
+          patch.owner_id = oid;
+        }
+      }
 
       // Capture pre-update state if stage is changing (for email alert + diff).
       let prevCard = null;

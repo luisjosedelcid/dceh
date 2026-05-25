@@ -82,6 +82,16 @@
   .card-x{position:absolute;top:6px;right:6px;background:none;border:none;cursor:pointer;color:var(--gray-mid);font-size:14px;padding:2px 6px;line-height:1;opacity:0;transition:.2s}
   .card:hover .card-x{opacity:1}
   .card-x:hover{color:var(--red)}
+  /* Owner avatar */
+  .owner-av{position:absolute;top:8px;right:28px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;letter-spacing:0.02em;border:1.5px solid var(--white);box-shadow:0 0 0 1px var(--rule);cursor:default;user-select:none}
+  .owner-av.unassigned{background:transparent;color:var(--gray-mid);border:1.5px dashed var(--rule);box-shadow:none;font-weight:600}
+  /* Owner picker in modal */
+  .owner-picker{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .owner-chip{display:inline-flex;align-items:center;gap:7px;padding:5px 10px 5px 5px;border:1px solid var(--rule);background:var(--white);cursor:pointer;font-size:12px;color:var(--ink);transition:all .15s;font-family:inherit}
+  .owner-chip:hover{border-color:var(--gold-rule);background:rgba(184,139,71,0.04)}
+  .owner-chip.selected{border-color:var(--gold);background:var(--gold-dim)}
+  .owner-chip .av{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff}
+  .owner-chip.unassigned .av{background:transparent;color:var(--gray-mid);border:1.5px dashed var(--rule)}
 
   /* MODAL */
   .modal-bg{position:fixed;inset:0;background:rgba(27,38,66,0.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
@@ -182,6 +192,8 @@ let commentsByCard = {};
 let dragId = null;
 let openCardId = null;
 let prefill = null;       // { ticker, name, note } from query string
+let analysts = [];         // [{ id, name, initials, color, active, email }]
+function analystById(id) { return id ? analysts.find(a => a.id === id) : null; }
 
 // ============================================================
 // AUTH HELPERS (uses window.dceAuth from /dce-auth.js)
@@ -277,6 +289,11 @@ async function loadPipeline() {
     if (!commentsByCard[c.card_id]) commentsByCard[c.card_id] = [];
     commentsByCard[c.card_id].push(c);
   });
+
+  try {
+    const aResp = await api('/api/admin/analysts?active=1');
+    analysts = Array.isArray(aResp) ? aResp : (aResp.items || []);
+  } catch (e) { console.warn('Failed to load analysts:', e); analysts = []; }
 }
 
 // ============================================================
@@ -362,6 +379,12 @@ function renderBoard() {
   }).join('');
 }
 
+function ownerAvatarHTML(c) {
+  const a = analystById(c.owner_id);
+  if (!a) return `<div class="owner-av unassigned" title="Unassigned">–</div>`;
+  return `<div class="owner-av" style="background:${esc(a.color)}" title="${esc(a.name)}">${esc(a.initials)}</div>`;
+}
+
 function cardHTML(c) {
   const cmtCount = (commentsByCard[c.id] || []).length;
   const badges = [];
@@ -379,6 +402,7 @@ function cardHTML(c) {
          ondragend="dragEnd(event)"
          onclick="openModal('${c.id}')">
       <button class="card-x" onclick="event.stopPropagation();deleteCard('${c.id}')" title="Delete">×</button>
+      ${ownerAvatarHTML(c)}
       <div class="card-tk">${esc(c.ticker)}</div>
       <div class="card-nm">${esc(c.name)}</div>
       ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
@@ -512,6 +536,13 @@ function renderModal() {
     </div>
 
     <div class="modal-section">
+      <h4>Owner</h4>
+      <div class="owner-picker" id="owner-picker">
+        ${renderOwnerPicker(c)}
+      </div>
+    </div>
+
+    <div class="modal-section">
       <h4>Note</h4>
       <textarea class="note-edit" id="note-edit">${esc(c.note || '')}</textarea>
       <button class="save-note" id="save-note-btn" onclick="saveNote()">Guardar nota</button>
@@ -625,6 +656,58 @@ function fmtDateTime(iso) {
 }
 function stageLabel(id) {
   return (COLUMNS.find(c => c.id === id) || {}).title || id;
+}
+
+// ============================================================
+// OWNER PICKER
+// ============================================================
+function renderOwnerPicker(c) {
+  const selectedId = c.owner_id || null;
+  const chips = [];
+  // "Unassigned" chip
+  const isUnass = !selectedId;
+  chips.push(`
+    <button class="owner-chip unassigned ${isUnass ? 'selected' : ''}" onclick="assignOwner(null)">
+      <span class="av">–</span>
+      <span>Unassigned</span>
+    </button>
+  `);
+  // One chip per active analyst
+  analysts.forEach(a => {
+    const sel = (a.id === selectedId) ? 'selected' : '';
+    chips.push(`
+      <button class="owner-chip ${sel}" onclick="assignOwner('${esc(a.id)}')">
+        <span class="av" style="background:${esc(a.color)}">${esc(a.initials)}</span>
+        <span>${esc(a.name)}</span>
+      </button>
+    `);
+  });
+  return chips.join('');
+}
+
+async function assignOwner(ownerId) {
+  const c = pipeline.find(x => x.id === openCardId);
+  if (!c) return;
+  const prev = c.owner_id || null;
+  if (prev === (ownerId || null)) return;
+  // Optimistic update
+  c.owner_id = ownerId || null;
+  const picker = document.getElementById('owner-picker');
+  if (picker) picker.innerHTML = renderOwnerPicker(c);
+  renderBoard();
+  try {
+    const resp = await api(`/api/admin/pipeline-cards?id=${encodeURIComponent(c.id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ owner_id: ownerId || null }),
+    });
+    const item = resp.item || resp;
+    if (item && item.owner_id !== undefined) c.owner_id = item.owner_id;
+  } catch (e) {
+    alert('Error: ' + e.message);
+    c.owner_id = prev;
+    if (picker) picker.innerHTML = renderOwnerPicker(c);
+    renderBoard();
+  }
 }
 
 // ============================================================
