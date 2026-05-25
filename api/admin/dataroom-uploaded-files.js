@@ -5,13 +5,27 @@
 //   → { items: [{ id, folder_id, name, filename, url, size_bytes, mime_type,
 //                 detail, uploaded_by, uploaded_at }] }
 //
+// PATCH  /api/admin/dataroom-uploaded-files?id=<uuid>
+//   body: { folder_id?, name?, detail? }
+//   → { item: {...} }
+//
 // DELETE /api/admin/dataroom-uploaded-files?id=<uuid>
 //   → { ok: true }
 //   Hard-deletes both the storage object and the metadata row.
 // ═══════════════════════════════════════════════════════════════════
 
 const { verifyAdminToken } = require('../_admin-auth');
-const { sbSelect, sbDelete } = require('../_supabase');
+const { sbSelect, sbUpdate, sbDelete } = require('../_supabase');
+
+function parseBody(req) {
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch { body = {}; }
+  }
+  return body || {};
+}
+
+function isUuid(s) { return typeof s === 'string' && /^[0-9a-f-]{36}$/i.test(s); }
 
 function requireAuth(req, res) {
   const tok = req.headers['x-admin-token'];
@@ -44,6 +58,38 @@ module.exports = async (req, res) => {
         'select=*&order=uploaded_at.desc&limit=2000'
       );
       res.status(200).json({ items });
+      return;
+    }
+
+    if (req.method === 'PATCH') {
+      const id = (req.query.id || '').toString();
+      if (!isUuid(id)) { res.status(400).json({ error: 'invalid id' }); return; }
+      const body = parseBody(req);
+      const patch = {};
+      if (body.folder_id !== undefined) {
+        if (body.folder_id !== null && !isUuid(body.folder_id)) {
+          res.status(400).json({ error: 'invalid folder_id' });
+          return;
+        }
+        if (body.folder_id) {
+          const parent = await sbSelect('dataroom_folders', `select=id&id=eq.${body.folder_id}&limit=1`);
+          if (!parent || parent.length === 0) {
+            res.status(404).json({ error: 'destination folder not found' });
+            return;
+          }
+        }
+        patch.folder_id = body.folder_id || null;
+      }
+      if (body.name !== undefined) patch.name = String(body.name || '').slice(0, 200) || null;
+      if (body.detail !== undefined) patch.detail = String(body.detail || '').slice(0, 500) || null;
+      if (Object.keys(patch).length === 0) {
+        res.status(400).json({ error: 'no valid fields to update' });
+        return;
+      }
+      const result = await sbUpdate('dataroom_files', `id=eq.${id}`, patch);
+      const item = Array.isArray(result) ? result[0] : result;
+      if (!item) { res.status(404).json({ error: 'not found' }); return; }
+      res.status(200).json({ item });
       return;
     }
 

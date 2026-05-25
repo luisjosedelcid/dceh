@@ -76,6 +76,9 @@
   .subfolder[draggable="true"]{cursor:grab}
   .subfolder.dragging{opacity:0.4}
   .subfolder.drag-over{border-left-color:var(--navy);box-shadow:0 0 0 2px var(--navy) inset}
+  .subfolder.drag-over-target{border-left-color:var(--gold);box-shadow:0 0 0 2px var(--gold) inset;background:rgba(184,139,71,0.06)}
+  .file-draggable{cursor:grab}
+  .file-draggable.dragging{opacity:0.4;cursor:grabbing}
 
 
   /* SUBFOLDER GRID */
@@ -456,7 +459,13 @@ function fileItemHTML(file, ctx) {
       delBtn = `<button class="file-del-btn" title="Delete file" onclick="event.preventDefault();event.stopPropagation();deleteFile(${JSON.stringify(file.url || '').replace(/"/g,'&quot;')}, ${JSON.stringify(file.filename || '').replace(/"/g,'&quot;')}, ${JSON.stringify(file.name || '').replace(/"/g,'&quot;')}, ${JSON.stringify(ctx && ctx.rootSlug || '').replace(/"/g,'&quot;')}, ${JSON.stringify(ctx && ctx.subSlug || '').replace(/"/g,'&quot;')})">×</button>`;
     }
   }
-  return `<a class="file-item" href="${file.url || '#'}"${target}${downloadAttr} ${!isLink ? 'onclick="return false" style="cursor:default;opacity:0.55"' : ''}>
+  // Only uploaded files (with _uploadId) are draggable — legacy JSON files
+  // don't have a folder_id row to update.
+  const isDraggable = admin && file._uploadId;
+  const dragAttrs = isDraggable
+    ? ` draggable="true" data-upload-id="${escapeHtml(file._uploadId)}" data-file-name="${escapeHtml(file.name || file.filename || '')}"`
+    : '';
+  return `<a class="file-item${isDraggable ? ' file-draggable' : ''}" href="${file.url || '#'}"${target}${downloadAttr}${dragAttrs} ${!isLink ? 'onclick="return false" style="cursor:default;opacity:0.55"' : ''}>
     <div class="file-type ${fileTypeClass(type)}">${type}</div>
     <div class="file-info">
       <div class="file-name">${escapeHtml(file.name)}</div>
@@ -593,6 +602,90 @@ async function persistOrder(arr) {
   }
 }
 
+// ─── File drag & drop → move file to a subfolder ──────────────────
+let fileDragState = null; // { uploadId, name, srcEl }
+
+function attachFileDnD(content) {
+  const items = content.querySelectorAll('.file-draggable');
+  items.forEach(el => {
+    el.addEventListener('dragstart', (e) => {
+      e.stopPropagation();
+      fileDragState = {
+        uploadId: el.getAttribute('data-upload-id'),
+        name: el.getAttribute('data-file-name') || 'file',
+        srcEl: el,
+      };
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', fileDragState.uploadId);
+      // Prevent the <a href> from triggering navigation on drag
+      el.setAttribute('data-was-href', el.getAttribute('href') || '');
+      el.removeAttribute('href');
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      // Restore href so download still works after drag
+      const h = el.getAttribute('data-was-href');
+      if (h) el.setAttribute('href', h);
+      fileDragState = null;
+      document.querySelectorAll('.drag-over-target').forEach(n => n.classList.remove('drag-over-target'));
+    });
+  });
+}
+
+function attachFileDropOnSubfolders(container) {
+  const cards = container.querySelectorAll('.subfolder');
+  cards.forEach(card => {
+    card.addEventListener('dragover', (e) => {
+      if (!fileDragState) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      card.classList.add('drag-over-target');
+    });
+    card.addEventListener('dragleave', () => {
+      card.classList.remove('drag-over-target');
+    });
+    card.addEventListener('drop', async (e) => {
+      if (!fileDragState) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const destId = card.getAttribute('data-id');
+      const uploadId = fileDragState.uploadId;
+      const fileName = fileDragState.name;
+      card.classList.remove('drag-over-target');
+      if (!destId || !uploadId) return;
+      await moveFileToFolder(uploadId, destId, fileName);
+    });
+  });
+}
+
+async function moveFileToFolder(uploadId, destFolderId, fileName) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  try {
+    const r = await fetch('/api/admin/dataroom-uploaded-files?id=' + encodeURIComponent(uploadId), {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ folder_id: destFolderId }),
+      signal: controller.signal,
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error || ('HTTP ' + r.status));
+    }
+    // Refresh data and re-render
+    await loadAll();
+    render();
+  } catch (e) {
+    const msg = (e && e.name === 'AbortError')
+      ? 'Move timed out. Try reloading the page.'
+      : (e.message || 'Move failed');
+    alert('No se pudo mover "' + fileName + '": ' + msg);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 function renderRoot() {
   document.getElementById('root-view').style.display = 'block';
   document.getElementById('folder-view').style.display = 'none';
@@ -673,7 +766,10 @@ function renderFolder(id) {
       // attach after innerHTML applied below
       setTimeout(() => {
         const container = content.querySelector('.subfolder-grid');
-        if (container) attachDnD(container, '.subfolder', subs, id);
+        if (container) {
+          attachDnD(container, '.subfolder', subs, id);
+          attachFileDropOnSubfolders(container);
+        }
       }, 0);
     }
   }
@@ -686,6 +782,9 @@ function renderFolder(id) {
       subSlug: chain[1] ? chain[1].slug : '',
     };
     html += files.map(f => fileItemHTML(f, ctx)).join('');
+    if (admin) {
+      setTimeout(() => attachFileDnD(content), 0);
+    }
   } else if (subs.length === 0) {
     html += `<div class="empty">
       <div class="empty-icon">∅</div>
