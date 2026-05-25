@@ -462,10 +462,31 @@ function fileItemHTML(file, ctx) {
   // Only uploaded files (with _uploadId) are draggable — legacy JSON files
   // don't have a folder_id row to update.
   const isDraggable = admin && file._uploadId;
-  const dragAttrs = isDraggable
-    ? ` draggable="true" data-upload-id="${escapeHtml(file._uploadId)}" data-file-name="${escapeHtml(file.name || file.filename || '')}"`
-    : '';
-  return `<a class="file-item${isDraggable ? ' file-draggable' : ''}" href="${file.url || '#'}"${target}${downloadAttr}${dragAttrs} ${!isLink ? 'onclick="return false" style="cursor:default;opacity:0.55"' : ''}>
+
+  if (isDraggable) {
+    // Use a <div> wrapper for draggable rows (an <a download> hijacks the
+    // native dragstart in some browsers and never fires our listener).
+    // The whole row is still clickable for download via JS handler.
+    const urlAttr = escapeHtml(file.url || '#');
+    const fname = escapeHtml(file.filename || file.name || 'file');
+    return `<div class="file-item file-draggable" draggable="true"
+      data-upload-id="${escapeHtml(file._uploadId)}"
+      data-file-name="${escapeHtml(file.name || file.filename || '')}"
+      data-file-url="${urlAttr}"
+      data-file-filename="${fname}"
+      onclick="handleFileRowClick(event, this)">
+      <div class="file-type ${fileTypeClass(type)}">${type}</div>
+      <div class="file-info">
+        <div class="file-name">${escapeHtml(file.name)}</div>
+        <div class="file-detail">${escapeHtml(file.detail || '')}</div>
+      </div>
+      <div class="file-uploaded">${dateStr}</div>
+      <div class="file-action">${action}</div>
+      ${delBtn}
+    </div>`;
+  }
+
+  return `<a class="file-item" href="${file.url || '#'}"${target}${downloadAttr} ${!isLink ? 'onclick="return false" style="cursor:default;opacity:0.55"' : ''}>
     <div class="file-type ${fileTypeClass(type)}">${type}</div>
     <div class="file-info">
       <div class="file-name">${escapeHtml(file.name)}</div>
@@ -475,6 +496,24 @@ function fileItemHTML(file, ctx) {
     <div class="file-action">${action}</div>
     ${delBtn}
   </a>`;
+}
+
+// Click handler for draggable file rows: triggers download via a temporary
+// anchor element so the row behaves like a link without actually being one.
+function handleFileRowClick(ev, el) {
+  // Ignore clicks on the delete button (it stops propagation itself, but
+  // belt + suspenders)
+  if (ev.target.closest('.file-del-btn')) return;
+  const url = el.getAttribute('data-file-url');
+  const filename = el.getAttribute('data-file-filename') || '';
+  if (!url || url === '#') return;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  if (url.startsWith('http')) a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => a.remove(), 0);
 }
 
 function escapeHtml(s) {
@@ -618,15 +657,9 @@ function attachFileDnD(content) {
       el.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', fileDragState.uploadId);
-      // Prevent the <a href> from triggering navigation on drag
-      el.setAttribute('data-was-href', el.getAttribute('href') || '');
-      el.removeAttribute('href');
     });
     el.addEventListener('dragend', () => {
       el.classList.remove('dragging');
-      // Restore href so download still works after drag
-      const h = el.getAttribute('data-was-href');
-      if (h) el.setAttribute('href', h);
       fileDragState = null;
       document.querySelectorAll('.drag-over-target').forEach(n => n.classList.remove('drag-over-target'));
     });
