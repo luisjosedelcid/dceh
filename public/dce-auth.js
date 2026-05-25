@@ -355,13 +355,13 @@
     { id:'home',     label:'Home',    href:'/',              single:true },
     { id:'cockpit',  label:'Cockpit', href:'/cockpit.html',  single:true },
     { id:'research', label:'Research', items:[
-      { href:'/study.html',       label:'Study',    desc:'Sector deep-dives + megatrends' },
-      { href:'/news.html',        label:'News',     desc:'AI news scanner (Claude)' },
-      { href:'/calendar.html',    label:'Calendar', desc:'Earnings dates de la cobertura' },
+      { href:'/study.html',       label:'Study',    desc:'Sector deep-dives and megatrends' },
+      { href:'/news.html',        label:'News',     desc:'Daily AI-summarized scanner' },
+      { href:'/calendar.html',    label:'Calendar', desc:'Earnings and events for coverage' },
     ]},
     { id:'pipeline', label:'Pipeline', items:[
       { href:'/screener.html',    label:'Find',     desc:'Idea generation — screener, superinvestors, sector tracker' },
-      { href:'/research.html',    label:'Workflow', desc:'Kanban de tesis en investigación' },
+      { href:'/research.html',    label:'Workflow', desc:'Kanban of theses in research' },
       { href:'/universe.html',    label:'Universe', desc:'Columbia framework — EPV, IRR, MoS' },
       { href:'/journal.html',     label:'Decisions', desc:'Decision journal — buy/pass/sell + re-underwriting' },
       // { href:'/premortem.html',   label:'Pre-mortem',  desc:'Watch failure modes · manage' }, // archived 2026-05-07: backend activo, página oculta. Re-underwriting trimestral mantiene la disciplina.
