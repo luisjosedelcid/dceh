@@ -62,14 +62,15 @@
   .br { background: rgba(155,35,53,.1); color: var(--red); }
   .bo { background: var(--gold-dim); color: var(--gold); }
 
-  /* PRICE INPUT */
-  .price-input {
-    width: 90px; text-align: right; font-family: 'Archivo',sans-serif; font-size: 13px; font-weight: 600;
-    color: var(--navy); background: rgba(184,139,71,0.06); border: 1.5px solid rgba(184,139,71,0.20);
-    border-radius: 3px; padding: 5px 8px; outline: none; transition: all .2s; font-variant-numeric: tabular-nums;
+  /* PRICE (read-only, live) */
+  .price-cell {
+    display: inline-block; min-width: 90px; text-align: right;
+    font-family: 'Archivo',sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--navy); background: rgba(184,139,71,0.06);
+    border: 1.5px solid rgba(184,139,71,0.20);
+    border-radius: 3px; padding: 5px 8px;
+    font-variant-numeric: tabular-nums; cursor: default;
   }
-  .price-input:hover { border-color: var(--gold); background: rgba(184,139,71,0.10); }
-  .price-input:focus { border-color: var(--gold); background: var(--white); box-shadow: 0 0 0 2px rgba(184,139,71,0.15); }
 
   /* ALERT CELL */
   .alert-cell { font-size: 12px; font-variant-numeric: tabular-nums; cursor: pointer; user-select: none; padding: 4px 6px; border-radius: 3px; display: inline-flex; align-items: center; gap: 5px; min-width: 70px; justify-content: flex-end; }
@@ -205,7 +206,7 @@
 <main>
   <div class="page-title">DCE Holdings — Investment Office</div>
   <h1>Covered Universe</h1>
-  <p class="page-sub">Columbia Framework valuation summary. Edit price to recalculate IRR and Margin of Safety in real time. <span id="live-note" style="font-size:11px;font-weight:500;color:var(--gray-mid)">Fetching live prices...</span></p>
+  <p class="page-sub">Columbia Framework valuation summary. Prices stream live from Finnhub; IRR and Margin of Safety recompute on each update. <span id="live-note" style="font-size:11px;font-weight:500;color:var(--gray-mid)">Fetching live prices...</span></p>
 
   <div class="tabs">
     <button class="tab-btn active" data-tab="invested">Invested <span class="count" id="invested-count">0</span></button>
@@ -579,7 +580,7 @@ function renderRow(c, vals) {
     </td>
     <td>${sym(c)}${fmt(vals.mktCap)}M</td>
     <td>${sym(c)}${fmt(vals.ev)}M</td>
-    <td><input class="price-input" data-ticker="${c.ticker}" value="${vals.price.toFixed(2)}" onchange="onPriceChange('${c.ticker}', this.value)" onfocus="this.select()"></td>
+    <td><span class="price-cell" data-ticker="${c.ticker}" title="Live price (read-only)">${vals.price.toFixed(2)}</span></td>
     <td class="gold">${sym(c)}${vals.epvPs.toFixed(2)}</td>
     <td class="${peClass}">${vals.priceEpv.toFixed(2)}×</td>
     <td>${vals.nopatMult.toFixed(1)}×</td>
@@ -721,21 +722,7 @@ function renderTable() {
   });
 }
 
-function onPriceChange(ticker, val) {
-  const c = UNIVERSE.find(u => u.ticker === ticker);
-  if (!c) return;
-  const price = parseFloat(val) || c.defaultPrice;
-  const vals = calcCompany(c, price);
-  // Re-render just this row inside its stage's tbody
-  const tbody = document.getElementById('universe-body-' + c.funnelStage);
-  if (!tbody) return;
-  const stageEntries = UNIVERSE.filter(u => u.funnelStage === c.funnelStage);
-  const idx = stageEntries.findIndex(u => u.ticker === ticker);
-  const rows = tbody.querySelectorAll('tr');
-  if (rows[idx]) {
-    rows[idx].outerHTML = renderRow(c, vals);
-  }
-}
+// onPriceChange removed — prices are read-only and driven by fetchLivePrices().
 
 // ═══ FUNNEL STAGE SYNC ═══
 // Source of truth: pipeline_cards.stage (kanban).
