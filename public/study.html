@@ -46,17 +46,19 @@
   .btn-danger:hover{background:var(--red);color:var(--white);border-color:var(--red)}
   .btn[disabled]{opacity:0.5;cursor:not-allowed}
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
-  .card{background:var(--white);border:1px solid var(--rule);border-top:3px solid var(--gold);padding:20px 22px;transition:all .2s;display:flex;flex-direction:column;min-height:200px}
-  .card:hover{border-color:var(--gold-rule);box-shadow:0 4px 16px rgba(27,38,66,0.06)}
-  .card-emoji{font-size:24px;margin-bottom:10px}
-  .card-title{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px;line-height:1.3}
-  .card-desc{font-size:13px;color:var(--gray-txt);line-height:1.5;margin-bottom:14px;flex-grow:1}
-  .card-meta{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:10px}
-  .card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
-  .tag{font-size:10px;font-weight:500;background:var(--gold-dim);color:var(--gold);padding:3px 9px;border-radius:3px;letter-spacing:0.04em}
-  .upload-pill{display:inline-block;font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);background:var(--gold-dim);padding:2px 8px;border-radius:3px;margin-bottom:10px}
-  .card-actions{display:flex;gap:8px;margin-top:auto;flex-wrap:wrap}
+  /* Horizontal row list (matches Data Room subfolder layout) */
+  .grid{display:flex;flex-direction:column;gap:6px}
+  .card{display:flex;align-items:center;gap:16px;background:var(--white);border:1px solid var(--rule);border-left:2px solid var(--gold);padding:14px 20px;transition:all .2s;min-height:0;position:relative}
+  .card:hover{border-color:var(--gold-rule);background:rgba(184,139,71,0.02)}
+  .card-emoji{font-size:20px;flex-shrink:0}
+  .card-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+  .card-title{font-size:14px;font-weight:700;color:var(--navy);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card-desc{font-size:12px;color:var(--gray-txt);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card-meta{font-size:10px;letter-spacing:0.10em;text-transform:uppercase;color:var(--gray-mid)}
+  .card-tags{display:flex;flex-wrap:wrap;gap:5px;flex-shrink:0}
+  .tag{font-size:9px;font-weight:500;background:var(--gold-dim);color:var(--gold);padding:3px 8px;border-radius:3px;letter-spacing:0.04em;white-space:nowrap}
+  .upload-pill{display:inline-block;font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);background:var(--gold-dim);padding:3px 8px;border-radius:3px;flex-shrink:0}
+  .card-actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:nowrap}
 
   .empty{padding:40px;text-align:center;color:var(--gray-mid);font-style:italic;background:var(--white);border:1px dashed var(--rule)}
   .status{font-size:12px;color:var(--gray-mid);margin-bottom:14px}
@@ -80,7 +82,9 @@
   @media (max-width: 720px){
     header{padding:0 16px;flex-wrap:wrap;min-height:auto;padding-top:10px;padding-bottom:10px;gap:8px}
     main{padding:18px 14px 40px}
-    .grid{grid-template-columns:1fr}
+    .card{flex-wrap:wrap;gap:10px}
+    .card-body{flex-basis:100%}
+    .card-actions{margin-left:auto}
   }
 </style>
 <link rel="stylesheet" href="/responsive.css">
@@ -272,9 +276,11 @@ function renderUploadCard(u, section) {
   const sizeStr = u.size_bytes ? ' · ' + fmtBytes(u.size_bytes) : '';
   return `<article class="card">
     <div class="upload-pill">Uploaded</div>
-    <div class="card-title">${escapeHtml(u.name || u.filename)}</div>
-    <div class="card-meta">${escapeHtml(u.uploaded_by || 'admin')} · ${fmtDate(u.uploaded_at)}${sizeStr}</div>
-    ${u.detail ? `<div class="card-desc">${escapeHtml(u.detail)}</div>` : '<div class="card-desc"></div>'}
+    <div class="card-body">
+      <div class="card-title">${escapeHtml(u.name || u.filename)}</div>
+      <div class="card-meta">${escapeHtml(u.uploaded_by || 'admin')} · ${fmtDate(u.uploaded_at)}${sizeStr}</div>
+      ${u.detail ? `<div class="card-desc">${escapeHtml(u.detail)}</div>` : ''}
+    </div>
     <div class="card-actions">
       <a class="btn btn-primary" href="${escapeAttr(u.url)}" target="_blank" rel="noopener">Open →</a>
       ${adminBtns}
@@ -292,10 +298,12 @@ function renderCuratedCard(it) {
     : '';
   return `<article class="card">
     ${it.cover_emoji ? `<div class="card-emoji">${escapeHtml(it.cover_emoji)}</div>` : ''}
-    <div class="card-title">${escapeHtml(it.title)}</div>
-    <div class="card-meta">${escapeHtml(it.author || 'DCE Holdings')} · ${fmtDate(it.published_at)}</div>
+    <div class="card-body">
+      <div class="card-title">${escapeHtml(it.title)}</div>
+      <div class="card-meta">${escapeHtml(it.author || 'DCE Holdings')} · ${fmtDate(it.published_at)}</div>
+      ${it.description ? `<div class="card-desc">${escapeHtml(it.description)}</div>` : ''}
+    </div>
     ${tags ? `<div class="card-tags">${tags}</div>` : ''}
-    ${it.description ? `<div class="card-desc">${escapeHtml(it.description)}</div>` : '<div class="card-desc"></div>'}
     <div class="card-actions">${pdf}${ext}</div>
   </article>`;
 }
