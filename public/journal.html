@@ -336,10 +336,6 @@
       <span class="chip filter-type" data-type="BUY" onclick="setTypeFilter('BUY', this)">Buy</span>
       <span class="chip filter-type" data-type="PASS" onclick="setTypeFilter('PASS', this)">Pass</span>
       <span class="chip filter-type" data-type="FOLLOW" onclick="setTypeFilter('FOLLOW', this)">Follow</span>
-      <span class="chip filter-type" data-type="ADD" onclick="setTypeFilter('ADD', this)">Add</span>
-      <span class="chip filter-type" data-type="HOLD" onclick="setTypeFilter('HOLD', this)">Hold</span>
-      <span class="chip filter-type" data-type="TRIM" onclick="setTypeFilter('TRIM', this)">Trim</span>
-      <span class="chip filter-type" data-type="SELL" onclick="setTypeFilter('SELL', this)">Sell</span>
       <input type="text" id="filter-ticker" placeholder="Ticker…" oninput="applyFilters()">
       <input type="number" id="filter-year" placeholder="Year" min="2000" max="2100" oninput="applyFilters()">
     </div>
@@ -697,10 +693,14 @@ function nextReview(it) {
   };
 }
 
+// Research outcomes pane only surfaces the initial post-research decisions.
+// Post-commit actions (ADD / HOLD / TRIM / SELL) live in Re-underwriting and Lessons learned.
+const RESEARCH_OUTCOME_TYPES = new Set(['BUY', 'PASS', 'FOLLOW']);
+
 function applyFilters() {
   const ticker = (document.getElementById('filter-ticker').value || '').toUpperCase().trim();
   const year = (document.getElementById('filter-year').value || '').trim();
-  let rows = state.items.slice();
+  let rows = state.items.filter(r => RESEARCH_OUTCOME_TYPES.has(r.decision_type));
   if (state.filterType) rows = rows.filter(r => r.decision_type === state.filterType);
   if (ticker) rows = rows.filter(r => (r.ticker || '').includes(ticker));
   if (year && /^\d{4}$/.test(year)) rows = rows.filter(r => (r.decision_date || '').startsWith(year));
@@ -710,7 +710,7 @@ function applyFilters() {
 function renderTable(rows) {
   const tbody = document.getElementById('tbody-all');
   const status = document.getElementById('status-all');
-  document.getElementById('count-all').textContent = state.items.length;
+  document.getElementById('count-all').textContent = state.items.filter(r => RESEARCH_OUTCOME_TYPES.has(r.decision_type)).length;
   if (rows.length === 0) {
     status.textContent = '';
     tbody.innerHTML = `<tr><td colspan="6"><div class="empty">No decisions match these filters.</div></td></tr>`;
