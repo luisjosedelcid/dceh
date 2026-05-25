@@ -738,8 +738,8 @@
             <div class="metric-lbl">WACC</div>
           </div>
           <div>
-            <div class="metric-val">Cond.</div>
-            <div class="metric-lbl">Munger</div>
+            <div class="metric-val" data-slot="realized-irr">—</div>
+            <div class="metric-lbl">IRR a la fecha</div>
           </div>
         </div>
         <div class="card-footer">
@@ -778,8 +778,8 @@
             <div class="metric-lbl">WACC</div>
           </div>
           <div>
-            <div class="metric-val">Cond.</div>
-            <div class="metric-lbl">Munger</div>
+            <div class="metric-val" data-slot="realized-irr">—</div>
+            <div class="metric-lbl">IRR a la fecha</div>
           </div>
         </div>
         <div class="card-footer">
@@ -1046,6 +1046,23 @@ window.addEventListener('DOMContentLoaded', () => {
       grid.querySelectorAll('a.company-card[data-static-ticker]').forEach(card => {
         const tk = card.getAttribute('data-static-ticker').toUpperCase();
         card.style.display = heldSet.has(tk) ? '' : 'none';
+        // Fill the 'IRR a la fecha' slot from holdings.irr_annualized (annualized since first buy)
+        const slot = card.querySelector('[data-slot="realized-irr"]');
+        if (slot) {
+          const h = holdings.find(x => String(x.ticker).toUpperCase() === tk);
+          const irr = h && h.irr_annualized != null ? Number(h.irr_annualized) : null;
+          if (irr != null && Number.isFinite(irr)) {
+            const pct = (irr * 100);
+            slot.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+            slot.classList.remove('green','red');
+            slot.classList.add(pct >= 0 ? 'green' : 'red');
+            if (h && h.first_buy_date) {
+              slot.title = 'Anualizado desde ' + h.first_buy_date;
+            }
+          } else {
+            slot.textContent = '—';
+          }
+        }
       });
 
       // For held tickers WITHOUT a static dashboard card, render a compact 'start study' card.
