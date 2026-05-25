@@ -734,8 +734,8 @@
             <div class="metric-lbl">ROIC FY25</div>
           </div>
           <div>
-            <div class="metric-val gold">10.24%</div>
-            <div class="metric-lbl">WACC</div>
+            <div class="metric-val" data-slot="last-price">—</div>
+            <div class="metric-lbl">Precio live</div>
           </div>
           <div>
             <div class="metric-val" data-slot="realized-irr">—</div>
@@ -774,8 +774,8 @@
             <div class="metric-lbl">ROIC FY25</div>
           </div>
           <div>
-            <div class="metric-val gold">8.94%</div>
-            <div class="metric-lbl">WACC</div>
+            <div class="metric-val" data-slot="last-price">—</div>
+            <div class="metric-lbl">Precio live</div>
           </div>
           <div>
             <div class="metric-val" data-slot="realized-irr">—</div>
@@ -1047,9 +1047,23 @@ window.addEventListener('DOMContentLoaded', () => {
         const tk = card.getAttribute('data-static-ticker').toUpperCase();
         card.style.display = heldSet.has(tk) ? '' : 'none';
         // Fill the 'IRR a la fecha' slot from holdings.irr_annualized (annualized since first buy)
+        const h = holdings.find(x => String(x.ticker).toUpperCase() === tk);
+        // Fill 'Precio live' slot
+        const priceSlot = card.querySelector('[data-slot="last-price"]');
+        if (priceSlot) {
+          const px = h && h.last_price != null ? Number(h.last_price) : null;
+          if (px != null && Number.isFinite(px)) {
+            priceSlot.textContent = '$' + px.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            priceSlot.classList.add('gold');
+            if (h && h.avg_cost != null) {
+              priceSlot.title = 'Costo promedio: $' + Number(h.avg_cost).toFixed(2);
+            }
+          } else {
+            priceSlot.textContent = '—';
+          }
+        }
         const slot = card.querySelector('[data-slot="realized-irr"]');
         if (slot) {
-          const h = holdings.find(x => String(x.ticker).toUpperCase() === tk);
           const irr = h && h.irr_annualized != null ? Number(h.irr_annualized) : null;
           if (irr != null && Number.isFinite(irr)) {
             const pct = (irr * 100);
