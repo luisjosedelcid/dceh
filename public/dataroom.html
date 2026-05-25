@@ -322,6 +322,15 @@ async function loadAll() {
   } catch {}
 
   buildIndices();
+  // Restore from URL hash if present (deep link or back-button restore)
+  const hashId = folderIdFromHash();
+  if (hashId && BY_ID.has(hashId)) {
+    currentFolderId = hashId;
+  }
+  // Seed initial history state so popstate fires correctly
+  if (!history.state || typeof history.state.folderId === 'undefined') {
+    try { history.replaceState({ folderId: currentFolderId }, '', window.location.href); } catch {}
+  }
   render();
 }
 
@@ -838,14 +847,51 @@ function renderFolder(id) {
 // ──────────────────────────────────────────────────────────────────
 function openFolder(id) {
   currentFolderId = id;
+  pushFolderToHistory(id);
   render();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function showRoot() {
   currentFolderId = null;
+  pushFolderToHistory(null);
   render();
 }
+
+// ──────────────────────────────────────────────────────────────────
+// Browser history integration (back button navigates within data room)
+// ──────────────────────────────────────────────────────────────────
+function pushFolderToHistory(id) {
+  try {
+    const newHash = id ? '#f=' + encodeURIComponent(id) : '';
+    const currentHash = window.location.hash || '';
+    if (currentHash === newHash) return;
+    const url = window.location.pathname + window.location.search + newHash;
+    history.pushState({ folderId: id }, '', url);
+  } catch {}
+}
+
+function folderIdFromHash() {
+  const h = window.location.hash || '';
+  const m = h.match(/^#f=(.+)$/);
+  if (!m) return null;
+  try { return decodeURIComponent(m[1]); } catch { return null; }
+}
+
+function applyHashNavigation() {
+  const id = folderIdFromHash();
+  if (id && BY_ID.has(id)) {
+    currentFolderId = id;
+  } else {
+    currentFolderId = null;
+  }
+  render();
+}
+
+window.addEventListener('popstate', () => {
+  applyHashNavigation();
+  window.scrollTo({ top: 0 });
+});
 
 // ──────────────────────────────────────────────────────────────────
 // CRUD modal
