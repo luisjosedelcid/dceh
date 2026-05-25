@@ -81,17 +81,19 @@
   .file-draggable.dragging{opacity:0.4;cursor:grabbing}
 
 
-  /* SUBFOLDER GRID */
-  .subfolder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px}
-  .subfolder{background:var(--white);border:1px solid var(--rule);border-left:2px solid var(--gold);padding:16px 18px;cursor:pointer;transition:all .2s;text-decoration:none;color:var(--ink);position:relative}
+  /* SUBFOLDER LIST (horizontal rows like file rows) */
+  .subfolder-grid{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
+  .subfolder{display:flex;align-items:center;gap:14px;background:var(--white);border:1px solid var(--rule);border-left:2px solid var(--gold);padding:14px 20px;cursor:pointer;transition:all .2s;text-decoration:none;color:var(--ink);position:relative}
   .subfolder:hover{border-color:var(--gold-rule);background:rgba(184,139,71,0.02)}
-  .subfolder-name{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px}
-  .subfolder-detail{font-size:11px;color:var(--gray-mid);margin-bottom:6px}
-  .subfolder-tag{display:inline-block;font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:2px 8px;background:var(--gold-dim);color:var(--gold);margin-right:4px}
-  .subfolder-count{font-size:10px;color:var(--gray-mid);margin-top:6px}
-  .subfolder-actions{position:absolute;top:6px;right:6px;display:none;gap:4px}
+  .subfolder-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .subfolder-name{font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .subfolder-detail{font-size:11px;color:var(--gray-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .subfolder-tags{display:flex;gap:6px;flex-shrink:0}
+  .subfolder-tag{display:inline-block;font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;background:var(--gold-dim);color:var(--gold);white-space:nowrap}
+  .subfolder-count{font-size:11px;color:var(--gray-mid);flex-shrink:0;min-width:60px;text-align:right;letter-spacing:0.02em}
+  .subfolder-actions{display:none;gap:4px;flex-shrink:0}
   .subfolder:hover .subfolder-actions{display:flex}
-  .subfolder-actions button{font-size:9px;padding:2px 6px;border:1px solid var(--gold-rule);background:var(--white);color:var(--gold);cursor:pointer;line-height:1;font-family:inherit}
+  .subfolder-actions button{font-size:9px;padding:3px 8px;border:1px solid var(--gold-rule);background:var(--white);color:var(--gold);cursor:pointer;line-height:1;font-family:inherit}
   .subfolder-actions button.del{color:var(--red);border-color:rgba(155,35,53,0.30)}
 
   /* SECTION TITLE */
@@ -787,11 +789,13 @@ function renderFolder(id) {
              <button class="del" onclick="deleteFolder('${sf.id}')">×</button>
            </div>` : '';
       return `<div class="subfolder" data-id="${sf.id}"${admin ? ' draggable="true"' : ''} onclick="openFolder('${sf.id}')">
-        ${actions}
-        <div class="subfolder-name">${escapeHtml(sf.name)}</div>
-        <div class="subfolder-detail">${escapeHtml(detail)}</div>
-        ${tags.join(' ')}
+        <div class="subfolder-info">
+          <div class="subfolder-name">${escapeHtml(sf.name)}</div>
+          ${detail ? `<div class="subfolder-detail">${escapeHtml(detail)}</div>` : ''}
+        </div>
+        ${tags.length ? `<div class="subfolder-tags">${tags.join('')}</div>` : ''}
         <div class="subfolder-count">${fcount} ${fcount === 1 ? 'file' : 'files'}</div>
+        ${actions}
       </div>`;
     }).join('');
     html += '</div>';
