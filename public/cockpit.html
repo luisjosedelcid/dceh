@@ -188,35 +188,35 @@
     <!-- 1. PIPELINE — span 2 -->
     <div class="card span2">
       <div class="card-h"><h3>Pipeline in flight</h3><span class="count" id="cnt-pipeline">—</span></div>
-      <div class="card-b" id="pipeline-body"><div class="loading">Cargando…</div></div>
+      <div class="card-b" id="pipeline-body"><div class="loading">Loading…</div></div>
       <div class="card-f"><a href="/research.html">Open pipeline →</a></div>
     </div>
 
     <!-- 2. OUTSTANDING DECISIONS -->
     <div class="card">
       <div class="card-h"><h3>Outstanding decisions</h3><span class="count" id="cnt-decisions">—</span></div>
-      <div class="card-b" id="decisions-body"><div class="loading">Cargando…</div></div>
+      <div class="card-b" id="decisions-body"><div class="loading">Loading…</div></div>
       <div class="card-f"><a href="/journal.html">Open journal →</a></div>
     </div>
 
     <!-- 3. RE-UNDERWRITING DUE -->
     <div class="card">
       <div class="card-h"><h3>Re-underwriting due</h3><span class="count" id="cnt-reu">—</span></div>
-      <div class="card-b" id="reu-body"><div class="loading">Cargando…</div></div>
+      <div class="card-b" id="reu-body"><div class="loading">Loading…</div></div>
       <div class="card-f"><a href="/journal.html">Open re-underwriting →</a></div>
     </div>
 
     <!-- 4. EARNINGS UPCOMING -->
     <div class="card">
       <div class="card-h"><h3>Earnings upcoming</h3><span class="count">Next 45 days</span></div>
-      <div class="card-b" id="earnings-body"><div class="loading">Cargando…</div></div>
+      <div class="card-b" id="earnings-body"><div class="loading">Loading…</div></div>
       <div class="card-f"><a href="/calendar.html">Open calendar →</a></div>
     </div>
 
     <!-- 5. LAST DELIVERABLES -->
     <div class="card">
       <div class="card-h"><h3>Last deliverables</h3><span class="count">Recent</span></div>
-      <div class="card-b" id="deliv-body"><div class="loading">Cargando…</div></div>
+      <div class="card-b" id="deliv-body"><div class="loading">Loading…</div></div>
       <div class="card-f"><a href="/dataroom.html">Open data room →</a></div>
     </div>
 
@@ -224,7 +224,7 @@
     <div class="card">
       <div class="card-h"><h3>Slack inbox</h3><span class="count" id="cnt-tasks">Slack</span></div>
       <div class="card-b" id="tasks-body">
-        <div class="empty">Cargando…</div>
+        <div class="empty">Loading…</div>
       </div>
       <div class="card-f"><a href="https://app.slack.com/client" target="_blank" rel="noopener">Open Slack →</a></div>
     </div>
@@ -232,14 +232,14 @@
     <!-- 7. WATCHLIST ALERTS -->
     <div class="card">
       <div class="card-h"><h3>Watchlist alerts</h3><span class="count" id="cnt-watch">—</span></div>
-      <div class="card-b" id="watch-body"><div class="loading">Cargando…</div></div>
+      <div class="card-b" id="watch-body"><div class="loading">Loading…</div></div>
       <div class="card-f"><a href="/screener.html">Open watchlist →</a></div>
     </div>
 
-    <!-- 8. TEAM MEETINGS (Google Calendar — próximos 7 días, asistentes @dceholdings.com) -->
+    <!-- 8. TEAM MEETINGS (Google Calendar — next 7 days, attendees @dceholdings.com) -->
     <div class="card">
       <div class="card-h"><h3>Team meetings</h3><span class="count" id="cnt-cal">Next 7d</span></div>
-      <div class="card-b" id="cal-body"><div class="loading">Cargando…</div></div>
+      <div class="card-b" id="cal-body"><div class="loading">Loading…</div></div>
       <div class="card-f"><a href="https://calendar.google.com" target="_blank" rel="noopener">Open Google Calendar →</a></div>
     </div>
 
@@ -324,7 +324,7 @@ function stageLabel(stage) {
 function renderPipeline(items) {
   const el = $('pipeline-body');
   $('cnt-pipeline').textContent = `${items.length} pending`;
-  if (!items.length) { el.innerHTML = '<div class="empty">Nada pendiente de tu firma.</div>'; return; }
+  if (!items.length) { el.innerHTML = '<div class="empty">Nothing pending your sign-off.</div>'; return; }
   el.innerHTML = items.slice(0, 8).map(p => {
     const days = p.days_in_stage;
     let badge = '<span class="badge green">On track</span>';
@@ -347,7 +347,7 @@ function renderPipeline(items) {
 function renderDecisions(items) {
   const el = $('decisions-body');
   $('cnt-decisions').textContent = `${items.length} pending`;
-  if (!items.length) { el.innerHTML = '<div class="empty">Sin decisiones pendientes.</div>'; return; }
+  if (!items.length) { el.innerHTML = '<div class="empty">No pending decisions.</div>'; return; }
   el.innerHTML = items.slice(0, 6).map(d => {
     let badge = '<span class="badge amber">This week</span>';
     let title = '';
@@ -376,7 +376,7 @@ function renderDecisions(items) {
 function renderReunderwriting(items) {
   const el = $('reu-body');
   $('cnt-reu').textContent = `${items.length} due`;
-  if (!items.length) { el.innerHTML = '<div class="empty">Sin re-underwriting pendiente.</div>'; return; }
+  if (!items.length) { el.innerHTML = '<div class="empty">No re-underwriting pending.</div>'; return; }
   el.innerHTML = items.slice(0, 5).map(r => {
     const d = r.days_until_due;
     let badge = '<span class="badge amber">Soon</span>';
@@ -445,7 +445,7 @@ function renderHighlights(payload) {
   const el = $('tasks-body');
   const cnt = $('cnt-tasks');
   if (!payload || !Array.isArray(payload.messages) || payload.messages.length === 0) {
-    el.innerHTML = `<div class="empty">Sin menciones ni DMs pendientes.<br><span style="font-size:10px;color:var(--gray-mid)">Refrescar manualmente desde el agente o esperar al cron.</span></div>`;
+    el.innerHTML = `<div class="empty">No pending mentions or DMs.<br><span style="font-size:10px;color:var(--gray-mid)">Refresh manually from the agent or wait for the cron.</span></div>`;
     if (cnt) cnt.textContent = '0';
     return;
   }
@@ -512,13 +512,13 @@ function renderTeamMeetings(payload) {
   const events = (payload && Array.isArray(payload.events)) ? payload.events : [];
   if (cnt) cnt.textContent = events.length === 0 ? 'Next 7d' : String(events.length);
   if (events.length === 0) {
-    el.innerHTML = '<div class="empty">Sin reuniones de equipo en los próximos 7 días.<br><span style="font-size:10px;color:var(--gray-mid)">Solo eventos con asistentes @dceholdings.com.</span></div>';
+    el.innerHTML = '<div class="empty">No team meetings in the next 7 days.<br><span style="font-size:10px;color:var(--gray-mid)">Only events with @dceholdings.com attendees.</span></div>';
     return;
   }
   el.innerHTML = events.slice(0, 6).map(e => {
     const wd = e.weekday || (e.start ? weekdayShort(e.start) : '');
     const time = e.time_label || '';
-    const title = escapeHtml(e.title || 'Reunión');
+    const title = escapeHtml(e.title || 'Meeting');
     const attendees = Array.isArray(e.attendees) ? e.attendees.length : 0;
     const link = e.html_link ? `<a href="${escapeHtml(e.html_link)}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:none">${title}</a>` : title;
     const days = (typeof e.days_until === 'number') ? e.days_until : null;
@@ -529,7 +529,7 @@ function renderTeamMeetings(payload) {
       <span class="tk" style="color:var(--gold)">${escapeHtml(wd)}</span>
       <div class="body">
         <div class="title">${link}</div>
-        <div class="meta">${escapeHtml(e.date_label || e.start || '')}${time ? ' · ' + escapeHtml(time) : ''}${attendees ? ' · ' + attendees + ' asistentes' : ''}</div>
+        <div class="meta">${escapeHtml(e.date_label || e.start || '')}${time ? ' · ' + escapeHtml(time) : ''}${attendees ? ' · ' + attendees + ' attendees' : ''}</div>
       </div>
       ${badge}
     </div>`;
