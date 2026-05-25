@@ -372,9 +372,9 @@
         <div class="row"><span class="k">CEO</span><span class="v" id="prof-ceo">—</span></div>
       </div>
       <div class="kv">
-        <div class="row"><span class="k">Sede</span><span class="v" id="prof-hq">—</span></div>
-        <div class="row"><span class="k">Empleados</span><span class="v" id="prof-employees">—</span></div>
-        <div class="row"><span class="k">Fecha de Valoración</span><span class="v gold" id="prof-valdate">—</span></div>
+        <div class="row"><span class="k">HQ</span><span class="v" id="prof-hq">—</span></div>
+        <div class="row"><span class="k">Employees</span><span class="v" id="prof-employees">—</span></div>
+        <div class="row"><span class="k">Valuation Date</span><span class="v gold" id="prof-valdate">—</span></div>
       </div>
     </div>
   </div>
@@ -405,7 +405,7 @@
   </div>
   <div class="g4" style="margin-bottom:20px">
     <div class="card">
-      <div class="clbl">Total Deuda</div>
+      <div class="clbl">Total Debt</div>
       <div class="cval" id="md-debt">—</div>
       <div class="csub" id="md-debt-sub">—</div>
     </div>
@@ -420,14 +420,14 @@
       <div class="csub" id="md-cash-sub">—</div>
     </div>
     <div class="card">
-      <div class="clbl">Deuda Neta</div>
+      <div class="clbl">Net Debt</div>
       <div class="cval" id="md-netdebt">—</div>
       <div class="csub" id="md-netdebt-sub">—</div>
     </div>
   </div>
 
   <!-- KEY FINANCIALS -->
-  <div class="slbl"><span id="kf-fy-label">Métricas Financieras Clave</span></div>
+  <div class="slbl"><span id="kf-fy-label">Key Financial Metrics</span></div>
   <div class="card" style="margin-bottom:20px;padding:22px 26px">
     <div class="g4" style="gap:0 28px;margin-bottom:14px">
       <div class="kv">
@@ -468,7 +468,7 @@
     <table class="fin-tbl" style="width:100%">
       <thead>
         <tr>
-          <th style="text-align:left;padding:10px 18px">Múltiplo</th>
+          <th style="text-align:left;padding:10px 18px">Multiple</th>
           <th style="text-align:right;padding:10px 18px">Snapshot <span style="font-weight:400;opacity:0.7;font-size:10px" id="mult-snap-date">(val date)</span></th>
           <th style="text-align:right;padding:10px 18px">Live <span style="font-weight:400;opacity:0.7;font-size:10px">(now)</span></th>
           <th style="text-align:right;padding:10px 18px">Δ Re-rating</th>
@@ -478,11 +478,11 @@
     </table>
   </div>
 
-  <!-- MARKET CONTEXT (CIO view: precio vs EPV + múltiplo histórico) -->
+  <!-- MARKET CONTEXT (CIO view: price vs EPV + historical multiple) -->
   <div class="slbl">Market Context<span id="mctx-flag" style="font-size:9px;font-weight:500;letter-spacing:0.15em;color:var(--gray-mid);margin-left:14px;text-transform:none">5Y · daily closes</span></div>
   <div class="g2" style="margin-bottom:24px">
     <div class="chart-card"><div class="clbl">Stock Price (5Y) vs EPV &amp; BUY Zone</div><canvas id="c-price"></canvas><div id="c-price-note" style="font-size:10px;color:var(--gray-mid);margin-top:8px;text-align:center">—</div></div>
-    <div class="chart-card"><div class="clbl">P/E Histórico (TTM proxy, 5Y)</div><canvas id="c-pe"></canvas><div id="c-pe-note" style="font-size:10px;color:var(--gray-mid);margin-top:8px;text-align:center">—</div></div>
+    <div class="chart-card"><div class="clbl">Historical P/E (TTM proxy, 5Y)</div><canvas id="c-pe"></canvas><div id="c-pe-note" style="font-size:10px;color:var(--gray-mid);margin-top:8px;text-align:center">—</div></div>
   </div>
 
   <!-- HISTORICAL CHARTS -->
@@ -521,29 +521,29 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
-     2b. SALES — Revenue por segmento, geografía, canal y sourcing
+     2b. SALES — Revenue by segment, geography, channel and sourcing
      ══════════════════════════════════════════════════════════ -->
 <div id="tab-sales" class="tab-content">
 
   <div class="slbl">Revenue Mix — FY2025 Snapshot</div>
   <div class="g2" style="margin-bottom:24px">
-    <div class="chart-card"><div class="clbl" id="clbl-sales-seg">Revenue por Segmento</div><canvas id="c-sales-seg"></canvas></div>
-    <div class="chart-card"><div class="clbl" id="clbl-sales-geo">Revenue por Geografía</div><canvas id="c-sales-geo"></canvas></div>
+    <div class="chart-card"><div class="clbl" id="clbl-sales-seg">Revenue by Segment</div><canvas id="c-sales-seg"></canvas></div>
+    <div class="chart-card"><div class="clbl" id="clbl-sales-geo">Revenue by Geography</div><canvas id="c-sales-geo"></canvas></div>
   </div>
 
-  <div class="slbl" id="slbl-sales-segment" style="margin-top:8px">Ventas por Segmento</div>
+  <div class="slbl" id="slbl-sales-segment" style="margin-top:8px">Sales by Segment</div>
   <div class="tbl-wrap" id="tbl-sales-segment"></div>
 
-  <div class="slbl" id="slbl-sales-geo" style="margin-top:20px">Ventas por Geografía</div>
+  <div class="slbl" id="slbl-sales-geo" style="margin-top:20px">Sales by Geography</div>
   <div class="tbl-wrap" id="tbl-sales-geo"></div>
 
   <div class="g2" style="margin-top:20px">
     <div>
-      <div class="slbl">Distribución por Canal (FY2025)</div>
+      <div class="slbl">Distribution by Channel (FY2025)</div>
       <div class="tbl-wrap" id="tbl-sales-channel"></div>
     </div>
     <div>
-      <div class="slbl" id="slbl-sales-sourcing">Sourcing de Manufactura (FY2025)</div>
+      <div class="slbl" id="slbl-sales-sourcing">Manufacturing Sourcing (FY2025)</div>
       <div class="tbl-wrap" id="tbl-sales-sourcing"></div>
     </div>
   </div>

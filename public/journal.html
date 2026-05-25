@@ -235,9 +235,9 @@
   .v32-table tbody tr:nth-child(odd) td{background:#fafaf7}
   .v32-table tbody tr:nth-child(even) td{background:#fff}
   .sem-cell{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.06em;color:#fff;padding:3px 9px;border-radius:2px;min-width:60px;text-align:center}
-  .sem-Verde,.sem-Validado,.sem-NoActivado,.sem-ThesisIntact{background:#1F5F3F}
-  .sem-Amarillo,.sem-Parcial,.sem-Debilitado,.sem-Watch,.sem-ThresholdsRecalibrated,.sem-ThesisEvolved{background:#B88B47}
-  .sem-Rojo,.sem-Roto,.sem-Activado,.sem-ThesisBroken{background:#7A1010}
+  .sem-Green,.sem-Verde,.sem-Validated,.sem-Validado,.sem-NotTriggered,.sem-NoActivado,.sem-ThesisIntact{background:#1F5F3F}
+  .sem-Yellow,.sem-Amarillo,.sem-Partial,.sem-Parcial,.sem-Weakened,.sem-Debilitado,.sem-Watch,.sem-ThresholdsRecalibrated,.sem-ThesisEvolved{background:#B88B47}
+  .sem-Red,.sem-Rojo,.sem-Broken,.sem-Roto,.sem-Triggered,.sem-Activado,.sem-ThesisBroken{background:#7A1010}
   .v32-pillar-title{font-weight:700;color:var(--navy);font-size:12px}
   .v32-pillar-evidence{font-size:11px;color:var(--gray-txt);margin-top:3px;line-height:1.5}
   .v32-section-meta{font-size:11px;color:var(--gray-mid);margin-bottom:6px;font-style:italic}
@@ -502,10 +502,10 @@
                 <label>Horizon</label>
                 <select id="ne-horizon">
                   <option value="">—</option>
-                  <option value="1-3 años">1-3 años</option>
-                  <option value="3-5 años">3-5 años</option>
-                  <option value="5+ años">5+ años</option>
-                  <option value="10+ años">10+ años</option>
+                  <option value="1-3 years">1-3 years</option>
+                  <option value="3-5 years">3-5 years</option>
+                  <option value="5+ years">5+ years</option>
+                  <option value="10+ years">10+ years</option>
                 </select>
               </div>
               <div class="form-row">
@@ -543,16 +543,16 @@
           <!-- 3) Executive Summary -->
           <div class="v32-section">
             <div class="v32-section-title">3 · Executive Summary</div>
-            <div class="v32-section-help">~250 words. Voz institucional. Sin emojis. Cifras específicas.</div>
+            <div class="v32-section-help">~250 words. Institutional voice. No emojis. Specific figures.</div>
             <div class="form-row">
-              <textarea id="ne-exec-summary" maxlength="12000" placeholder="Microsoft califica como Core Compounder de DCE Holdings..." style="min-height:140px"></textarea>
+              <textarea id="ne-exec-summary" maxlength="12000" placeholder="Microsoft qualifies as a DCE Holdings Core Compounder..." style="min-height:140px"></textarea>
             </div>
           </div>
 
           <!-- 4) Thesis Pillars -->
           <div class="v32-section">
             <div class="v32-section-title">4 · Thesis Pillars</div>
-            <div class="v32-section-help">3-7 pilares. Una línea cada uno: edge económico, moat, capital allocation, valuation, etc.</div>
+            <div class="v32-section-help">3-7 pillars. One line each: economic edge, moat, capital allocation, valuation, etc.</div>
             <div class="dyn-list" id="dl-pillars"></div>
             <button type="button" class="dyn-add" onclick="dynAdd('pillars')">+ Add pillar</button>
           </div>
@@ -560,16 +560,16 @@
           <!-- 5) Variant Perception -->
           <div class="v32-section">
             <div class="v32-section-title">5 · Variant Perception</div>
-            <div class="v32-section-help">¿En qué se equivoca el consenso? Lo que el mercado no está pricing.</div>
+            <div class="v32-section-help">Where is consensus wrong? What the market is not pricing in.</div>
             <div class="form-row">
-              <textarea id="ne-variant" maxlength="8000" placeholder="El consenso de sell-side modela X, pero nuestra view es Y porque..." style="min-height:100px"></textarea>
+              <textarea id="ne-variant" maxlength="8000" placeholder="Sell-side consensus models X, but our view is Y because..." style="min-height:100px"></textarea>
             </div>
           </div>
 
           <!-- 6) Catalysts (structured) -->
           <div class="v32-section">
             <div class="v32-section-title">6 · Catalysts (Structured)</div>
-            <div class="v32-section-help">3-5 catalizadores con timing. Reemplaza el campo Catalysts simple de arriba si está poblado.</div>
+            <div class="v32-section-help">3-5 catalysts with timing. Replaces the simple Catalysts field above when populated.</div>
             <div class="dyn-list" id="dl-catalysts"></div>
             <button type="button" class="dyn-add" onclick="dynAdd('catalysts')">+ Add catalyst</button>
           </div>
@@ -577,7 +577,7 @@
           <!-- 7) Failure Modes -->
           <div class="v32-section">
             <div class="v32-section-title">7 · Failure Modes (Pre-Mortem)</div>
-            <div class="v32-section-help">5-8 modos de falla con probabilidad y severidad. Del Thesis Breaker + Munger.</div>
+            <div class="v32-section-help">5-8 failure modes with probability and severity. From the Thesis Breaker + Munger.</div>
             <div class="dyn-list" id="dl-failure-modes"></div>
             <button type="button" class="dyn-add" onclick="dynAdd('failure-modes')">+ Add failure mode</button>
           </div>
@@ -585,7 +585,7 @@
           <!-- 8) Kill Criteria -->
           <div class="v32-section">
             <div class="v32-section-title">8 · Kill Criteria</div>
-            <div class="v32-section-help">Umbrales medibles que disparan revisión obligatoria de la tesis.</div>
+            <div class="v32-section-help">Measurable thresholds that trigger a mandatory thesis review.</div>
             <div class="dyn-list" id="dl-kill-criteria"></div>
             <button type="button" class="dyn-add" onclick="dynAdd('kill-criteria')">+ Add kill criterion</button>
           </div>
@@ -594,7 +594,7 @@
           <div class="v32-section">
             <div class="v32-section-title">9 · Final Recommendation</div>
             <div class="form-row">
-              <textarea id="ne-final-rec" maxlength="8000" placeholder="BUY — initiate position al X% del NAV con escalonamiento..." style="min-height:100px"></textarea>
+              <textarea id="ne-final-rec" maxlength="8000" placeholder="BUY — initiate position at X% of NAV with staged entries..." style="min-height:100px"></textarea>
             </div>
           </div>
 
@@ -602,7 +602,7 @@
           <div class="v32-section">
             <div class="v32-section-title">10 · Position Sizing Rationale</div>
             <div class="form-row">
-              <textarea id="ne-size-rationale" maxlength="8000" placeholder="Tamaño objetivo X% del NAV. Esto sitúa a [TICKER] en..." style="min-height:100px"></textarea>
+              <textarea id="ne-size-rationale" maxlength="8000" placeholder="Target size X% of NAV. This places [TICKER] within..." style="min-height:100px"></textarea>
             </div>
           </div>
 
@@ -848,7 +848,7 @@ function renderV32Block(r) {
   // Snapshot meta
   const metaParts = [];
   if (r.position_size_band) metaParts.push(escapeHtml(r.position_size_band));
-  if (r.conviction_level) metaParts.push('Convicción: <b>' + escapeHtml(r.conviction_level) + '</b>');
+  if (r.conviction_level) metaParts.push('Conviction: <b>' + escapeHtml(r.conviction_level) + '</b>');
   if (r.position_size_target_pct !== undefined && r.position_size_target_pct !== null && r.position_size_target_pct !== '') {
     const pct = Number(r.position_size_target_pct);
     const pctVal = pct < 1 ? pct * 100 : pct; // stored as fraction (0.060) or percent (6.0)
@@ -857,7 +857,7 @@ function renderV32Block(r) {
   if (irr5y !== undefined && irr5y !== null) {
     metaParts.push('Target IRR: <b>' + fmtPct(irr5y) + '</b>');
   }
-  if (r.investment_horizon) metaParts.push('Horizonte: <b>' + escapeHtml(r.investment_horizon) + '</b>');
+  if (r.investment_horizon) metaParts.push('Horizon: <b>' + escapeHtml(r.investment_horizon) + '</b>');
   const metaLine = metaParts.length
     ? `<div class="v32-section-meta">${metaParts.join(' &middot; ')}</div>`
     : '';
@@ -881,7 +881,7 @@ function renderV32Block(r) {
   // Pillars
   const pillarsHtml = pillars.length ? `
     <div class="field">
-      <div class="field-lbl">Tesis · ${pillars.length} pilares</div>
+      <div class="field-lbl">Thesis · ${pillars.length} pillars</div>
       ${pillars.map((p, i) => `
         <div style="margin:8px 0 12px">
           <div class="v32-pillar-title">${i + 1}. ${escapeHtml(p.title || p.pillar || '')}</div>
@@ -896,7 +896,7 @@ function renderV32Block(r) {
       <div class="field-lbl">Variant Perception</div>
       ${variantText ? `<div style="margin:6px 0;line-height:1.5">${escapeHtml(variantText)}</div>` : ''}
       ${variantPoints.length ? `<table class="v32-table" style="margin-top:6px">
-        <thead><tr><th style="width:25%">Área</th><th>Nuestra visión</th></tr></thead>
+        <thead><tr><th style="width:25%">Area</th><th>Our view</th></tr></thead>
         <tbody>
           ${variantPoints.map(e => `<tr><td style="font-weight:600;color:var(--navy)">${escapeHtml(e.area || '')}</td><td>${escapeHtml(e.view || '')}</td></tr>`).join('')}
         </tbody></table>` : ''}
@@ -923,9 +923,9 @@ function renderV32Block(r) {
   // KPI Framework
   const kpiHtml = kpis.length ? `
     <div class="field">
-      <div class="field-lbl">KPI Framework — semáforos</div>
+      <div class="field-lbl">KPI Framework — traffic lights</div>
       <table class="v32-table">
-        <thead><tr><th>KPI</th><th>Actual</th><th>Target</th><th>Estado</th></tr></thead>
+        <thead><tr><th>KPI</th><th>Actual</th><th>Target</th><th>Status</th></tr></thead>
         <tbody>
           ${kpis.map(k => `<tr>
             <td>${escapeHtml(k.kpi || k.metric || '')}</td>
@@ -950,9 +950,9 @@ function renderV32Block(r) {
   // Catalysts
   const catHtml = cats.length ? `
     <div class="field">
-      <div class="field-lbl">Catalizadores</div>
+      <div class="field-lbl">Catalysts</div>
       <table class="v32-table">
-        <thead><tr><th>Catalizador</th><th>Timing</th><th>Impacto</th></tr></thead>
+        <thead><tr><th>Catalyst</th><th>Timing</th><th>Impact</th></tr></thead>
         <tbody>
           ${cats.map(c => `<tr>
             <td style="font-weight:600;color:var(--navy)">${escapeHtml(c.catalyst || c.title || '')}</td>
@@ -968,7 +968,7 @@ function renderV32Block(r) {
     <div class="field">
       <div class="field-lbl">Failure Modes (Pre-Mortem)</div>
       <table class="v32-table">
-        <thead><tr><th>Failure Mode</th><th>Indicador</th><th>Probabilidad</th><th>Severidad</th></tr></thead>
+        <thead><tr><th>Failure Mode</th><th>Indicator</th><th>Probability</th><th>Severity</th></tr></thead>
         <tbody>
           ${fms.map(f => `<tr>
             <td style="font-weight:600;color:var(--navy)">${escapeHtml(f.failure_mode || f.title || '')}</td>
@@ -994,7 +994,7 @@ function renderV32Block(r) {
     <div class="field">
       <div class="field-lbl">Executive Summary &amp; Recommendation</div>
       ${r.executive_summary ? `<div style="margin:6px 0;line-height:1.5">${escapeHtml(r.executive_summary)}</div>` : ''}
-      ${r.final_recommendation ? `<div style="margin:6px 0"><b>Recomendación:</b> ${escapeHtml(r.final_recommendation)}</div>` : ''}
+      ${r.final_recommendation ? `<div style="margin:6px 0"><b>Recommendation:</b> ${escapeHtml(r.final_recommendation)}</div>` : ''}
       ${r.position_sizing_rationale ? `<div style="margin:6px 0;font-size:11px;color:var(--gray-txt)"><b>Position sizing:</b> ${escapeHtml(r.position_sizing_rationale)}</div>` : ''}
     </div>` : '';
 
@@ -2285,14 +2285,14 @@ function openReundForm(dueId) {
       <div class="form-grid-3" style="margin-top:10px">
         <div><label class="field-lbl">Days held</label><input type="number" id="reund-days-held" placeholder="147" class="v32-input"></div>
         <div><label class="field-lbl">Next review date</label><input type="date" id="reund-next-review" class="v32-input"></div>
-        <div><label class="field-lbl">Trigger document</label><input type="text" id="reund-trigger-doc" placeholder="10-Q presentado por…" class="v32-input"></div>
+        <div><label class="field-lbl">Trigger document</label><input type="text" id="reund-trigger-doc" placeholder="10-Q filed by…" class="v32-input"></div>
       </div>
     </div>
 
     <!-- §2 — Executive Summary -->
     <div class="v32-section" data-v32-num="2">
       <div class="v32-section-title">Executive Summary</div>
-      <textarea id="reund-exec-summary" rows="4" class="v32-textarea" placeholder="Síntesis del trimestre: pilares validados, KPIs principales, conclusión del comité…"></textarea>
+      <textarea id="reund-exec-summary" rows="4" class="v32-textarea" placeholder="Quarterly synthesis: pillars validated, key KPIs, committee conclusion…"></textarea>
     </div>
 
     <div id="reund-killmodes" class="field">
@@ -2301,8 +2301,8 @@ function openReundForm(dueId) {
     </div>
 
     <div id="reund-qmetrics" class="field" style="display:none">
-      <div class="field-lbl">Quarterly metrics snapshot (de este filing)</div>
-      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:6px">Captura el valor observado de cada métrica trimestral. Si no aplica este trimestre, déjalo vacío y anota por qué.</div>
+      <div class="field-lbl">Quarterly metrics snapshot (from this filing)</div>
+      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:6px">Capture the observed value for each quarterly metric. If not applicable this quarter, leave blank and note why.</div>
       <div id="reund-qmetrics-body"></div>
     </div>
 
@@ -2319,33 +2319,33 @@ function openReundForm(dueId) {
     <!-- §3 — What Changed Since Last Quarter -->
     <div class="v32-section" data-v32-num="3">
       <div class="v32-section-title">What Changed Since Last Quarter</div>
-      <label class="field-lbl">Eventos materiales del trimestre</label>
+      <label class="field-lbl">Material events of the quarter</label>
       <div id="reuw-dl-material-events" class="dyn-list"></div>
-      <button type="button" class="dyn-add" onclick="reuwDynAdd('material-events')">+ Add evento</button>
-      <label class="field-lbl" style="margin-top:14px">Decisiones tomadas durante el trimestre</label>
-      <textarea id="reund-decisions-taken" rows="2" class="v32-textarea" placeholder="E.g. Ninguna decisión de portfolio sobre [TICKER] durante el trimestre. Posición mantenida."></textarea>
+      <button type="button" class="dyn-add" onclick="reuwDynAdd('material-events')">+ Add event</button>
+      <label class="field-lbl" style="margin-top:14px">Decisions taken during the quarter</label>
+      <textarea id="reund-decisions-taken" rows="2" class="v32-textarea" placeholder="E.g. No portfolio decisions on [TICKER] during the quarter. Position held."></textarea>
     </div>
 
     <!-- §4 — Thesis Tracking -->
     <div class="v32-section" data-v32-num="4">
-      <div class="v32-section-title">Thesis Tracking — pilares del memo</div>
-      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:8px">Cada pilar de la tesis original (Memo §2) se evalúa contra la evidencia trimestral.</div>
+      <div class="v32-section-title">Thesis Tracking — memo pillars</div>
+      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:8px">Each pillar of the original thesis (Memo §2) is evaluated against the quarterly evidence.</div>
       <div id="reuw-dl-thesis-tracking" class="dyn-list"></div>
-      <button type="button" class="dyn-add" onclick="reuwDynAdd('thesis-tracking')">+ Add pilar</button>
+      <button type="button" class="dyn-add" onclick="reuwDynAdd('thesis-tracking')">+ Add pillar</button>
     </div>
 
     <!-- §5 — Pre-Mortem Tracking -->
     <div class="v32-section" data-v32-num="5">
       <div class="v32-section-title">Pre-Mortem Tracking — failure modes</div>
-      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:8px">Cada failure mode del Memo §10 se evalúa con la evidencia trimestral. Severidad Alta/Crítica activada escala al CIO.</div>
+      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:8px">Each failure mode from Memo §10 is evaluated against the quarterly evidence. High/Critical severity triggered escalates to the CIO.</div>
       <div id="reuw-dl-premortem-tracking" class="dyn-list"></div>
       <button type="button" class="dyn-add" onclick="reuwDynAdd('premortem-tracking')">+ Add failure mode</button>
     </div>
 
     <!-- §6 — KPI Dashboard -->
     <div class="v32-section" data-v32-num="6">
-      <div class="v32-section-title">KPI Dashboard — semáforos del trimestre</div>
-      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:8px">Los KPIs definidos en el Memo §6. Cualquier KPI en zona Roja por dos trimestres consecutivos dispara revisión de tesis.</div>
+      <div class="v32-section-title">KPI Dashboard — quarterly traffic lights</div>
+      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:8px">KPIs defined in Memo §6. Any KPI in the Red zone for two consecutive quarters triggers a thesis review.</div>
       <div id="reuw-dl-kpi-dashboard" class="dyn-list"></div>
       <button type="button" class="dyn-add" onclick="reuwDynAdd('kpi-dashboard')">+ Add KPI</button>
     </div>
@@ -2353,37 +2353,37 @@ function openReundForm(dueId) {
     <!-- §7 — Valuation Update -->
     <div class="v32-section" data-v32-num="7">
       <div class="v32-section-title">Valuation Update</div>
-      <label class="field-lbl">Componentes del Implied IRR (refresh)</label>
+      <label class="field-lbl">Implied IRR components (refresh)</label>
       <div id="reuw-dl-valuation-components" class="dyn-list"></div>
-      <button type="button" class="dyn-add" onclick="reuwDynAdd('valuation-components')">+ Add componente</button>
-      <label class="field-lbl" style="margin-top:14px">Conclusión de la valoración</label>
-      <textarea id="reund-valuation-conclusion" rows="2" class="v32-textarea" placeholder="E.g. Implied IRR forward se mantiene en 14.1%. Margen vs hurdle 410bps sigue robusto. Sin re-rating estructural."></textarea>
+      <button type="button" class="dyn-add" onclick="reuwDynAdd('valuation-components')">+ Add component</button>
+      <label class="field-lbl" style="margin-top:14px">Valuation conclusion</label>
+      <textarea id="reund-valuation-conclusion" rows="2" class="v32-textarea" placeholder="E.g. Forward implied IRR holds at 14.1%. Margin vs hurdle 410bps remains robust. No structural re-rating."></textarea>
     </div>
 
     <div class="field">
-      <div class="field-lbl">3. Outcome del re-underwriting *</div>
+      <div class="field-lbl">3. Re-underwriting outcome *</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
-        <label class="chip" style="cursor:pointer;border-left:3px solid #3a8c5b;padding:8px 10px"><input type="radio" name="reund-outcome" value="thesis_intact" checked onchange="onOutcomeChange()" style="margin-right:6px"><strong>Tesis intacta</strong><div style="font-size:11px;color:var(--gray-mid);margin-top:2px">Sigue todo igual. Solo se firma.</div></label>
-        <label class="chip" style="cursor:pointer;border-left:3px solid #c9a227;padding:8px 10px"><input type="radio" name="reund-outcome" value="thresholds_recalibrated" onchange="onOutcomeChange()" style="margin-right:6px"><strong>Thresholds recalibrados</strong><div style="font-size:11px;color:var(--gray-mid);margin-top:2px">Tesis sigue, ajustamos kill criteria.</div></label>
-        <label class="chip" style="cursor:pointer;border-left:3px solid #c2641a;padding:8px 10px"><input type="radio" name="reund-outcome" value="thesis_evolved" onchange="onOutcomeChange()" style="margin-right:6px"><strong>Tesis evolucionó</strong><div style="font-size:11px;color:var(--gray-mid);margin-top:2px">Cambio material; comité ratifica.</div></label>
-        <label class="chip" style="cursor:pointer;border-left:3px solid #9b2335;padding:8px 10px"><input type="radio" name="reund-outcome" value="thesis_broken" onchange="onOutcomeChange()" style="margin-right:6px"><strong>Tesis rota</strong><div style="font-size:11px;color:var(--gray-mid);margin-top:2px">Comité debe decidir SELL. Alerta automática.</div></label>
+        <label class="chip" style="cursor:pointer;border-left:3px solid #3a8c5b;padding:8px 10px"><input type="radio" name="reund-outcome" value="thesis_intact" checked onchange="onOutcomeChange()" style="margin-right:6px"><strong>Thesis intact</strong><div style="font-size:11px;color:var(--gray-mid);margin-top:2px">All unchanged. Sign and move on.</div></label>
+        <label class="chip" style="cursor:pointer;border-left:3px solid #c9a227;padding:8px 10px"><input type="radio" name="reund-outcome" value="thresholds_recalibrated" onchange="onOutcomeChange()" style="margin-right:6px"><strong>Thresholds recalibrated</strong><div style="font-size:11px;color:var(--gray-mid);margin-top:2px">Thesis holds, kill criteria adjusted.</div></label>
+        <label class="chip" style="cursor:pointer;border-left:3px solid #c2641a;padding:8px 10px"><input type="radio" name="reund-outcome" value="thesis_evolved" onchange="onOutcomeChange()" style="margin-right:6px"><strong>Thesis evolved</strong><div style="font-size:11px;color:var(--gray-mid);margin-top:2px">Material change; committee ratifies.</div></label>
+        <label class="chip" style="cursor:pointer;border-left:3px solid #9b2335;padding:8px 10px"><input type="radio" name="reund-outcome" value="thesis_broken" onchange="onOutcomeChange()" style="margin-right:6px"><strong>Thesis broken</strong><div style="font-size:11px;color:var(--gray-mid);margin-top:2px">Committee must decide SELL. Automatic alert.</div></label>
       </div>
     </div>
 
     <div class="field" id="reund-changesummary-wrap" style="display:none">
-      <div class="field-lbl">3a. Justificación del cambio *</div>
-      <textarea id="reund-changesummary" rows="3" style="width:100%;padding:10px;border:1px solid var(--rule);background:var(--white);font-family:inherit;font-size:13px;resize:vertical" placeholder="Por qué el contrato original cambia. Esta justificación queda inmutable en el audit trail."></textarea>
+      <div class="field-lbl">3a. Justification for the change *</div>
+      <textarea id="reund-changesummary" rows="3" style="width:100%;padding:10px;border:1px solid var(--rule);background:var(--white);font-family:inherit;font-size:13px;resize:vertical" placeholder="Why the original contract changes. This justification is immutable in the audit trail."></textarea>
     </div>
 
     <!-- §8.2 — Outcome justification (v3.2) -->
     <div class="field">
-      <div class="field-lbl">3c. Justificación del outcome (v3.2)</div>
-      <textarea id="reund-outcome-justification" rows="3" class="v32-textarea" placeholder="Por qué este outcome es el correcto: cuántos pilares validados, cuántos failure modes activados, margen vs hurdle, etc."></textarea>
+      <div class="field-lbl">3c. Outcome justification (v3.2)</div>
+      <textarea id="reund-outcome-justification" rows="3" class="v32-textarea" placeholder="Why this outcome is correct: how many pillars validated, how many failure modes triggered, margin vs hurdle, etc."></textarea>
     </div>
 
     <div class="field" id="reund-newthesis-wrap" style="display:none">
-      <div class="field-lbl">3b. Nueva thesis_summary (solo si tesis evolucionó, opcional)</div>
-      <textarea id="reund-newthesis" rows="3" style="width:100%;padding:10px;border:1px solid var(--rule);background:var(--white);font-family:inherit;font-size:13px;resize:vertical" placeholder="Si la tesis se reformula, escribe la versión nueva aquí (reemplaza la anterior en premortems.thesis_summary)."></textarea>
+      <div class="field-lbl">3b. New thesis_summary (only if thesis evolved, optional)</div>
+      <textarea id="reund-newthesis" rows="3" style="width:100%;padding:10px;border:1px solid var(--rule);background:var(--white);font-family:inherit;font-size:13px;resize:vertical" placeholder="If the thesis is reformulated, write the new version here (replaces the previous one in premortems.thesis_summary)."></textarea>
     </div>
 
     <div class="field">
@@ -2409,7 +2409,7 @@ function openReundForm(dueId) {
     <div class="v32-section" data-v32-num="8">
       <div class="v32-section-title">Next Actions</div>
       <div id="reuw-dl-next-actions" class="dyn-list"></div>
-      <button type="button" class="dyn-add" onclick="reuwDynAdd('next-actions')">+ Add acción</button>
+      <button type="button" class="dyn-add" onclick="reuwDynAdd('next-actions')">+ Add action</button>
     </div>
 
     <div class="field">
@@ -2638,20 +2638,20 @@ function renderReuwV32Block(entry, due) {
     });
   const wcHtml = (new10qRows.length || wc.decisions_taken || events.length) ? `
     <div class="field">
-      <div class="field-lbl">What Changed (datos del filing)</div>
+      <div class="field-lbl">What Changed (filing data)</div>
       ${new10qRows.length ? `<table class="v32-table"><tbody>
         ${new10qRows.map(row => `<tr><td style="width:55%;color:var(--navy)">${escapeHtml(row[0])}</td><td>${row[1]}</td></tr>`).join('')}
       </tbody></table>` : ''}
-      ${wc.decisions_taken ? `<div style="margin-top:10px;padding:8px 10px;background:#fff8ec;border-left:3px solid var(--gold);font-size:12px;line-height:1.5"><b>Decisiones tomadas:</b> ${escapeHtml(wc.decisions_taken)}</div>` : ''}
-      ${events.length ? `<div style="margin-top:10px"><div style="font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--navy);margin-bottom:4px">EVENTOS MATERIALES</div><ul style="margin:0 0 0 18px;padding:0">${events.map(e => `<li style="margin:3px 0;font-size:12px;line-height:1.5">${escapeHtml(e)}</li>`).join('')}</ul></div>` : ''}
+      ${wc.decisions_taken ? `<div style="margin-top:10px;padding:8px 10px;background:#fff8ec;border-left:3px solid var(--gold);font-size:12px;line-height:1.5"><b>Decisions taken:</b> ${escapeHtml(wc.decisions_taken)}</div>` : ''}
+      ${events.length ? `<div style="margin-top:10px"><div style="font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--navy);margin-bottom:4px">MATERIAL EVENTS</div><ul style="margin:0 0 0 18px;padding:0">${events.map(e => `<li style="margin:3px 0;font-size:12px;line-height:1.5">${escapeHtml(e)}</li>`).join('')}</ul></div>` : ''}
     </div>` : '';
 
   // Thesis tracking
   const ttHtml = tt.length ? `
     <div class="field">
-      <div class="field-lbl">Thesis Tracking — 5 pilares</div>
+      <div class="field-lbl">Thesis Tracking — 5 pillars</div>
       <table class="v32-table">
-        <thead><tr><th>Pilar</th><th>Estado</th><th>Evidencia este trimestre</th></tr></thead>
+        <thead><tr><th>Pillar</th><th>Status</th><th>Evidence this quarter</th></tr></thead>
         <tbody>
           ${tt.map(t => `<tr>
             <td style="font-weight:600;color:var(--navy)">${escapeHtml(t.pillar || t.title || '')}</td>
@@ -2667,7 +2667,7 @@ function renderReuwV32Block(entry, due) {
     <div class="field">
       <div class="field-lbl">Pre-Mortem Tracking — failure modes</div>
       <table class="v32-table">
-        <thead><tr><th>Failure Mode</th><th>Severidad</th><th>Estado</th><th>Evidencia</th></tr></thead>
+        <thead><tr><th>Failure Mode</th><th>Severity</th><th>Status</th><th>Evidence</th></tr></thead>
         <tbody>
           ${pt.map(f => `<tr>
             <td style="font-weight:600;color:var(--navy)">${escapeHtml(f.failure_mode || '')}</td>
@@ -2682,9 +2682,9 @@ function renderReuwV32Block(entry, due) {
   // KPI dashboard
   const kdHtml = kd.length ? `
     <div class="field">
-      <div class="field-lbl">KPI Dashboard — semáforos del trimestre</div>
+      <div class="field-lbl">KPI Dashboard — quarterly traffic lights</div>
       <table class="v32-table">
-        <thead><tr><th>KPI</th><th>Target</th><th>Q actual</th><th>Δ vs target</th><th>Estado</th></tr></thead>
+        <thead><tr><th>KPI</th><th>Target</th><th>Current Q</th><th>Δ vs target</th><th>Status</th></tr></thead>
         <tbody>
           ${kd.map(k => `<tr>
             <td>${escapeHtml(k.kpi || '')}</td>
@@ -2702,7 +2702,7 @@ function renderReuwV32Block(entry, due) {
     <div class="field">
       <div class="field-lbl">Valuation Refresh</div>
       ${vrComps.length ? `<table class="v32-table">
-        <thead><tr><th>Componente</th><th>Memo original</th><th>Q actual</th><th>Δ</th></tr></thead>
+        <thead><tr><th>Component</th><th>Original memo</th><th>Current Q</th><th>Δ</th></tr></thead>
         <tbody>
           ${vrComps.map(c => `<tr>
             <td style="color:var(--navy)">${escapeHtml(c.component || '')}</td>
@@ -2712,7 +2712,7 @@ function renderReuwV32Block(entry, due) {
           </tr>`).join('')}
         </tbody>
       </table>` : ''}
-      ${vr.conclusion ? `<div style="margin-top:8px;padding:8px 10px;background:#f3ead7;border-left:3px solid var(--gold);font-size:12px;line-height:1.5"><b>Conclusión:</b> ${escapeHtml(vr.conclusion)}</div>` : ''}
+      ${vr.conclusion ? `<div style="margin-top:8px;padding:8px 10px;background:#f3ead7;border-left:3px solid var(--gold);font-size:12px;line-height:1.5"><b>Conclusion:</b> ${escapeHtml(vr.conclusion)}</div>` : ''}
     </div>` : '';
 
   // Next actions
@@ -2733,7 +2733,7 @@ function renderReundDetail(data) {
   const due = data.due || {};
   const entry = data.entry || null;
   const rev = data.revision || null;
-  document.getElementById('drawer-title').textContent = (due.ticker || '') + ' · Re-underwriting (firmado)';
+  document.getElementById('drawer-title').textContent = (due.ticker || '') + ' · Re-underwriting (signed)';
 
   // v3.2 path — entirely different render
   if (entry && entry.framework_version === 'v3.2') {
@@ -2743,7 +2743,7 @@ function renderReundDetail(data) {
         <div><div class="k">Filing</div><div class="v">${escapeHtml(due.doc_type || '')}</div></div>
         <div><div class="k">Period end</div><div class="v">${fmtDate(due.period_end)}</div></div>
         <div><div class="k">Filed</div><div class="v" style="font-size:12px">${fmtDate(due.filed_at)}</div></div>
-        <div><div class="k">Cerrado</div><div class="v" style="font-size:12px">${fmtDate(due.completed_at)}</div></div>
+        <div><div class="k">Closed</div><div class="v" style="font-size:12px">${fmtDate(due.completed_at)}</div></div>
       </div>
       ${due.source_url ? `<div class="field"><a href="${escapeHtml(due.source_url)}" target="_blank" rel="noopener" style="color:var(--gold);font-size:12px">View filing on EDGAR →</a></div>` : ''}
       <div class="field">
@@ -2751,9 +2751,9 @@ function renderReundDetail(data) {
       </div>
       ${renderReuwV32Block(entry, due)}
       <div class="field" style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <button onclick="closeDrawer()" style="background:var(--white);color:var(--navy);border:1px solid var(--navy);padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600">Cerrar</button>
-        <button onclick="exportReundPdf(${due.id})" style="background:var(--gold);color:var(--white);border:none;padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600">Exportar PDF</button>
-        <button onclick="undoReund(${due.id}, '${escapeHtml(due.ticker || '')}', '${escapeHtml(due.doc_type || '')}', '${fmtDate(due.period_end)}')" style="background:var(--white);color:var(--red);border:1px solid var(--red);padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600;margin-left:auto">Deshacer</button>
+        <button onclick="closeDrawer()" style="background:var(--white);color:var(--navy);border:1px solid var(--navy);padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600">Close</button>
+        <button onclick="exportReundPdf(${due.id})" style="background:var(--gold);color:var(--white);border:none;padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600">Export PDF</button>
+        <button onclick="undoReund(${due.id}, '${escapeHtml(due.ticker || '')}', '${escapeHtml(due.doc_type || '')}', '${fmtDate(due.period_end)}')" style="background:var(--white);color:var(--red);border:1px solid var(--red);padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600;margin-left:auto">Undo</button>
         <span id="reund-detail-msg" style="font-size:12px;width:100%;margin-top:6px"></span>
       </div>
     `;
@@ -2761,10 +2761,10 @@ function renderReundDetail(data) {
   }
 
   const ocStyles = {
-    thesis_intact:           { bg: '#e3f4ea', fg: '#1e6c3a', label: 'Tesis intacta' },
-    thresholds_recalibrated: { bg: '#fff3cf', fg: '#7c5d10', label: 'Thresholds recalibrados' },
-    thesis_evolved:          { bg: '#fde3cf', fg: '#7a3a08', label: 'Tesis evolucionó' },
-    thesis_broken:           { bg: '#fbd7dd', fg: '#7a1424', label: 'Tesis rota' },
+    thesis_intact:           { bg: '#e3f4ea', fg: '#1e6c3a', label: 'Thesis intact' },
+    thresholds_recalibrated: { bg: '#fff3cf', fg: '#7c5d10', label: 'Thresholds recalibrated' },
+    thesis_evolved:          { bg: '#fde3cf', fg: '#7a3a08', label: 'Thesis evolved' },
+    thesis_broken:           { bg: '#fbd7dd', fg: '#7a1424', label: 'Thesis broken' },
   };
   const oc = due.outcome;
   const ocBadge = oc && ocStyles[oc]
@@ -2832,28 +2832,28 @@ function renderReundDetail(data) {
 
     ${due.outcome_notes ? `
     <div class="field">
-      <div class="field-lbl">Justificación del cambio</div>
+      <div class="field-lbl">Justification for the change</div>
       <div class="field-val" style="white-space:pre-wrap;background:#fff8ec;padding:10px;border-left:3px solid var(--gold);font-size:13px">${escapeHtml(due.outcome_notes)}</div>
     </div>` : ''}
 
     ${rev ? `
     <div class="field" style="border-top:1px solid var(--rule);padding-top:14px;margin-top:14px">
-      <div class="slbl" style="margin-bottom:8px">Revisión creada</div>
+      <div class="slbl" style="margin-bottom:8px">Revision created</div>
       <div class="meta-grid">
-        <div><div class="k">Versión</div><div class="v">V${rev.version_num}</div></div>
-        <div><div class="k">Tipo</div><div class="v" style="font-size:12px">${escapeHtml(rev.change_type || '—')}</div></div>
-        <div><div class="k">Comité</div><div class="v" style="font-size:12px">${rev.ratified_by_committee ? 'Ratificado' : 'Pendiente'}</div></div>
+        <div><div class="k">Version</div><div class="v">V${rev.version_num}</div></div>
+        <div><div class="k">Type</div><div class="v" style="font-size:12px">${escapeHtml(rev.change_type || '—')}</div></div>
+        <div><div class="k">Committee</div><div class="v" style="font-size:12px">${rev.ratified_by_committee ? 'Ratified' : 'Pending'}</div></div>
       </div>
       ${rev.thesis_summary ? `<div class="field-val" style="white-space:pre-wrap;background:var(--white);padding:10px;border:1px solid var(--rule);font-size:12px;margin-top:8px"><strong>Thesis (snapshot V${rev.version_num}):</strong><br>${escapeHtml(rev.thesis_summary)}</div>` : ''}
       <div style="margin-top:10px;font-size:11px">
-        <a href="/${(due.ticker || '').toLowerCase()}?tab=premortem" style="color:var(--gold)">Ver historial completo en el dashboard →</a>
+        <a href="/${(due.ticker || '').toLowerCase()}?tab=premortem" style="color:var(--gold)">View full history in the dashboard →</a>
       </div>
     </div>` : ''}
 
     <div class="field" style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <button onclick="closeDrawer()" style="background:var(--white);color:var(--navy);border:1px solid var(--navy);padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600">Cerrar</button>
-      <button onclick="exportReundPdf(${due.id})" style="background:var(--gold);color:var(--white);border:none;padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600">Exportar PDF</button>
-      <button onclick="undoReund(${due.id}, '${escapeHtml(due.ticker || '')}', '${escapeHtml(due.doc_type || '')}', '${fmtDate(due.period_end)}')" style="background:var(--white);color:var(--red);border:1px solid var(--red);padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600;margin-left:auto">Deshacer</button>
+      <button onclick="closeDrawer()" style="background:var(--white);color:var(--navy);border:1px solid var(--navy);padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600">Close</button>
+      <button onclick="exportReundPdf(${due.id})" style="background:var(--gold);color:var(--white);border:none;padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600">Export PDF</button>
+      <button onclick="undoReund(${due.id}, '${escapeHtml(due.ticker || '')}', '${escapeHtml(due.doc_type || '')}', '${fmtDate(due.period_end)}')" style="background:var(--white);color:var(--red);border:1px solid var(--red);padding:9px 18px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;font-weight:600;margin-left:auto">Undo</button>
       <span id="reund-detail-msg" style="font-size:12px;width:100%;margin-top:6px"></span>
     </div>
   `;
@@ -2893,7 +2893,7 @@ window.renderQuarterlyMetricsReadonly = renderQuarterlyMetricsReadonly;
 // We pass the admin token via _tok so a normal browser download works.
 function exportReundPdf(dueId) {
   const tk = tokenAdmin();
-  if (!tk) { alert('Sign in as admin para exportar.'); return; }
+  if (!tk) { alert('Sign in as admin to export.'); return; }
   const url = '/api/reunderwriting-pdf?due_id=' + encodeURIComponent(dueId) + '&_tok=' + encodeURIComponent(tk);
   window.open(url, '_blank');
 }
@@ -2903,19 +2903,19 @@ window.exportReundPdf = exportReundPdf;
 // premortem version, returns the due to 'pending'.
 async function undoReund(dueId, ticker, docType, periodEnd) {
   const tk = tokenAdmin();
-  if (!tk) { alert('Sign in as admin para deshacer.'); return; }
+  if (!tk) { alert('Sign in as admin to undo.'); return; }
   const ok = confirm(
-    'DESHACER re-underwriting de ' + ticker + ' \u00b7 ' + docType + ' \u00b7 period ' + periodEnd + '?\n\n' +
-    'Esto va a:\n' +
-    '  \u2022 Borrar el entry firmado (las 3 preguntas + action)\n' +
-    '  \u2022 Si se cre\u00f3 una revisi\u00f3n del pre-mortem, borrarla y revertir la versi\u00f3n\n' +
-    '  \u2022 Devolver el due al estado "pending" para volver a firmarlo\n\n' +
-    'Esta acci\u00f3n no se puede revertir desde el cockpit.'
+    'UNDO re-underwriting for ' + ticker + ' \u00b7 ' + docType + ' \u00b7 period ' + periodEnd + '?\n\n' +
+    'This will:\n' +
+    '  \u2022 Delete the signed entry (3 questions + action)\n' +
+    '  \u2022 If a pre-mortem revision was created, delete it and revert the version\n' +
+    '  \u2022 Return the due to "pending" status to be re-signed\n\n' +
+    'This action cannot be reversed from the cockpit.'
   );
   if (!ok) return;
 
   const msg = document.getElementById('reund-detail-msg');
-  if (msg) { msg.textContent = 'Deshaciendo\u2026'; msg.style.color = 'var(--gray-mid)'; }
+  if (msg) { msg.textContent = 'Undoing\u2026'; msg.style.color = 'var(--gray-mid)'; }
   try {
     const r = await fetch('/api/reunderwriting-undo', {
       method: 'POST',
@@ -2927,7 +2927,7 @@ async function undoReund(dueId, ticker, docType, periodEnd) {
       if (msg) { msg.textContent = 'Error: ' + (data.error || 'HTTP ' + r.status); msg.style.color = 'var(--red)'; }
       return;
     }
-    if (msg) { msg.textContent = 'Re-underwriting deshecho. Refrescando\u2026'; msg.style.color = 'var(--green)'; }
+    if (msg) { msg.textContent = 'Re-underwriting undone. Refreshing\u2026'; msg.style.color = 'var(--green)'; }
     setTimeout(() => {
       closeDrawer();
       loadReunderwriting();
@@ -2967,20 +2967,20 @@ window.collectQuarterlyMetrics = collectQuarterlyMetrics;
 // ============================================================
 const REUW_DYN_CONFIG = {
   'thesis-tracking': {
-    label: 'Pilar',
+    label: 'Pillar',
     fields: [
-      { id: 'pillar', type: 'textarea', placeholder: 'Pilar de la tesis (Memo §2)…' },
-      { id: 'status', type: 'select', label: 'Estado', meta: true, options: ['', 'Validado', 'Parcial', 'Watch', 'Debilitado', 'Roto'] },
-      { id: 'evidence', type: 'text', label: 'Evidencia trimestral', placeholder: '27.8% YoY this Q…', meta: true }
+      { id: 'pillar', type: 'textarea', placeholder: 'Thesis pillar (Memo §2)…' },
+      { id: 'status', type: 'select', label: 'Status', meta: true, options: ['', 'Validated', 'Partial', 'Watch', 'Weakened', 'Broken'] },
+      { id: 'evidence', type: 'text', label: 'Quarterly evidence', placeholder: '27.8% YoY this Q…', meta: true }
     ]
   },
   'premortem-tracking': {
     label: 'Failure mode',
     fields: [
       { id: 'failure_mode', type: 'textarea', placeholder: 'Failure mode (Memo §10)…' },
-      { id: 'severity', type: 'select', label: 'Severidad', meta: true, options: ['', 'Baja', 'Media', 'Alta', 'Crítica'] },
-      { id: 'status', type: 'select', label: 'Estado', meta: true, options: ['', 'No activado', 'Watch', 'Activado'] },
-      { id: 'evidence', type: 'text', label: 'Evidencia', placeholder: 'Datos del trimestre…', meta: true }
+      { id: 'severity', type: 'select', label: 'Severity', meta: true, options: ['', 'Low', 'Medium', 'High', 'Critical'] },
+      { id: 'status', type: 'select', label: 'Status', meta: true, options: ['', 'Not triggered', 'Watch', 'Triggered'] },
+      { id: 'evidence', type: 'text', label: 'Evidence', placeholder: 'Quarterly data…', meta: true }
     ]
   },
   'kpi-dashboard': {
@@ -2988,30 +2988,30 @@ const REUW_DYN_CONFIG = {
     fields: [
       { id: 'kpi', type: 'text', placeholder: 'KPI (e.g. Azure revenue YoY %)' },
       { id: 'target', type: 'text', label: 'Target', placeholder: '≥ 25%', meta: true },
-      { id: 'current_q', type: 'text', label: 'Q actual', placeholder: '27.8%', meta: true },
+      { id: 'current_q', type: 'text', label: 'Current Q', placeholder: '27.8%', meta: true },
       { id: 'delta_vs_target', type: 'text', label: 'Δ vs target', placeholder: '+280bps', meta: true },
-      { id: 'semaphore', type: 'select', label: 'Semáforo', meta: true, options: ['', 'Verde', 'Amarillo', 'Rojo'] }
+      { id: 'semaphore', type: 'select', label: 'Traffic light', meta: true, options: ['', 'Green', 'Yellow', 'Red'] }
     ]
   },
   'valuation-components': {
-    label: 'Componente',
+    label: 'Component',
     fields: [
-      { id: 'component', type: 'text', placeholder: 'Componente (e.g. Earnings growth 5-yr CAGR)' },
-      { id: 'memo_original', type: 'text', label: 'Memo original', placeholder: '+13.5%', meta: true },
-      { id: 'current_q1_2026', type: 'text', label: 'Q actual', placeholder: '+13.4%', meta: true },
+      { id: 'component', type: 'text', placeholder: 'Component (e.g. Earnings growth 5-yr CAGR)' },
+      { id: 'memo_original', type: 'text', label: 'Original memo', placeholder: '+13.5%', meta: true },
+      { id: 'current_q1_2026', type: 'text', label: 'Current Q', placeholder: '+13.4%', meta: true },
       { id: 'delta', type: 'text', label: 'Δ', placeholder: '−10bps', meta: true }
     ]
   },
   'material-events': {
-    label: 'Evento',
+    label: 'Event',
     fields: [
-      { id: 'text', type: 'textarea', placeholder: 'Evento material del trimestre (fecha + descripción)' }
+      { id: 'text', type: 'textarea', placeholder: 'Material event of the quarter (date + description)' }
     ]
   },
   'next-actions': {
-    label: 'Acción',
+    label: 'Action',
     fields: [
-      { id: 'text', type: 'textarea', placeholder: 'Próxima acción (e.g. Monitorear FCF margin; si Q2 sigue Amarillo, escalar al CIO)' }
+      { id: 'text', type: 'textarea', placeholder: 'Next action (e.g. Monitor FCF margin; if Q2 stays Yellow, escalate to CIO)' }
     ]
   }
 };
@@ -3276,10 +3276,10 @@ function severityLabelFromPct(pct) {
   if (pct == null) return '';
   const n = Number(pct);
   if (!Number.isFinite(n)) return '';
-  if (n >= 80) return 'Crítica';
-  if (n >= 60) return 'Alta';
-  if (n >= 30) return 'Media';
-  return 'Baja';
+  if (n >= 80) return 'Critical';
+  if (n >= 60) return 'High';
+  if (n >= 30) return 'Medium';
+  return 'Low';
 }
 
 // ---------- Collect v3.2 payload from re-underwriting drawer ----------
@@ -3449,12 +3449,12 @@ async function submitReund() {
     return;
   }
   if (outcome !== 'thesis_intact' && changeSummary.trim().length < 10) {
-    msg.textContent = 'Justificación del cambio requerida (mín 10 caracteres) cuando el outcome no es "intacta".';
+    msg.textContent = 'Justification for the change required (min 10 characters) when the outcome is not "intact".';
     msg.style.color = 'var(--red)';
     return;
   }
   if (outcome === 'thesis_broken') {
-    if (!confirm('Vas a marcar la tesis como ROTA.\n\nEsto:\n- Crea una revisión inmutable del pre-mortem\n- Envía alerta a Slack y email al comité\n- NO ejecuta venta automática\n\n¿Confirmas?')) {
+    if (!confirm('You are about to mark the thesis as BROKEN.\n\nThis will:\n- Create an immutable pre-mortem revision\n- Send Slack alert and email to the committee\n- NOT execute an automatic sale\n\nConfirm?')) {
       msg.textContent = '';
       return;
     }
@@ -3464,7 +3464,7 @@ async function submitReund() {
   const derivedType = derivedTypeFromAction(action);
   if (derivedType) {
     const tk = (reundState && reundState.current && reundState.current.ticker) || '';
-    if (!confirm('Este re-underwriting también creará una entrada ' + derivedType + ' en el Decision Journal' + (tk ? ' para ' + tk : '') + ',\nenlazada a esta revisión.\n\n¿Confirmas?')) {
+    if (!confirm('This re-underwriting will also create a ' + derivedType + ' entry in the Decision Journal' + (tk ? ' for ' + tk : '') + ',\nlinked to this revision.\n\nConfirm?')) {
       msg.textContent = '';
       btn.disabled = false;
       return;

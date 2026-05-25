@@ -269,8 +269,8 @@ function renderGate() {
     <div class="gate">
       <div class="slbl" style="justify-content:center">DCE Holdings — Investment Office</div>
       <h2>Workflow</h2>
-      <p>Acceso restringido. Inicia sesión con tu cuenta DCE para acceder al pipeline.</p>
-      <button class="gh-btn" onclick="window.dceAuth.openLoginModal()">Iniciar sesión</button>
+      <p>Restricted access. Sign in with your DCE account to access the pipeline.</p>
+      <button class="gh-btn" onclick="window.dceAuth.openLoginModal()">Sign in</button>
     </div>
   `;
 }
@@ -304,7 +304,7 @@ function renderApp() {
   main.innerHTML = `
     <div class="slbl">DCE Holdings — Investment Office</div>
     <h1>Workflow</h1>
-    <p class="subtitle">Drag cards between stages. Click a card to view notes and comments. Sync vía Supabase — multi-usuario en tiempo real.</p>
+    <p class="subtitle">Drag cards between stages. Click a card to view notes and comments. Synced via Supabase — multi-user in real time.</p>
 
     <div id="prefill-slot"></div>
 
@@ -444,7 +444,7 @@ async function addCard() {
 async function deleteCard(id) {
   const c = pipeline.find(x => x.id === id);
   if (!c) return;
-  if (!confirm(`¿Eliminar ${c.ticker} del pipeline?`)) return;
+  if (!confirm(`Remove ${c.ticker} from the pipeline?`)) return;
 
   try {
     await api(`/api/admin/pipeline-cards?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
@@ -545,19 +545,19 @@ function renderModal() {
     <div class="modal-section">
       <h4>Note</h4>
       <textarea class="note-edit" id="note-edit">${esc(c.note || '')}</textarea>
-      <button class="save-note" id="save-note-btn" onclick="saveNote()">Guardar nota</button>
+      <button class="save-note" id="save-note-btn" onclick="saveNote()">Save note</button>
     </div>
 
     <div class="modal-section">
       <h4>Comments (${comments.length})</h4>
       <div class="comments-list" id="comments-list">
         ${comments.length === 0
-          ? `<div class="no-comments">Sin comentarios todavía. Sé el primero.</div>`
+          ? `<div class="no-comments">No comments yet. Be the first.</div>`
           : comments.map(commentHTML).join('')}
       </div>
       <div class="comment-form">
-        <textarea id="new-comment" placeholder="Escribe un comentario…"></textarea>
-        <button onclick="addComment()">Enviar</button>
+        <textarea id="new-comment" placeholder="Write a comment…"></textarea>
+        <button onclick="addComment()">Send</button>
       </div>
     </div>
   `;
@@ -575,7 +575,7 @@ function commentHTML(c) {
           <span class="when">${fmtDateTime(c.created_at)}</span>
         </div>
         <div class="comment-text">${esc(c.body)}</div>
-        ${canDelete ? `<button class="comment-del" onclick="deleteComment('${c.id}')">Eliminar</button>` : ''}
+        ${canDelete ? `<button class="comment-del" onclick="deleteComment('${c.id}')">Delete</button>` : ''}
       </div>
     </div>
   `;
@@ -595,9 +595,9 @@ async function saveNote() {
     c.note = (data && data.note !== undefined) ? data.note : (newNote || null);
 
     const btn = document.getElementById('save-note-btn');
-    btn.textContent = '✓ Guardado';
+    btn.textContent = '✓ Saved';
     btn.classList.add('saved');
-    setTimeout(() => { btn.textContent = 'Guardar nota'; btn.classList.remove('saved'); }, 1500);
+    setTimeout(() => { btn.textContent = 'Save note'; btn.classList.remove('saved'); }, 1500);
     renderBoard();
   } catch (e) {
     alert('Error: ' + e.message);
@@ -626,7 +626,7 @@ async function addComment() {
 }
 
 async function deleteComment(id) {
-  if (!confirm('¿Eliminar este comentario?')) return;
+  if (!confirm('Delete this comment?')) return;
   try {
     await api(`/api/admin/pipeline-comments?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
     commentsByCard[openCardId] = (commentsByCard[openCardId] || []).filter(c => c.id !== id);

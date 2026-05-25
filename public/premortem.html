@@ -482,8 +482,8 @@
         const cfg = fm.trigger_config || {};
         const metric = cfg.metric || fm.failure_mode;
         const thr = cfg.threshold_pct != null ? `${cfg.operator || '<'} ${cfg.threshold_pct}` : '\u2014';
-        const consec = cfg.consecutive_quarters > 1 ? ` por ${cfg.consecutive_quarters}Q consecutivos` : '';
-        evidence = `${metric}: aún no se ha capturado este trimestre. Threshold ${thr}${consec}. Se actualiza cuando el comité firma el re-underwriting del próximo 10-K/10-Q.`;
+        const consec = cfg.consecutive_quarters > 1 ? ` for ${cfg.consecutive_quarters} consecutive quarters` : '';
+        evidence = `${metric}: not yet captured this quarter. Threshold ${thr}${consec}. Updated when the committee signs the next 10-K/10-Q re-underwriting.`;
       } else {
         evidence = 'No evaluation recorded yet.';
       }

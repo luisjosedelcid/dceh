@@ -163,7 +163,7 @@
     const u = JSON.parse(raw);
     const role = (u && u.role) ? u.role : 'admin'; // legacy sessions = admin
     if (role !== 'admin') {
-      alert('Acceso restringido: Performance solo está disponible para administradores.');
+      alert('Restricted access: Performance is only available to administrators.');
       window.location.replace('/');
     }
   } catch(e) { /* ignore */ }
@@ -229,17 +229,17 @@
       <!-- IPS Bandas panel -->
       <div class="ips-card" id="ips-bands-card" style="display:none">
         <div class="ips-head">
-          Bandas IPS — Asignación táctica (§3.5–3.7)
-          <span style="font-size:9px;font-weight:400;opacity:0.7">Lectura al último NAV</span>
+          IPS bands — Tactical allocation (§3.5–3.7)
+          <span style="font-size:9px;font-weight:400;opacity:0.7">As of last NAV</span>
         </div>
-        <div class="ips-note">Benchmark IPS §4.8: MSCI World Quality NR (proxy IWQU.L). Régimen transitorio reconocido por IPS §3.7.</div>
+        <div class="ips-note">IPS benchmark §4.8: MSCI World Quality NR (proxy IWQU.L). Transitional regime acknowledged by IPS §3.7.</div>
         <table class="ips-bands-table">
           <thead>
             <tr>
-              <th>Componente</th>
-              <th class="right">Banda</th>
-              <th class="right">Lectura</th>
-              <th>Estado</th>
+              <th>Component</th>
+              <th class="right">Band</th>
+              <th class="right">Reading</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody id="ips-bands-tbody"></tbody>
@@ -271,7 +271,7 @@
         <div class="mini-stat"><div class="mini-label">Cash (USD)</div><div class="mini-value" id="st-cash">—</div></div>
         <div class="mini-stat"><div class="mini-label">Market value</div><div class="mini-value" id="st-mv">—</div></div>
         <div class="mini-stat" title="Dividends and interest already credited to the account during the period."><div class="mini-label">Dividends + interest (received)</div><div class="mini-value" id="st-income">—</div></div>
-        <div class="mini-stat" title="Estimated dividends and interest yet to be received this year. Requires forward dividend yield per holding + cash sweep rate (pending data source)."><div class="mini-label">Dividends + interest (pending)</div><div class="mini-value" id="st-income-pending" style="color:var(--gray-mid);font-style:italic;font-size:14px">Pendiente</div></div>
+        <div class="mini-stat" title="Estimated dividends and interest yet to be received this year. Requires forward dividend yield per holding + cash sweep rate (pending data source)."><div class="mini-label">Dividends + interest (pending)</div><div class="mini-value" id="st-income-pending" style="color:var(--gray-mid);font-style:italic;font-size:14px">Pending</div></div>
         <div class="mini-stat"><div class="mini-label">Realized P&amp;L</div><div class="mini-value" id="st-realized">—</div></div>
         <div class="mini-stat"><div class="mini-label">Unrealized P&amp;L</div><div class="mini-value" id="st-unrealized">—</div></div>
         <div class="mini-stat"><div class="mini-label">Withholding tax</div><div class="mini-value" id="st-tax">—</div></div>
@@ -726,7 +726,7 @@ function renderPendingIncome(p){
   const el = document.getElementById('st-income-pending');
   if (!el) return;
   if (!p || typeof p.total_pending_usd !== 'number') {
-    el.textContent = 'Pendiente';
+    el.textContent = 'Pending';
     el.style.color = 'var(--gray-mid)';
     el.style.fontStyle = 'italic';
     el.style.fontSize = '14px';

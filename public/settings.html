@@ -367,8 +367,8 @@
       <div>
         <div style="font-size:13px;color:var(--ink);font-weight:600;margin-bottom:4px">Discipline gate thresholds</div>
         <div style="font-size:11px;color:var(--gray-mid);max-width:680px;line-height:1.5">
-          Estos valores controlan los 5 gates del Cockpit. Cambios aplican inmediatamente al próximo refresh del Cockpit.
-          Porcentajes en formato decimal (0.10 = 10%). Días en números enteros.
+          These values control the 5 Cockpit gates. Changes apply on the next Cockpit refresh.
+          Percentages in decimal format (0.10 = 10%). Days as integers.
         </div>
       </div>
       <button class="btn ghost" type="button" id="btn-discipline-refresh" style="font-size:11px">Refresh</button>
@@ -430,7 +430,7 @@ const USER_KEY = 'dce_admin_user';
     // Backwards-compat: legacy sessions without role are treated as admin
     const role = (u && u.role) ? u.role : 'admin';
     if (role !== 'admin') {
-      alert('Acceso restringido: el Reporting Hub solo está disponible para administradores.');
+      alert('Restricted access: the Reporting Hub is only available to administrators.');
       window.location.href = '/';
     }
   } catch (e) { /* ignore */ }
@@ -781,7 +781,7 @@ function renderDisciplineRules(rules) {
     const step = isPct ? '0.01' : '1';
     const min = isPct ? '0.01' : '1';
     const max = isPct ? '1' : '3650';
-    const placeholder = isPct ? '0.10 = 10%' : (isDays ? 'días' : '');
+    const placeholder = isPct ? '0.10 = 10%' : (isDays ? 'days' : '');
     const updatedBy = rule.updated_by ? '<div style="font-size:10px;color:var(--gray-mid);margin-top:2px">Updated by ' + escapeHtml(rule.updated_by) + ' · ' + new Date(rule.updated_at).toLocaleDateString() + '</div>' : '';
     return (
       '<div style="display:grid;grid-template-columns:1fr 140px 80px 100px;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--rule)">' +
