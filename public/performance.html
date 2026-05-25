@@ -152,6 +152,23 @@
 <script src="/dce-auth.js" defer></script>
 </head>
 <body data-dce-auth="manual">
+<script>
+// ── Role gate ────────────────────────────────────────────────────────
+// Performance contains portfolio P&L and is restricted to role='admin'.
+// Analysts and viewers are redirected to home.
+(function enforceRoleGate(){
+  try {
+    const raw = localStorage.getItem('dce_admin_user');
+    if (!raw) return; // not signed in — fall through to normal flow
+    const u = JSON.parse(raw);
+    const role = (u && u.role) ? u.role : 'admin'; // legacy sessions = admin
+    if (role !== 'admin') {
+      alert('Acceso restringido: Performance solo está disponible para administradores.');
+      window.location.replace('/');
+    }
+  } catch(e) { /* ignore */ }
+})();
+</script>
 
 <header>
   <div class="logo">DCE <span>Holdings</span></div>
