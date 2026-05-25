@@ -760,12 +760,18 @@ async function saveFolderModal() {
   btn.setAttribute('disabled', '1');
   btn.textContent = 'Saving…';
 
+  // Safety net: hard timeout so the button never stays locked indefinitely
+  // (e.g. on CORS preflight stalls behind a 307 to www.).
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
   try {
     if (modalState.mode === 'create') {
       const body = { name, description: description || null };
       if (modalState.parentId) body.parent_id = modalState.parentId;
       const r = await fetch('/api/admin/dataroom-folders', {
         method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
+        signal: controller.signal,
       });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
@@ -781,6 +787,7 @@ async function saveFolderModal() {
       const r = await fetch(`/api/admin/dataroom-folders?id=${encodeURIComponent(modalState.folderId)}`, {
         method: 'PATCH', headers: authHeaders(),
         body: JSON.stringify({ name, description: description || null }),
+        signal: controller.signal,
       });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
@@ -794,7 +801,12 @@ async function saveFolderModal() {
       render();
     }
   } catch (e) {
-    errEl.textContent = e.message || 'Save failed';
+    const msg = (e && e.name === 'AbortError')
+      ? 'Request timed out (15s). Try again — if it persists, reload the page or log in again.'
+      : (e.message || 'Save failed');
+    errEl.textContent = msg;
+  } finally {
+    clearTimeout(timeoutId);
     btn.removeAttribute('disabled');
     btn.textContent = 'Save';
   }
