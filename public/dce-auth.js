@@ -360,10 +360,10 @@
       { href:'/calendar.html',    label:'Calendar', desc:'Earnings and events for coverage' },
     ]},
     { id:'pipeline', label:'Pipeline', items:[
-      { href:'/screener.html',    label:'Find',     desc:'Idea generation — screener, superinvestors, sector tracker' },
+      { href:'/screener.html',    label:'Find',     desc:'Screener, superinvestors, sector tracker' },
       { href:'/research.html',    label:'Workflow', desc:'Kanban of theses in research' },
-      { href:'/universe.html',    label:'Universe', desc:'Columbia framework — EPV, IRR, MoS' },
-      { href:'/journal.html',     label:'Decisions', desc:'Decision journal — buy/pass/sell + re-underwriting' },
+      { href:'/universe.html',    label:'Universe', desc:'Columbia-modeled coverage with IRR' },
+      { href:'/journal.html',     label:'Decisions', desc:'Journal of commitments and exits' },
       // { href:'/premortem.html',   label:'Pre-mortem',  desc:'Watch failure modes · manage' }, // archived 2026-05-07: backend activo, página oculta. Re-underwriting trimestral mantiene la disciplina.
     ]},
     // Performance: absorbe Portfolio (eliminado) + IV Tracking (oculto). Cockpit movido a top-level.
