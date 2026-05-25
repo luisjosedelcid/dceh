@@ -51,6 +51,7 @@
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
   .card{background:var(--card);border:1px solid var(--line);display:flex;flex-direction:column;min-height:280px}
   .card.span2{grid-column:span 2}
+  .card.span3{grid-column:span 3}
   .card-h{padding:14px 18px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(0deg,transparent 0%,rgba(27,38,66,.02) 100%)}
   .card-h h3{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--navy);font-weight:600}
   .card-h .count{font-size:10px;font-weight:600;background:var(--gold-soft);padding:2px 8px;border-radius:2px;color:var(--gold)}
@@ -135,12 +136,14 @@
   @media (max-width:1100px){
     .grid{grid-template-columns:repeat(2,1fr)}
     .card.span2{grid-column:span 2}
+    .card.span3{grid-column:span 2}
   }
   @media (max-width:720px){
     header{padding:0 20px}
     .wrap{padding:24px 16px 60px}
     .grid{grid-template-columns:1fr}
     .card.span2{grid-column:span 1}
+    .card.span3{grid-column:span 1}
     .status{flex-direction:column;align-items:flex-start}
     .status .item{border-right:none;border-bottom:1px solid var(--line);width:100%;padding:8px 0}
     .status .item:last-child{border-bottom:none}
@@ -185,15 +188,15 @@
   <!-- GRID -->
   <div class="grid">
 
-    <!-- 1. PIPELINE — span 2 -->
-    <div class="card span2">
+    <!-- 1. PIPELINE — span 2 for CIO, span 3 (full width) for analyst -->
+    <div class="card span2" id="card-pipeline">
       <div class="card-h"><h3>Pipeline in flight</h3><span class="count" id="cnt-pipeline">—</span></div>
       <div class="card-b" id="pipeline-body"><div class="loading">Loading…</div></div>
       <div class="card-f"><a href="/research.html">Open pipeline →</a></div>
     </div>
 
-    <!-- 2. OUTSTANDING DECISIONS -->
-    <div class="card">
+    <!-- 2. OUTSTANDING DECISIONS (CIO only) -->
+    <div class="card" id="card-decisions" data-role="cio">
       <div class="card-h"><h3>Outstanding decisions</h3><span class="count" id="cnt-decisions">—</span></div>
       <div class="card-b" id="decisions-body"><div class="loading">Loading…</div></div>
       <div class="card-f"><a href="/journal.html">Open journal →</a></div>
@@ -594,7 +597,34 @@ async function loadSlackInbox() {
   } catch (e) { console.warn('slack inbox load failed:', e); renderHighlights(null); }
 }
 
-// 3 fuentes independientes: si una falla, las otras igual se pintan.
+// ─ Role-aware layout ────────────────────────────────────────────────────────────────────────────────────────────
+// Analysts don't see Outstanding decisions; Pipeline expands to full width.
+function applyRoleView() {
+  try {
+    const r = (window.dceAuth && typeof window.dceAuth.role === 'function') ? window.dceAuth.role() : null;
+    // Backwards-compat: legacy admin sessions (no role) are treated as CIO
+    const isCIO = !r || r === 'admin' || r === 'cio';
+    const decCard = document.getElementById('card-decisions');
+    const pipeCard = document.getElementById('card-pipeline');
+    if (!decCard || !pipeCard) return;
+    if (isCIO) {
+      decCard.style.display = '';
+      pipeCard.classList.remove('span3');
+      pipeCard.classList.add('span2');
+    } else {
+      decCard.style.display = 'none';
+      pipeCard.classList.remove('span2');
+      pipeCard.classList.add('span3');
+    }
+  } catch (e) { console.warn('applyRoleView failed:', e); }
+}
+applyRoleView();
+if (window.dceAuth && typeof window.dceAuth.onChange === 'function') {
+  window.dceAuth.onChange(applyRoleView);
+}
+window.addEventListener('DOMContentLoaded', applyRoleView);
+
+// 3 independent sources: if one fails, the others still render.
 loadApi();
 loadTeamMeetings();
 loadSlackInbox();
