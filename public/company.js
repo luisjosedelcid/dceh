@@ -2388,10 +2388,9 @@ function computeImpliedIrr() {
 }
 
 /* ════════════════════════════════════════════════════════════
-   10b. PROBABILITY WORKSHEET
+   10b. PROBABILITY WORKSHEET — replica standalone visual
    ════════════════════════════════════════════════════════════ */
 
-// Thresholds DCE
 const PROB_HURDLE = 0.12;
 const PROB_ASYM_TARGET = 2.0;
 const PROB_LOSS_TARGET = -0.03;
@@ -2407,9 +2406,7 @@ function probLoadWeights() {
     if (raw) {
       const w = JSON.parse(raw);
       if (Number.isFinite(w.bear) && Number.isFinite(w.base) && Number.isFinite(w.bull) &&
-          (w.bear + w.base + w.bull === 100)) {
-        return w;
-      }
+          (w.bear + w.base + w.bull === 100)) return w;
     }
   } catch(e) {}
   return { bear: 25, base: 50, bull: 25 };
@@ -2423,164 +2420,284 @@ function renderProbability() {
   const irr = D.irr || {};
   if (irr.bullIrr == null || irr.bearIrr == null || irr.impliedIrr == null) {
     document.getElementById('probability-body').innerHTML =
-      `<div class="card" style="max-width:760px;padding:24px">
-        <div style="color:var(--gray-mid);font-size:13px">Faltan IRR Bull/Base/Bear en el JSON. Esta pestaña requiere <code>irr.bullIrr</code>, <code>irr.impliedIrr</code> e <code>irr.bearIrr</code>.</div>
-      </div>`;
+      `<div class="card" style="max-width:760px;padding:24px"><div style="color:var(--gray-mid);font-size:13px">Faltan IRR Bull/Base/Bear en el JSON. Esta pestaña requiere <code>irr.bullIrr</code>, <code>irr.impliedIrr</code> e <code>irr.bearIrr</code>.</div></div>`;
     return;
   }
   const w = probLoadWeights();
-  const irrBull = +irr.bullIrr;
-  const irrBase = +irr.impliedIrr;
-  const irrBear = +irr.bearIrr;
+  const tickerLabel = `${D.ticker || ''}${D.name ? ' · ' + D.name : ''}`;
 
   const body = document.getElementById('probability-body');
   body.innerHTML = `
     <style>
-      #tab-probability .pw-grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:18px; }
-      #tab-probability .pw-scenario { padding:18px 20px; border-radius:8px; border:1px solid var(--line); background:#fff; }
-      #tab-probability .pw-scenario.bear { border-top:3px solid var(--red); }
-      #tab-probability .pw-scenario.base { border-top:3px solid var(--gold); }
-      #tab-probability .pw-scenario.bull { border-top:3px solid var(--green); }
-      #tab-probability .pw-tag { font-size:10px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--gray-mid); margin-bottom:4px; }
-      #tab-probability .pw-tag.bear { color:var(--red); }
-      #tab-probability .pw-tag.base { color:var(--gold); }
-      #tab-probability .pw-tag.bull { color:var(--green); }
-      #tab-probability .pw-irr { font-size:22px; font-weight:600; font-feature-settings:'tnum'; color:#1b2642; margin-bottom:14px; }
-      #tab-probability .pw-slider-row { display:flex; align-items:center; gap:12px; }
-      #tab-probability .pw-slider-row input[type=range] { flex:1; accent-color:#1b2642; }
-      #tab-probability .pw-slider-row .pw-wval { font-size:18px; font-weight:600; font-feature-settings:'tnum'; color:#1b2642; min-width:52px; text-align:right; }
-      #tab-probability .pw-total-bar { display:flex; justify-content:space-between; align-items:center; padding:10px 16px; background:#f5f6f8; border-radius:6px; margin-bottom:20px; font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:var(--gray-mid); }
-      #tab-probability .pw-total-bar.invalid { background:#fdecec; color:var(--red); }
-      #tab-probability .pw-total-bar .pw-totalv { font-size:14px; font-weight:600; font-feature-settings:'tnum'; }
-      #tab-probability .pw-table { width:100%; border-collapse:collapse; margin-bottom:18px; font-size:13px; }
-      #tab-probability .pw-table th { text-align:left; padding:9px 12px; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(--gray-mid); border-bottom:1px solid var(--line); font-weight:600; }
-      #tab-probability .pw-table td { padding:10px 12px; border-bottom:1px solid var(--line); font-feature-settings:'tnum'; }
-      #tab-probability .pw-table td.num, #tab-probability .pw-table th.num { text-align:right; }
-      #tab-probability .pw-table tfoot td { font-weight:700; border-top:2px solid #1b2642; border-bottom:none; padding-top:14px; }
-      #tab-probability .pw-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
-      #tab-probability .pw-metric { padding:16px; border-radius:6px; border:1px solid var(--line); background:#fff; }
-      #tab-probability .pw-metric.pass { border-left:3px solid var(--green); }
-      #tab-probability .pw-metric.fail { border-left:3px solid var(--red); }
-      #tab-probability .pw-metric .pw-mlbl { font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--gray-mid); margin-bottom:6px; }
-      #tab-probability .pw-metric .pw-mval { font-size:20px; font-weight:600; font-feature-settings:'tnum'; color:#1b2642; }
-      #tab-probability .pw-metric .pw-mflag { font-size:9px; font-weight:700; letter-spacing:0.15em; margin-top:6px; }
-      #tab-probability .pw-metric.pass .pw-mflag { color:var(--green); }
-      #tab-probability .pw-metric.fail .pw-mflag { color:var(--red); }
-      #tab-probability .pw-metric .pw-mtarget { font-size:10px; color:var(--gray-mid); margin-top:4px; }
-      #tab-probability .pw-decision { padding:22px 26px; border-radius:8px; margin-bottom:20px; border:1px solid var(--line); }
-      #tab-probability .pw-decision.buy { background:#eef7f0; border-left:4px solid var(--green); }
-      #tab-probability .pw-decision.borderline { background:#fdf6e9; border-left:4px solid var(--gold); }
-      #tab-probability .pw-decision.pass { background:#fdecec; border-left:4px solid var(--red); }
-      #tab-probability .pw-decision .pw-dtxt { font-size:18px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; }
-      #tab-probability .pw-decision.buy .pw-dtxt { color:var(--green); }
-      #tab-probability .pw-decision.borderline .pw-dtxt { color:#9d7a2c; }
-      #tab-probability .pw-decision.pass .pw-dtxt { color:var(--red); }
-      #tab-probability .pw-decision .pw-dsum { font-size:13px; color:var(--gray-mid); margin-top:4px; }
-      #tab-probability .pw-sens-table { font-size:12px; }
-      #tab-probability .pw-sens-table tr.actual { background:#fdf6e9; }
-      #tab-probability .pw-just textarea { width:100%; min-height:90px; padding:12px; border:1px solid var(--line); border-radius:4px; font-family:inherit; font-size:13px; color:#1b2642; resize:vertical; }
+      #tab-probability {
+        --pw-navy: #0d1b2a;
+        --pw-gold: #b88b47;
+        --pw-green: #4aaa6a;
+        --pw-red: #c54848;
+        --pw-gray-1: #e8e9ec;
+        --pw-gray-3: #7a8090;
+      }
+      #tab-probability .pw-section {
+        background:#fff; border:1px solid var(--pw-gray-1); border-radius:8px;
+        padding:22px 24px; margin-bottom:20px;
+        box-shadow:0 1px 3px rgba(13,27,42,0.04);
+      }
+      #tab-probability .pw-stitle {
+        font-size:11px; font-weight:700; letter-spacing:1.8px;
+        color:var(--pw-gold); text-transform:uppercase;
+        margin-bottom:14px; padding-bottom:8px;
+        border-bottom:1px solid var(--pw-gray-1);
+      }
+      #tab-probability .pw-row { display:flex; gap:16px; flex-wrap:wrap; }
+      #tab-probability .pw-ig { flex:1; min-width:160px; }
+      #tab-probability .pw-ig.wide { flex:2; }
+      #tab-probability .pw-ig label {
+        display:block; font-size:11px; font-weight:600; color:var(--pw-gray-3);
+        text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;
+      }
+      #tab-probability .pw-ig input {
+        width:100%; padding:9px 12px;
+        border:1px solid var(--pw-gray-1); border-radius:4px;
+        font-size:14px; color:var(--pw-navy); background:#fafafa;
+        font-family:inherit;
+      }
+      #tab-probability .pw-ig input:focus { outline:none; border-color:var(--pw-gold); background:#fff; }
+      #tab-probability .pw-note {
+        font-size:11px; color:var(--pw-gray-3); margin-top:10px;
+      }
+      #tab-probability .pw-wgrid {
+        display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-top:4px;
+      }
+      #tab-probability .pw-wcell {
+        background:#fafafa; border:1px solid var(--pw-gray-1); border-radius:6px;
+        padding:14px;
+      }
+      #tab-probability .pw-wcell.bear { border-left:3px solid var(--pw-red); }
+      #tab-probability .pw-wcell.base { border-left:3px solid var(--pw-gold); }
+      #tab-probability .pw-wcell.bull { border-left:3px solid var(--pw-green); }
+      #tab-probability .pw-wlbl {
+        font-size:11px; font-weight:700; letter-spacing:1.5px; margin-bottom:8px;
+      }
+      #tab-probability .pw-wlbl.bear { color:var(--pw-red); }
+      #tab-probability .pw-wlbl.base { color:var(--pw-gold); }
+      #tab-probability .pw-wlbl.bull { color:var(--pw-green); }
+      #tab-probability .pw-wval {
+        font-size:32px; font-weight:600; color:var(--pw-navy); margin-bottom:4px;
+        font-variant-numeric:tabular-nums;
+      }
+      #tab-probability .pw-wval .unit { font-size:16px; color:var(--pw-gray-3); margin-left:2px; }
+      #tab-probability .pw-wirr { font-size:12px; color:var(--pw-gray-3); margin-top:6px; font-variant-numeric:tabular-nums; }
+      #tab-probability .pw-slider {
+        width:100%; margin-top:8px; -webkit-appearance:none; appearance:none;
+        height:4px; background:var(--pw-gray-1); border-radius:2px; outline:none;
+      }
+      #tab-probability .pw-slider::-webkit-slider-thumb {
+        -webkit-appearance:none; width:16px; height:16px;
+        background:var(--pw-navy); border-radius:50%; cursor:pointer;
+      }
+      #tab-probability .pw-slider::-moz-range-thumb {
+        width:16px; height:16px; background:var(--pw-navy);
+        border-radius:50%; cursor:pointer; border:none;
+      }
+      #tab-probability .pw-totalbar {
+        margin-top:14px; padding:10px 14px;
+        background:var(--pw-navy); color:#fff; border-radius:4px;
+        display:flex; justify-content:space-between; align-items:center;
+        font-size:13px;
+      }
+      #tab-probability .pw-totalbar.invalid { background:var(--pw-red); }
+      #tab-probability .pw-totalbar .v { font-weight:600; font-size:16px; font-variant-numeric:tabular-nums; }
+      #tab-probability table.pw-t {
+        width:100%; border-collapse:collapse; font-size:13px;
+      }
+      #tab-probability table.pw-t th, #tab-probability table.pw-t td {
+        padding:10px 12px; text-align:left;
+        border-bottom:1px solid var(--pw-gray-1);
+      }
+      #tab-probability table.pw-t th {
+        font-size:10px; font-weight:700; letter-spacing:1.5px;
+        text-transform:uppercase; color:var(--pw-gray-3);
+      }
+      #tab-probability table.pw-t td.num,
+      #tab-probability table.pw-t th.num {
+        text-align:right; font-variant-numeric:tabular-nums;
+      }
+      #tab-probability table.pw-t td.scen {
+        font-weight:600; letter-spacing:0.5px;
+      }
+      #tab-probability table.pw-t tr.bear td.scen { color:var(--pw-red); }
+      #tab-probability table.pw-t tr.base td.scen { color:var(--pw-gold); }
+      #tab-probability table.pw-t tr.bull td.scen { color:var(--pw-green); }
+      #tab-probability table.pw-t tr.weighted {
+        background:var(--pw-navy); color:#fff;
+      }
+      #tab-probability table.pw-t tr.weighted td {
+        font-weight:600; font-size:14px; border-bottom:none;
+      }
+      #tab-probability table.pw-t tr.weighted td.lab {
+        letter-spacing:1.2px; text-transform:uppercase; font-size:11px;
+      }
+      #tab-probability .pw-mgrid {
+        display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:4px;
+      }
+      #tab-probability .pw-mcard {
+        padding:14px; background:#fafafa; border:1px solid var(--pw-gray-1);
+        border-radius:6px; border-top:3px solid #9ba0aa;
+      }
+      #tab-probability .pw-mcard.pass { border-top-color:var(--pw-green); }
+      #tab-probability .pw-mcard.fail { border-top-color:var(--pw-red); }
+      #tab-probability .pw-mname {
+        font-size:10px; letter-spacing:1.3px; text-transform:uppercase;
+        color:var(--pw-gray-3); margin-bottom:6px;
+      }
+      #tab-probability .pw-mvalue {
+        font-size:20px; font-weight:600; margin-bottom:4px;
+        font-variant-numeric:tabular-nums; color:var(--pw-navy);
+      }
+      #tab-probability .pw-mtarget { font-size:11px; color:var(--pw-gray-3); }
+      #tab-probability .pw-mflag {
+        display:inline-block; margin-top:8px; font-size:10px;
+        font-weight:700; letter-spacing:1px; padding:3px 8px; border-radius:3px;
+      }
+      #tab-probability .pw-mflag.pass { background:#e8f5ed; color:var(--pw-green); }
+      #tab-probability .pw-mflag.fail { background:#fde8e8; color:var(--pw-red); }
+      #tab-probability .pw-decision {
+        padding:20px 24px; border-radius:8px; text-align:center;
+        font-size:16px; font-weight:600; letter-spacing:0.5px; margin-top:14px;
+      }
+      #tab-probability .pw-decision.buy { background:#e8f5ed; color:var(--pw-green); border:2px solid var(--pw-green); }
+      #tab-probability .pw-decision.borderline { background:#fdf5e8; color:var(--pw-gold); border:2px solid var(--pw-gold); }
+      #tab-probability .pw-decision.pass { background:#fde8e8; color:var(--pw-red); border:2px solid var(--pw-red); }
+      #tab-probability .pw-dsum {
+        font-size:12px; font-weight:400; color:var(--pw-gray-3);
+        margin-top:6px; letter-spacing:0;
+      }
+      #tab-probability table.pw-sens td { padding:7px 10px; font-size:12px; }
+      #tab-probability table.pw-sens tr.actual { background:#fdf5e8; font-weight:600; }
+      #tab-probability textarea.pw-just {
+        width:100%; min-height:100px; padding:10px 12px;
+        border:1px solid var(--pw-gray-1); border-radius:4px;
+        font-size:13px; font-family:inherit; background:#fafafa; resize:vertical;
+        color:var(--pw-navy);
+      }
+      #tab-probability textarea.pw-just:focus { outline:none; border-color:var(--pw-gold); background:#fff; }
     </style>
 
-    <!-- Inputs Sliders -->
-    <div class="card" style="padding:22px 24px;margin-bottom:18px">
-      <div class="clbl" style="margin-bottom:14px">Asignación de Probabilidades — pesos suman 100%</div>
-      <div class="pw-grid3">
-        <div class="pw-scenario bear">
-          <div class="pw-tag bear">Bear · IRR Esperado</div>
-          <div class="pw-irr" id="pw-bearIrr">—</div>
-          <div class="pw-tag" style="margin-bottom:8px;color:var(--gray-mid)">Peso</div>
-          <div class="pw-slider-row">
-            <input type="range" id="pw-wBear" min="0" max="100" step="1" value="${w.bear}">
-            <span class="pw-wval" id="pw-wBearVal">${w.bear}%</span>
-          </div>
+    <!-- 1 · TARGET & SCENARIOS -->
+    <div class="pw-section">
+      <div class="pw-stitle">1 · Target &amp; Scenarios</div>
+      <div class="pw-row">
+        <div class="pw-ig wide">
+          <label>Ticker / Empresa</label>
+          <input type="text" id="pw-ticker" value="${tickerLabel}" readonly>
         </div>
-        <div class="pw-scenario base">
-          <div class="pw-tag base">Base · IRR Esperado</div>
-          <div class="pw-irr" id="pw-baseIrr">—</div>
-          <div class="pw-tag" style="margin-bottom:8px;color:var(--gray-mid)">Peso</div>
-          <div class="pw-slider-row">
-            <input type="range" id="pw-wBase" min="0" max="100" step="1" value="${w.base}">
-            <span class="pw-wval" id="pw-wBaseVal">${w.base}%</span>
-          </div>
+        <div class="pw-ig">
+          <label>IRR Bear (%)</label>
+          <input type="number" id="pw-irrBear" value="${(+irr.bearIrr).toFixed(2)}" step="0.01" readonly>
         </div>
-        <div class="pw-scenario bull">
-          <div class="pw-tag bull">Bull · IRR Esperado</div>
-          <div class="pw-irr" id="pw-bullIrr">—</div>
-          <div class="pw-tag" style="margin-bottom:8px;color:var(--gray-mid)">Peso</div>
-          <div class="pw-slider-row">
-            <input type="range" id="pw-wBull" min="0" max="100" step="1" value="${w.bull}">
-            <span class="pw-wval" id="pw-wBullVal">${w.bull}%</span>
-          </div>
+        <div class="pw-ig">
+          <label>IRR Base (%)</label>
+          <input type="number" id="pw-irrBase" value="${(+irr.impliedIrr).toFixed(2)}" step="0.01" readonly>
+        </div>
+        <div class="pw-ig">
+          <label>IRR Bull (%)</label>
+          <input type="number" id="pw-irrBull" value="${(+irr.bullIrr).toFixed(2)}" step="0.01" readonly>
         </div>
       </div>
-      <div class="pw-total-bar" id="pw-totalBar">
-        <span>Suma de Pesos</span>
-        <span class="pw-totalv" id="pw-totalVal">100%</span>
+      <div class="pw-note">
+        IRRs son outputs de los Associates (Bull Analyst, Bear Analyst) y del Company Brief auditado. El CIO no los modifica.
       </div>
     </div>
 
-    <!-- Scenario Contributions Table -->
-    <div class="card" style="padding:20px 24px;margin-bottom:18px">
-      <div class="clbl" style="margin-bottom:10px">Contribución por Escenario</div>
-      <table class="pw-table">
+    <!-- 2 · CIO PROBABILITY ASSIGNMENT -->
+    <div class="pw-section">
+      <div class="pw-stitle">2 · CIO Probability Assignment</div>
+      <div class="pw-wgrid">
+        <div class="pw-wcell bear">
+          <div class="pw-wlbl bear">BEAR</div>
+          <div class="pw-wval"><span id="pw-wBearVal">${w.bear}</span><span class="unit">%</span></div>
+          <div class="pw-wirr">IRR <span id="pw-bearIrrLabel">—</span></div>
+          <input type="range" class="pw-slider" id="pw-wBear" min="0" max="100" value="${w.bear}">
+        </div>
+        <div class="pw-wcell base">
+          <div class="pw-wlbl base">BASE</div>
+          <div class="pw-wval"><span id="pw-wBaseVal">${w.base}</span><span class="unit">%</span></div>
+          <div class="pw-wirr">IRR <span id="pw-baseIrrLabel">—</span></div>
+          <input type="range" class="pw-slider" id="pw-wBase" min="0" max="100" value="${w.base}">
+        </div>
+        <div class="pw-wcell bull">
+          <div class="pw-wlbl bull">BULL</div>
+          <div class="pw-wval"><span id="pw-wBullVal">${w.bull}</span><span class="unit">%</span></div>
+          <div class="pw-wirr">IRR <span id="pw-bullIrrLabel">—</span></div>
+          <input type="range" class="pw-slider" id="pw-wBull" min="0" max="100" value="${w.bull}">
+        </div>
+      </div>
+      <div class="pw-totalbar" id="pw-totalBar">
+        <span>Suma de probabilidades</span>
+        <span class="v" id="pw-totalVal">100%</span>
+      </div>
+    </div>
+
+    <!-- 3 · EXPECTED VALUE -->
+    <div class="pw-section">
+      <div class="pw-stitle">3 · Expected Value</div>
+      <table class="pw-t">
         <thead>
           <tr>
             <th>Escenario</th>
             <th class="num">Peso</th>
-            <th class="num">IRR</th>
-            <th class="num">Contribución (Peso × IRR)</th>
+            <th class="num">IRR 5y</th>
+            <th class="num">Contribución</th>
           </tr>
         </thead>
         <tbody>
-          <tr><td style="color:var(--red)">Bear</td><td class="num" id="pw-rowBearW">—</td><td class="num" id="pw-rowBearIrr">—</td><td class="num" id="pw-rowBearC">—</td></tr>
-          <tr><td style="color:var(--gold)">Base</td><td class="num" id="pw-rowBaseW">—</td><td class="num" id="pw-rowBaseIrr">—</td><td class="num" id="pw-rowBaseC">—</td></tr>
-          <tr><td style="color:var(--green)">Bull</td><td class="num" id="pw-rowBullW">—</td><td class="num" id="pw-rowBullIrr">—</td><td class="num" id="pw-rowBullC">—</td></tr>
+          <tr class="bear"><td class="scen">BEAR</td><td class="num" id="pw-rowBearW">—</td><td class="num" id="pw-rowBearIrr">—</td><td class="num" id="pw-rowBearC">—</td></tr>
+          <tr class="base"><td class="scen">BASE</td><td class="num" id="pw-rowBaseW">—</td><td class="num" id="pw-rowBaseIrr">—</td><td class="num" id="pw-rowBaseC">—</td></tr>
+          <tr class="bull"><td class="scen">BULL</td><td class="num" id="pw-rowBullW">—</td><td class="num" id="pw-rowBullIrr">—</td><td class="num" id="pw-rowBullC">—</td></tr>
+          <tr class="weighted"><td class="lab" colspan="3">Weighted IRR</td><td class="num" id="pw-weightedIrr">—</td></tr>
         </tbody>
-        <tfoot>
-          <tr><td colspan="3" style="color:#1b2642">Weighted IRR</td><td class="num" id="pw-weightedIrr" style="color:#1b2642;font-size:16px">—</td></tr>
-        </tfoot>
       </table>
     </div>
 
-    <!-- Decision Metrics -->
-    <div class="card" style="padding:20px 24px;margin-bottom:18px">
-      <div class="clbl" style="margin-bottom:10px">Métricas de Decisión</div>
-      <div class="pw-metrics">
-        <div class="pw-metric" id="pw-m1Card">
-          <div class="pw-mlbl">Weighted IRR</div>
-          <div class="pw-mval" id="pw-m1Val">—</div>
-          <div class="pw-mtarget">Target: ≥ 12.00%</div>
-          <div class="pw-mflag" id="pw-m1Flag">—</div>
+    <!-- 4 · DECISION METRICS -->
+    <div class="pw-section">
+      <div class="pw-stitle">4 · Decision Metrics</div>
+      <div class="pw-mgrid">
+        <div class="pw-mcard" id="pw-m1Card">
+          <div class="pw-mname">Weighted IRR</div>
+          <div class="pw-mvalue" id="pw-m1Val">—</div>
+          <div class="pw-mtarget">Target ≥ 12.00%</div>
+          <span class="pw-mflag" id="pw-m1Flag">—</span>
         </div>
-        <div class="pw-metric" id="pw-m2Card">
-          <div class="pw-mlbl">Asymmetry Ratio</div>
-          <div class="pw-mval" id="pw-m2Val">—</div>
-          <div class="pw-mtarget">Target: ≥ 2.0x</div>
-          <div class="pw-mflag" id="pw-m2Flag">—</div>
+        <div class="pw-mcard" id="pw-m2Card">
+          <div class="pw-mname">Asymmetry Ratio</div>
+          <div class="pw-mvalue" id="pw-m2Val">—</div>
+          <div class="pw-mtarget">Target ≥ 2.00x</div>
+          <span class="pw-mflag" id="pw-m2Flag">—</span>
         </div>
-        <div class="pw-metric" id="pw-m3Card">
-          <div class="pw-mlbl">Prob-Weighted Loss</div>
-          <div class="pw-mval" id="pw-m3Val">—</div>
-          <div class="pw-mtarget">Target: ≥ -3pp</div>
-          <div class="pw-mflag" id="pw-m3Flag">—</div>
+        <div class="pw-mcard" id="pw-m3Card">
+          <div class="pw-mname">Prob-Weighted Loss</div>
+          <div class="pw-mvalue" id="pw-m3Val">—</div>
+          <div class="pw-mtarget">Target ≥ -3.00pp</div>
+          <span class="pw-mflag" id="pw-m3Flag">—</span>
         </div>
-        <div class="pw-metric" id="pw-m4Card">
-          <div class="pw-mlbl">Downside Cap</div>
-          <div class="pw-mval" id="pw-m4Val">—</div>
-          <div class="pw-mtarget">Target: ≥ -20%</div>
-          <div class="pw-mflag" id="pw-m4Flag">—</div>
+        <div class="pw-mcard" id="pw-m4Card">
+          <div class="pw-mname">Downside Cap (Bear)</div>
+          <div class="pw-mvalue" id="pw-m4Val">—</div>
+          <div class="pw-mtarget">Target ≥ -20.00%</div>
+          <span class="pw-mflag" id="pw-m4Flag">—</span>
         </div>
       </div>
       <div class="pw-decision" id="pw-decisionBox">
-        <div class="pw-dtxt" id="pw-decisionText">—</div>
+        <div id="pw-decisionText">—</div>
         <div class="pw-dsum" id="pw-decisionSummary">—</div>
       </div>
     </div>
 
-    <!-- Sensitivity -->
-    <div class="card" style="padding:20px 24px;margin-bottom:18px">
-      <div class="clbl" style="margin-bottom:10px">Sensibilidad — manteniendo Base fijo, variando Bear/Bull</div>
-      <table class="pw-table pw-sens-table">
+    <!-- 5 · SENSITIVITY -->
+    <div class="pw-section">
+      <div class="pw-stitle">5 · Sensibilidad — Base fijo, varía Bear/Bull</div>
+      <table class="pw-t pw-sens">
         <thead>
           <tr>
             <th class="num">Bear %</th>
@@ -2595,18 +2712,16 @@ function renderProbability() {
       </table>
     </div>
 
-    <!-- Justification -->
-    <div class="card pw-just" style="padding:20px 24px">
-      <div class="clbl" style="margin-bottom:10px">Justificación CIO — ¿Por qué estos pesos?</div>
-      <textarea id="pw-justification" placeholder="Anclaje a base rates de la industria · diferenciales de moat · catalizadores específicos · factores correlacionados..."></textarea>
+    <!-- 6 · JUSTIFICATION -->
+    <div class="pw-section">
+      <div class="pw-stitle">6 · Justificación CIO</div>
+      <textarea class="pw-just" id="pw-justification" placeholder="Anclaje a base rates de la industria · diferenciales de moat · catalizadores específicos · factores correlacionados..."></textarea>
     </div>
   `;
 
-  // Wire up sliders
   ['pw-wBull','pw-wBase','pw-wBear'].forEach(id => {
     document.getElementById(id).addEventListener('input', () => probSyncWeights(id));
   });
-  // Load justification
   try {
     const j = localStorage.getItem(probKey()+'_just');
     if (j) document.getElementById('pw-justification').value = j;
@@ -2615,7 +2730,6 @@ function renderProbability() {
     try { localStorage.setItem(probKey()+'_just', e.target.value); } catch(_) {}
   });
 
-  // Initial paint
   probRecalc();
 }
 
@@ -2629,14 +2743,12 @@ function probSyncWeights(changedId) {
   if (total !== 100) {
     const delta = total - 100;
     if (changedId === 'pw-wBear') {
-      // primero ajusta Bull
       let newBull = wBull - delta;
       if (newBull < 0) {
         const remainder = -newBull;
         newBull = 0;
-        let newBase = Math.max(0, wBase - remainder);
         document.getElementById('pw-wBull').value = newBull;
-        document.getElementById('pw-wBase').value = newBase;
+        document.getElementById('pw-wBase').value = Math.max(0, wBase - remainder);
       } else if (newBull > 100) {
         newBull = 100;
         document.getElementById('pw-wBull').value = newBull;
@@ -2645,14 +2757,12 @@ function probSyncWeights(changedId) {
         document.getElementById('pw-wBull').value = newBull;
       }
     } else if (changedId === 'pw-wBull') {
-      // primero ajusta Bear
       let newBear = wBear - delta;
       if (newBear < 0) {
         const remainder = -newBear;
         newBear = 0;
-        let newBase = Math.max(0, wBase - remainder);
         document.getElementById('pw-wBear').value = newBear;
-        document.getElementById('pw-wBase').value = newBase;
+        document.getElementById('pw-wBase').value = Math.max(0, wBase - remainder);
       } else if (newBear > 100) {
         newBear = 100;
         document.getElementById('pw-wBear').value = newBear;
@@ -2661,7 +2771,6 @@ function probSyncWeights(changedId) {
         document.getElementById('pw-wBear').value = newBear;
       }
     } else if (changedId === 'pw-wBase') {
-      // Ajusta Bull y Bear proporcionalmente
       const otherTotal = wBull + wBear;
       const target = 100 - wBase;
       if (otherTotal === 0) {
@@ -2688,7 +2797,6 @@ function probRecalc() {
   const wBase = parseInt(document.getElementById('pw-wBase').value) / 100;
   const wBear = parseInt(document.getElementById('pw-wBear').value) / 100;
 
-  // Persist weights
   probSaveWeights({
     bear: Math.round(wBear*100),
     base: Math.round(wBase*100),
@@ -2698,22 +2806,19 @@ function probRecalc() {
   const fmtPct = (v, signed=false) => (signed && v > 0 ? '+' : '') + (v*100).toFixed(2) + '%';
   const fmtPp  = v => (v > 0 ? '+' : '') + (v*100).toFixed(2) + 'pp';
 
-  // Weight values
-  document.getElementById('pw-wBullVal').textContent = (wBull*100).toFixed(0) + '%';
-  document.getElementById('pw-wBaseVal').textContent = (wBase*100).toFixed(0) + '%';
-  document.getElementById('pw-wBearVal').textContent = (wBear*100).toFixed(0) + '%';
+  // weight values
+  document.getElementById('pw-wBullVal').textContent = (wBull*100).toFixed(0);
+  document.getElementById('pw-wBaseVal').textContent = (wBase*100).toFixed(0);
+  document.getElementById('pw-wBearVal').textContent = (wBear*100).toFixed(0);
 
-  // IRR labels in slider cards
-  document.getElementById('pw-bullIrr').textContent = fmtPct(irrBull, true);
-  document.getElementById('pw-baseIrr').textContent = fmtPct(irrBase, true);
-  document.getElementById('pw-bearIrr').textContent = fmtPct(irrBear, true);
+  document.getElementById('pw-bullIrrLabel').textContent = fmtPct(irrBull, true);
+  document.getElementById('pw-baseIrrLabel').textContent = fmtPct(irrBase, true);
+  document.getElementById('pw-bearIrrLabel').textContent = fmtPct(irrBear, true);
 
-  // Total bar
   const total = Math.round((wBull + wBase + wBear) * 100);
   document.getElementById('pw-totalVal').textContent = total + '%';
   document.getElementById('pw-totalBar').classList.toggle('invalid', total !== 100);
 
-  // Contributions
   const cBull = wBull * irrBull;
   const cBase = wBase * irrBase;
   const cBear = wBear * irrBear;
@@ -2730,7 +2835,6 @@ function probRecalc() {
   document.getElementById('pw-rowBearC').textContent = fmtPp(cBear);
   document.getElementById('pw-weightedIrr').textContent = fmtPct(weighted, true);
 
-  // Metrics
   const asymmetry = irrBear < 0 && wBear > 0 ? (wBull * irrBull) / (wBear * Math.abs(irrBear)) : Infinity;
   const probLoss = irrBear < 0 ? wBear * irrBear : 0;
   const m1Pass = weighted >= PROB_HURDLE;
@@ -2753,7 +2857,6 @@ function probRecalc() {
     flag.textContent = pass ? 'PASS' : 'FAIL';
   });
 
-  // Decision
   const nPass = [m1Pass, m2Pass, m3Pass, m4Pass].filter(Boolean).length;
   const decBox = document.getElementById('pw-decisionBox');
   decBox.classList.remove('buy','borderline','pass');
@@ -2775,7 +2878,6 @@ function probRecalc() {
     document.getElementById('pw-decisionSummary').textContent = 'Weighted IRR debajo del hurdle (' + (PROB_HURDLE*100).toFixed(2) + '%)';
   }
 
-  // Sensitivity
   const tbody = document.getElementById('pw-sensBody');
   tbody.innerHTML = '';
   const baseFixed = wBase;
@@ -2794,8 +2896,8 @@ function probRecalc() {
       `<td class="num">${(baseFixed*100).toFixed(0)}%</td>` +
       `<td class="num">${(wBullTest*100).toFixed(0)}%</td>` +
       `<td class="num">${fmtPct(wirr, true)}</td>` +
-      `<td class="num" style="color:${flag ? 'var(--green)' : 'var(--red)'}">${delta > 0 ? '+' : ''}${delta.toFixed(2)}pp</td>` +
-      `<td class="num" style="color:${flag ? 'var(--green)' : 'var(--red)'};font-weight:600;font-size:11px;letter-spacing:1px">${flag ? 'PASS' : 'FAIL'}</td>`;
+      `<td class="num" style="color:${flag ? 'var(--pw-green)' : 'var(--pw-red)'}">${delta > 0 ? '+' : ''}${delta.toFixed(2)}pp</td>` +
+      `<td class="num" style="color:${flag ? 'var(--pw-green)' : 'var(--pw-red)'};font-weight:600;font-size:11px;letter-spacing:1px">${flag ? 'PASS' : 'FAIL'}</td>`;
     tbody.appendChild(tr);
   }
 }
