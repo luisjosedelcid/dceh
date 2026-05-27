@@ -100,14 +100,25 @@
           "historico": true
         },
         {
-          "name": "2026-05 - Operations Manual v3.6.1",
+          "name": "2026-05 - Operations Manual v4.5",
+          "filename": "DCE_Operations_Manual_v4.5.pdf",
+          "type": "pdf",
+          "detail": "Version vigente. Linea v4.x: aterriza el proceso operativo bajo regimen vigente (AUM < USD 10M) alineado con Charter v3.3, IPS v11.0 y Governance v5.1. v4.5 (27 mayo 2026) incorpora el Probability Worksheet como paso obligatorio del debate adversarial (§3.5) entre Pre-Mortem refinement y registro en el Journal. El worksheet vive en el dashboard de la compania (tab Probability de /company.html) y consiste en asignacion explicita de pesos Bear/Base/Bull sobre los IRRs heredados del Thesis Builder y del Thesis Breaker, con justificacion escrita y verificacion de cuatro gates institucionales (hurdle >=12%, asimetria >=2x, expected loss >=-3%, downside Bear >=-20%). Su veredicto (BUY CANDIDATE / BORDERLINE / REVISAR / PASS) es input al Journal Entry, no sustituye la decision del CIO. Cambios derivados: nuevo gate G5 ampliado (§7.0), nueva subcarpeta probability_worksheets bajo cada ticker en el Data Room (§8.2), snapshot del worksheet firmado adjunto a toda entrada BUY/FOLLOW/PASS del Decision Journal (§8.3), y bloque de quince minutos agregado al Debate Adversarial en cadencias semanales (§6.2). Compatible con el ciclo operativo y la jerarquia documental establecidos en v4.4.",
+          "url": "/docs/DCE_Operations_Manual_v4.5.pdf",
+          "uploaded": "2026-05-27",
+          "version": "v4.5",
+          "doc_type": "Operations Manual"
+        },
+        {
+          "name": "2026-05 - Operations Manual v3.6.1 (historico)",
           "filename": "2026-05_Operations_Manual_v3-6.docx",
           "type": "docx",
-          "detail": "Version vigente. Elimina la capa de Comite de Inversiones: la cadena de decision termina en el CIO con apoyo tecnico del Associate. Renombra 'CI Pack' por 'Investment Decision Pack' a lo largo del documento (21 menciones). Flujo de tesis simplificado: Munger Digital + decision_inputs.json -> ratificacion directa del CIO, sin paso colegiado. Incorpora el Governance Recalibration Trigger en §3.4 con trigger AUM > USD 10M. v3.6.1 (mayo 2026): el flujo de tesis pasa de 10 a 11 pasos incorporando el Probability Worksheet (asignacion de pesos Bear/Base/Bull sobre los IRRs del Builder y Breaker + verificacion de cuatro gates) inmediatamente antes de la ratificacion del CIO. Conserva el principio de delegacion analitica v3.5, cadencia semanal de dos reuniones, Decision Journal, 8 secciones del Re-Underwriting, Pre-Mortem, Kill Criteria, Data Room y naming convention.",
+          "detail": "Version reemplazada. Rama paralela v3.x preservada para trazabilidad; la linea vigente continua siendo v4.x (v4.5 vigente).",
           "url": "/docs/2026-05_Operations_Manual_v3-6.docx",
           "uploaded": "2026-05-27",
           "version": "v3.6.1",
-          "doc_type": "Operations Manual"
+          "doc_type": "Operations Manual",
+          "historico": true
         },
         {
           "name": "2026-05 - Operations Manual v3.5 (historico)",
