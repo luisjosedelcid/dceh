@@ -260,8 +260,8 @@ function renderItems(section) {
 
 function renderUploadCard(u, section) {
   const adminBtns = isAdmin() ? `
-    <button class="btn btn-ghost" onclick="openRenameModal('${escapeAttr(u.id)}','${escapeAttr(section)}')">Rename</button>
-    <button class="btn btn-danger" onclick="deleteUploadedFile('${escapeAttr(u.id)}', ${JSON.stringify(u.name || u.filename)})">Delete</button>
+    <button class="btn btn-ghost" data-action="rename" data-id="${escapeAttr(u.id)}" data-section="${escapeAttr(section)}">Rename</button>
+    <button class="btn btn-danger" data-action="delete" data-id="${escapeAttr(u.id)}" data-name="${escapeAttr(u.name || u.filename || '')}">Delete</button>
   ` : '';
   const sizeStr = u.size_bytes ? ' · ' + fmtBytes(u.size_bytes) : '';
   return `<article class="card">
@@ -482,6 +482,23 @@ document.getElementById('upload-modal').addEventListener('click', (e) => {
   if (e.target.id === 'upload-modal') closeUploadModal();
 });
 document.getElementById('rename-save').addEventListener('click', saveRename);
+
+// Event delegation for admin actions on upload cards (Rename / Delete).
+// Using data-attributes + delegation avoids fragile inline onclicks with
+// JSON.stringify in HTML attributes, which broke for filenames containing
+// quotes or special characters.
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const id = btn.dataset.id;
+  if (!action || !id) return;
+  if (action === 'delete') {
+    deleteUploadedFile(id, btn.dataset.name || '');
+  } else if (action === 'rename') {
+    openRenameModal(id, btn.dataset.section || 'sector');
+  }
+});
 document.getElementById('rename-modal').addEventListener('click', (e) => {
   if (e.target.id === 'rename-modal') closeRenameModal();
 });
