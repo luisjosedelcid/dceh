@@ -95,7 +95,14 @@ async function initDashboard() {
   buildNav();
   // Async — don't block initial render
   buildVersionControls(ticker).catch(err => console.warn('version controls failed:', err));
-  switchTab('overview');
+  // Restore active tab from URL hash (or default to overview)
+  const initialTab = (location.hash || '').replace(/^#/, '') || 'overview';
+  switchTab(initialTab);
+  // React to hash changes (back/forward navigation)
+  window.addEventListener('hashchange', () => {
+    const t = (location.hash || '').replace(/^#/, '') || 'overview';
+    switchTab(t);
+  });
 }
 
 /* ── version controls (selector + banner) ─────────────────── */
@@ -275,10 +282,19 @@ function switchTab(id, btnEl) {
   document.querySelectorAll('#main-nav button').forEach(b => b.classList.remove('active'));
   // show target
   const tab = document.getElementById(`tab-${id}`);
-  if (tab) tab.classList.add('active');
+  if (!tab) {
+    // Unknown tab id — fall back to overview without polluting hash
+    if (id !== 'overview') return switchTab('overview');
+  } else {
+    tab.classList.add('active');
+  }
   // activate button
   const btn = btnEl || document.getElementById(`nav-${id}`);
   if (btn) btn.classList.add('active');
+  // persist in URL hash (so refresh stays on same tab)
+  if (location.hash.replace(/^#/, '') !== id) {
+    history.replaceState(null, '', '#' + id);
+  }
   // lazy-render
   renderTab(id);
 }
