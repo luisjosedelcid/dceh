@@ -2620,13 +2620,12 @@ function renderProbability() {
           <input type="number" id="pw-irrBull" value="${(+irr.bullIrr).toFixed(2)}" step="0.01">
         </div>
       </div>
-      <div class="pw-note" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-        <span>IRRs vienen del Company Brief auditado. Editables para sensibilidad ad-hoc (no se persisten en el JSON).</span>
+      <div style="display:flex; justify-content:flex-end; margin-top:6px;">
         <button type="button" id="pw-irrReset" title="Restaurar IRRs originales del JSON"
           style="background:#fff; border:1px solid var(--pw-gray-1); color:var(--pw-navy);
                  padding:6px 12px; font-size:10px; letter-spacing:1.2px; text-transform:uppercase;
                  font-weight:600; border-radius:3px; cursor:pointer; font-family:inherit;">
-          Reset a originales
+          Reset
         </button>
       </div>
     </div>
