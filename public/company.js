@@ -2620,8 +2620,14 @@ function renderProbability() {
           <input type="number" id="pw-irrBull" value="${(+irr.bullIrr).toFixed(2)}" step="0.01">
         </div>
       </div>
-      <div class="pw-note">
-        IRRs vienen del Company Brief auditado. Editables para sensibilidad ad-hoc (no se persisten en el JSON).
+      <div class="pw-note" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+        <span>IRRs vienen del Company Brief auditado. Editables para sensibilidad ad-hoc (no se persisten en el JSON).</span>
+        <button type="button" id="pw-irrReset" title="Restaurar IRRs originales del JSON"
+          style="background:#fff; border:1px solid var(--pw-gray-1); color:var(--pw-navy);
+                 padding:6px 12px; font-size:10px; letter-spacing:1.2px; text-transform:uppercase;
+                 font-weight:600; border-radius:3px; cursor:pointer; font-family:inherit;">
+          Reset a originales
+        </button>
       </div>
     </div>
 
@@ -2741,6 +2747,17 @@ function renderProbability() {
   ['pw-irrBear','pw-irrBase','pw-irrBull'].forEach(id => {
     document.getElementById(id).addEventListener('input', () => probRecalc());
   });
+  // Reset IRRs a los valores originales del JSON
+  const irrResetBtn = document.getElementById('pw-irrReset');
+  if (irrResetBtn) {
+    irrResetBtn.addEventListener('click', () => {
+      const origIrr = (D && D.irr) || {};
+      document.getElementById('pw-irrBear').value = (+origIrr.bearIrr).toFixed(2);
+      document.getElementById('pw-irrBase').value = (+origIrr.impliedIrr).toFixed(2);
+      document.getElementById('pw-irrBull').value = (+origIrr.bullIrr).toFixed(2);
+      probRecalc();
+    });
+  }
   try {
     const j = localStorage.getItem(probKey()+'_just');
     if (j) document.getElementById('pw-justification').value = j;
