@@ -237,7 +237,7 @@ function buildNav() {
     {id:'tb',          label:'Thesis Breaker',    external: D.documents.thesisBreakerUrl,  style:'color:var(--red);font-weight:600'},
     {id:'tbld',        label:'Thesis Builder',    external: D.documents.thesisBuilderUrl,  style:'color:var(--green);font-weight:600'},
     {id:'munger',      label:'Munger Digital',    external: D.documents.mungerDigitalUrl,  style:'color:#6b4fa0;font-weight:600'},
-    {id:'probability', label:'Probability', probabilityGuard: true},
+    {id:'probability', label:'Probability'},
     {id:'summary',     label:'Summary'},
     {id:'home',        label:'← Home', home: true, style:'margin-left:auto;color:var(--gray-mid)'},
   ];
@@ -247,9 +247,6 @@ function buildNav() {
       return `<div id="version-selector" style="display:none;align-items:center;gap:8px;padding:0 14px 0 0;margin-right:8px;border-right:1px solid var(--line)"></div>`;
     }
     if (t.salesGuard && (!D.sales || !D.sales.years)) {
-      return '';
-    }
-    if (t.probabilityGuard && !(D.irr && D.irr.bullIrr != null && D.irr.bearIrr != null && D.irr.impliedIrr != null)) {
       return '';
     }
     if (t.external) {
@@ -2434,21 +2431,21 @@ function probSaveWeights(w) {
 
 function renderProbability() {
   const irr = D.irr || {};
-  if (irr.bullIrr == null || irr.bearIrr == null || irr.impliedIrr == null) {
+  if (irr.impliedIrr == null) {
     document.getElementById('probability-body').innerHTML = `
       <div class="card" style="max-width:760px;padding:28px 32px">
         <div style="font-size:11px;letter-spacing:1.8px;color:#b88b47;font-weight:700;text-transform:uppercase;margin-bottom:12px">Probability Worksheet · Pendiente</div>
-        <div style="font-size:14px;color:#0d1b2a;line-height:1.6;margin-bottom:10px">
-          Esta pestaña requiere los IRRs de los tres escenarios (Bear, Base, Bull).
-        </div>
-        <div style="font-size:13px;color:#7a8090;line-height:1.6">
-          Solo se activa cuando la empresa tenga el <strong>Thesis Breaker</strong> y <strong>Thesis Builder</strong> auditados.
-          El Base IRR ya está en el modelo (<code style="background:#f5f5f5;padding:1px 5px;border-radius:2px">${(+irr.impliedIrr || 0).toFixed(2)}%</code>),
-          falta cargar <code style="background:#f5f5f5;padding:1px 5px;border-radius:2px">bearIrr</code> y <code style="background:#f5f5f5;padding:1px 5px;border-radius:2px">bullIrr</code> en el JSON.
+        <div style="font-size:14px;color:#0d1b2a;line-height:1.6">
+          Falta el Base IRR (<code>irr.impliedIrr</code>) en el JSON del modelo.
         </div>
       </div>`;
     return;
   }
+  // Fallback: si Bear o Bull están null en el JSON, usar Base como valor inicial.
+  // Variables locales para no mutar D.irr (así Reset puede detectar que estaban null).
+  const bearVal = (irr.bearIrr != null) ? +irr.bearIrr : +irr.impliedIrr;
+  const bullVal = (irr.bullIrr != null) ? +irr.bullIrr : +irr.impliedIrr;
+  const baseVal = +irr.impliedIrr;
   const w = probLoadWeights();
   const tickerLabel = `${D.ticker || ''}${D.name ? ' · ' + D.name : ''}`;
 
@@ -2619,15 +2616,15 @@ function renderProbability() {
         </div>
         <div class="pw-ig">
           <label>IRR Bear (%)</label>
-          <input type="number" id="pw-irrBear" value="${(+irr.bearIrr).toFixed(2)}" step="0.01">
+          <input type="number" id="pw-irrBear" value="${bearVal.toFixed(2)}" step="0.01">
         </div>
         <div class="pw-ig">
           <label>IRR Base (%)</label>
-          <input type="number" id="pw-irrBase" value="${(+irr.impliedIrr).toFixed(2)}" step="0.01">
+          <input type="number" id="pw-irrBase" value="${baseVal.toFixed(2)}" step="0.01">
         </div>
         <div class="pw-ig">
           <label>IRR Bull (%)</label>
-          <input type="number" id="pw-irrBull" value="${(+irr.bullIrr).toFixed(2)}" step="0.01">
+          <input type="number" id="pw-irrBull" value="${bullVal.toFixed(2)}" step="0.01">
         </div>
       </div>
       <div style="display:flex; justify-content:flex-end; margin-top:6px;">
@@ -2756,14 +2753,17 @@ function renderProbability() {
   ['pw-irrBear','pw-irrBase','pw-irrBull'].forEach(id => {
     document.getElementById(id).addEventListener('input', () => probRecalc());
   });
-  // Reset IRRs a los valores originales del JSON
+  // Reset IRRs a los valores originales del JSON (Bear/Bull caen al Base si están null)
   const irrResetBtn = document.getElementById('pw-irrReset');
   if (irrResetBtn) {
     irrResetBtn.addEventListener('click', () => {
-      const origIrr = (D && D.irr) || {};
-      document.getElementById('pw-irrBear').value = (+origIrr.bearIrr).toFixed(2);
-      document.getElementById('pw-irrBase').value = (+origIrr.impliedIrr).toFixed(2);
-      document.getElementById('pw-irrBull').value = (+origIrr.bullIrr).toFixed(2);
+      const o = (D && D.irr) || {};
+      const baseO = +o.impliedIrr;
+      const bearO = (o.bearIrr != null) ? +o.bearIrr : baseO;
+      const bullO = (o.bullIrr != null) ? +o.bullIrr : baseO;
+      document.getElementById('pw-irrBear').value = bearO.toFixed(2);
+      document.getElementById('pw-irrBase').value = baseO.toFixed(2);
+      document.getElementById('pw-irrBull').value = bullO.toFixed(2);
       probRecalc();
     });
   }
