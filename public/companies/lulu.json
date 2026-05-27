@@ -1231,9 +1231,9 @@
     "impliedIrr": 46.61,
     "mos": 34.61,
     "totalGrowth": 21.16,
-    "bearIrr": null,
-    "bullIrr": null,
-    "bearDownside": null
+    "bearIrr": 17.4,
+    "bullIrr": 46.61,
+    "bearDownside": -37.5
   },
   "healthCheck": {
     "passCount": 14,
