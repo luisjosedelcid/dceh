@@ -100,13 +100,13 @@
           "historico": true
         },
         {
-          "name": "2026-05 - Operations Manual v3.6",
+          "name": "2026-05 - Operations Manual v3.6.1",
           "filename": "2026-05_Operations_Manual_v3-6.docx",
           "type": "docx",
-          "detail": "Version vigente. Elimina la capa de Comite de Inversiones: la cadena de decision termina en el CIO con apoyo tecnico del Associate. Renombra 'CI Pack' por 'Investment Decision Pack' a lo largo del documento (21 menciones). Flujo de tesis simplificado: Munger Digital + decision_inputs.json -> ratificacion directa del CIO, sin paso colegiado. Incorpora el Governance Recalibration Trigger en §3.4 con trigger AUM > USD 10M. Conserva el principio de delegacion analitica v3.5 (CIO valida tesis, Associate valida exactitud tecnica), cadencia semanal de dos reuniones, Decision Journal, 8 secciones del Re-Underwriting, Pre-Mortem, Kill Criteria, Data Room y naming convention.",
+          "detail": "Version vigente. Elimina la capa de Comite de Inversiones: la cadena de decision termina en el CIO con apoyo tecnico del Associate. Renombra 'CI Pack' por 'Investment Decision Pack' a lo largo del documento (21 menciones). Flujo de tesis simplificado: Munger Digital + decision_inputs.json -> ratificacion directa del CIO, sin paso colegiado. Incorpora el Governance Recalibration Trigger en §3.4 con trigger AUM > USD 10M. v3.6.1 (mayo 2026): el flujo de tesis pasa de 10 a 11 pasos incorporando el Probability Worksheet (asignacion de pesos Bear/Base/Bull sobre los IRRs del Builder y Breaker + verificacion de cuatro gates) inmediatamente antes de la ratificacion del CIO. Conserva el principio de delegacion analitica v3.5, cadencia semanal de dos reuniones, Decision Journal, 8 secciones del Re-Underwriting, Pre-Mortem, Kill Criteria, Data Room y naming convention.",
           "url": "/docs/2026-05_Operations_Manual_v3-6.docx",
-          "uploaded": "2026-05-20",
-          "version": "v3.6",
+          "uploaded": "2026-05-27",
+          "version": "v3.6.1",
           "doc_type": "Operations Manual"
         },
         {
