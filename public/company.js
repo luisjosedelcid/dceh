@@ -2593,19 +2593,19 @@ function renderProbability() {
         </div>
         <div class="pw-ig">
           <label>IRR Bear (%)</label>
-          <input type="number" id="pw-irrBear" value="${(+irr.bearIrr).toFixed(2)}" step="0.01" readonly>
+          <input type="number" id="pw-irrBear" value="${(+irr.bearIrr).toFixed(2)}" step="0.01">
         </div>
         <div class="pw-ig">
           <label>IRR Base (%)</label>
-          <input type="number" id="pw-irrBase" value="${(+irr.impliedIrr).toFixed(2)}" step="0.01" readonly>
+          <input type="number" id="pw-irrBase" value="${(+irr.impliedIrr).toFixed(2)}" step="0.01">
         </div>
         <div class="pw-ig">
           <label>IRR Bull (%)</label>
-          <input type="number" id="pw-irrBull" value="${(+irr.bullIrr).toFixed(2)}" step="0.01" readonly>
+          <input type="number" id="pw-irrBull" value="${(+irr.bullIrr).toFixed(2)}" step="0.01">
         </div>
       </div>
       <div class="pw-note">
-        IRRs son outputs de los Associates (Bull Analyst, Bear Analyst) y del Company Brief auditado. El CIO no los modifica.
+        IRRs vienen del Company Brief auditado. Editables para sensibilidad ad-hoc (no se persisten en el JSON).
       </div>
     </div>
 
@@ -2722,6 +2722,9 @@ function renderProbability() {
   ['pw-wBull','pw-wBase','pw-wBear'].forEach(id => {
     document.getElementById(id).addEventListener('input', () => probSyncWeights(id));
   });
+  ['pw-irrBear','pw-irrBase','pw-irrBull'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => probRecalc());
+  });
   try {
     const j = localStorage.getItem(probKey()+'_just');
     if (j) document.getElementById('pw-justification').value = j;
@@ -2789,10 +2792,13 @@ function probSyncWeights(changedId) {
 }
 
 function probRecalc() {
+  const irrBullInp = parseFloat(document.getElementById('pw-irrBull').value);
+  const irrBaseInp = parseFloat(document.getElementById('pw-irrBase').value);
+  const irrBearInp = parseFloat(document.getElementById('pw-irrBear').value);
   const irr = D.irr || {};
-  const irrBull = (+irr.bullIrr) / 100;
-  const irrBase = (+irr.impliedIrr) / 100;
-  const irrBear = (+irr.bearIrr) / 100;
+  const irrBull = (Number.isFinite(irrBullInp) ? irrBullInp : +irr.bullIrr) / 100;
+  const irrBase = (Number.isFinite(irrBaseInp) ? irrBaseInp : +irr.impliedIrr) / 100;
+  const irrBear = (Number.isFinite(irrBearInp) ? irrBearInp : +irr.bearIrr) / 100;
   const wBull = parseInt(document.getElementById('pw-wBull').value) / 100;
   const wBase = parseInt(document.getElementById('pw-wBase').value) / 100;
   const wBear = parseInt(document.getElementById('pw-wBear').value) / 100;
