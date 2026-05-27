@@ -355,7 +355,7 @@
     { id:'home',     label:'Home',    href:'/',              single:true },
     { id:'cockpit',  label:'Cockpit', href:'/cockpit.html',  single:true },
     { id:'research', label:'Research', items:[
-      { href:'/study.html',       label:'Study',    desc:'Sector deep-dives and megatrends' },
+      { href:'/study.html',       label:'Study',    desc:'Sector memos underpinning the portfolio thesis' },
       { href:'/news.html',        label:'News',     desc:'Daily AI-summarized scanner' },
       { href:'/calendar.html',    label:'Calendar', desc:'Earnings and events for coverage' },
     ]},

@@ -113,11 +113,10 @@
 <main>
   <div class="slbl">DCE Holdings — Investment Office</div>
   <h1>Study</h1>
-  <div class="sub">Sector deep-dives and structural megatrend analyses underpinning the portfolio thesis.</div>
+  <div class="sub">Sector deep-dives underpinning the portfolio thesis.</div>
 
   <div class="mode-tabs">
-    <button class="mode-tab active" data-section="sector" onclick="showSection('sector', this)">Sector Analysis <span class="count" id="count-sector">—</span></button>
-    <button class="mode-tab" data-section="megatrends" onclick="showSection('megatrends', this)">Megatrends <span class="count" id="count-megatrends">—</span></button>
+    <button class="mode-tab active" data-section="sector" onclick="showSection('sector', this)">Sector Memos <span class="count" id="count-sector">—</span></button>
   </div>
 
   <div class="mode-pane active" id="pane-sector">
@@ -127,15 +126,6 @@
     </div>
     <div class="status" id="status-sector">Loading…</div>
     <div class="grid" id="grid-sector"></div>
-  </div>
-
-  <div class="mode-pane" id="pane-megatrends">
-    <div class="toolbar">
-      <div class="meta">Structural shifts that compound over a decade — AI, energy transition, demographics, geopolitics.</div>
-      <button class="btn btn-primary admin-only" onclick="openUploadModal('megatrends')">+ Upload file</button>
-    </div>
-    <div class="status" id="status-megatrends">Loading…</div>
-    <div class="grid" id="grid-megatrends"></div>
   </div>
 </main>
 
@@ -311,7 +301,6 @@ function renderCuratedCard(it) {
 function render() {
   applyAdminVisibility();
   renderItems('sector');
-  renderItems('megatrends');
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -320,7 +309,7 @@ function render() {
 function openUploadModal(section) {
   if (!isAdmin()) return alert('Sign in as admin to upload files.');
   uploadState = { section };
-  document.getElementById('upload-section').textContent = section === 'sector' ? 'Sector Analysis' : 'Megatrends';
+  document.getElementById('upload-section').textContent = section === 'sector' ? 'Sector Memos' : 'Megatrends';
   document.getElementById('upl-file').value = '';
   document.getElementById('upl-name').value = '';
   document.getElementById('upl-detail').value = '';
