@@ -2435,8 +2435,18 @@ function probSaveWeights(w) {
 function renderProbability() {
   const irr = D.irr || {};
   if (irr.bullIrr == null || irr.bearIrr == null || irr.impliedIrr == null) {
-    document.getElementById('probability-body').innerHTML =
-      `<div class="card" style="max-width:760px;padding:24px"><div style="color:var(--gray-mid);font-size:13px">Faltan IRR Bull/Base/Bear en el JSON. Esta pestaña requiere <code>irr.bullIrr</code>, <code>irr.impliedIrr</code> e <code>irr.bearIrr</code>.</div></div>`;
+    document.getElementById('probability-body').innerHTML = `
+      <div class="card" style="max-width:760px;padding:28px 32px">
+        <div style="font-size:11px;letter-spacing:1.8px;color:#b88b47;font-weight:700;text-transform:uppercase;margin-bottom:12px">Probability Worksheet · Pendiente</div>
+        <div style="font-size:14px;color:#0d1b2a;line-height:1.6;margin-bottom:10px">
+          Esta pestaña requiere los IRRs de los tres escenarios (Bear, Base, Bull).
+        </div>
+        <div style="font-size:13px;color:#7a8090;line-height:1.6">
+          Solo se activa cuando la empresa tenga el <strong>Thesis Breaker</strong> y <strong>Thesis Builder</strong> auditados.
+          El Base IRR ya está en el modelo (<code style="background:#f5f5f5;padding:1px 5px;border-radius:2px">${(+irr.impliedIrr || 0).toFixed(2)}%</code>),
+          falta cargar <code style="background:#f5f5f5;padding:1px 5px;border-radius:2px">bearIrr</code> y <code style="background:#f5f5f5;padding:1px 5px;border-radius:2px">bullIrr</code> en el JSON.
+        </div>
+      </div>`;
     return;
   }
   const w = probLoadWeights();

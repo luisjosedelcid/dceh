@@ -1202,7 +1202,10 @@
     "actualMult": 35.32,
     "impliedIrr": 17.58,
     "mos": 5.58,
-    "totalGrowth": 23.36
+    "totalGrowth": 23.36,
+    "bearIrr": null,
+    "bullIrr": null,
+    "bearDownside": null
   },
   "healthCheck": {
     "passCount": 9,
