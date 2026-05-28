@@ -1651,5 +1651,86 @@
       "Modelo asset-light: sin manufactura propia",
       "Total Revenue por año se toma del 10-K (auditado); valores por segmento son estimaciones derivadas"
     ]
+  },
+  "autoInferences": {
+    "version": "4.3.0",
+    "decisionPoints": [
+      {
+        "id": "sm_treatment",
+        "tier": 2,
+        "tierName": "historical_ratio",
+        "confidence": "LOW",
+        "value": 0.033300412378279104,
+        "reason": "Baseline S&M/Rev = 3.33% sobre 2 años estables. 2 stable years detected (growth band ±5.0pp, ratio band ±1.0pp). Median rev growth = 17.0%, median S&M/Rev = 3.3%.",
+        "fallbackChain": [
+          "Tier 1 (tano_pure) descartado: sin customer/churn data."
+        ],
+        "window": {
+          "years": [
+            2019,
+            2021,
+            2022,
+            2023,
+            2024,
+            2025
+          ],
+          "excluded": [
+            2020
+          ]
+        },
+        "stableYears": [
+          2024,
+          2025
+        ]
+      },
+      {
+        "id": "g_organic",
+        "tier": 4,
+        "tierName": "manual_industry_long_run",
+        "confidence": "MEDIUM",
+        "value": 0.03,
+        "reason": "US apparel industry long-run CAGR ≈ 3% (BEA + Statista 10y). LULU es consagrado, sin tailwind macro adicional. Tano method aplica el growth ex-empresa.",
+        "fallbackChain": []
+      },
+      {
+        "id": "b_growth",
+        "tier": 2,
+        "tierName": "tano_capex_minus_da",
+        "confidence": "MEDIUM",
+        "value": 0.5891,
+        "reason": "Tano method: growth CapEx = Σ(CapEx) − Σ(D&A) = 3047 − 1252 = 1795 sobre FY2022-2025. b_growth = 58.91%. Ventana 4y porque excluye FY2020-2021 (COVID disruption).",
+        "fallbackChain": [],
+        "window": {
+          "years": [
+            2022,
+            2023,
+            2024,
+            2025
+          ],
+          "excluded": [
+            2020,
+            2021
+          ]
+        }
+      }
+    ],
+    "auditGate": {
+      "status": "PASS_WITH_ALERTS",
+      "hardFails": [],
+      "alerts": [
+        "Phase 4 v4.3 Trigger A (sub-threshold): 1 LOW-confidence point(s): ['s&m_treatment']. Below hard-fail threshold but flag for CIO review."
+      ],
+      "confidenceSummary": {
+        "HIGH": 0,
+        "MEDIUM": 2,
+        "LOW": 1,
+        "FAIL": 0
+      },
+      "roicMarginal": {
+        "current": 0.25,
+        "previous": 0.25,
+        "deltaBps": 0.0
+      }
+    }
   }
 }
