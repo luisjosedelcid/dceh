@@ -1,7 +1,7 @@
 {
   "_meta": {
     "description": "Single source of truth para el Data Room de dceholdings.app. Se actualiza automaticamente por las skills DCE al generar nuevos entregables. Estructura alineada con Operations Manual v3 seccion 3.4.",
-    "last_updated": "2026-05-23",
+    "last_updated": "2026-05-28",
     "naming_convention": "AAAA-MM - Tipo - Detalle.ext (Operations Manual v3 §3.4)",
     "owner": "CIO"
   },
@@ -327,6 +327,15 @@
               "url": "/docs/LULU/2026-05_Columbia_Model_Lululemon_LULU.xlsx",
               "uploaded": "2026-05-04",
               "doc_type": "Columbia Model"
+            },
+            {
+              "name": "2026-05 - Thesis Builder - Lululemon Athletica (LULU)",
+              "filename": "2026-05_Thesis_Builder_Lululemon_Athletica_LULU.pdf",
+              "type": "pdf",
+              "detail": "Defensa cuantitativa Bull (espejo Breaker)",
+              "url": "/docs/LULU/2026-05_Thesis_Builder_Lululemon_Athletica_LULU.pdf",
+              "uploaded": "2026-05-28",
+              "doc_type": "Thesis Builder"
             }
           ]
         }
