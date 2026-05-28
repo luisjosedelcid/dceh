@@ -283,6 +283,15 @@
               "uploaded": "2026-05-04",
               "doc_type": "Investment Memo",
               "status": "historic"
+            },
+            {
+              "name": "2026-05 - Thesis Builder - Microsoft Corporation (MSFT)",
+              "filename": "2026-05_Thesis_Builder_Microsoft_Corporation_MSFT.pdf",
+              "type": "pdf",
+              "detail": "Defensa cuantitativa Bull (espejo Breaker)",
+              "url": "/docs/MSFT/2026-05_Thesis_Builder_Microsoft_Corporation_MSFT.pdf",
+              "uploaded": "2026-05-28",
+              "doc_type": "Thesis Builder"
             }
           ]
         },

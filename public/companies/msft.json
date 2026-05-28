@@ -1751,7 +1751,8 @@
   "documents": {
     "valuationReportUrl": "/docs/DCE_MSFT_Valuation_Report.pdf",
     "thesisBreakerUrl": "/docs/DCE_MSFT_Thesis_Breaker.pdf",
-    "mungerDigitalUrl": "/docs/DCE_MSFT_Munger_Digital.pdf"
+    "mungerDigitalUrl": "/docs/DCE_MSFT_Munger_Digital.pdf",
+    "thesisBuilderUrl": "/docs/DCE_MSFT_Thesis_Builder.pdf"
   },
   "thesisSummary": {
     "verdict": "OVERVALUED",
