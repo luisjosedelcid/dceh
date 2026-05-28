@@ -1499,8 +1499,8 @@
   "documents": {
     "valuationReportUrl": "/docs/DCE_LULU_Valuation_Report.pdf",
     "thesisBreakerUrl": "/docs/DCE_LULU_Thesis_Breaker.pdf",
-    "thesisBuilderUrl": "/docs/DCE_LULU_Thesis_Builder.pdf",
-    "mungerDigitalUrl": "/docs/DCE_LULU_Munger_Digital.pdf"
+    "mungerDigitalUrl": "/docs/DCE_LULU_Munger_Digital.pdf",
+    "columbiaModelUrl": "/docs/DCE_LULU_Columbia_Model.xlsx"
   },
   "thesisSummary": {
     "verdict": "WATCHLIST",
