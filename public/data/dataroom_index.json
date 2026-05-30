@@ -1,7 +1,7 @@
 {
   "_meta": {
     "description": "Single source of truth para el Data Room de dceholdings.app. Se actualiza automaticamente por las skills DCE al generar nuevos entregables. Estructura alineada con Operations Manual v3 seccion 3.4.",
-    "last_updated": "2026-05-28",
+    "last_updated": "2026-05-30",
     "naming_convention": "AAAA-MM - Tipo - Detalle.ext (Operations Manual v3 §3.4)",
     "owner": "CIO"
   },
@@ -437,6 +437,33 @@
               "url": "/docs/DCE_SAP_Munger_Digital.pdf",
               "uploaded": "2026-04-28",
               "doc_type": "Munger Digital"
+            }
+          ]
+        },
+        "UBER": {
+          "name": "UBER - Uber Technologies",
+          "ticker": "UBER",
+          "company": "Uber Technologies, Inc.",
+          "status": "analysis",
+          "files": [
+            {
+              "name": "2026-05 - Company Brief - Uber (UBER)",
+              "filename": "2026-05_Company_Brief_Uber_UBER.docx",
+              "type": "docx",
+              "detail": "Company Brief v2.0 (15 secciones 0-14, base case descriptivo-cuantitativo). Franquicia confirmada (EPV/RV 1.16x; ROIC 16.7% > WACC 9.5%) pero ninguno de los 3 escenarios IRR (Bear -13.7%, Base -7.1%, Bull -0.8%) supera el hurdle 12% a $70.40; mercado descuenta expansion de margen >>10.7% normalizado. Declaracion de Escalera: Caso 4. Sin veredicto BUY/PASS (decision del CIO en Semana 2). Phase 4 Audit Gate: PASS.",
+              "url": "/docs/UBER/2026-05_Company_Brief_Uber_UBER.docx",
+              "uploaded": "2026-05-30",
+              "doc_type": "Company Brief",
+              "version": "v2.0"
+            },
+            {
+              "name": "2026-05 - Columbia Model - Uber (UBER)",
+              "filename": "2026-05_Columbia_Model_Uber_UBER.xlsx",
+              "type": "xlsx",
+              "detail": "Modelo Columbia 14-sheet (base). Revenue FY25 $51,997M; ROIC 16.7%; WACC 9.5%; EPV/share $25.84; RV/share $22.26; EPV/RV 1.16x; Hurdle 12%.",
+              "url": "/docs/UBER/2026-05_Columbia_Model_Uber_UBER.xlsx",
+              "uploaded": "2026-05-30",
+              "doc_type": "Columbia Model"
             }
           ]
         }
