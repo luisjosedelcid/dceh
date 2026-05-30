@@ -347,6 +347,22 @@
               "doc_type": "Thesis Builder"
             }
           ]
+        },
+        "UBER": {
+          "name": "UBER - Uber Technologies",
+          "ticker": "UBER",
+          "company": "Uber Technologies",
+          "files": [
+            {
+              "name": "2026-05 - Columbia Model - Uber Technologies (UBER)",
+              "filename": "2026-05_Columbia_Model_Uber_Technologies_UBER.xlsx",
+              "type": "xlsx",
+              "detail": "Modelo Columbia 14-sheet",
+              "url": "/docs/UBER/2026-05_Columbia_Model_Uber_Technologies_UBER.xlsx",
+              "uploaded": "2026-05-30",
+              "doc_type": "Columbia Model"
+            }
+          ]
         }
       }
     },
