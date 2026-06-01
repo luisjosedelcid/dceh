@@ -11,6 +11,7 @@
     { "source": "/lulu", "destination": "/company.html?ticker=LULU" },
     { "source": "/msft", "destination": "/company.html?ticker=MSFT" },
     { "source": "/race", "destination": "/company.html?ticker=RACE" },
+    { "source": "/uber", "destination": "/company.html?ticker=UBER" },
     { "source": "/universe", "destination": "/universe.html" },
     { "source": "/screener", "destination": "/screener.html" },
     { "source": "/news", "destination": "/news.html" },

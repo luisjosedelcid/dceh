@@ -533,6 +533,33 @@ const UNIVERSE = [
     badge: 'Conditional',
     funnelStage: 'research',
   },
+  {
+    ticker: 'UBER',
+    name: 'Uber Technologies, Inc.',
+    sector: 'NYSE · Mobility — Marketplace',
+    link: '/uber',
+    currency: '$',
+    finnhubSymbol: 'UBER',
+    shares: 2119.69,                     // M diluted
+    debt: 10521 + 1390,                  // Total Debt + Leases ($M)
+    cash: 7633,                          // Cash + STI ($M)
+    defaultPrice: 70.40,
+    nopatNorm: 3926,                     // Normalized NOPAT ($M) — Columbia v4.3 base
+    wacc: 0.1130,
+    excessCash: 6593,                    // ($M, post 2% rev buffer)
+    bridgeAdj: 6593 + 0 - 10521 - 1390,  // excess + ltinv - debt - leases
+    distYield: 0.0287,                   // dividend + buyback yield proxy
+    reinvGrowth: 0.0448,
+    organicGrowth: 0.020,
+    exitMult: 18,                        // 18x NOPAT (sector_median mobility, v3.3 Fix 1)
+    horizon: 5,
+    hurdle: 0.12,
+    de: 0.0798,                          // D/E
+    netBorrowCost: 0.0292,               // Kd after tax
+    rvPerShare: 12.64,
+    badge: 'Pass',
+    funnelStage: 'passed',
+  },
 ];
 
 function fmt(v, dec) { return v.toLocaleString('en-US', { minimumFractionDigits: dec||0, maximumFractionDigits: dec||0 }); }

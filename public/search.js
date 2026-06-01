@@ -21,7 +21,7 @@
   ];
 
   // Built-in tickers — extend as we add company JSONs
-  const KNOWN_TICKERS = ['BKNG', 'SAP', 'LULU', 'MSFT', 'RACE'];
+  const KNOWN_TICKERS = ['BKNG', 'SAP', 'LULU', 'MSFT', 'RACE', 'UBER'];
 
   // Static documents in the GitHub repo (BKNG/SAP institutional deliverables)
   const STATIC_DOCS = [
@@ -44,6 +44,9 @@
     { title: 'RACE · Company Brief',  url: '/docs/DCE_RACE_Valuation_Report.docx', ticker: 'RACE', kind: 'Company Brief' },
     { title: 'RACE · Thesis Builder',    url: '/docs/DCE_RACE_Thesis_Builder.pdf',   ticker: 'RACE', kind: 'Thesis Builder'   },
     { title: 'RACE · Columbia Model',    url: '/docs/DCE_RACE_Columbia_Model.xlsx',   ticker: 'RACE', kind: 'Columbia Model'   },
+    { title: 'UBER · Company Brief',     url: '/docs/UBER/2026-05_Company_Brief_Uber_UBER.docx',   ticker: 'UBER', kind: 'Company Brief'   },
+    { title: 'UBER · Columbia Model',    url: '/docs/UBER/2026-05_Columbia_Model_Uber_UBER.xlsx', ticker: 'UBER', kind: 'Columbia Model'  },
+    { title: 'UBER · Quick Review v3.3', url: '/docs/UBER/QR_UBER_v3.3.pdf',                       ticker: 'UBER', kind: 'Quick Review'    },
   ];
 
   // ──────────────────────────────────────────────────────────

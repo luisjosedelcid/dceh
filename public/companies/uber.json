@@ -1,0 +1,1760 @@
+{
+  "ticker": "UBER",
+  "name": "Uber Technologies, Inc.",
+  "exchange": "NYSE",
+  "industry": "Mobility — Marketplace (Ridesharing + Delivery + Freight)",
+  "fiscalYear": "FY2025 (LTM 2026Q1)",
+  "valuationDate": "30-May-2026",
+  "currency": "USD",
+  "currencySymbol": "$",
+  "overview": {
+    "marketCap": 149226.0,
+    "ev": 153504.0,
+    "shares": 2119.69,
+    "debt": 10521.0,
+    "leases": 1390.0,
+    "cash": 7633.0,
+    "stockPrice": 70.4,
+    "nopatNorm": 3926.0,
+    "fcfLatest": 9763.0,
+    "revenue": 52017.0,
+    "operMargin": 0.107,
+    "netMargin": 0.1951,
+    "fcfMargin": 0.1877,
+    "taxRate": 0.21,
+    "wacc": 0.113,
+    "roic3yr": 0.2039,
+    "roicLatest": 0.2788,
+    "hurdle": 0.12,
+    "ceo": "Dara Khosrowshahi",
+    "headquarters": "San Francisco, California, EE.UU.",
+    "employees": 31100,
+    "evNopat": 39.1,
+    "revenueCagr3yr": 0.1773,
+    "fcfCagr3yr": 0.3975,
+    "ebitda": 6284.0,
+    "netIncome": 10146.0
+  },
+  "financials": {
+    "years": [
+      "FY2020",
+      "FY2021",
+      "FY2022",
+      "FY2023",
+      "FY2024",
+      "FY2025"
+    ],
+    "revenue": [
+      11139.0,
+      17455.0,
+      31877.0,
+      37281.0,
+      43978.0,
+      52017.0
+    ],
+    "operIncome": [
+      -1622.0,
+      -616.0,
+      2251.0,
+      4615.0,
+      7149.0,
+      9525.0
+    ],
+    "netIncome": [
+      -6788.0,
+      -570.0,
+      -9138.0,
+      2156.0,
+      9845.0,
+      10093.0
+    ],
+    "ebitda": [
+      197.0,
+      1261.0,
+      4664.0,
+      7304.0,
+      9881.0,
+      12379.0
+    ],
+    "fcf": [
+      -6499.0,
+      -818.0,
+      1365.0,
+      6033.0,
+      13334.0,
+      19077.0
+    ],
+    "cfo": [
+      -4246.0,
+      85.0,
+      2750.0,
+      9036.0,
+      16269.0,
+      22305.0
+    ],
+    "buybacks": [
+      0,
+      0,
+      0,
+      0,
+      1252.0,
+      6523.0
+    ],
+    "dividends": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "totalAssets": [
+      59978.0,
+      67999.0,
+      55591.0,
+      71125.0,
+      96539.0,
+      117502.0
+    ],
+    "totalDebt": [
+      1544.0,
+      1644.0,
+      1673.0,
+      1550.0,
+      1454.0,
+      1390.0
+    ],
+    "cashSti": [
+      1180.0,
+      0,
+      103.0,
+      727.0,
+      1084.0,
+      528.0
+    ],
+    "equity": [
+      33252.0,
+      38774.0,
+      32109.0,
+      38699.0,
+      51244.0,
+      61802.0
+    ],
+    "nopatAdjusted": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "operMarginPct": [
+      -14.6,
+      -3.5,
+      7.1,
+      12.4,
+      16.3,
+      18.3
+    ],
+    "netMarginPct": [
+      -60.9,
+      -3.3,
+      -28.7,
+      5.8,
+      22.4,
+      19.4
+    ],
+    "isRows": [
+      {
+        "l": "REVENUES",
+        "t": "section"
+      },
+      {
+        "l": "Net Revenue",
+        "t": "normal",
+        "v": [
+          11139.0,
+          17455.0,
+          31877.0,
+          37281.0,
+          43978.0,
+          52017.0
+        ]
+      },
+      {
+        "l": "Cost of Goods Sold",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -5154.0,
+          -9351.0,
+          -19659.0,
+          -22457.0,
+          -26651.0,
+          -31338.0
+        ]
+      },
+      {
+        "l": "Gross Profit",
+        "t": "subtotal",
+        "v": [
+          5985.0,
+          8104.0,
+          12218.0,
+          14824.0,
+          17327.0,
+          20679.0
+        ]
+      },
+      {
+        "l": "Gross Margin",
+        "t": "margin",
+        "v": [
+          53.7,
+          46.4,
+          38.3,
+          39.8,
+          39.4,
+          39.8
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "OPERATING EXPENSES",
+        "t": "section"
+      },
+      {
+        "l": "Depreciation & Amortization",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -1819.0,
+          -1877.0,
+          -2413.0,
+          -2689.0,
+          -2732.0,
+          -2854.0
+        ]
+      },
+      {
+        "l": "Selling, General & Admin (ex D&A)",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -3583.0,
+          -4789.0,
+          -4756.0,
+          -4356.0,
+          -4337.0,
+          -4898.0
+        ]
+      },
+      {
+        "l": "Impairments & Restructuring",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -2205.0,
+          -2054.0,
+          -2798.0,
+          -3164.0,
+          -3109.0,
+          -3402.0
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "Operating Income",
+        "t": "total",
+        "v": [
+          -1622.0,
+          -616.0,
+          2251.0,
+          4615.0,
+          7149.0,
+          9525.0
+        ]
+      },
+      {
+        "l": "Operating Margin",
+        "t": "margin",
+        "v": [
+          -14.6,
+          -3.5,
+          7.1,
+          12.4,
+          16.3,
+          18.3
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "BELOW THE LINE",
+        "t": "section"
+      },
+      {
+        "l": "Provision for Income Taxes",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "Effective Tax Rate",
+        "t": "margin",
+        "v": [
+          -0.0,
+          -0.0,
+          -0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "Net Income (GAAP)",
+        "t": "total",
+        "v": [
+          -6788.0,
+          -570.0,
+          -9138.0,
+          2156.0,
+          9845.0,
+          10093.0
+        ]
+      },
+      {
+        "l": "Net Margin",
+        "t": "margin",
+        "v": [
+          -60.9,
+          -3.3,
+          -28.7,
+          5.8,
+          22.4,
+          19.4
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "DERIVED METRICS",
+        "t": "section"
+      },
+      {
+        "l": "EBITDA",
+        "t": "normal",
+        "v": [
+          197.0,
+          1261.0,
+          4664.0,
+          7304.0,
+          9881.0,
+          12379.0
+        ]
+      },
+      {
+        "l": "EBITDA Margin",
+        "t": "margin",
+        "v": [
+          1.8,
+          7.2,
+          14.6,
+          19.6,
+          22.5,
+          23.8
+        ]
+      },
+      {
+        "l": "FCF Margin",
+        "t": "margin",
+        "v": [
+          -58.3,
+          -4.7,
+          4.3,
+          16.2,
+          30.3,
+          36.7
+        ]
+      },
+      {
+        "l": "Stock-Based Compensation",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "SBC % of Revenue",
+        "t": "margin",
+        "v": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "SUPPLEMENTARY DATA",
+        "t": "section"
+      },
+      {
+        "l": "EPS Diluted ($)",
+        "t": "normal",
+        "v": [
+          -1.0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "Diluted Shares (M)",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          2.0,
+          1.0
+        ]
+      },
+      {
+        "l": "Marketing/Brand Spend (est.)",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "DCE ADJUSTMENTS",
+        "t": "section"
+      },
+      {
+        "l": "Adjusted NOPAT DCE",
+        "t": "total",
+        "v": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "l": "NOPAT Margin",
+        "t": "margin",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "bsRows": [
+      {
+        "l": "CURRENT ASSETS",
+        "t": "section"
+      },
+      {
+        "l": "Cash & Equivalents",
+        "t": "normal",
+        "v": [
+          1180.0,
+          0,
+          103.0,
+          727.0,
+          1084.0,
+          528.0
+        ]
+      },
+      {
+        "l": "Accounts Receivable",
+        "t": "normal",
+        "v": [
+          1073.0,
+          2439.0,
+          2779.0,
+          3404.0,
+          3333.0,
+          3827.0
+        ]
+      },
+      {
+        "l": "Inventories",
+        "t": "normal",
+        "v": [
+          1982.0,
+          2085.0,
+          2159.0,
+          2486.0,
+          1935.0,
+          2533.0
+        ]
+      },
+      {
+        "l": "Other Current Assets",
+        "t": "normal",
+        "v": [
+          9882.0,
+          8819.0,
+          9249.0,
+          11297.0,
+          12245.0,
+          13993.0
+        ]
+      },
+      {
+        "l": "Total Current Assets",
+        "t": "subtotal",
+        "v": [
+          14117.0,
+          13343.0,
+          14290.0,
+          17914.0,
+          18597.0,
+          20881.0
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "NON-CURRENT ASSETS",
+        "t": "section"
+      },
+      {
+        "l": "Property & Equipment, net",
+        "t": "normal",
+        "v": [
+          10131.0,
+          12606.0,
+          5271.0,
+          6454.0,
+          8762.0,
+          9465.0
+        ]
+      },
+      {
+        "l": "Right-of-Use Lease Assets",
+        "t": "normal",
+        "v": [
+          2478.0,
+          3276.0,
+          3921.0,
+          8058.0,
+          17936.0,
+          25354.0
+        ]
+      },
+      {
+        "l": "Goodwill",
+        "t": "normal",
+        "v": [
+          33252.0,
+          38774.0,
+          32109.0,
+          38699.0,
+          51244.0,
+          61802.0
+        ]
+      },
+      {
+        "l": "Intangible Assets, net",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "Other Non-Current Assets",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "Total Assets",
+        "t": "total",
+        "v": [
+          59978.0,
+          67999.0,
+          55591.0,
+          71125.0,
+          96539.0,
+          117502.0
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "CURRENT LIABILITIES",
+        "t": "section"
+      },
+      {
+        "l": "Accounts Payable",
+        "t": "normal",
+        "v": [
+          175.0,
+          185.0,
+          201.0,
+          190.0,
+          175.0,
+          169.0
+        ]
+      },
+      {
+        "l": "Lease Liabilities (Current)",
+        "t": "normal",
+        "v": [
+          6865.0,
+          9024.0,
+          8853.0,
+          9454.0,
+          11476.0,
+          12320.0
+        ]
+      },
+      {
+        "l": "Other Current Liabilities",
+        "t": "normal",
+        "v": [
+          7560.0,
+          9276.0,
+          9265.0,
+          9459.0,
+          8347.0,
+          10521.0
+        ]
+      },
+      {
+        "l": "Total Current Liabilities",
+        "t": "subtotal",
+        "v": [
+          14600.0,
+          18485.0,
+          18319.0,
+          19103.0,
+          19998.0,
+          23010.0
+        ]
+      },
+      {
+        "l": "Working Capital % (CL / Assets)",
+        "t": "margin",
+        "v": [
+          24.3,
+          27.2,
+          33.0,
+          26.9,
+          20.7,
+          19.6
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "NON-CURRENT LIABILITIES",
+        "t": "section"
+      },
+      {
+        "l": "Lease Liabilities (Non-Current)",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "Other Non-Current Liabilities",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "Total Debt (Long-Term)",
+        "t": "normal",
+        "v": [
+          1544.0,
+          1644.0,
+          1673.0,
+          1550.0,
+          1454.0,
+          1390.0
+        ]
+      },
+      {
+        "l": "Total Liabilities",
+        "t": "subtotal",
+        "v": [
+          16144.0,
+          20129.0,
+          19992.0,
+          20653.0,
+          21452.0,
+          24400.0
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "EQUITY",
+        "t": "section"
+      },
+      {
+        "l": "Total Stockholders Equity",
+        "t": "subtotal",
+        "v": [
+          33252.0,
+          38774.0,
+          32109.0,
+          38699.0,
+          51244.0,
+          61802.0
+        ]
+      },
+      {
+        "l": "Total Liabilities + Equity",
+        "t": "total",
+        "v": [
+          49396.0,
+          58903.0,
+          52101.0,
+          59352.0,
+          72696.0,
+          86202.0
+        ]
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "SUPPLEMENTARY DATA",
+        "t": "section"
+      },
+      {
+        "l": "Cash + Short-Term Investments",
+        "t": "normal",
+        "v": [
+          1180.0,
+          0,
+          103.0,
+          727.0,
+          1084.0,
+          528.0
+        ]
+      },
+      {
+        "l": "Total Debt",
+        "t": "normal",
+        "v": [
+          1544.0,
+          1644.0,
+          1673.0,
+          1550.0,
+          1454.0,
+          1390.0
+        ]
+      },
+      {
+        "l": "Net Debt (Debt − Cash)",
+        "t": "normal",
+        "v": [
+          364.0,
+          1644.0,
+          1570.0,
+          823.0,
+          370.0,
+          862.0
+        ]
+      },
+      {
+        "l": "Book Value per Share ($)",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          25622.0,
+          61802.0
+        ],
+        "fmt": "price"
+      },
+      {
+        "l": "",
+        "t": "spacer"
+      },
+      {
+        "l": "DERIVED RATIOS",
+        "t": "section"
+      },
+      {
+        "l": "Current Ratio (CA / CL)",
+        "t": "margin",
+        "v": [
+          0.97,
+          0.72,
+          0.78,
+          0.94,
+          0.93,
+          0.91
+        ],
+        "isRatio": true
+      },
+      {
+        "l": "Debt / Equity (%)",
+        "t": "margin",
+        "v": [
+          4.6,
+          4.2,
+          5.2,
+          4.0,
+          2.8,
+          2.2
+        ]
+      },
+      {
+        "l": "Equity Ratio (E / Assets) (%)",
+        "t": "margin",
+        "v": [
+          55.4,
+          57.0,
+          57.8,
+          54.4,
+          53.1,
+          52.6
+        ]
+      }
+    ],
+    "cfRows": [
+      {
+        "l": "OPERATING ACTIVITIES (CFO)",
+        "t": "section"
+      },
+      {
+        "l": "Net Income",
+        "t": "normal",
+        "v": [
+          -6788.0,
+          -570.0,
+          -9138.0,
+          2156.0,
+          9845.0,
+          10093.0
+        ]
+      },
+      {
+        "l": "Depreciation & Amortization",
+        "t": "normal",
+        "v": [
+          1819.0,
+          1877.0,
+          2413.0,
+          2689.0,
+          2732.0,
+          2854.0
+        ]
+      },
+      {
+        "l": "Impairments",
+        "t": "normal",
+        "v": [
+          827.0,
+          1168.0,
+          1793.0,
+          1935.0,
+          1796.0,
+          1826.0
+        ]
+      },
+      {
+        "l": "Stock-Based Compensation",
+        "t": "normal",
+        "v": [
+          2641.0,
+          -1945.0,
+          7040.0,
+          -1329.0,
+          -5241.0,
+          -2567.0
+        ]
+      },
+      {
+        "l": "Other Adjustments",
+        "t": "normal",
+        "v": [
+          -2745.0,
+          -445.0,
+          642.0,
+          3585.0,
+          7137.0,
+          10099.0
+        ]
+      },
+      {
+        "l": "Changes in Working Capital",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "Cash from Operations (CFO)",
+        "t": "subtotal",
+        "v": [
+          -4246.0,
+          85.0,
+          2750.0,
+          9036.0,
+          16269.0,
+          22305.0
+        ]
+      },
+      {
+        "l": "INVESTING ACTIVITIES",
+        "t": "section"
+      },
+      {
+        "l": "Capital Expenditures",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          -2253.0,
+          -903.0,
+          -1385.0,
+          -3003.0,
+          -2935.0,
+          -3228.0
+        ]
+      },
+      {
+        "l": "Other Investing",
+        "t": "normal",
+        "v": [
+          -2869.0,
+          -1201.0,
+          -1637.0,
+          -3226.0,
+          -3177.0,
+          -3564.0
+        ]
+      },
+      {
+        "l": "FINANCING ACTIVITIES",
+        "t": "section"
+      },
+      {
+        "l": "Repurchases of Common Stock",
+        "t": "normal",
+        "neg": true,
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          -1252.0,
+          -6523.0
+        ]
+      },
+      {
+        "l": "Other Financing",
+        "t": "normal",
+        "v": [
+          1379.0,
+          1780.0,
+          15.0,
+          -95.0,
+          -835.0,
+          810.0
+        ]
+      },
+      {
+        "l": "FREE CASH FLOW",
+        "t": "section"
+      },
+      {
+        "l": "Free Cash Flow (CFO − CapEx)",
+        "t": "subtotal",
+        "v": [
+          -6499.0,
+          -818.0,
+          1365.0,
+          6033.0,
+          13334.0,
+          19077.0
+        ]
+      }
+    ]
+  },
+  "rv": {
+    "tangibleAssets": [
+      {
+        "label": "Cash and Cash Equivalents",
+        "bookValue": 7105.0,
+        "adjustable": true,
+        "defaultAdj": 100.0,
+        "reproValue": 7105.0,
+        "method": "100% — efectivo líquido"
+      },
+      {
+        "label": "Accounts Receivable",
+        "bookValue": 528.0,
+        "adjustable": true,
+        "defaultAdj": 100.0,
+        "reproValue": 528.0,
+        "method": "100% — securities líquidas"
+      },
+      {
+        "label": "Inventories",
+        "bookValue": 3827.0,
+        "adjustable": true,
+        "defaultAdj": 97.0,
+        "reproValue": 3712.0,
+        "method": "97% — small credit risk on receivables"
+      },
+      {
+        "label": "Other Current Assets",
+        "bookValue": 2533.0,
+        "adjustable": true,
+        "defaultAdj": 85.0,
+        "reproValue": 2153.0,
+        "method": "85% — prepaid + other current"
+      },
+      {
+        "label": "Property and Equipment, net",
+        "bookValue": 3011.0,
+        "adjustable": true,
+        "defaultAdj": 110.0,
+        "reproValue": 3312.0,
+        "method": "110% — replacement cost > book (inflación)"
+      }
+    ],
+    "intangibleAssets": [
+      {
+        "label": "Brand / Customer Asset (reconstruction)",
+        "bookValue": 0,
+        "adjustable": true,
+        "defaultAdj": 100,
+        "reproValue": 0,
+        "method": "",
+        "dataKey": "brand"
+      },
+      {
+        "label": "S&M Asset (Unamortized)",
+        "bookValue": 3740.0,
+        "adjustable": true,
+        "defaultAdj": 100,
+        "reproValue": 3740.0,
+        "method": "CAC ~$22 × 170M MAPCs FY25",
+        "dataKey": "sm"
+      },
+      {
+        "label": "Goodwill",
+        "bookValue": 14527.0,
+        "adjustable": true,
+        "defaultAdj": 100,
+        "reproValue": 8716.0,
+        "method": "R&D acum 5y FY21-25 × 60% efficiency",
+        "dataKey": "gw"
+      },
+      {
+        "label": "Intangible Assets, net (BS)",
+        "bookValue": 30000.0,
+        "adjustable": true,
+        "defaultAdj": 100,
+        "reproValue": 18000.0,
+        "method": "S&M acum 7y (proxy) × 60% efficiency"
+      }
+    ],
+    "otherAssets": [
+      {
+        "label": "Right-of-Use Lease Assets",
+        "bookValue": 8931.0,
+        "adjustable": true,
+        "defaultAdj": 0.0,
+        "reproValue": 0,
+        "method": "DP12 — Goodwill reconstruido individualmente"
+      },
+      {
+        "label": "Other Non-Current Assets (incl. DTA)",
+        "bookValue": 31956.0,
+        "adjustable": true,
+        "defaultAdj": 100,
+        "reproValue": 31956.0,
+        "method": "",
+        "dataKey": "dta"
+      }
+    ],
+    "liabilities": [
+      {
+        "label": "Accounts Payable",
+        "value": 169.0,
+        "method": "100% — Contractual"
+      },
+      {
+        "label": "Lease Liabilities (Total)",
+        "value": 12320.0,
+        "method": "100% — Contractual lease"
+      },
+      {
+        "label": "Other Current Liabilities",
+        "value": 10521.0,
+        "method": "100% — Contractual"
+      },
+      {
+        "label": "Other Non-Current Liabilities",
+        "value": 0.0,
+        "method": "100% — Contractual"
+      }
+    ],
+    "totalLiabilities": 23010.0,
+    "totalRvEquity": 26800.0,
+    "rvPerShare": 12.64,
+    "note": "El Reproduction Value de UBER no captura adecuadamente el valor del network effect bilateral (drivers + riders + couriers + merchants) ni el dataset de routing/pricing dinámico acumulado a escala global. RV es informativo pero EPV es el ancla de valuación."
+  },
+  "epv": {
+    "nopatBase": 3925.79,
+    "waccBase": 11.3,
+    "taxBase": 21,
+    "excessCash": 6593.0,
+    "ltInv": 0,
+    "debt": -0.0,
+    "leases": -1390.0,
+    "minorityInterest": 0,
+    "epvOps": 34741.54,
+    "epvEquity": 38888.2,
+    "epvPerShare": 18.35,
+    "gaapOI": 6284.0,
+    "normEBIT": 4969.36,
+    "da": 719.0,
+    "maintCapex": 719.0,
+    "bridgeRows": [
+      {
+        "k": "Normalized EBIT (post normalization)",
+        "v": "$4,969M"
+      },
+      {
+        "k": "× (1 − Tax Rate 21%)",
+        "v": "× 0.79",
+        "dim": true
+      },
+      {
+        "k": "Normalized NOPAT",
+        "v": "$3,926M",
+        "id": "bridge-nopat"
+      },
+      {
+        "k": "(+) D&A (non-cash add-back)",
+        "v": "+$719M"
+      },
+      {
+        "k": "(−) Maintenance CapEx (= D&A)",
+        "v": "−$719M",
+        "dim": true
+      },
+      {
+        "k": "÷ WACC",
+        "v": "11.30%",
+        "id": "bridge-wacc"
+      },
+      {
+        "k": "EPV Operations",
+        "v": "$34,742M",
+        "id": "bridge-epv-ops",
+        "bold": true,
+        "gold": true
+      },
+      {
+        "k": "(+) Excess Cash (Cash+STI − 2% Rev buffer)",
+        "v": "+$6,593M",
+        "green": true
+      },
+      {
+        "k": "(+) Non-Operating Assets",
+        "v": "$0M",
+        "dim": true
+      },
+      {
+        "k": "(−) Total Debt",
+        "v": "−$0M",
+        "red": true
+      },
+      {
+        "k": "(−) Lease Liabilities",
+        "v": "−$1,390M",
+        "red": true
+      },
+      {
+        "k": "EPV Equity",
+        "v": "$38,888M",
+        "id": "bridge-epv-eq",
+        "bold": true,
+        "gold": true
+      },
+      {
+        "k": "EPV / Share",
+        "v": "$18.35",
+        "id": "bridge-epv-ps",
+        "bold": true,
+        "gold": true
+      }
+    ]
+  },
+  "wacc": {
+    "rf": 0.043,
+    "beta": 1.3,
+    "erp": 0.055,
+    "ke": 0.1145,
+    "kdPreTax": 0.0,
+    "kdAfterTax": 0.0,
+    "weightDebt": 0.0767,
+    "weightEquity": 0.9233,
+    "waccFinal": 0.113
+  },
+  "roic": {
+    "investedCapital": [
+      {
+        "label": "Operating WC",
+        "value": 0.0
+      },
+      {
+        "label": "PP&E",
+        "value": -5791.0
+      },
+      {
+        "label": "Other LT Operating Assets (ROU + Other NCA)",
+        "value": 3011.0
+      },
+      {
+        "label": "S&M Asset",
+        "value": 11518.0
+      }
+    ],
+    "roicLatest": 27.88,
+    "roic3yr": 20.39,
+    "roicFY22": 14.83,
+    "roicFY23": 16.61,
+    "roicFY24": 16.67,
+    "roicFY25": 27.88,
+    "roicHistory": [
+      null,
+      19.19,
+      14.83,
+      16.61,
+      16.67,
+      27.88
+    ],
+    "marginalRoic": 138.71,
+    "growthCapex2y": 0.0,
+    "growthCapex3y": null,
+    "icHistory": [
+      -547.0,
+      5769.0,
+      12606.0,
+      16893.0,
+      16397.0,
+      18056.0
+    ],
+    "nopatHistory": [
+      "FY 2020",
+      "FY 2021",
+      "FY 2022",
+      "FY 2023",
+      "FY 2024",
+      "FY 2025"
+    ],
+    "icRows": [
+      {
+        "l": "INVESTED CAPITAL BUILD-UP",
+        "t": "section"
+      },
+      {
+        "l": "Working Capital Operating",
+        "t": "normal",
+        "v": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "l": "(+) PP&E, Net",
+        "t": "normal",
+        "v": [
+          -3635.0,
+          -4315.0,
+          -3714.0,
+          -3374.0,
+          -6033.0,
+          -5791.0
+        ]
+      },
+      {
+        "l": "(+) Other LT Operating Assets",
+        "t": "normal",
+        "v": [
+          3088.0,
+          3241.0,
+          3531.0,
+          3314.0,
+          3110.0,
+          3011.0
+        ]
+      },
+      {
+        "l": "(+) S&M Asset (Unamortized)",
+        "t": "normal",
+        "v": [
+          0.0,
+          4789.0,
+          8348.0,
+          10318.0,
+          11179.0,
+          11518.0
+        ]
+      },
+      {
+        "l": "(+) R&D Asset (N/A)",
+        "t": "normal",
+        "v": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "l": "Invested Capital",
+        "t": "subtotal",
+        "v": [
+          -547.0,
+          5769.0,
+          12606.0,
+          16893.0,
+          16397.0,
+          18056.0
+        ]
+      },
+      {
+        "l": "RETURN",
+        "t": "section"
+      },
+      {
+        "l": "NOPAT (numerator)",
+        "t": "normal",
+        "v": [
+          "FY 2020",
+          "FY 2021",
+          "FY 2022",
+          "FY 2023",
+          "FY 2024",
+          "FY 2025"
+        ]
+      },
+      {
+        "l": "ROIC %",
+        "t": "subtotal",
+        "v": [
+          null,
+          19.19,
+          14.83,
+          16.61,
+          16.67,
+          27.88
+        ],
+        "isPct": true
+      }
+    ]
+  },
+  "irr": {
+    "selectedRoic": 20.39,
+    "organicGrowth": 2.0,
+    "reinvGrowth": 4.48,
+    "exitMultiple": 18,
+    "buybacks": 4000.0,
+    "horizon": 5,
+    "hurdle": 12.0,
+    "distYield": 2.87,
+    "dCapital": 7.98,
+    "netBorrowCost": 2.92,
+    "dividends": 0.0,
+    "interest": 0.0,
+    "ev": 154777.0,
+    "nopat": 3925.79,
+    "reinvRate": 21.96,
+    "deRatio": 7.98,
+    "actualMult": 39.43,
+    "impliedIrr": -5.81,
+    "mos": -17.81,
+    "totalGrowth": 6.48
+  },
+  "healthCheck": {
+    "passCount": 7,
+    "failCount": 1,
+    "monitorCount": 3,
+    "metrics": [
+      {
+        "category": "Financial Strength",
+        "label": "Total Debt / Equity",
+        "value": "0.37×",
+        "threshold": "<0.5×",
+        "passThreshold": "<0.5×",
+        "monitorThreshold": "0.5–1.0×",
+        "failThreshold": ">1.0×",
+        "direction": "lower_better",
+        "status": "pass",
+        "rationale": "Debt=LT Debt FY25; Equity=Total Stockholders' Equity FY25"
+      },
+      {
+        "category": "Financial Strength",
+        "label": "Net Debt / EBITDA",
+        "value": "0.71×",
+        "threshold": "<2×",
+        "passThreshold": "<2×",
+        "monitorThreshold": "2–3×",
+        "failThreshold": ">3×",
+        "direction": "lower_better",
+        "status": "pass",
+        "rationale": "Net Debt=4,447M; EBITDA=6,284M"
+      },
+      {
+        "category": "Financial Strength",
+        "label": "Current Ratio",
+        "value": "1.14×",
+        "threshold": ">1.5×",
+        "passThreshold": ">1.5×",
+        "monitorThreshold": "1.0–1.5×",
+        "failThreshold": "<1.0×",
+        "direction": "higher_better",
+        "status": "monitor",
+        "rationale": "TCA=13,993M; TCL=12,320M"
+      },
+      {
+        "category": "Financial Strength",
+        "label": "Interest Coverage",
+        "value": "12.65×",
+        "threshold": ">5×",
+        "passThreshold": ">5×",
+        "monitorThreshold": "2–5×",
+        "failThreshold": "<2×",
+        "direction": "higher_better",
+        "status": "pass",
+        "rationale": "EBIT=5,565M; Interest Exp=440M"
+      },
+      {
+        "category": "Profitability",
+        "label": "Operating Margin",
+        "value": "18.8%",
+        "threshold": ">10%",
+        "passThreshold": ">10%",
+        "monitorThreshold": "7–10%",
+        "failThreshold": "<7%",
+        "direction": "higher_better",
+        "status": "pass",
+        "rationale": "FCF=9,763M; Rev=52,017M"
+      },
+      {
+        "category": "Profitability",
+        "label": "FCF Margin",
+        "value": "24.0%",
+        "threshold": ">15%",
+        "passThreshold": ">15%",
+        "monitorThreshold": "10–15%",
+        "failThreshold": "<10%",
+        "direction": "higher_better",
+        "status": "pass",
+        "rationale": "Source: RATIOS FY2025"
+      },
+      {
+        "category": "Profitability",
+        "label": "ROIC",
+        "value": "12.7%",
+        "threshold": ">5pp",
+        "passThreshold": ">5pp",
+        "monitorThreshold": "0–5pp",
+        "failThreshold": "<0pp",
+        "direction": "higher_better",
+        "status": "pass",
+        "rationale": "ROIC=24.0%; WACC=11.3%"
+      },
+      {
+        "category": "Profitability",
+        "label": "ROIC > WACC",
+        "value": "N/A",
+        "threshold": ">0",
+        "passThreshold": "",
+        "monitorThreshold": "",
+        "failThreshold": "",
+        "direction": "higher_better",
+        "status": "monitor",
+        "rationale": ""
+      },
+      {
+        "category": "Growth",
+        "label": "Revenue CAGR",
+        "value": "192.5%",
+        "threshold": ">5%",
+        "passThreshold": ">5%",
+        "monitorThreshold": "0–5%",
+        "failThreshold": "<0%",
+        "direction": "higher_better",
+        "status": "pass",
+        "rationale": "FY2022→FY2025: 390→9,763"
+      },
+      {
+        "category": "Growth",
+        "label": "EBITDA Growth YoY",
+        "value": "N/A",
+        "threshold": ">5%",
+        "passThreshold": "",
+        "monitorThreshold": "",
+        "failThreshold": "",
+        "direction": "higher_better",
+        "status": "monitor",
+        "rationale": ""
+      },
+      {
+        "category": "Growth",
+        "label": "FCF CAGR 3yr",
+        "value": "39.8%",
+        "threshold": ">85%",
+        "passThreshold": ">85%",
+        "monitorThreshold": "75–85%",
+        "failThreshold": "<75%",
+        "direction": "higher_better",
+        "status": "fail",
+        "rationale": "GP=20,679M; Rev=52,017M → 39.8% — FAIL (Uber is semi-asset-light, ~40% GM)"
+      }
+    ],
+    "radarLabels": [
+      "Financial\\nStrength",
+      "Profitability",
+      "Growth"
+    ],
+    "radarScores": [
+      90,
+      90,
+      53
+    ]
+  },
+  "cioDecisions": [
+    {
+      "id": "1",
+      "decision": "S&M Proxy",
+      "value": "Sales and Marketing (10-K line)",
+      "rationale": "Direct line item per 10-K — proxy for customer acquisition investment"
+    },
+    {
+      "id": "2",
+      "decision": "R&D Capitalization",
+      "value": "Sí — capitalizar",
+      "rationale": "UBER invests heavily in tech; R&D builds durable platform IP"
+    },
+    {
+      "id": "3",
+      "decision": "S&M Useful Life",
+      "value": "4 años",
+      "rationale": "Rideshare customer retention ~3-5 yrs; 4yr conservative mid"
+    },
+    {
+      "id": "4",
+      "decision": "R&D Useful Life",
+      "value": "5 años",
+      "rationale": "Platform tech cycle 4-7 yrs; 5yr standard per Greenwald framework"
+    },
+    {
+      "id": "4b",
+      "decision": "PIM Rates",
+      "value": "N/A (intangibles agregados)",
+      "rationale": "10-K does not provide disaggregated intangible amortization by type"
+    },
+    {
+      "id": "5",
+      "decision": "SBC Treatment",
+      "value": "Ya en OpEx — no add-back",
+      "rationale": "UBER SBC included in each operating expense line per 10-K"
+    },
+    {
+      "id": "6",
+      "decision": "Normalization Window",
+      "value": "FY2022-LTM (4 años)",
+      "rationale": "Pre-2022 losses structural; 2022 COVID recovery; stable from 2022"
+    },
+    {
+      "id": "7",
+      "decision": "Items to Normalize",
+      "value": "Legal/settlements; Equity gains/losses; Restructuring",
+      "rationale": "Didi/Aurora/Grab equity gains are non-recurring; settlements variable"
+    },
+    {
+      "id": "8",
+      "decision": "Tax Rate",
+      "value": "21% statutory",
+      "rationale": "US statutory rate; effective rate erratic due to equity stakes → use statutory"
+    },
+    {
+      "id": "9",
+      "decision": "Lease Treatment",
+      "value": "ASC 842 ya capitalizado",
+      "rationale": "Finance + operating leases capitalized in BS per GAAP ASC 842"
+    },
+    {
+      "id": "10",
+      "decision": "Non-Operating Assets",
+      "value": "Cash>2% Rev + Equity stakes + STI",
+      "rationale": "Operating buffer ≈ 2% revenue; LT investments non-operating"
+    },
+    {
+      "id": "11",
+      "decision": "WACC",
+      "value": "11.3% (Rf 4.3%, β1.30, ERP 5.5%, Kd 5.0%)",
+      "rationale": "CAPM + DCF WACC; β from 2yr weekly regression vs S&P; Kd from 10-K"
+    },
+    {
+      "id": "12",
+      "decision": "Goodwill in RV",
+      "value": "0%",
+      "rationale": "Standard Columbia — goodwill reconstructed component by component; no double count"
+    },
+    {
+      "id": "13",
+      "decision": "Intangibles in RV",
+      "value": "CAC×MAUs + Marketing 7y×60% + R&D cap + Licencias",
+      "rationale": "Reconstruction approach per spec §3.8; each component justified"
+    },
+    {
+      "id": "14",
+      "decision": "DTA in RV",
+      "value": "70%",
+      "rationale": "Consistent profitability from FY2023 → high realization probability"
+    },
+    {
+      "id": "15",
+      "decision": "Exit Multiple",
+      "value": "18x EV/NOPAT",
+      "rationale": "Mean reversion from ~37x; 18x = reasonable mature platform multiple"
+    }
+  ],
+  "adj": {
+    "gaapOI": 5565.0,
+    "mktTotal": 311.0,
+    "mkt3yrAvg": 323.0,
+    "impairment": 4356.0,
+    "transformation": 0,
+    "smLife": 4,
+    "smGrowthPct": -934.08,
+    "taxRate": 21,
+    "smGrowthExp": -2905.0,
+    "smAsset": 0.0,
+    "nrTotal": 311.0,
+    "nopatFinal": 0.0,
+    "rdTotal": null,
+    "rdLife": null,
+    "rdGrowthExp": null,
+    "rdAsset": null,
+    "normalizationAdj": 4356.0,
+    "etrHistory": []
+  },
+  "documents": {
+    "valuationReportUrl": "/docs/UBER/2026-05_Company_Brief_Uber_UBER.docx",
+    "thesisBreakerUrl": "/docs/UBER/2026-05_Investment_Memo_Uber_Technologies_UBER.docx",
+    "mungerDigitalUrl": "/docs/UBER/2026-05_Columbia_Model_Uber_UBER.xlsx"
+  },
+  "thesisSummary": {
+    "verdict": "OVERVALUED",
+    "epvRvRatio": 1.451,
+    "priceEpvRatio": 3.837,
+    "impliedIrr": -5.81,
+    "marginOfSafety": -283.73,
+    "narrative": "Uber es la marketplace de mobility líder global con presencia en 70+ países y 175M MAPUs. El moat descansa en network effects bilaterales (drivers/riders), eficiencia de matching algorítmico, y escala de datos de routing. Bull case: la plataforma logra unit-economics breakeven en AV (Aurora/Waymo partnerships) y mantiene take rate ~25% en Mobility. Bear case: AV se concreta sin Uber app (Waymo directo, robotaxis de Tesla), Delivery saturated, regulación laboral. QR v3.3 routing: PASS — Weighted IRR Total Return 5y +3.5%, premium severo (MC/EPV-norm 3.84x). Requiere caída de precio o catalizador AV positivo para reconsiderar."
+  },
+  "finnhubSymbol": "UBER"
+}
