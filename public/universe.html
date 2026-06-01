@@ -543,7 +543,7 @@ const UNIVERSE = [
     shares: 2119.69,                     // M diluted
     debt: 10521 + 1390,                  // Total Debt + Leases ($M)
     cash: 7633,                          // Cash + STI ($M)
-    defaultPrice: 70.40,
+    defaultPrice: 72.51,                 // Updated 01-Jun-2026 (live fallback)
     nopatNorm: 3926,                     // Normalized NOPAT ($M) — Columbia v4.3 base
     wacc: 0.1130,
     excessCash: 6593,                    // ($M, post 2% rev buffer)
@@ -729,8 +729,10 @@ function renderTable() {
   UNIVERSE.forEach(c => {
     const stage = c.funnelStage;
     if (!buckets[stage]) return; // ignore unknown stages
-    const priceEl = document.querySelector(`input[data-ticker="${c.ticker}"]`);
-    const price = priceEl ? parseFloat(priceEl.value) || c.defaultPrice : c.defaultPrice;
+    // Live prices are stored in LIVE_PRICES map (filled by fetchLivePrices());
+    // fallback to defaultPrice if Finnhub didn't return a value.
+    const livePx = LIVE_PRICES[c.ticker];
+    const price = (typeof livePx === 'number' && livePx > 0) ? livePx : c.defaultPrice;
     const vals = calcCompany(c, price);
     buckets[stage].push(renderRow(c, vals));
   });
@@ -785,6 +787,9 @@ async function syncFunnelStagesFromKanban() {
   }
 }
 
+// Live price store (keyed by ticker). Filled by fetchLivePrices().
+const LIVE_PRICES = {};
+
 // Initial render (alerts will be loaded after, then re-render)
 renderTable();
 loadAlerts().then(() => renderTable());
@@ -809,11 +814,8 @@ async function fetchLivePrices() {
     let updated = 0;
     results.forEach(({ ticker, price }) => {
       if (!price || price <= 0) return;
-      const input = document.querySelector(`input[data-ticker="${ticker}"]`);
-      if (input) {
-        input.value = price.toFixed(2);
-        updated++;
-      }
+      LIVE_PRICES[ticker] = price;
+      updated++;
     });
     // Re-render the whole table once after all live prices are in,
     // so alert cells reflect the latest live price (warn/broken thresholds)
