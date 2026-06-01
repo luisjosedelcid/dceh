@@ -1191,6 +1191,35 @@ window.addEventListener('DOMContentLoaded', () => {
         grid.insertBefore(card, emptyEl);
       }
 
+      // ═══ LIVE PRICE OVERLAY ═══
+      // Supabase prices_daily can lag if the daily cron failed (e.g. MSFT showed
+      // \$414 vs live \$460). Overlay every visible card's last-price slot with
+      // a fresh fetch to /api/finnhub-quote (same path /universe uses).
+      (async function refreshLivePrices() {
+        const visibleCards = Array.from(grid.querySelectorAll('a.company-card[data-static-ticker]'))
+          .filter(c => c.style.display !== 'none');
+        const tickers = visibleCards.map(c => c.getAttribute('data-static-ticker').toUpperCase());
+        if (tickers.length === 0) return;
+        const results = await Promise.all(tickers.map(async (tk) => {
+          try {
+            const r = await fetch(`/api/finnhub-quote?symbol=${encodeURIComponent(tk)}`);
+            if (!r.ok) return { tk, price: null };
+            const j = await r.json();
+            return { tk, price: (j && typeof j.c === 'number' && j.c > 0) ? j.c : null };
+          } catch (_) { return { tk, price: null }; }
+        }));
+        results.forEach(({ tk, price }) => {
+          if (price == null) return;
+          const card = visibleCards.find(c => c.getAttribute('data-static-ticker').toUpperCase() === tk);
+          if (!card) return;
+          const slot = card.querySelector('[data-slot="last-price"]');
+          if (!slot) return;
+          slot.textContent = '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          slot.classList.add('gold');
+          // Preserve the avg_cost tooltip if it was set during the initial Supabase fill.
+        });
+      })();
+
       // Wire up 'Start study' buttons
       grid.addEventListener('click', async (ev) => {
         const btn = ev.target.closest('[data-action="start-study"]');
