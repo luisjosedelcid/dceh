@@ -24,15 +24,15 @@
       "cost_basis_total_usd": 529896.56,
       "price_source": {
         "live": true,
-        "endpoint": "https://api.crypto.com/exchange/v1/public/get-ticker?instrument_name=XRP_USD",
-        "field": "last"
+        "provider": "coingecko",
+        "coingecko_id": "ripple"
       },
       "notes": "Saldo confirmado en wallet propia. Ajuste por fees de red XRP (12.85 XRP, ~$17) reconocidos como gasto operativo."
     }
   ],
   "sources": [
     "Estado de Cuenta FINAL sin dust — DCE Holdings, 7-may-2026",
-    "Crypto.com Exchange API — get_ticker XRP_USD (precio live)"
+    "CoinGecko API — simple/price (precio live, CORS habilitado)"
   ],
   "disclaimer": "Sleeve Crypto puro: solo cripto auto-custodiada. El cash repatriado a banco se reporta en el tab Dashboard principal. P&L realizado histórico se muestra como nota informativa, no integra el NAV vivo del sleeve.",
   "valuation_method_note": "NAV crypto = Σ (cantidad × precio spot live). Cost basis por promedio ponderado conforme NIIF para PYMES Sec.13 (Inventarios) / Sec.18 (Activos Intangibles)."

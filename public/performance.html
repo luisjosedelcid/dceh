@@ -1501,21 +1501,22 @@ function crFmtHold(months){
   return y+(y===1?' año ':' años ')+m+' meses';
 }
 
-async function crFetchPrice(asset){
-  // Crypto.com public API — sin auth, sin CORS issues
-  const inst = asset.toUpperCase()+'_USD';
-  const url = 'https://api.crypto.com/exchange/v1/public/get-ticker?instrument_name='+encodeURIComponent(inst);
+async function crFetchPricesBatch(positions){
+  // CoinGecko simple/price — CORS habilitado, sin auth, batched
+  const ids = positions.filter(p=>p.price_source && p.price_source.live && p.price_source.coingecko_id).map(p=>p.price_source.coingecko_id);
+  if(!ids.length) return {};
+  const url = 'https://api.coingecko.com/api/v3/simple/price?ids='+encodeURIComponent(ids.join(','))+'&vs_currencies=usd&include_last_updated_at=true';
   const r = await fetch(url, {cache:'no-store'});
-  if(!r.ok) throw new Error('HTTP '+r.status+' fetching '+inst);
+  if(!r.ok) throw new Error('HTTP '+r.status+' fetching CoinGecko');
   const j = await r.json();
-  // Response shape: {result:{data:[{instrument_name, last, ...}]}}
-  let row = null;
-  if(j && j.result){
-    if(Array.isArray(j.result.data) && j.result.data.length){ row = j.result.data[0]; }
-    else if(j.result.data && typeof j.result.data === 'object'){ row = j.result.data; }
+  const out = {};
+  for(const p of positions){
+    const id = p.price_source && p.price_source.coingecko_id;
+    if(id && j[id] && j[id].usd!=null){
+      out[p.asset] = { last: Number(j[id].usd), ts: j[id].last_updated_at ? new Date(j[id].last_updated_at*1000) : new Date() };
+    }
   }
-  if(!row || row.last==null) throw new Error('No price data for '+inst);
-  return { last: Number(row.last), ts: new Date() };
+  return out;
 }
 
 async function loadCrypto(){
@@ -1529,14 +1530,9 @@ async function loadCrypto(){
       if(!r.ok) throw new Error('HTTP '+r.status);
       CR_DATA = await r.json();
     }
-    // Fetch live prices for each live-priced position
-    CR_PRICE = CR_PRICE || {};
-    for(const p of (CR_DATA.positions||[])){
-      if(p.price_source && p.price_source.live){
-        try{ CR_PRICE[p.asset] = await crFetchPrice(p.asset); }
-        catch(e){ console.warn('Price fetch failed for', p.asset, e.message); }
-      }
-    }
+    // Fetch live prices batched
+    try{ CR_PRICE = await crFetchPricesBatch(CR_DATA.positions||[]); }
+    catch(e){ console.warn('Price fetch failed:', e.message); CR_PRICE = CR_PRICE||{}; }
     renderCrypto();
     loading.classList.add('hide');
     content.classList.remove('hide');
@@ -1553,11 +1549,7 @@ async function loadCrypto(){
 
 async function refreshCryptoPrice(){
   if(!CR_DATA) return;
-  for(const p of (CR_DATA.positions||[])){
-    if(p.price_source && p.price_source.live){
-      try{ CR_PRICE[p.asset] = await crFetchPrice(p.asset); }catch(e){}
-    }
-  }
+  try{ CR_PRICE = await crFetchPricesBatch(CR_DATA.positions||[]); }catch(e){}
   renderCrypto();
 }
 
