@@ -205,14 +205,102 @@
 
   <!-- ====== TAB NAV ====== -->
   <nav class="tabs" role="tablist">
-    <button class="tab-btn active" data-tab="tab-dashboard" role="tab" type="button">Dashboard</button>
+    <button class="tab-btn active" data-tab="tab-consolidado" role="tab" type="button">Consolidado</button>
+    <button class="tab-btn" data-tab="tab-dashboard" role="tab" type="button">Dashboard</button>
     <button class="tab-btn" data-tab="tab-realestate" role="tab" type="button">Real Estate</button>
     <button class="tab-btn" data-tab="tab-crypto" role="tab" type="button">Crypto</button>
     <button class="tab-btn" data-tab="tab-data" role="tab" type="button">Data &amp; audit <span class="tab-badge admin-only-badge">Admin</span></button>
   </nav>
 
+  <!-- ====== TAB: CONSOLIDADO ====== -->
+  <section class="tab-pane active" id="tab-consolidado" role="tabpanel">
+    <div class="panel">
+      <h2>Consolidado — Todas las clases de activo</h2>
+      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:14px">Vista agregada de los sleeves Equity, Real Estate y Crypto, con bandas de asignación IPS §3.1.</div>
+
+      <div id="cons-loading" class="nodata">Loading…</div>
+
+      <div id="cons-content" class="hide">
+        <!-- KPI strip -->
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kpi-label">NAV total (USD)</div><div class="kpi-value" id="cons-kpi-nav">—</div><div class="kpi-sub" id="cons-kpi-nav-sub">— sleeves</div></div>
+          <div class="kpi"><div class="kpi-label">Capital aportado</div><div class="kpi-value" id="cons-kpi-cap">—</div><div class="kpi-sub">neto de retiros</div></div>
+          <div class="kpi"><div class="kpi-label">P&amp;L unrealized</div><div class="kpi-value" id="cons-kpi-pnl">—</div><div class="kpi-sub" id="cons-kpi-pnl-sub">vs capital aportado</div></div>
+          <div class="kpi"><div class="kpi-label">MOIC consolidado</div><div class="kpi-value" id="cons-kpi-moic">—</div><div class="kpi-sub">NAV / Capital</div></div>
+          <div class="kpi"><div class="kpi-label">ROI consolidado</div><div class="kpi-value" id="cons-kpi-roi">—</div><div class="kpi-sub">unrealized</div></div>
+        </div>
+
+        <!-- Allocation por sleeve -->
+        <div style="margin-top:24px">
+          <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin-bottom:10px">Allocation por sleeve</h3>
+          <div style="overflow-x:auto;border:1px solid var(--rule)">
+            <table class="tbl" id="cons-tbl-alloc">
+              <thead>
+                <tr>
+                  <th>Sleeve</th>
+                  <th class="right">NAV (USD)</th>
+                  <th class="right">% NAV</th>
+                  <th class="right">Capital (USD)</th>
+                  <th class="right">P&amp;L unreal. (USD)</th>
+                  <th class="right">MOIC</th>
+                  <th class="right">ROI</th>
+                  <th>Last update</th>
+                </tr>
+              </thead>
+              <tbody id="cons-tbl-alloc-tbody"></tbody>
+              <tfoot id="cons-tbl-alloc-tfoot"></tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- IPS Bands §3.1 -->
+        <div class="ips-card" id="cons-ips-card" style="margin-top:24px">
+          <div class="ips-head">
+            IPS §3.1 — Bandas de asignación estratégica
+            <span style="font-size:9px;font-weight:400;opacity:0.7">Política institucional DCE Holdings</span>
+          </div>
+          <div class="ips-note">Lectura actual contra rangos definidos en el IPS v1.0 §3.1. Verde: dentro de banda. Ámbar: cerca del límite (±2pp). Rojo: fuera de banda. Sleeves no implementados (PE, Renta fija) figuran como 0% — fuera de banda por convención.</div>
+          <table class="ips-bands-table">
+            <thead>
+              <tr>
+                <th>Clase de activo</th>
+                <th class="right">Mín</th>
+                <th class="right">Máx</th>
+                <th class="right">Actual</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="cons-ips-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Top holdings consolidados -->
+        <div style="margin-top:24px">
+          <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin-bottom:10px">Top holdings consolidados</h3>
+          <div style="overflow-x:auto;border:1px solid var(--rule)">
+            <table class="tbl" id="cons-tbl-top">
+              <thead>
+                <tr>
+                  <th>Sleeve</th>
+                  <th>Holding</th>
+                  <th class="right">Market value (USD)</th>
+                  <th class="right">% NAV total</th>
+                </tr>
+              </thead>
+              <tbody id="cons-tbl-top-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="actions" style="margin-top:18px">
+          <button class="btn ghost" id="btn-cons-reload" type="button">Reload</button>
+        </div>
+      </div>
+    </div>
+  </section><!-- /tab-consolidado -->
+
   <!-- ====== TAB: DASHBOARD ====== -->
-  <section class="tab-pane active" id="tab-dashboard" role="tabpanel">
+  <section class="tab-pane" id="tab-dashboard" role="tabpanel">
 
   <!-- ====== DASHBOARD PANEL ====== -->
   <div class="panel" id="panel-dashboard">
@@ -1662,13 +1750,245 @@ function renderCrypto(){
 
 document.getElementById('btn-cr-reload').addEventListener('click', ()=>{ refreshCryptoPrice(); });
 
+// === Consolidado module ===
+let CONS_LOADED = false;
+function consFmtUsd0(n){ if(n==null||isNaN(n)) return '—'; const v=Number(n); const s=Math.abs(v).toLocaleString('en-US',{maximumFractionDigits:0}); return (v<0?'-$':'$')+s; }
+function consFmtPct(n){ if(n==null||isNaN(n)) return '—'; return (n>=0?'+':'')+(n*100).toFixed(2)+'%'; }
+function consFmtMoic(n){ if(n==null||isNaN(n)) return '—'; return n.toFixed(2)+'x'; }
+
+async function loadConsolidado(){
+  document.getElementById('cons-loading').classList.remove('hide');
+  document.getElementById('cons-content').classList.add('hide');
+  try{
+    // 1) Equity feed — reuse cachedKpis if disponible; sino fetch
+    let eqK = cachedKpis;
+    let eqHoldings = [];
+    if(!eqK){
+      const tok = adminToken();
+      const hdrs = tok ? { headers: { 'x-admin-token': tok } } : {};
+      try{
+        const r = await fetch('/api/performance', hdrs);
+        const j = await r.json();
+        if(r.ok && j.ok && j.kpis){ eqK = j.kpis; cachedKpis = eqK; eqHoldings = j.holdings || []; }
+      }catch(e){ /* equity opcional */ }
+    } else {
+      // intentar enriquecer con holdings si la última render lo expuso vía DOM no es trivial; refetch ligero
+      try{
+        const tok = adminToken();
+        const hdrs = tok ? { headers: { 'x-admin-token': tok } } : {};
+        const r = await fetch('/api/performance', hdrs);
+        const j = await r.json();
+        if(r.ok && j.ok){ eqHoldings = j.holdings || []; }
+      }catch(e){}
+    }
+    // 2) Real Estate
+    if(!RE_DATA){ try{ await loadRealEstate(); }catch(e){} }
+    // 3) Crypto (precio live)
+    if(!CR_DATA){ try{ await loadCrypto(); }catch(e){} }
+    else if(!CR_PRICE){ try{ await refreshCryptoPrice(); }catch(e){} }
+
+    renderConsolidado(eqK, eqHoldings);
+    document.getElementById('cons-loading').classList.add('hide');
+    document.getElementById('cons-content').classList.remove('hide');
+    CONS_LOADED = true;
+  }catch(e){
+    document.getElementById('cons-loading').textContent = 'Failed to load: '+e.message;
+  }
+}
+
+function renderConsolidado(eqK, eqHoldings){
+  const today = new Date();
+
+  // ---- Sleeve Equity ----
+  let eqNav=0, eqCap=0, eqPnlUnr=0, eqLast='—';
+  if(eqK){
+    eqNav = Number(eqK.nav||0);
+    eqCap = Number(eqK.invested_usd||0);
+    eqPnlUnr = Number(eqK.unrealized_pnl||0);
+    eqLast = eqK.last_date || '—';
+  }
+
+  // ---- Sleeve Real Estate ----
+  let reNav=0, reCap=0, reLast='—';
+  let reEnriched = [];
+  if(RE_DATA){
+    const fxToday = Number(RE_DATA.fx_eur_usd.today);
+    for(const p of (RE_DATA.positions||[])){
+      const fxDeploy = Number(p.fx_eur_usd_at_deploy);
+      const costUsd = p.amount_eur * fxDeploy;
+      const navUsd = p.nav_eur * fxToday;
+      reEnriched.push({name:p.name, costUsd, navUsd});
+      reCap += costUsd;
+      reNav += navUsd;
+    }
+    reLast = RE_DATA.nav_as_of || '—';
+  }
+  const rePnlUnr = reNav - reCap;
+
+  // ---- Sleeve Crypto ----
+  let crNav=0, crCap=0, crPnlUnr=0, crLast='—';
+  let crEnriched = [];
+  if(CR_DATA){
+    crCap = Number(CR_DATA.capital.capital_neto_aportado_usd||0);
+    for(const p of (CR_DATA.positions||[])){
+      const px = (CR_PRICE && CR_PRICE[p.asset] && CR_PRICE[p.asset].last) || null;
+      const marketUsd = px!=null ? p.quantity * px : 0;
+      crNav += marketUsd;
+      crEnriched.push({name:p.asset+' — '+(p.asset_name||''), marketUsd});
+    }
+    crPnlUnr = crNav - Number(CR_DATA.positions.reduce((s,p)=>s+Number(p.cost_basis_total_usd||0),0));
+    const latestTs = (CR_PRICE && Object.values(CR_PRICE).length) ? Math.max(...Object.values(CR_PRICE).map(x=>x.ts.getTime())) : null;
+    crLast = latestTs ? new Date(latestTs).toLocaleDateString('es-ES') : (CR_DATA.as_of_static_data||'—');
+  }
+
+  // ---- Totales ----
+  const totNav = eqNav + reNav + crNav;
+  const totCap = eqCap + reCap + crCap;
+  const totPnlUnr = eqPnlUnr + rePnlUnr + crPnlUnr;
+  const totMoic = totCap>0 ? totNav/totCap : null;
+  const totRoi = totCap>0 ? totPnlUnr/totCap : null;
+  const sleeveCount = (eqK?1:0) + (RE_DATA?1:0) + (CR_DATA?1:0);
+
+  // ---- KPI render ----
+  document.getElementById('cons-kpi-nav').textContent = consFmtUsd0(totNav);
+  document.getElementById('cons-kpi-nav-sub').textContent = sleeveCount+' sleeves activos';
+  document.getElementById('cons-kpi-cap').textContent = consFmtUsd0(totCap);
+  const pnlEl = document.getElementById('cons-kpi-pnl');
+  pnlEl.textContent = (totPnlUnr>=0?'+':'')+consFmtUsd0(totPnlUnr);
+  pnlEl.style.color = totPnlUnr>=0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('cons-kpi-pnl-sub').textContent = consFmtPct(totRoi)+' vs capital';
+  const moicEl = document.getElementById('cons-kpi-moic');
+  moicEl.textContent = consFmtMoic(totMoic);
+  moicEl.style.color = (totMoic!=null && totMoic>=1) ? 'var(--green)' : 'var(--red)';
+  const roiEl = document.getElementById('cons-kpi-roi');
+  roiEl.textContent = consFmtPct(totRoi);
+  roiEl.style.color = (totRoi!=null && totRoi>=0) ? 'var(--green)' : 'var(--red)';
+
+  // ---- Allocation table ----
+  const sleeves = [
+    {key:'equity', label:'Equity', nav:eqNav, cap:eqCap, pnl:eqPnlUnr, last:eqLast, present: !!eqK, color:'#1B2642'},
+    {key:'realestate', label:'Real Estate', nav:reNav, cap:reCap, pnl:rePnlUnr, last:reLast, present: !!RE_DATA, color:'#B88B47'},
+    {key:'crypto', label:'Crypto', nav:crNav, cap:crCap, pnl:crPnlUnr, last:crLast, present: !!CR_DATA, color:'#5B6B8C'},
+  ];
+  const tbody = document.getElementById('cons-tbl-alloc-tbody');
+  let html = '';
+  for(const s of sleeves){
+    if(!s.present) continue;
+    const wNav = totNav>0 ? s.nav/totNav : 0;
+    const moic = s.cap>0 ? s.nav/s.cap : null;
+    const roi = s.cap>0 ? s.pnl/s.cap : null;
+    const pnlCls = s.pnl>=0 ? 'pos' : 'neg';
+    const moicCls = (moic!=null && moic>=1) ? 'pos' : 'neg';
+    html += '<tr>'
+      +'<td><span style="display:inline-block;width:10px;height:10px;background:'+s.color+';margin-right:8px;border-radius:2px;vertical-align:middle"></span><strong>'+s.label+'</strong></td>'
+      +'<td class="r">'+consFmtUsd0(s.nav)+'</td>'
+      +'<td class="r">'+(wNav*100).toFixed(2)+'%</td>'
+      +'<td class="r">'+consFmtUsd0(s.cap)+'</td>'
+      +'<td class="r '+pnlCls+'" style="font-weight:600">'+(s.pnl>=0?'+':'')+consFmtUsd0(s.pnl)+'</td>'
+      +'<td class="r '+moicCls+'" style="font-weight:600">'+consFmtMoic(moic)+'</td>'
+      +'<td class="r '+(roi!=null&&roi>=0?'pos':'neg')+'" style="font-weight:600">'+consFmtPct(roi)+'</td>'
+      +'<td style="font-size:11px;color:var(--gray-mid)">'+s.last+'</td>'
+      +'</tr>';
+  }
+  tbody.innerHTML = html;
+  const totMoicF = totCap>0?totNav/totCap:null;
+  const totRoiF = totCap>0?totPnlUnr/totCap:null;
+  document.getElementById('cons-tbl-alloc-tfoot').innerHTML =
+    '<tr style="background:var(--cream);font-weight:700">'
+    +'<td>TOTAL</td>'
+    +'<td class="r">'+consFmtUsd0(totNav)+'</td>'
+    +'<td class="r">100.00%</td>'
+    +'<td class="r">'+consFmtUsd0(totCap)+'</td>'
+    +'<td class="r '+(totPnlUnr>=0?'pos':'neg')+'">'+(totPnlUnr>=0?'+':'')+consFmtUsd0(totPnlUnr)+'</td>'
+    +'<td class="r">'+consFmtMoic(totMoicF)+'</td>'
+    +'<td class="r '+(totRoiF!=null&&totRoiF>=0?'pos':'neg')+'">'+consFmtPct(totRoiF)+'</td>'
+    +'<td></td>'
+    +'</tr>';
+
+  // ---- IPS §3.1 bands ----
+  // Mapping: Equities públicos = mv del sleeve Equity; Efectivo = cash_usd del sleeve Equity;
+  // Real estate = NAV sleeve RE; Alternativos = NAV sleeve Crypto; PE y Renta fija = 0 (no implementados).
+  const eqMv = eqK ? Number(eqK.market_value_usd||0) : 0;
+  const eqCash = eqK ? Number(eqK.cash_usd||0) : 0;
+  const bands = [
+    {label:'Equities públicos', min:0.50, max:0.80, actual: totNav>0 ? eqMv/totNav : 0},
+    {label:'Private equity', min:0.00, max:0.20, actual: 0},
+    {label:'Real estate', min:0.00, max:0.20, actual: totNav>0 ? reNav/totNav : 0},
+    {label:'Renta fija', min:0.05, max:0.15, actual: 0},
+    {label:'Efectivo y equivalentes', min:0.15, max:0.25, actual: totNav>0 ? eqCash/totNav : 0},
+    {label:'Alternativos (incl. Crypto)', min:0.00, max:0.15, actual: totNav>0 ? crNav/totNav : 0},
+  ];
+  const ipsTbody = document.getElementById('cons-ips-tbody');
+  let ipsHtml = '';
+  for(const b of bands){
+    let status, color;
+    const tol = 0.02; // ±2pp
+    if(b.actual >= b.min && b.actual <= b.max){ status = 'OK — dentro de banda'; color = 'var(--green)'; }
+    else if(b.actual >= (b.min - tol) && b.actual <= (b.max + tol)){ status = 'Cerca del límite'; color = '#B88B47'; }
+    else if(b.actual < b.min){ status = 'BAJO mínimo'; color = 'var(--red)'; }
+    else { status = 'SOBRE máximo'; color = 'var(--red)'; }
+    ipsHtml += '<tr>'
+      +'<td>'+b.label+'</td>'
+      +'<td class="right">'+(b.min*100).toFixed(0)+'%</td>'
+      +'<td class="right">'+(b.max*100).toFixed(0)+'%</td>'
+      +'<td class="right" style="font-weight:600">'+(b.actual*100).toFixed(2)+'%</td>'
+      +'<td style="color:'+color+';font-weight:600;font-size:11px">'+status+'</td>'
+      +'</tr>';
+  }
+  // Iliquidez consolidada = RE + PE
+  const illiq = totNav>0 ? (reNav)/totNav : 0; // PE = 0 hoy
+  let illiqStatus, illiqColor;
+  if(illiq <= 0.50){ illiqStatus = 'OK — dentro de banda'; illiqColor = 'var(--green)'; }
+  else if(illiq <= 0.52){ illiqStatus = 'Cerca del límite'; illiqColor = '#B88B47'; }
+  else { illiqStatus = 'SOBRE máximo'; illiqColor = 'var(--red)'; }
+  ipsHtml += '<tr style="border-top:2px solid var(--rule)">'
+    +'<td><em>Iliquidez consolidada (máx)</em></td>'
+    +'<td class="right">—</td>'
+    +'<td class="right">50%</td>'
+    +'<td class="right" style="font-weight:600">'+(illiq*100).toFixed(2)+'%</td>'
+    +'<td style="color:'+illiqColor+';font-weight:600;font-size:11px">'+illiqStatus+'</td>'
+    +'</tr>';
+  ipsTbody.innerHTML = ipsHtml;
+
+  // ---- Top holdings consolidados ----
+  const all = [];
+  for(const h of (eqHoldings||[])){
+    const mv = Number(h.market_value || h.marketValue || h.mv || 0);
+    const name = h.ticker || h.symbol || h.name || '?';
+    if(mv>0) all.push({sleeve:'Equity', name, mv, color:'#1B2642'});
+  }
+  for(const p of reEnriched){ if(p.navUsd>0) all.push({sleeve:'Real Estate', name:p.name, mv:p.navUsd, color:'#B88B47'}); }
+  for(const p of crEnriched){ if(p.marketUsd>0) all.push({sleeve:'Crypto', name:p.name, mv:p.marketUsd, color:'#5B6B8C'}); }
+  all.sort((a,b)=>b.mv-a.mv);
+  const topN = all.slice(0,15);
+  const topBody = document.getElementById('cons-tbl-top-tbody');
+  if(topN.length===0){
+    topBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray-mid);font-style:italic;padding:14px">Holdings no disponibles (admin login requerido para Equity)</td></tr>';
+  } else {
+    let topHtml = '';
+    for(const h of topN){
+      const w = totNav>0 ? h.mv/totNav : 0;
+      topHtml += '<tr>'
+        +'<td><span style="display:inline-block;padding:2px 8px;background:'+h.color+';color:#fff;font-size:10px;letter-spacing:0.05em;border-radius:3px;font-weight:600">'+h.sleeve+'</span></td>'
+        +'<td><strong>'+h.name+'</strong></td>'
+        +'<td class="right">'+consFmtUsd0(h.mv)+'</td>'
+        +'<td class="right">'+(w*100).toFixed(2)+'%</td>'
+        +'</tr>';
+    }
+    topBody.innerHTML = topHtml;
+  }
+}
+
+document.getElementById('btn-cons-reload').addEventListener('click', loadConsolidado);
+
 const TAB_STORAGE_KEY = 'dce-perf-tab';
-const VALID_TABS = new Set(['tab-dashboard','tab-data','tab-realestate','tab-crypto']);
+const VALID_TABS = new Set(['tab-consolidado','tab-dashboard','tab-data','tab-realestate','tab-crypto']);
 function switchTab(tabId){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabId));
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('active', p.id===tabId));
   try{ localStorage.setItem(TAB_STORAGE_KEY, tabId); }catch(e){}
   if(tabId==='tab-dashboard' && equityChart){ try{ equityChart.resize(); }catch(e){} }
+  if(tabId==='tab-consolidado' && !CONS_LOADED){ loadConsolidado(); }
   if(tabId==='tab-realestate' && !RE_DATA){ loadRealEstate(); }
   if(tabId==='tab-crypto' && !CR_DATA){ loadCrypto(); }
 }
@@ -1688,16 +2008,19 @@ function applyAdminGate(){
   if(ok){
     loadExisting();
     loadPricesSummary();
-    // Restore preferred tab
-    let preferred = 'tab-dashboard';
+    // Restore preferred tab (default: Consolidado)
+    let preferred = 'tab-consolidado';
     try{ const v = localStorage.getItem(TAB_STORAGE_KEY); if(VALID_TABS.has(v)) preferred = v; }catch(e){}
     switchTab(preferred);
   }else{
     const wrap = document.getElementById('existing-tx-wrap');
     wrap.className = 'nodata';
     wrap.innerHTML = 'Admin access required. Click <strong>Admin login</strong> above.';
-    // Force back to dashboard if currently on data tab
-    if(document.getElementById('tab-data').classList.contains('active')) switchTab('tab-dashboard');
+    // Force back to consolidado if currently on data tab
+    if(document.getElementById('tab-data').classList.contains('active')) switchTab('tab-consolidado');
+    // For non-admins, the default Consolidado tab is already active in HTML but
+    // switchTab() wasn't invoked — trigger the loader manually.
+    if(!CONS_LOADED && document.getElementById('tab-consolidado').classList.contains('active')) loadConsolidado();
   }
   loadDashboard();
 }
