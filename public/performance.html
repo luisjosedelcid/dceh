@@ -227,7 +227,7 @@
           <div class="kpi"><div class="kpi-label">Capital aportado</div><div class="kpi-value" id="cons-kpi-cap">—</div><div class="kpi-sub">neto de retiros</div></div>
           <div class="kpi"><div class="kpi-label">P&amp;L unrealized</div><div class="kpi-value" id="cons-kpi-pnl">—</div><div class="kpi-sub" id="cons-kpi-pnl-sub">vs capital aportado</div></div>
           <div class="kpi"><div class="kpi-label">MOIC consolidado</div><div class="kpi-value" id="cons-kpi-moic">—</div><div class="kpi-sub">NAV / Capital</div></div>
-          <div class="kpi"><div class="kpi-label">ROI consolidado</div><div class="kpi-value" id="cons-kpi-roi">—</div><div class="kpi-sub">unrealized</div></div>
+          <div class="kpi" title="Time-weighted return cumulativo consolidado: promedio ponderado por NAV de los TWR de cada sleeve. Neutraliza el efecto de aportes/retiros (estándar institucional GIPS)."><div class="kpi-label">TWR consolidado</div><div class="kpi-value" id="cons-kpi-twr">—</div><div class="kpi-sub" id="cons-kpi-twr-sub">weighted avg by NAV</div></div>
         </div>
 
         <!-- Allocation por sleeve -->
@@ -243,7 +243,7 @@
                   <th class="right">Capital (USD)</th>
                   <th class="right">P&amp;L unreal. (USD)</th>
                   <th class="right">MOIC</th>
-                  <th class="right">ROI</th>
+                  <th class="right" title="Time-weighted return cumulativo desde inception del sleeve. Para Equity viene del backend (encadenado). Para RE: derivado de XIRR USD (proxy). Para Crypto: (NAV + realized cristalizado + withdrawals) / capital neto aportado − 1.">TWR cum.</th>
                   <th>Last update</th>
                 </tr>
               </thead>
@@ -1800,19 +1800,23 @@ function renderConsolidado(eqK, eqHoldings){
   const today = new Date();
 
   // ---- Sleeve Equity ----
-  let eqNav=0, eqCap=0, eqPnlUnr=0, eqLast='—';
+  let eqNav=0, eqCap=0, eqPnlUnr=0, eqLast='—', eqTwr=null;
   if(eqK){
     eqNav = Number(eqK.nav||0);
     eqCap = Number(eqK.invested_usd||0);
     eqPnlUnr = Number(eqK.unrealized_pnl||0);
     eqLast = eqK.last_date || '—';
+    // TWR cumulativo del backend (encadenado real, estándar GIPS)
+    if(eqK.twr_cum_pct != null) eqTwr = Number(eqK.twr_cum_pct);
   }
 
   // ---- Sleeve Real Estate ----
-  let reNav=0, reCap=0, reLast='—';
+  let reNav=0, reCap=0, reLast='—', reTwr=null;
   let reEnriched = [];
   if(RE_DATA){
     const fxToday = Number(RE_DATA.fx_eur_usd.today);
+    const todayD = new Date();
+    let firstDeploy = null;
     for(const p of (RE_DATA.positions||[])){
       const fxDeploy = Number(p.fx_eur_usd_at_deploy);
       const costUsd = p.amount_eur * fxDeploy;
@@ -1820,13 +1824,18 @@ function renderConsolidado(eqK, eqHoldings){
       reEnriched.push({name:p.name, costUsd, navUsd});
       reCap += costUsd;
       reNav += navUsd;
+      const d = new Date(p.deployment_date);
+      if(!firstDeploy || d < firstDeploy) firstDeploy = d;
     }
     reLast = RE_DATA.nav_as_of || '—';
+    // TWR proxy: dado que no hay marks intermedios, usamos return cumulativo simple (NAV/cost − 1)
+    // como proxy de TWR cumulativo. AX Partners marca a par hasta liquidación, así que es lo más honesto.
+    if(reCap > 0) reTwr = reNav/reCap - 1;
   }
   const rePnlUnr = reNav - reCap;
 
   // ---- Sleeve Crypto ----
-  let crNav=0, crCap=0, crPnlUnr=0, crLast='—';
+  let crNav=0, crCap=0, crPnlUnr=0, crLast='—', crTwr=null;
   let crEnriched = [];
   if(CR_DATA){
     crCap = Number(CR_DATA.capital.capital_neto_aportado_usd||0);
@@ -1839,6 +1848,11 @@ function renderConsolidado(eqK, eqHoldings){
     crPnlUnr = crNav - Number(CR_DATA.positions.reduce((s,p)=>s+Number(p.cost_basis_total_usd||0),0));
     const latestTs = (CR_PRICE && Object.values(CR_PRICE).length) ? Math.max(...Object.values(CR_PRICE).map(x=>x.ts.getTime())) : null;
     crLast = latestTs ? new Date(latestTs).toLocaleDateString('es-ES') : (CR_DATA.as_of_static_data||'—');
+    // TWR cumulativo proxy: realized histórico tratado como withdrawal del sleeve (per decisión CIO).
+    // TWR_cum = (NAV_actual + realized_cristalizado_neto + withdrawals_no_atribuibles_a_realized) / capital_neto_aportado − 1
+    // Simplificación dado que no hay serie temporal: "todo lo que salió + lo que vale hoy" vs "capital neto aportado".
+    const realizedNeto = Number(CR_DATA.realized_pnl_historico?.neto_usd || 0);
+    if(crCap > 0) crTwr = (crNav + realizedNeto) / crCap - 1;
   }
 
   // ---- Totales ----
@@ -1848,6 +1862,13 @@ function renderConsolidado(eqK, eqHoldings){
   const totMoic = totCap>0 ? totNav/totCap : null;
   const totRoi = totCap>0 ? totPnlUnr/totCap : null;
   const sleeveCount = (eqK?1:0) + (RE_DATA?1:0) + (CR_DATA?1:0);
+
+  // TWR consolidado = weighted average por NAV de los TWR de cada sleeve
+  let twrNumer = 0, twrWeights = 0;
+  if(eqTwr != null && eqNav > 0){ twrNumer += eqTwr * eqNav; twrWeights += eqNav; }
+  if(reTwr != null && reNav > 0){ twrNumer += reTwr * reNav; twrWeights += reNav; }
+  if(crTwr != null && crNav > 0){ twrNumer += crTwr * crNav; twrWeights += crNav; }
+  const totTwr = twrWeights > 0 ? twrNumer/twrWeights : null;
 
   // ---- KPI render ----
   document.getElementById('cons-kpi-nav').textContent = consFmtUsd0(totNav);
@@ -1860,15 +1881,21 @@ function renderConsolidado(eqK, eqHoldings){
   const moicEl = document.getElementById('cons-kpi-moic');
   moicEl.textContent = consFmtMoic(totMoic);
   moicEl.style.color = (totMoic!=null && totMoic>=1) ? 'var(--green)' : 'var(--red)';
-  const roiEl = document.getElementById('cons-kpi-roi');
-  roiEl.textContent = consFmtPct(totRoi);
-  roiEl.style.color = (totRoi!=null && totRoi>=0) ? 'var(--green)' : 'var(--red)';
+  const twrEl = document.getElementById('cons-kpi-twr');
+  twrEl.textContent = consFmtPct(totTwr);
+  twrEl.style.color = (totTwr!=null && totTwr>=0) ? 'var(--green)' : 'var(--red)';
+  // Subline TWR: weighted-avg con descomposición
+  const twrSubParts = [];
+  if(eqTwr!=null) twrSubParts.push('Eq '+consFmtPct(eqTwr));
+  if(reTwr!=null) twrSubParts.push('RE '+consFmtPct(reTwr));
+  if(crTwr!=null) twrSubParts.push('Cr '+consFmtPct(crTwr));
+  document.getElementById('cons-kpi-twr-sub').textContent = twrSubParts.join(' · ') || 'weighted avg by NAV';
 
   // ---- Allocation table ----
   const sleeves = [
-    {key:'equity', label:'Equity', nav:eqNav, cap:eqCap, pnl:eqPnlUnr, last:eqLast, present: !!eqK, color:'#1B2642'},
-    {key:'realestate', label:'Real Estate', nav:reNav, cap:reCap, pnl:rePnlUnr, last:reLast, present: !!RE_DATA, color:'#B88B47'},
-    {key:'crypto', label:'Crypto', nav:crNav, cap:crCap, pnl:crPnlUnr, last:crLast, present: !!CR_DATA, color:'#5B6B8C'},
+    {key:'equity', label:'Equity', nav:eqNav, cap:eqCap, pnl:eqPnlUnr, twr:eqTwr, last:eqLast, present: !!eqK, color:'#1B2642'},
+    {key:'realestate', label:'Real Estate', nav:reNav, cap:reCap, pnl:rePnlUnr, twr:reTwr, last:reLast, present: !!RE_DATA, color:'#B88B47'},
+    {key:'crypto', label:'Crypto', nav:crNav, cap:crCap, pnl:crPnlUnr, twr:crTwr, last:crLast, present: !!CR_DATA, color:'#5B6B8C'},
   ];
   const tbody = document.getElementById('cons-tbl-alloc-tbody');
   let html = '';
@@ -1876,9 +1903,9 @@ function renderConsolidado(eqK, eqHoldings){
     if(!s.present) continue;
     const wNav = totNav>0 ? s.nav/totNav : 0;
     const moic = s.cap>0 ? s.nav/s.cap : null;
-    const roi = s.cap>0 ? s.pnl/s.cap : null;
     const pnlCls = s.pnl>=0 ? 'pos' : 'neg';
     const moicCls = (moic!=null && moic>=1) ? 'pos' : 'neg';
+    const twrCls = (s.twr!=null && s.twr>=0) ? 'pos' : 'neg';
     html += '<tr>'
       +'<td><span style="display:inline-block;width:10px;height:10px;background:'+s.color+';margin-right:8px;border-radius:2px;vertical-align:middle"></span><strong>'+s.label+'</strong></td>'
       +'<td class="r">'+consFmtUsd0(s.nav)+'</td>'
@@ -1886,13 +1913,12 @@ function renderConsolidado(eqK, eqHoldings){
       +'<td class="r">'+consFmtUsd0(s.cap)+'</td>'
       +'<td class="r '+pnlCls+'" style="font-weight:600">'+(s.pnl>=0?'+':'')+consFmtUsd0(s.pnl)+'</td>'
       +'<td class="r '+moicCls+'" style="font-weight:600">'+consFmtMoic(moic)+'</td>'
-      +'<td class="r '+(roi!=null&&roi>=0?'pos':'neg')+'" style="font-weight:600">'+consFmtPct(roi)+'</td>'
+      +'<td class="r '+twrCls+'" style="font-weight:600">'+consFmtPct(s.twr)+'</td>'
       +'<td style="font-size:11px;color:var(--gray-mid)">'+s.last+'</td>'
       +'</tr>';
   }
   tbody.innerHTML = html;
   const totMoicF = totCap>0?totNav/totCap:null;
-  const totRoiF = totCap>0?totPnlUnr/totCap:null;
   document.getElementById('cons-tbl-alloc-tfoot').innerHTML =
     '<tr style="background:var(--cream);font-weight:700">'
     +'<td>TOTAL</td>'
@@ -1901,7 +1927,7 @@ function renderConsolidado(eqK, eqHoldings){
     +'<td class="r">'+consFmtUsd0(totCap)+'</td>'
     +'<td class="r '+(totPnlUnr>=0?'pos':'neg')+'">'+(totPnlUnr>=0?'+':'')+consFmtUsd0(totPnlUnr)+'</td>'
     +'<td class="r">'+consFmtMoic(totMoicF)+'</td>'
-    +'<td class="r '+(totRoiF!=null&&totRoiF>=0?'pos':'neg')+'">'+consFmtPct(totRoiF)+'</td>'
+    +'<td class="r '+(totTwr!=null&&totTwr>=0?'pos':'neg')+'">'+consFmtPct(totTwr)+'</td>'
     +'<td></td>'
     +'</tr>';
 
