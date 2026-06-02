@@ -1,0 +1,54 @@
+{
+  "last_updated": "2026-06-02",
+  "source": "AX Partners 2025 Annual Report (created 30/01/2026, period 01/01/2025 - 31/12/2025)",
+  "nav_as_of": "2025-12-31",
+  "disclaimer": "NAV indicativo basado en el último mark oficial del GP al 31/12/2025. AX Partners marca a par hasta liquidación; valoraciones forward-looking sujetas a cambio. Re-marcar al recibir el próximo reporte trimestral.",
+  "fx_eur_usd": {
+    "today": 1.1649,
+    "today_date": "2026-06-02",
+    "nav_close": 1.1750,
+    "nav_close_date": "2025-12-31"
+  },
+  "positions": [
+    {
+      "id": "ax-spv19-ibiza",
+      "name": "Hotel Sir Joan Ibiza",
+      "vehicle": "AX Partners Real Estate SCSp — SPV 19",
+      "fund_manager": "AX Partners GP Sàrl (Luxembourg)",
+      "share_class": "A9",
+      "subscription_date": "2024-10-02",
+      "deployment_date": "2024-11-28",
+      "amount_eur": 250000.00,
+      "fx_eur_usd_at_deploy": 1.0542,
+      "ownership_pct": 0.0192,
+      "hurdle_rate_pct": 0.06,
+      "target_roe_pct_low": 0.30,
+      "target_roe_pct_high": 0.40,
+      "target_investment_period_months_low": 36,
+      "target_investment_period_months_high": 60,
+      "nav_eur": 280202.52,
+      "moic_eur_reported": 1.12,
+      "status": "Active"
+    },
+    {
+      "id": "ax-spv14-cala-blanca",
+      "name": "Cala Blanca Residences",
+      "vehicle": "AX Partners Real Estate Fund AIF, SCSp — SPV 14",
+      "fund_manager": "AX Partners GP Sàrl (Luxembourg)",
+      "share_class": "A6",
+      "subscription_date": "2025-02-18",
+      "deployment_date": "2025-03-20",
+      "amount_eur": 250000.00,
+      "fx_eur_usd_at_deploy": 1.0833,
+      "ownership_pct": 0.125,
+      "hurdle_rate_pct": 0.10,
+      "target_roe_pct": 0.50,
+      "preferred_equity": true,
+      "target_investment_period_months_low": 24,
+      "target_investment_period_months_high": 36,
+      "nav_eur": 291989.54,
+      "moic_eur_reported": 1.17,
+      "status": "Active"
+    }
+  ]
+}

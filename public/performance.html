@@ -206,6 +206,7 @@
   <!-- ====== TAB NAV ====== -->
   <nav class="tabs" role="tablist">
     <button class="tab-btn active" data-tab="tab-dashboard" role="tab" type="button">Dashboard</button>
+    <button class="tab-btn" data-tab="tab-realestate" role="tab" type="button">Real Estate</button>
     <button class="tab-btn" data-tab="tab-data" role="tab" type="button">Data &amp; audit <span class="tab-badge admin-only-badge">Admin</span></button>
   </nav>
 
@@ -400,6 +401,49 @@
   </div>
 
   </section><!-- /tab-data -->
+
+  <!-- ====== TAB: REAL ESTATE ====== -->
+  <section class="tab-pane" id="tab-realestate" role="tabpanel">
+
+    <div class="panel">
+      <h2>Real Estate — Posiciones activas</h2>
+      <div id="re-loading" class="nodata">Loading…</div>
+      <div id="re-content" class="hide">
+
+        <!-- KPI strip RE -->
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kpi-label">Net invested (USD)</div><div class="kpi-value" id="re-kpi-inv">—</div><div class="kpi-sub" id="re-kpi-inv-sub">@ FX deploy</div></div>
+          <div class="kpi"><div class="kpi-label">NAV (USD)</div><div class="kpi-value" id="re-kpi-nav">—</div><div class="kpi-sub" id="re-kpi-nav-sub">—</div></div>
+          <div class="kpi"><div class="kpi-label">MOIC (USD)</div><div class="kpi-value" id="re-kpi-moic">—</div><div class="kpi-sub">portfolio agregado</div></div>
+          <div class="kpi"><div class="kpi-label">XIRR (USD, ann.)</div><div class="kpi-value" id="re-kpi-irr">—</div><div class="kpi-sub">since inception</div></div>
+          <div class="kpi"><div class="kpi-label">Posiciones</div><div class="kpi-value" id="re-kpi-count">—</div><div class="kpi-sub" id="re-kpi-nav-eur">NAV EUR: —</div></div>
+        </div>
+
+        <!-- Tabla holdings RE -->
+        <div style="margin-top:24px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;gap:12px">
+            <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:0">Holdings</h3>
+            <span id="re-asof-badge" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.08em">—</span>
+          </div>
+          <div style="overflow-x:auto;border:1px solid var(--rule)">
+            <table class="tbl" id="re-tbl-holdings"></table>
+          </div>
+        </div>
+
+        <!-- FX y disclaimer -->
+        <div style="margin-top:18px;padding:14px 16px;background:var(--cream);border:1px solid var(--rule);font-size:11px;color:var(--gray-txt);line-height:1.6">
+          <div style="font-weight:600;color:var(--navy);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px">Bases métodológicas</div>
+          <div id="re-fx-detail">—</div>
+          <div id="re-disclaimer" style="margin-top:8px;font-style:italic;color:var(--gray-mid)">—</div>
+        </div>
+
+        <div class="actions" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <button class="btn ghost" id="btn-re-reload" type="button">Reload</button>
+        </div>
+      </div>
+    </div>
+
+  </section><!-- /tab-realestate -->
 
 </main>
 
@@ -1242,14 +1286,160 @@ document.getElementById('btn-perf-report').addEventListener('click', async () =>
 });
 
 // ── Tabs ─────────────────────────────────────
+// === Real Estate module ===
+let RE_DATA = null;
+
+function reFmtUsd0(n){ if(n==null||isNaN(n)) return '—'; return '$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:0}); }
+function reFmtUsd2(n){ if(n==null||isNaN(n)) return '—'; return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function reFmtEur0(n){ if(n==null||isNaN(n)) return '—'; return '€'+Number(n).toLocaleString('de-DE',{maximumFractionDigits:0}); }
+function reFmtEur2(n){ if(n==null||isNaN(n)) return '—'; return '€'+Number(n).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function reFmtPct(n,d){ if(n==null||isNaN(n)) return '—'; const dec=(d==null?2:d); const sign=n>0?'+':''; return sign+(n*100).toFixed(dec)+'%'; }
+function reFmtMoic(n){ if(n==null||isNaN(n)) return '—'; return Number(n).toFixed(3)+'x'; }
+function reYears(d1,d2){ return (d2-d1)/(1000*60*60*24*365.25); }
+function reFmtMonths(months){
+  if(months==null||isNaN(months)||months<=0) return '—';
+  const y = Math.floor(months/12), m = Math.round(months%12);
+  if(y===0) return m+' meses';
+  if(m===0) return y+(y===1?' año':' años');
+  return y+(y===1?' año ':' años ')+m+' meses';
+}
+function reXirr(cashflows){
+  const d0 = Math.min(...cashflows.map(c=>c.date.getTime()));
+  function npv(r){ return cashflows.reduce((s,c)=> s + c.amount/Math.pow(1+r, (c.date.getTime()-d0)/(1000*60*60*24*365.25)), 0); }
+  let lo=-0.99, hi=10.0, mid=0;
+  for(let i=0;i<200;i++){ mid=(lo+hi)/2; if(npv(mid)>0) lo=mid; else hi=mid; }
+  return mid;
+}
+
+async function loadRealEstate(){
+  const loading = document.getElementById('re-loading');
+  const content = document.getElementById('re-content');
+  loading.classList.remove('hide');
+  content.classList.add('hide');
+  try{
+    const r = await fetch('/real_estate_positions.json', {cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    RE_DATA = await r.json();
+    renderRealEstate();
+    loading.classList.add('hide');
+    content.classList.remove('hide');
+  }catch(e){
+    loading.textContent = 'Error loading Real Estate positions: '+(e&&e.message||e);
+  }
+}
+
+function renderRealEstate(){
+  if(!RE_DATA) return;
+  const fxToday = Number(RE_DATA.fx_eur_usd.today);
+  const today = new Date();
+  const positions = RE_DATA.positions || [];
+
+  const enriched = positions.map(p=>{
+    const deployDate = new Date(p.deployment_date);
+    const fxDeploy = Number(p.fx_eur_usd_at_deploy);
+    const costUsd = p.amount_eur * fxDeploy;
+    const navUsdToday = p.nav_eur * fxToday;
+    const moicEur = p.nav_eur / p.amount_eur;
+    const moicUsd = navUsdToday / costUsd;
+    const t = reYears(deployDate, today);
+    const irrUsd = t>0 ? Math.pow(navUsdToday/costUsd, 1/t) - 1 : null;
+    const irrEur = t>0 ? Math.pow(p.nav_eur/p.amount_eur, 1/t) - 1 : null;
+    const lockupMonthsTotal = p.target_investment_period_months_high || p.target_investment_period_months || null;
+    let lockupRemainingMonths = null;
+    if(lockupMonthsTotal){
+      const monthsElapsed = (today - deployDate)/(1000*60*60*24*30.4375);
+      lockupRemainingMonths = Math.max(0, lockupMonthsTotal - monthsElapsed);
+    }
+    return Object.assign({}, p, {
+      deployDate, costUsd, navUsdToday, moicEur, moicUsd, irrUsd, irrEur,
+      tYears: t, lockupRemainingMonths
+    });
+  });
+
+  const totInvUsd = enriched.reduce((s,p)=>s+p.costUsd,0);
+  const totNavUsd = enriched.reduce((s,p)=>s+p.navUsdToday,0);
+  const totNavEur = enriched.reduce((s,p)=>s+p.nav_eur,0);
+  const totMoic = totNavUsd/totInvUsd;
+  const cfs = [];
+  for(const p of enriched){ cfs.push({date:p.deployDate, amount:-p.costUsd}); }
+  cfs.push({date: today, amount: totNavUsd});
+  const xirrUsd = reXirr(cfs);
+
+  document.getElementById('re-kpi-inv').textContent = reFmtUsd0(totInvUsd);
+  document.getElementById('re-kpi-nav').textContent = reFmtUsd0(totNavUsd);
+  const navGain = totNavUsd - totInvUsd;
+  const navGainPct = navGain/totInvUsd;
+  const sub = document.getElementById('re-kpi-nav-sub');
+  sub.textContent = (navGain>=0?'+':'')+reFmtUsd0(navGain)+' ('+(navGainPct*100).toFixed(2)+'%)';
+  sub.style.color = navGain>=0 ? 'var(--green)' : 'var(--red)';
+  const moicEl = document.getElementById('re-kpi-moic');
+  moicEl.textContent = reFmtMoic(totMoic);
+  moicEl.style.color = totMoic>=1 ? 'var(--green)' : 'var(--red)';
+  const irrEl = document.getElementById('re-kpi-irr');
+  irrEl.textContent = reFmtPct(xirrUsd);
+  irrEl.style.color = xirrUsd>=0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('re-kpi-count').textContent = String(enriched.length);
+  document.getElementById('re-kpi-nav-eur').textContent = 'NAV EUR: '+reFmtEur0(totNavEur);
+
+  const tbl = document.getElementById('re-tbl-holdings');
+  let html = '<thead><tr>'
+    +'<th>Position</th>'
+    +'<th>Vehicle</th>'
+    +'<th class="r">Deploy</th>'
+    +'<th class="r">Aporte EUR</th>'
+    +'<th class="r" title="FX EUR/USD al deployment">FX deploy</th>'
+    +'<th class="r">Cost basis USD</th>'
+    +'<th class="r">NAV EUR</th>'
+    +'<th class="r" title="NAV EUR convertido a USD al FX vigente">NAV USD</th>'
+    +'<th class="r">MOIC EUR</th>'
+    +'<th class="r">MOIC USD</th>'
+    +'<th class="r">IRR USD (ann.)</th>'
+    +'<th class="r" title="% sobre NAV total del portfolio Real Estate">Weight RE</th>'
+    +'<th class="r" title="Tiempo restante hasta el final del Target Investment Period del vehículo">Lock-up rem.</th>'
+    +'</tr></thead><tbody>';
+  for(const p of enriched){
+    const weight = p.navUsdToday/totNavUsd;
+    const irrCls = p.irrUsd>=0.12 ? 'pos' : (p.irrUsd>=0 ? '' : 'neg');
+    const moicEurCls = p.moicEur>=1 ? 'pos' : 'neg';
+    const moicUsdCls = p.moicUsd>=1 ? 'pos' : 'neg';
+    html += '<tr>'
+      +'<td><strong>'+p.name+'</strong></td>'
+      +'<td style="font-size:11px;color:var(--gray-mid)">'+p.vehicle+'</td>'
+      +'<td class="r" style="font-size:11px">'+p.deployment_date+'</td>'
+      +'<td class="r">'+reFmtEur0(p.amount_eur)+'</td>'
+      +'<td class="r">'+Number(p.fx_eur_usd_at_deploy).toFixed(4)+'</td>'
+      +'<td class="r">'+reFmtUsd2(p.costUsd)+'</td>'
+      +'<td class="r">'+reFmtEur2(p.nav_eur)+'</td>'
+      +'<td class="r">'+reFmtUsd2(p.navUsdToday)+'</td>'
+      +'<td class="r '+moicEurCls+'" style="font-weight:600">'+reFmtMoic(p.moicEur)+'</td>'
+      +'<td class="r '+moicUsdCls+'" style="font-weight:600">'+reFmtMoic(p.moicUsd)+'</td>'
+      +'<td class="r '+irrCls+'" style="font-weight:600">'+reFmtPct(p.irrUsd)+'</td>'
+      +'<td class="r">'+(weight*100).toFixed(2)+'%</td>'
+      +'<td class="r" style="font-size:11px">'+reFmtMonths(p.lockupRemainingMonths)+'</td>'
+      +'</tr>';
+  }
+  html += '</tbody>';
+  tbl.innerHTML = html;
+
+  document.getElementById('re-asof-badge').textContent = 'NAV as of '+RE_DATA.nav_as_of+' · FX as of '+RE_DATA.fx_eur_usd.today_date;
+  const fxDetail = 'FX EUR/USD utilizado: '+fxToday.toFixed(4)+' al '+RE_DATA.fx_eur_usd.today_date
+    +' (NAV mark al '+RE_DATA.nav_as_of+' a '+Number(RE_DATA.fx_eur_usd.nav_close).toFixed(4)+'). '
+    +'Cada aporte se convirtió a USD al FX vigente en la fecha de deployment; NAV vigente se convierte al FX de hoy. '
+    +'XIRR USD calculado por bisección sobre cashflows individuales (deployment negativo, NAV agregado positivo a hoy).';
+  document.getElementById('re-fx-detail').textContent = fxDetail;
+  document.getElementById('re-disclaimer').textContent = RE_DATA.disclaimer + ' Fuente: '+RE_DATA.source+'.';
+}
+
+document.getElementById('btn-re-reload').addEventListener('click', loadRealEstate);
+
 const TAB_STORAGE_KEY = 'dce-perf-tab';
+const VALID_TABS = new Set(['tab-dashboard','tab-data','tab-realestate']);
 function switchTab(tabId){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabId));
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('active', p.id===tabId));
   try{ localStorage.setItem(TAB_STORAGE_KEY, tabId); }catch(e){}
-  // Equity chart resizes correctly only if the canvas is visible when Chart.js measures it.
-  // If switching to dashboard tab and chart already rendered, trigger resize.
   if(tabId==='tab-dashboard' && equityChart){ try{ equityChart.resize(); }catch(e){} }
+  if(tabId==='tab-realestate' && !RE_DATA){ loadRealEstate(); }
 }
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=> switchTab(btn.dataset.tab));
@@ -1269,7 +1459,7 @@ function applyAdminGate(){
     loadPricesSummary();
     // Restore preferred tab
     let preferred = 'tab-dashboard';
-    try{ const v = localStorage.getItem(TAB_STORAGE_KEY); if(v==='tab-data'||v==='tab-dashboard') preferred = v; }catch(e){}
+    try{ const v = localStorage.getItem(TAB_STORAGE_KEY); if(VALID_TABS.has(v)) preferred = v; }catch(e){}
     switchTab(preferred);
   }else{
     const wrap = document.getElementById('existing-tx-wrap');
