@@ -225,7 +225,7 @@
         <div class="kpi-grid">
           <div class="kpi"><div class="kpi-label">NAV total (USD)</div><div class="kpi-value" id="cons-kpi-nav">—</div><div class="kpi-sub" id="cons-kpi-nav-sub">— sleeves</div></div>
           <div class="kpi"><div class="kpi-label">Capital aportado</div><div class="kpi-value" id="cons-kpi-cap">—</div><div class="kpi-sub">neto de retiros</div></div>
-          <div class="kpi"><div class="kpi-label">P&amp;L unrealized</div><div class="kpi-value" id="cons-kpi-pnl">—</div><div class="kpi-sub" id="cons-kpi-pnl-sub">vs capital aportado</div></div>
+          <div class="kpi" title="Incluye realized histórico de Crypto (utilidades ya cristalizadas vía retiros) + unrealized de Equity, RE y Crypto."><div class="kpi-label">P&amp;L total</div><div class="kpi-value" id="cons-kpi-pnl">—</div><div class="kpi-sub" id="cons-kpi-pnl-sub">vs capital aportado</div></div>
           <div class="kpi"><div class="kpi-label">MOIC consolidado</div><div class="kpi-value" id="cons-kpi-moic">—</div><div class="kpi-sub">NAV / Capital</div></div>
           <div class="kpi" title="Time-weighted return cumulativo consolidado: promedio ponderado por NAV de los TWR de cada sleeve. Neutraliza el efecto de aportes/retiros (estándar institucional GIPS)."><div class="kpi-label">TWR consolidado</div><div class="kpi-value" id="cons-kpi-twr">—</div><div class="kpi-sub" id="cons-kpi-twr-sub">weighted avg by NAV</div></div>
         </div>
@@ -241,7 +241,7 @@
                   <th class="right">NAV (USD)</th>
                   <th class="right">% NAV</th>
                   <th class="right">Capital (USD)</th>
-                  <th class="right">P&amp;L unreal. (USD)</th>
+                  <th class="right" title="Realized histórico cristalizado (sólo Crypto) + Unrealized (NAV vs cost basis). Hover sobre cada fila para descomposición.">P&amp;L total (USD)</th>
                   <th class="right">MOIC</th>
                   <th class="right" title="Time-weighted return cumulativo desde inception del sleeve. Para Equity viene del backend (encadenado). Para RE: derivado de XIRR USD (proxy). Para Crypto: (NAV + realized cristalizado + withdrawals) / capital neto aportado − 1.">TWR cum.</th>
                   <th>Last update</th>
@@ -1835,7 +1835,7 @@ function renderConsolidado(eqK, eqHoldings){
   const rePnlUnr = reNav - reCap;
 
   // ---- Sleeve Crypto ----
-  let crNav=0, crCap=0, crPnlUnr=0, crLast='—', crTwr=null;
+  let crNav=0, crCap=0, crPnlUnr=0, crPnlRealized=0, crPnlTotal=0, crLast='—', crTwr=null;
   let crEnriched = [];
   if(CR_DATA){
     crCap = Number(CR_DATA.capital.capital_neto_aportado_usd||0);
@@ -1846,19 +1846,21 @@ function renderConsolidado(eqK, eqHoldings){
       crEnriched.push({name:p.asset+' — '+(p.asset_name||''), marketUsd});
     }
     crPnlUnr = crNav - Number(CR_DATA.positions.reduce((s,p)=>s+Number(p.cost_basis_total_usd||0),0));
+    crPnlRealized = Number(CR_DATA.realized_pnl_historico?.neto_usd || 0);
+    // P&L total del sleeve Crypto = realized histórico (ya cristalizado vía retiros) + unrealized (NAV vs cost basis del XRP actual).
+    crPnlTotal = crPnlRealized + crPnlUnr;
     const latestTs = (CR_PRICE && Object.values(CR_PRICE).length) ? Math.max(...Object.values(CR_PRICE).map(x=>x.ts.getTime())) : null;
     crLast = latestTs ? new Date(latestTs).toLocaleDateString('es-ES') : (CR_DATA.as_of_static_data||'—');
     // TWR cumulativo proxy: realized histórico tratado como withdrawal del sleeve (per decisión CIO).
     // TWR_cum = (NAV_actual + realized_cristalizado_neto + withdrawals_no_atribuibles_a_realized) / capital_neto_aportado − 1
-    // Simplificación dado que no hay serie temporal: "todo lo que salió + lo que vale hoy" vs "capital neto aportado".
-    const realizedNeto = Number(CR_DATA.realized_pnl_historico?.neto_usd || 0);
-    if(crCap > 0) crTwr = (crNav + realizedNeto) / crCap - 1;
+    if(crCap > 0) crTwr = (crNav + crPnlRealized) / crCap - 1;
   }
 
   // ---- Totales ----
+  // Crypto contribuye con P&L total (realized + unrealized) porque el realized ya salió vía retiros y no está en NAV.
   const totNav = eqNav + reNav + crNav;
   const totCap = eqCap + reCap + crCap;
-  const totPnlUnr = eqPnlUnr + rePnlUnr + crPnlUnr;
+  const totPnlUnr = eqPnlUnr + rePnlUnr + crPnlTotal;
   const totMoic = totCap>0 ? totNav/totCap : null;
   const totRoi = totCap>0 ? totPnlUnr/totCap : null;
   const sleeveCount = (eqK?1:0) + (RE_DATA?1:0) + (CR_DATA?1:0);
@@ -1895,37 +1897,47 @@ function renderConsolidado(eqK, eqHoldings){
   const sleeves = [
     {key:'equity', label:'Equity', nav:eqNav, cap:eqCap, pnl:eqPnlUnr, twr:eqTwr, last:eqLast, present: !!eqK, color:'#1B2642'},
     {key:'realestate', label:'Real Estate', nav:reNav, cap:reCap, pnl:rePnlUnr, twr:reTwr, last:reLast, present: !!RE_DATA, color:'#B88B47'},
-    {key:'crypto', label:'Crypto', nav:crNav, cap:crCap, pnl:crPnlUnr, twr:crTwr, last:crLast, present: !!CR_DATA, color:'#5B6B8C'},
+    {key:'crypto', label:'Crypto', nav:crNav, cap:crCap, pnl:crPnlTotal, twr:crTwr, last:crLast, present: !!CR_DATA, color:'#5B6B8C', realized:crPnlRealized},
   ];
   const tbody = document.getElementById('cons-tbl-alloc-tbody');
   let html = '';
   for(const s of sleeves){
     if(!s.present) continue;
     const wNav = totNav>0 ? s.nav/totNav : 0;
-    const moic = s.cap>0 ? s.nav/s.cap : null;
+    // MOIC: si el sleeve tiene realized cristalizado (Crypto), incluirlo en numerador.
+    const moicNum = s.nav + (s.realized||0);
+    const moic = s.cap>0 ? moicNum/s.cap : null;
     const pnlCls = s.pnl>=0 ? 'pos' : 'neg';
     const moicCls = (moic!=null && moic>=1) ? 'pos' : 'neg';
     const twrCls = (s.twr!=null && s.twr>=0) ? 'pos' : 'neg';
+    // Tooltip P&L: si hay realized, descomponer en realized + unrealized
+    let pnlTooltip = '';
+    let pnlLabel = (s.pnl>=0?'+':'')+consFmtUsd0(s.pnl);
+    if(s.realized && s.realized !== 0){
+      const unr = s.pnl - s.realized;
+      pnlTooltip = ' title="Realized hist: '+(s.realized>=0?'+':'')+consFmtUsd0(s.realized)+' · Unrealized: '+(unr>=0?'+':'')+consFmtUsd0(unr)+'"';
+    }
     html += '<tr>'
       +'<td><span style="display:inline-block;width:10px;height:10px;background:'+s.color+';margin-right:8px;border-radius:2px;vertical-align:middle"></span><strong>'+s.label+'</strong></td>'
       +'<td class="r">'+consFmtUsd0(s.nav)+'</td>'
       +'<td class="r">'+(wNav*100).toFixed(2)+'%</td>'
       +'<td class="r">'+consFmtUsd0(s.cap)+'</td>'
-      +'<td class="r '+pnlCls+'" style="font-weight:600">'+(s.pnl>=0?'+':'')+consFmtUsd0(s.pnl)+'</td>'
+      +'<td class="r '+pnlCls+'" style="font-weight:600"'+pnlTooltip+'>'+pnlLabel+'</td>'
       +'<td class="r '+moicCls+'" style="font-weight:600">'+consFmtMoic(moic)+'</td>'
       +'<td class="r '+twrCls+'" style="font-weight:600">'+consFmtPct(s.twr)+'</td>'
       +'<td style="font-size:11px;color:var(--gray-mid)">'+s.last+'</td>'
       +'</tr>';
   }
   tbody.innerHTML = html;
-  const totMoicF = totCap>0?totNav/totCap:null;
+  // TOTAL MOIC: incluir realized de Crypto en numerador para consistencia con filas.
+  const totMoicF = totCap>0?(totNav + crPnlRealized)/totCap:null;
   document.getElementById('cons-tbl-alloc-tfoot').innerHTML =
     '<tr style="background:var(--cream);font-weight:700">'
     +'<td>TOTAL</td>'
     +'<td class="r">'+consFmtUsd0(totNav)+'</td>'
     +'<td class="r">100.00%</td>'
     +'<td class="r">'+consFmtUsd0(totCap)+'</td>'
-    +'<td class="r '+(totPnlUnr>=0?'pos':'neg')+'">'+(totPnlUnr>=0?'+':'')+consFmtUsd0(totPnlUnr)+'</td>'
+    +'<td class="r '+(totPnlUnr>=0?'pos':'neg')+'" title="Incluye realized histórico Crypto: '+(crPnlRealized>=0?'+':'')+consFmtUsd0(crPnlRealized)+'">'+(totPnlUnr>=0?'+':'')+consFmtUsd0(totPnlUnr)+'</td>'
     +'<td class="r">'+consFmtMoic(totMoicF)+'</td>'
     +'<td class="r '+(totTwr!=null&&totTwr>=0?'pos':'neg')+'">'+consFmtPct(totTwr)+'</td>'
     +'<td></td>'
