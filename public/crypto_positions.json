@@ -1,0 +1,39 @@
+{
+  "as_of_static_data": "2026-05-07",
+  "accounting_method": "NIIF para PYMES Sec. 13/18 — Promedio Ponderado",
+  "capital": {
+    "deposits_fiat_acumulados_usd": 472300.00,
+    "withdrawals_fiat_to_bank_usd": -192538.68,
+    "capital_neto_aportado_usd": 279761.32
+  },
+  "realized_pnl_historico": {
+    "y2024_usd": 95639.47,
+    "y2025_q1_usd": 155762.01,
+    "fees_intereses_usdc_usd": -2964.19,
+    "fees_red_xrp_usd": -17.02,
+    "neto_usd": 248420.27,
+    "nota": "Cristalizado y repatriado al sleeve Cash en banco (ver tab Performance principal). No se contabiliza en el NAV del sleeve Crypto."
+  },
+  "positions": [
+    {
+      "asset": "XRP",
+      "asset_name": "Ripple",
+      "custody": "Self-custody (cold wallet)",
+      "quantity": 400012.50,
+      "cost_basis_unit_usd": 1.3247,
+      "cost_basis_total_usd": 529896.56,
+      "price_source": {
+        "live": true,
+        "endpoint": "https://api.crypto.com/exchange/v1/public/get-ticker?instrument_name=XRP_USD",
+        "field": "last"
+      },
+      "notes": "Saldo confirmado en wallet propia. Ajuste por fees de red XRP (12.85 XRP, ~$17) reconocidos como gasto operativo."
+    }
+  ],
+  "sources": [
+    "Estado de Cuenta FINAL sin dust — DCE Holdings, 7-may-2026",
+    "Crypto.com Exchange API — get_ticker XRP_USD (precio live)"
+  ],
+  "disclaimer": "Sleeve Crypto puro: solo cripto auto-custodiada. El cash repatriado a banco se reporta en el tab Dashboard principal. P&L realizado histórico se muestra como nota informativa, no integra el NAV vivo del sleeve.",
+  "valuation_method_note": "NAV crypto = Σ (cantidad × precio spot live). Cost basis por promedio ponderado conforme NIIF para PYMES Sec.13 (Inventarios) / Sec.18 (Activos Intangibles)."
+}

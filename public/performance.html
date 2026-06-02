@@ -207,6 +207,7 @@
   <nav class="tabs" role="tablist">
     <button class="tab-btn active" data-tab="tab-dashboard" role="tab" type="button">Dashboard</button>
     <button class="tab-btn" data-tab="tab-realestate" role="tab" type="button">Real Estate</button>
+    <button class="tab-btn" data-tab="tab-crypto" role="tab" type="button">Crypto</button>
     <button class="tab-btn" data-tab="tab-data" role="tab" type="button">Data &amp; audit <span class="tab-badge admin-only-badge">Admin</span></button>
   </nav>
 
@@ -444,6 +445,51 @@
     </div>
 
   </section><!-- /tab-realestate -->
+
+  <!-- ====== TAB: CRYPTO ====== -->
+  <section class="tab-pane" id="tab-crypto" role="tabpanel">
+
+    <div class="panel">
+      <h2>Crypto — Sleeve auto-custodiado</h2>
+      <div id="cr-loading" class="nodata">Loading…</div>
+      <div id="cr-content" class="hide">
+
+        <!-- KPI strip Crypto -->
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kpi-label">Capital neto aportado</div><div class="kpi-value" id="cr-kpi-cap">—</div><div class="kpi-sub">depósitos − retiros fiat</div></div>
+          <div class="kpi"><div class="kpi-label">NAV crypto (live)</div><div class="kpi-value" id="cr-kpi-nav">—</div><div class="kpi-sub" id="cr-kpi-nav-sub">—</div></div>
+          <div class="kpi"><div class="kpi-label">P&amp;L total acumulado</div><div class="kpi-value" id="cr-kpi-pnl">—</div><div class="kpi-sub" id="cr-kpi-pnl-sub">unrealized + realized hist.</div></div>
+          <div class="kpi"><div class="kpi-label">MOIC</div><div class="kpi-value" id="cr-kpi-moic">—</div><div class="kpi-sub">sobre capital neto</div></div>
+          <div class="kpi"><div class="kpi-label">ROI sobre capital neto</div><div class="kpi-value" id="cr-kpi-roi">—</div><div class="kpi-sub" id="cr-kpi-hold">—</div></div>
+        </div>
+
+        <!-- Tabla holdings Crypto -->
+        <div style="margin-top:24px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;gap:12px">
+            <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:0">Holdings</h3>
+            <span id="cr-asof-badge" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.08em">—</span>
+          </div>
+          <div style="overflow-x:auto;border:1px solid var(--rule)">
+            <table class="tbl" id="cr-tbl-holdings"></table>
+          </div>
+        </div>
+
+        <!-- Realized histórico + Bases metodológicas -->
+        <div style="margin-top:18px;padding:14px 16px;background:var(--cream);border:1px solid var(--rule);font-size:11px;color:var(--gray-txt);line-height:1.6">
+          <div style="font-weight:600;color:var(--navy);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px">Bases metodológicas</div>
+          <div id="cr-method">—</div>
+          <div id="cr-realized" style="margin-top:8px">—</div>
+          <div id="cr-disclaimer" style="margin-top:8px;font-style:italic;color:var(--gray-mid)">—</div>
+        </div>
+
+        <div class="actions" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <button class="btn ghost" id="btn-cr-reload" type="button">Refresh price</button>
+          <span id="cr-last-update" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.08em">—</span>
+        </div>
+      </div>
+    </div>
+
+  </section><!-- /tab-crypto -->
 
 </main>
 
@@ -1432,14 +1478,207 @@ function renderRealEstate(){
 
 document.getElementById('btn-re-reload').addEventListener('click', loadRealEstate);
 
+// === Crypto module ===
+let CR_DATA = null;
+let CR_PRICE = null; // {asset: {last, ts}}
+let CR_REFRESH_TIMER = null;
+
+function crFmtUsd0(n){ if(n==null||isNaN(n)) return '—'; const v=Number(n); const s=Math.abs(v).toLocaleString('en-US',{maximumFractionDigits:0}); return (v<0?'-$':'$')+s; }
+function crFmtUsd2(n){ if(n==null||isNaN(n)) return '—'; const v=Number(n); const s=Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); return (v<0?'-$':'$')+s; }
+function crFmtPx(n){ if(n==null||isNaN(n)) return '—'; const v=Number(n); return '$'+(v>=1?v.toFixed(4):v.toFixed(6)); }
+function crFmtPct(n,d){ if(n==null||isNaN(n)) return '—'; const dec=(d==null?2:d); const sign=n>0?'+':''; return sign+(n*100).toFixed(dec)+'%'; }
+function crFmtQty(n){ if(n==null||isNaN(n)) return '—'; return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:8}); }
+function crFmtMoic(n){ if(n==null||isNaN(n)) return '—'; return Number(n).toFixed(3)+'x'; }
+function crMonthsBetween(startIso, endDate){
+  const start = new Date(startIso); const months = (endDate - start)/(1000*60*60*24*30.4375);
+  return months;
+}
+function crFmtHold(months){
+  if(months==null||isNaN(months)||months<=0) return '—';
+  const y = Math.floor(months/12), m = Math.round(months%12);
+  if(y===0) return m+' meses';
+  if(m===0) return y+(y===1?' año':' años');
+  return y+(y===1?' año ':' años ')+m+' meses';
+}
+
+async function crFetchPrice(asset){
+  // Crypto.com public API — sin auth, sin CORS issues
+  const inst = asset.toUpperCase()+'_USD';
+  const url = 'https://api.crypto.com/exchange/v1/public/get-ticker?instrument_name='+encodeURIComponent(inst);
+  const r = await fetch(url, {cache:'no-store'});
+  if(!r.ok) throw new Error('HTTP '+r.status+' fetching '+inst);
+  const j = await r.json();
+  // Response shape: {result:{data:[{instrument_name, last, ...}]}}
+  let row = null;
+  if(j && j.result){
+    if(Array.isArray(j.result.data) && j.result.data.length){ row = j.result.data[0]; }
+    else if(j.result.data && typeof j.result.data === 'object'){ row = j.result.data; }
+  }
+  if(!row || row.last==null) throw new Error('No price data for '+inst);
+  return { last: Number(row.last), ts: new Date() };
+}
+
+async function loadCrypto(){
+  const loading = document.getElementById('cr-loading');
+  const content = document.getElementById('cr-content');
+  loading.classList.remove('hide');
+  content.classList.add('hide');
+  try{
+    if(!CR_DATA){
+      const r = await fetch('/crypto_positions.json', {cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      CR_DATA = await r.json();
+    }
+    // Fetch live prices for each live-priced position
+    CR_PRICE = CR_PRICE || {};
+    for(const p of (CR_DATA.positions||[])){
+      if(p.price_source && p.price_source.live){
+        try{ CR_PRICE[p.asset] = await crFetchPrice(p.asset); }
+        catch(e){ console.warn('Price fetch failed for', p.asset, e.message); }
+      }
+    }
+    renderCrypto();
+    loading.classList.add('hide');
+    content.classList.remove('hide');
+    // Auto-refresh price every 60s while tab is visible
+    if(CR_REFRESH_TIMER){ clearInterval(CR_REFRESH_TIMER); }
+    CR_REFRESH_TIMER = setInterval(()=>{
+      const pane = document.getElementById('tab-crypto');
+      if(pane && pane.classList.contains('active')){ refreshCryptoPrice(); }
+    }, 60000);
+  }catch(e){
+    loading.textContent = 'Error loading Crypto sleeve: '+(e&&e.message||e);
+  }
+}
+
+async function refreshCryptoPrice(){
+  if(!CR_DATA) return;
+  for(const p of (CR_DATA.positions||[])){
+    if(p.price_source && p.price_source.live){
+      try{ CR_PRICE[p.asset] = await crFetchPrice(p.asset); }catch(e){}
+    }
+  }
+  renderCrypto();
+}
+
+function renderCrypto(){
+  if(!CR_DATA) return;
+  const today = new Date();
+  const capNeto = Number(CR_DATA.capital.capital_neto_aportado_usd);
+  const realizedHist = Number(CR_DATA.realized_pnl_historico.neto_usd);
+  const positions = CR_DATA.positions || [];
+
+  const enriched = positions.map(p=>{
+    const px = (CR_PRICE && CR_PRICE[p.asset] && CR_PRICE[p.asset].last) || null;
+    const marketUsd = px!=null ? p.quantity * px : null;
+    const costBasis = Number(p.cost_basis_total_usd);
+    const unrealUsd = marketUsd!=null ? (marketUsd - costBasis) : null;
+    const unrealPct = (marketUsd!=null && costBasis>0) ? unrealUsd/costBasis : null;
+    return Object.assign({}, p, {priceLive:px, marketUsd, unrealUsd, unrealPct, costBasis});
+  });
+
+  const totMarket = enriched.reduce((s,p)=> s + (p.marketUsd||0), 0);
+  const totUnreal = enriched.reduce((s,p)=> s + (p.unrealUsd||0), 0);
+  const pnlTotal = totUnreal + realizedHist;
+  const moic = capNeto>0 ? (totMarket + realizedHist + Number(CR_DATA.capital.withdrawals_fiat_to_bank_usd*-1)) / Number(CR_DATA.capital.deposits_fiat_acumulados_usd) : null;
+  // ROI sobre capital neto: lo que sigue expuesto vale totMarket; el realizado ya fue repatriado.
+  // Definición consistente con mock: P&L total acumulado / capital neto aportado.
+  const roi = capNeto>0 ? pnlTotal/capNeto : null;
+  const moicSleeve = capNeto>0 ? (totMarket + realizedHist) / capNeto : null;
+
+  // KPIs
+  document.getElementById('cr-kpi-cap').textContent = crFmtUsd0(capNeto);
+  const navEl = document.getElementById('cr-kpi-nav');
+  navEl.textContent = crFmtUsd0(totMarket);
+  const navSub = document.getElementById('cr-kpi-nav-sub');
+  const navGain = totUnreal;
+  navSub.textContent = (navGain>=0?'+':'')+crFmtUsd0(navGain)+' ('+(navGain>=0?'+':'')+(navGain/enriched.reduce((s,p)=>s+p.costBasis,0)*100).toFixed(2)+'% vs cost)';
+  navSub.style.color = navGain>=0 ? 'var(--green)' : 'var(--red)';
+
+  const pnlEl = document.getElementById('cr-kpi-pnl');
+  pnlEl.textContent = (pnlTotal>=0?'+':'')+crFmtUsd0(pnlTotal);
+  pnlEl.style.color = pnlTotal>=0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('cr-kpi-pnl-sub').textContent = 'unrealized '+(totUnreal>=0?'+':'')+crFmtUsd0(totUnreal)+' + realized hist. '+crFmtUsd0(realizedHist);
+
+  const moicEl = document.getElementById('cr-kpi-moic');
+  moicEl.textContent = crFmtMoic(moicSleeve);
+  moicEl.style.color = moicSleeve>=1 ? 'var(--green)' : 'var(--red)';
+
+  const roiEl = document.getElementById('cr-kpi-roi');
+  roiEl.textContent = crFmtPct(roi);
+  roiEl.style.color = roi>=0 ? 'var(--green)' : 'var(--red)';
+
+  // Holding period (desde primer depósito 2024-07-03)
+  const months = crMonthsBetween('2024-07-03', today);
+  document.getElementById('cr-kpi-hold').textContent = 'Holding: '+crFmtHold(months);
+
+  // Tabla holdings
+  const tbl = document.getElementById('cr-tbl-holdings');
+  let html = '<thead><tr>'
+    +'<th>Asset</th>'
+    +'<th>Custodia</th>'
+    +'<th class="r">Cantidad</th>'
+    +'<th class="r">Cost basis unit</th>'
+    +'<th class="r">Cost basis total</th>'
+    +'<th class="r">Precio spot live</th>'
+    +'<th class="r">Valor mercado</th>'
+    +'<th class="r">P&amp;L unrealized</th>'
+    +'<th class="r">% vs cost</th>'
+    +'<th class="r" title="% del NAV total del sleeve crypto">% sleeve</th>'
+    +'</tr></thead><tbody>';
+  for(const p of enriched){
+    const weight = (totMarket>0 && p.marketUsd!=null) ? p.marketUsd/totMarket : null;
+    const pnlCls = (p.unrealUsd==null) ? '' : (p.unrealUsd>=0?'pos':'neg');
+    html += '<tr>'
+      +'<td><strong>'+p.asset+'</strong>'+(p.asset_name?' <span style="font-size:10px;color:var(--gray-mid)">'+p.asset_name+'</span>':'')+'</td>'
+      +'<td style="font-size:11px;color:var(--gray-mid)">'+(p.custody||'—')+'</td>'
+      +'<td class="r">'+crFmtQty(p.quantity)+'</td>'
+      +'<td class="r">'+crFmtPx(p.cost_basis_unit_usd)+'</td>'
+      +'<td class="r">'+crFmtUsd2(p.costBasis)+'</td>'
+      +'<td class="r">'+crFmtPx(p.priceLive)+'</td>'
+      +'<td class="r">'+crFmtUsd2(p.marketUsd)+'</td>'
+      +'<td class="r '+pnlCls+'" style="font-weight:600">'+(p.unrealUsd!=null?(p.unrealUsd>0?'+':'')+crFmtUsd2(p.unrealUsd):'—')+'</td>'
+      +'<td class="r '+pnlCls+'">'+crFmtPct(p.unrealPct)+'</td>'
+      +'<td class="r">'+(weight!=null?(weight*100).toFixed(2)+'%':'—')+'</td>'
+      +'</tr>';
+  }
+  html += '</tbody>';
+  tbl.innerHTML = html;
+
+  // Footer info
+  const liveTs = enriched.find(p=>p.priceLive!=null);
+  const latestTs = (CR_PRICE && Object.values(CR_PRICE).length) ? Math.max(...Object.values(CR_PRICE).map(x=>x.ts.getTime())) : null;
+  document.getElementById('cr-asof-badge').textContent = 'Datos estáticos as of '+CR_DATA.as_of_static_data+' · Precio live: '+(latestTs?new Date(latestTs).toLocaleTimeString('es-ES'):'—');
+
+  document.getElementById('cr-method').innerHTML = '<strong>Método contable:</strong> '+CR_DATA.accounting_method+'. '
+    +'<strong>NAV crypto</strong> = Σ (cantidad × precio spot live de Crypto.com Exchange API). '
+    +'<strong>Capital neto aportado:</strong> depósitos fiat '+crFmtUsd0(CR_DATA.capital.deposits_fiat_acumulados_usd)
+    +' − retiros fiat a banco '+crFmtUsd0(Math.abs(CR_DATA.capital.withdrawals_fiat_to_bank_usd))
+    +' = '+crFmtUsd0(capNeto)+'.';
+
+  document.getElementById('cr-realized').innerHTML = '<strong>P&amp;L realizado histórico (2024 + Q1 2025):</strong> '
+    +crFmtUsd0(CR_DATA.realized_pnl_historico.y2024_usd)+' (2024) + '
+    +crFmtUsd0(CR_DATA.realized_pnl_historico.y2025_q1_usd)+' (Q1 2025) '
+    +crFmtUsd2(CR_DATA.realized_pnl_historico.fees_intereses_usdc_usd+CR_DATA.realized_pnl_historico.fees_red_xrp_usd)+' fees = '
+    +'<strong>'+crFmtUsd0(realizedHist)+' neto</strong>. '
+    +CR_DATA.realized_pnl_historico.nota;
+
+  document.getElementById('cr-disclaimer').textContent = CR_DATA.disclaimer + ' Fuentes: '+(CR_DATA.sources||[]).join(' · ')+'.';
+
+  document.getElementById('cr-last-update').textContent = 'Last refresh: '+(latestTs?new Date(latestTs).toLocaleString('es-ES'):'—');
+}
+
+document.getElementById('btn-cr-reload').addEventListener('click', ()=>{ refreshCryptoPrice(); });
+
 const TAB_STORAGE_KEY = 'dce-perf-tab';
-const VALID_TABS = new Set(['tab-dashboard','tab-data','tab-realestate']);
+const VALID_TABS = new Set(['tab-dashboard','tab-data','tab-realestate','tab-crypto']);
 function switchTab(tabId){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabId));
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('active', p.id===tabId));
   try{ localStorage.setItem(TAB_STORAGE_KEY, tabId); }catch(e){}
   if(tabId==='tab-dashboard' && equityChart){ try{ equityChart.resize(); }catch(e){} }
   if(tabId==='tab-realestate' && !RE_DATA){ loadRealEstate(); }
+  if(tabId==='tab-crypto' && !CR_DATA){ loadCrypto(); }
 }
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=> switchTab(btn.dataset.tab));
