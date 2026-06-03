@@ -386,6 +386,15 @@
               "url": "/docs/RACE/2026-06_Munger_Digital_Ferrari_RACE.pdf",
               "uploaded": "2026-06-03",
               "doc_type": "Munger Digital"
+            },
+            {
+              "name": "2026-06 - Decision Inputs - Ferrari (RACE)",
+              "filename": "2026-06_Decision_Inputs_Ferrari_RACE.json",
+              "type": "json",
+              "detail": "Decision inputs (puente Munger->Decision)",
+              "url": "/docs/RACE/2026-06_Decision_Inputs_Ferrari_RACE.json",
+              "uploaded": "2026-06-03",
+              "doc_type": "Decision Inputs"
             }
           ]
         }

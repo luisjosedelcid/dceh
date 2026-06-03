@@ -1,0 +1,176 @@
+{
+  "ticker": "RACE",
+  "company_name": "Ferrari N.V.",
+  "research_date": "2026-06-03",
+  "research_artifacts": {
+    "thesis_builder_pdf": "RACE_Thesis_Builder_2026-05-29_v2.2.pdf",
+    "thesis_breaker_pdf": "RACE_Thesis_Breaker_2026-05-29_v2.2.pdf",
+    "munger_pdf": "DCE_Ferrari_RACE_Munger_Digital.pdf"
+  },
+  "valuation_snapshot": {
+    "price_at_research": 317.63,
+    "epv_per_share": 111.75,
+    "fv_2030": 450.0,
+    "implied_irr_base": 0.1506,
+    "hurdle_rate": 0.12,
+    "mos_pp_vs_hurdle": 3.06,
+    "roic_5y_avg": 0.234,
+    "roic_ltm_om": 0.295,
+    "wacc": 0.0775,
+    "multiple_ltm_ev_nopat": 34.4,
+    "p_epv_ratio": 2.84,
+    "bull_irr_veblen": 0.215,
+    "bull_irr_plan2030": 0.185,
+    "bear_irr_porsche": -0.04,
+    "bear_irr_recesion": 0.065,
+    "bear_downside_porsche_pct": -0.45,
+    "bear_downside_recesion_pct": -0.18
+  },
+  "thesis_draft": {
+    "executive_summary": "Ferrari N.V. (RACE) es un franchise de lujo excepcional evaluado bajo el marco Columbia Business School (Greenwald), Caso 3 — Crecimiento justifica precio. El modelo Base arroja IRR 15.06% con MoS +3.06pp sobre hurdle 12%, posición marginal que solo se justifica si se materializan las narrativas de crecimiento del Caso 3. El precio actual de €317.63 implica P/EPV 2.84x: el valor de franquicia está demostrado (EPV €111.75), pero el precio descansa íntegramente en el premium de crecimiento. Ferrari opera con ROIC 5y avg 23.4% (15.7pp sobre WACC 7.75%), OM LTM 29.5%, book de pedidos 24 meses forward, D/E 5% — métricas de compounding engine intacto. Dos narrativas bull compiten: Bull #1 Veblen path (IRR ≈21.5%, +9.5pp MoS) que asume re-categorización institucional a casa de lujo Hermès/Patek; Bull #2 Plan 2030 operacional (IRR ≈18.5%, +6.5pp MoS) que asume ejecución del plan CMD (revenue €9Bn, EBITDA ≥40%) sin re-categorización. El evento binario crítico es el lanzamiento del Luce EV en Q4 2026: si es recibido como Veblen good (waitlist >12m), confirma el path estructural; si es recibido como mass-premium, activa el Porsche path bear (IRR ≈−4%, downside ≈−45%). La asimetría del debate: el Base marginal +3pp no ofrece colchón ante cualquier re-rating negativo, pero ambas narrativas bull sobreviven haircuts materiales de 5-7pp.",
+    "pillars": [
+      "Pilar 1 — Franchise compounding: ROIC 23.4% sostenido durante ciclo inflacionario 2022-2024, 15.7pp sobre WACC. Evidencia no teórica.",
+      "Pilar 2 — Scarcity y pricing power estructural: OM LTM 29.5%, book de pedidos 24 meses, ASP +3-6%/y sostenido. Waitlist neutraliza ciclo demand.",
+      "Pilar 3 — Optionalidad Veblen: precedente LVMH 2010-2024 (+40% re-rating sostenido 14 años) replica condiciones post-Luce EV exitoso.",
+      "Pilar 4 — Capital allocation disciplinado: D/E 5%, FCF yield 2.4%, buybacks + dividendo sostenibles. Sin M&A destructivo desde 2020.",
+      "Pilar 5 — Plan 2030 ejecutable: revenue €9Bn, EBITDA ≥40%, Lifestyle CAGR +17%/y. Defensa secundaria sin requerir re-categorización.",
+      "Pilar 6 — Beta 0.95 luxury: WACC 7.75% sostenible aunque rates suban, diferenciación vs automotriz pura."
+    ],
+    "catalysts": [
+      "Luce EV launch Q4 2026: order book >12m waitlist confirma Veblen path y activa re-rating hacia 38-45x EV/NOPAT",
+      "CMD 2030 execution: OM ≥29% sostenido FY26-FY27 y revenue CAGR ≥6% confirman Plan 2030 path",
+      "Inclusión en índices luxury equity (LVMH, Hermès, Richemont peer group) 2027-28: flujos institucionales sistemáticos",
+      "Lifestyle segment CAGR ≥15% disclosed trimestralmente: prueba de diversificación del revenue más allá del Cars segment (80% actual)"
+    ]
+  },
+  "premortem_draft": {
+    "thesis_summary": "Ferrari N.V. es un franchise de lujo con ROIC 23.4%, OM 29.5% y book de pedidos 24 meses. El precio €317.63 implica P/EPV 2.84x: el IRR Base de 15.06% con MoS +3pp sobre hurdle 12% es marginal. La tesis bull descansa en la re-categorización Veblen (IRR ≈21.5%) o en la ejecución del Plan 2030 (IRR ≈18.5%). El evento binario es el lanzamiento del Luce EV en Q4 2026. El riesgo estructural es el Porsche path (IRR ≈−4%, downside −45%).",
+    "failure_modes_proposed": [
+      {
+        "source": "thesis_breaker_§7",
+        "failure_mode": "Operating Margin LTM cae por debajo de 24% sostenido (Porsche path): NOPAT cae ~19%, EPV cae a ~€90/sh, precio recae a ~€220 (−30%)",
+        "category": "unit-economics",
+        "trigger_type": "kpi-threshold",
+        "trigger_config": {
+          "metric": "OPER_MARGIN_LTM",
+          "threshold": 24.0,
+          "operator": "<",
+          "timeframe": "2 quarters sustained"
+        },
+        "probability_pct": 25,
+        "severity_pct": 70,
+        "notes": "Mix dilution Lifestyle/EV + ICE comoditizado = OM convergencia Porsche AG post-2022. Destruye el Caso 3 y toda la narrativa Veblen."
+      },
+      {
+        "source": "thesis_breaker_§7",
+        "failure_mode": "Multiple EV/NOPAT cae por debajo de 25x sostenido 12m: re-categorización a peer Porsche (22x) o auto premium (18x) destruye 27-48% del equity",
+        "category": "valuation",
+        "trigger_type": "kpi-threshold",
+        "trigger_config": {
+          "metric": "MULTIPLE_EV_NOPAT",
+          "threshold": 25.0,
+          "operator": "<",
+          "timeframe": "12 months sustained"
+        },
+        "probability_pct": 30,
+        "severity_pct": 65,
+        "notes": "Precedente directo Porsche 2022-2024: multiple cayó de 13x a 8x P/E en 18 meses post-Taycan disappointment. El re-rating a la baja puede ocurrir en 6-12 meses."
+      },
+      {
+        "source": "thesis_breaker_§7",
+        "failure_mode": "Organic growth (volumen+ASP) cae por debajo de +1% durante 2 años consecutivos: IRR Base cae de 15% a ~9%, por debajo de hurdle DCE 12%",
+        "category": "moat",
+        "trigger_type": "kpi-threshold",
+        "trigger_config": {
+          "metric": "ORGANIC_GROWTH_VOL_ASP",
+          "threshold": 1.0,
+          "operator": "<",
+          "timeframe": "2 years consecutive"
+        },
+        "probability_pct": 20,
+        "severity_pct": 55,
+        "notes": "Bull asume cono Veblen 2-5%/y. Si volumen flat y ASP no compensa (ciclo luxury o competencia EV), el bull case deja de ser defendible."
+      },
+      {
+        "source": "thesis_breaker_§7b",
+        "failure_mode": "ROIC marginal (ΔNOPAT/ΔIC) LTM cae por debajo de 15% durante 2 trimestres consecutivos: señal de deterioro del compounding engine antes de que el retorno modelado se rompa",
+        "category": "unit-economics",
+        "trigger_type": "kpi-threshold",
+        "trigger_config": {
+          "metric": "ROIC_MARGINAL",
+          "threshold": 15.0,
+          "operator": "<",
+          "timeframe": "2Q consecutive"
+        },
+        "probability_pct": 20,
+        "severity_pct": 50,
+        "notes": "Obligatorio por IPS §4.7. Alerta temprana antes de que OM o múltiplo rompan sus red_thresholds. Sectorial luxury auto promedio: Porsche 14%, Mercedes-AMG 11%."
+      },
+      {
+        "source": "thesis_breaker_§7b",
+        "failure_mode": "Order book months of waitlist cae por debajo de 18 meses: señal de erosión de scarcity premium y posible inicio del Porsche path",
+        "category": "moat",
+        "trigger_type": "kpi-threshold",
+        "trigger_config": {
+          "metric": "BOOK_ORDERS_MONTHS",
+          "threshold": 18,
+          "operator": "<",
+          "timeframe": "1 quarter"
+        },
+        "probability_pct": 25,
+        "severity_pct": 60,
+        "notes": "Baseline actual: 22-26 meses. Yellow: <20 meses. Red: <18 meses. Earnings call CEO disclosure. Si el Luce EV no alcanza waitlist comparable al Purosangue, narrativa Veblen se debilita materialmente."
+      },
+      {
+        "source": "thesis_breaker_§7b+munger_§3",
+        "failure_mode": "Luce EV Q4 2026 recibido como mass-premium (waitlist <10m a los 90 días): event-based trigger que activa re-underwriting forzado y reclasificación narrativa a Bear #2",
+        "category": "execution",
+        "trigger_type": "event-based",
+        "trigger_config": {
+          "metric": "LUCE_EV_ORDER_BOOK_MONTHS",
+          "threshold": 10,
+          "operator": "<",
+          "timeframe": "90 days post-launch Q4 2026"
+        },
+        "probability_pct": 30,
+        "severity_pct": 75,
+        "notes": "Single point of failure del modelo Columbia. Bear regla operativa: si order book >12m, narrativa Porsche path queda refutada. Si <6m, activa Bear #1 completo. Zona gris 6-12m = ambigüedad = multiple compression parcial."
+      },
+      {
+        "source": "munger_§3",
+        "failure_mode": "Re-rating Veblen no ocurre en 3 años: MoS de 3pp se consume sin catalyst de categorización, IRR realizado cae a ~9% anual (por debajo de hurdle 12%)",
+        "category": "valuation",
+        "trigger_type": "time-based",
+        "trigger_config": {
+          "metric": "IMPLIED_IRR_REALIZED",
+          "threshold": 12.0,
+          "operator": "<",
+          "timeframe": "3 years"
+        },
+        "probability_pct": 35,
+        "severity_pct": 40,
+        "notes": "Escenario de mediocridad silenciosa: el negocio entrega pero el precio de entrada 2.84x EPV requiere re-rating para alcanzar hurdle. Sin re-rating, el MoS marginal +3pp no es suficiente buffer."
+      },
+      {
+        "source": "munger_§3",
+        "failure_mode": "Erosión estructural del moat en 5 años por competencia EV ultra-premium (Bentley EV, BYD Yangwang successor, Rolls-Royce): ASP cae a +1.5%/y, ROIC migra a 16%, múltiplo converge a 24x",
+        "category": "competitive",
+        "trigger_type": "qualitative",
+        "trigger_config": {
+          "metric": "COMPETITOR_EV_ULTRAPREMIUM_ENTRY",
+          "threshold": 1,
+          "operator": ">=",
+          "timeframe": "18 months"
+        },
+        "probability_pct": 20,
+        "severity_pct": 55,
+        "notes": "La scarcity de Ferrari puede ser instrumental (gestionada vía book de pedidos) más que estructural (la marca). Si competidores replican el modelo de scarcity en EV ultra-premium, el pricing power diferencial se erosiona."
+      }
+    ]
+  },
+  "pre_debate_briefing_summary": "Ferrari es un franchise excepcional cuyos números no están en disputa; el debate real es si el mercado completará el re-rating Veblen antes de que el MoS marginal de +3pp se agote. El CIO debe interrogar al Bull sobre la robustez del precedente LVMH y la falsificabilidad real del Veblen path, y debe interrogar al Bear sobre si el Porsche path es genuinamente análogo o una comparación oportunista. Los tres puntos críticos a vigilar en el debate: (1) el Luce EV launch como evento binario sin hedge cuantitativo; (2) el MoS Base +3pp que es marginal y no sobrevive múltiple contraction moderada; (3) la gobernanza dual-class Exor como riesgo de accountability. La pregunta incómoda: si Ferrari entrega exactamente el Base case sin re-rating Veblen, ¿está DCE comprando un franchise excepcional a un precio mediocre, o pagando por la excelencia futura que ya está descontada?",
+  "uncomfortable_question": "Si Ferrari entrega exactamente el Base case (IRR 15.06%, MoS +3pp) sin ningún evento de re-categorización Veblen, y el mercado nunca cierra el gap entre 34x y 38x EV/NOPAT, ¿está DCE comprando una empresa excepcional a un precio mediocre, o comprando una empresa excepcional a un precio que ya descuenta la excelencia futura?",
+  "recommendation": null,
+  "recommendation_rationale": null,
+  "ready_for_committee_debate": true
+}
