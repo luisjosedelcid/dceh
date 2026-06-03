@@ -87,6 +87,7 @@
   .subfolder:hover{border-color:var(--gold-rule);background:rgba(184,139,71,0.02)}
   .subfolder-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
   .subfolder-name{font-size:13px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .subfolder-num{font-size:9px;font-weight:600;letter-spacing:0.2em;color:var(--gold);flex-shrink:0;min-width:24px;text-align:left}
   .subfolder-detail{font-size:11px;color:var(--gray-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .subfolder-tags{display:flex;gap:6px;flex-shrink:0}
   .subfolder-tag{display:inline-block;font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;background:var(--gold-dim);color:var(--gold);white-space:nowrap}
@@ -739,29 +740,33 @@ function renderRoot() {
 
   const grid = document.getElementById('folder-grid');
   const admin = isAdmin();
+  // Render top-level folders with the same compact list styling we use for
+  // subfolders (see renderFolder below). Reuses .subfolder-grid / .subfolder
+  // classes so drag-and-drop, hover, and actions all behave identically.
+  grid.className = 'subfolder-grid';
   grid.innerHTML = ROOTS.map((f, idx) => {
     const num = String(idx + 1).padStart(2, '0');
     const count = countFilesRecursive(f);
     const subCount = childrenOf(f.id).length;
-    const meta = subCount > 0 ? `${count} ${count === 1 ? 'file' : 'files'} · ${subCount} sub` : `${count} ${count === 1 ? 'file' : 'files'}`;
+    const countLabel = `${count} ${count === 1 ? 'file' : 'files'}${subCount > 0 ? ` · ${subCount} sub` : ''}`;
     const actions = admin
-      ? `<div class="folder-actions" onclick="event.stopPropagation()">
+      ? `<div class="subfolder-actions" onclick="event.stopPropagation()">
            <button onclick="openEditModal('${f.id}')">Edit</button>
            <button class="del" onclick="deleteFolder('${f.id}')">×</button>
          </div>` : '';
     const cleanName = f.name.replace(/^\d+\s*/, '');
-    return `<div class="folder" data-id="${f.id}"${admin ? ' draggable="true"' : ''} onclick="openFolder('${f.id}')">
-      ${actions}
-      <div class="folder-num">${num}</div>
-      <div class="folder-name">${escapeHtml(cleanName)}</div>
-      <div class="folder-desc">${escapeHtml(f.description || '')}</div>
-      <div class="folder-meta">
-        <span class="folder-count">${meta}</span>
-        <span class="folder-arrow">Open →</span>
+    const desc = f.description ? `<div class="subfolder-detail">${escapeHtml(f.description)}</div>` : '';
+    return `<div class="subfolder" data-id="${f.id}"${admin ? ' draggable="true"' : ''} onclick="openFolder('${f.id}')">
+      <div class="subfolder-num">${num}</div>
+      <div class="subfolder-info">
+        <div class="subfolder-name">${escapeHtml(cleanName)}</div>
+        ${desc}
       </div>
+      <div class="subfolder-count">${countLabel}</div>
+      ${actions}
     </div>`;
   }).join('');
-  if (admin) attachDnD(grid, '.folder', ROOTS, null);
+  if (admin) attachDnD(grid, '.subfolder', ROOTS, null);
 }
 
 function renderFolder(id) {
