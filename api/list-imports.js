@@ -27,9 +27,10 @@ module.exports = async (req, res) => {
 
   try {
     // 1) Audit entries (one row per import, ordered desc by date)
+    // NOTE: report_audit timestamp column is `ts`, not `created_at`.
     const auditRows = await sbSelect(
       'report_audit',
-      `select=id,actor_email,filename,size_bytes,detail,created_at,batch_id&action=eq.import_schwab&order=created_at.desc&limit=${limit}`
+      `select=id,actor_email,filename,size_bytes,detail,ts,batch_id&action=eq.import_schwab&order=ts.desc&limit=${limit}`
     );
 
     // 2) Counts per batch_id in transactions / cashflows.
@@ -58,7 +59,7 @@ module.exports = async (req, res) => {
       kind: 'batch',
       batch_id: a.batch_id,
       audit_id: a.id,
-      created_at: a.created_at,
+      created_at: a.ts, // expose under created_at for UI consistency
       actor_email: a.actor_email,
       filename: a.filename,
       size_bytes: a.size_bytes,
