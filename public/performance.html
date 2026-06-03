@@ -71,6 +71,9 @@
   /* Ticker link → company dashboard */
   table.tbl a.ticker-link{color:var(--navy);text-decoration:none;border-bottom:1px dotted transparent;transition:color .15s, border-color .15s}
   table.tbl a.ticker-link:hover{color:var(--gold);border-bottom-color:var(--gold)}
+  .row-del-btn{background:transparent;border:1px solid var(--rule);color:var(--gray-mid);width:24px;height:22px;border-radius:3px;cursor:pointer;font-size:11px;line-height:1;padding:0;transition:all .15s}
+  .row-del-btn:hover:not(:disabled){background:#fee;border-color:var(--red);color:var(--red)}
+  .row-del-btn:disabled{opacity:0.4;cursor:wait}
   table.tbl a.ticker-link strong{font-weight:700}
 
   /* ── Alert cells (migrated from /portfolio.html) ───────────────────────── */
@@ -775,7 +778,7 @@ async function loadExisting(){
       <h2 style="font-size:11px;margin-top:0;border:0;padding-bottom:6px">Transactions (${j.transactions.length})</h2>
       <div style="overflow-x:auto;max-height:300px;overflow-y:auto;border:1px solid var(--rule);margin-bottom:16px">
         <table class="tbl">
-          <thead><tr><th>Date</th><th>Side</th><th>Symbol</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th><th>Source</th></tr></thead>
+          <thead><tr><th>Date</th><th>Side</th><th>Symbol</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th><th>Source</th><th class="r" style="width:60px"></th></tr></thead>
           <tbody>${j.transactions.map(t=>`
             <tr>
               <td>${t.trade_date}</td>
@@ -785,6 +788,7 @@ async function loadExisting(){
               <td class="r">${fmtNum(t.price_native,4)}</td>
               <td class="r"><strong>$${fmtUsd(t.qty*t.price_native)}</strong></td>
               <td class="muted">${t.source}</td>
+              <td class="r"><button type="button" class="row-del-btn" data-kind="tx" data-id="${t.id}" title="Eliminar transacción">✕</button></td>
             </tr>`).join('')}
           </tbody>
         </table>
@@ -792,7 +796,7 @@ async function loadExisting(){
       <h2 style="font-size:11px;border:0;padding-bottom:6px">Cashflows (${j.cashflows.length})</h2>
       <div style="overflow-x:auto;max-height:300px;overflow-y:auto;border:1px solid var(--rule)">
         <table class="tbl">
-          <thead><tr><th>Date</th><th>Type</th><th>Symbol</th><th class="r">Amount</th><th>Source</th></tr></thead>
+          <thead><tr><th>Date</th><th>Type</th><th>Symbol</th><th class="r">Amount</th><th>Source</th><th class="r" style="width:60px"></th></tr></thead>
           <tbody>${j.cashflows.map(c=>`
             <tr>
               <td>${c.occurred_at}</td>
@@ -800,12 +804,45 @@ async function loadExisting(){
               <td>${c.ticker||'—'}</td>
               <td class="r ${c.amount_native>=0?'':'red'}">$${fmtUsd(c.amount_native)}</td>
               <td class="muted">${c.source}</td>
+              <td class="r"><button type="button" class="row-del-btn" data-kind="cf" data-id="${c.id}" title="Eliminar cashflow">✕</button></td>
             </tr>`).join('')}
           </tbody>
         </table>
       </div>`;
+    // Wire delete buttons (delegated)
+    wrap.querySelectorAll('.row-del-btn').forEach(btn => {
+      btn.addEventListener('click', () => deleteRow(btn.dataset.kind, parseInt(btn.dataset.id, 10), btn));
+    });
   }catch(e){
     wrap.textContent='Network error: '+e.message;
+  }
+}
+
+// ── Row delete handler (admin only) ───────────
+async function deleteRow(kind, id, btn){
+  if(!Number.isFinite(id) || id<=0){ alert('ID inválido'); return; }
+  const label = kind==='cf' ? 'cashflow' : 'transacción';
+  if(!confirm(`¿Eliminar este ${label} (#${id})? Esta acción es permanente. Si la fuente es schwab_csv, reaparecerá en la siguiente importación.`)) return;
+  const url = kind==='cf' ? '/api/delete-cashflow' : '/api/delete-transaction';
+  const originalText = btn ? btn.textContent : null;
+  if(btn){ btn.disabled=true; btn.textContent='…'; }
+  try{
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-token':adminToken()},
+      body: JSON.stringify({ id })
+    });
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok){
+      alert('Error: '+(j.error||r.status));
+      if(btn){ btn.disabled=false; btn.textContent=originalText||'✕'; }
+      return;
+    }
+    setAlert('alert-slot','ok',`${label.charAt(0).toUpperCase()+label.slice(1)} #${id} eliminado.`);
+    loadExisting();
+  }catch(e){
+    alert('Network error: '+e.message);
+    if(btn){ btn.disabled=false; btn.textContent=originalText||'✕'; }
   }
 }
 
