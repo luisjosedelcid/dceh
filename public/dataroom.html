@@ -792,9 +792,9 @@ function renderFolder(id) {
     html += '<div class="subfolder-grid">';
     html += subs.map(sf => {
       const m = sf.metadata || {};
+      // Tags (classification / status) removed from render per user request —
+      // data still preserved in metadata, just not shown in the row.
       const tags = [];
-      if (m.classification) tags.push(`<span class="subfolder-tag">${escapeHtml(m.classification)}</span>`);
-      if (m.status) tags.push(`<span class="subfolder-tag">${escapeHtml(m.status)}</span>`);
       const fcount = countFilesRecursive(sf);
       const detail = m.company || sf.description || '';
       const actions = admin
