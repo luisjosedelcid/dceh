@@ -105,16 +105,26 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Audit (best-effort) — also stamped with batch_id so we can list imports
-  sbInsert('report_audit', {
-    actor_email: actor,
-    action: 'import_schwab',
-    folder: 'performance',
-    filename,
-    size_bytes: csvText.length,
-    detail: `tx=${txInserted} cf=${cfInserted} skipped=${parsed.skipped.length} errors=${parsed.errors.length}`,
-    batch_id: batchId,
-  }).catch(() => {});
+  // Audit (best-effort) — also stamped with batch_id so we can list imports.
+  // We log failures to stderr instead of silently swallowing them — otherwise a
+  // CHECK constraint or schema mismatch can leave imports invisible in the panel.
+  let auditOk = true;
+  let auditError = null;
+  try {
+    await sbInsert('report_audit', {
+      actor_email: actor,
+      action: 'import_schwab',
+      folder: 'performance',
+      filename,
+      size_bytes: csvText.length,
+      detail: `tx=${txInserted} cf=${cfInserted} skipped=${parsed.skipped.length} errors=${parsed.errors.length}`,
+      batch_id: batchId,
+    });
+  } catch (e) {
+    auditOk = false;
+    auditError = String(e).slice(0, 300);
+    console.error('[admin-import-schwab] audit insert failed:', auditError);
+  }
 
   res.status(200).json({
     ok: true,
@@ -122,6 +132,8 @@ module.exports = async (req, res) => {
     summary: { ...summary, txInserted, cfInserted },
     batchId,
     filename,
+    auditOk,
+    auditError,
     skipped: parsed.skipped,
     errors: parsed.errors,
   });
