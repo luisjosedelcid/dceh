@@ -74,6 +74,15 @@
   .row-del-btn{background:transparent;border:1px solid var(--rule);color:var(--gray-mid);width:24px;height:22px;border-radius:3px;cursor:pointer;font-size:11px;line-height:1;padding:0;transition:all .15s}
   .row-del-btn:hover:not(:disabled){background:#fee;border-color:var(--red);color:var(--red)}
   .row-del-btn:disabled{opacity:0.4;cursor:wait}
+  .src-chips-wrap{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px 0;padding:6px 8px;background:var(--cream);border:1px solid var(--rule);border-radius:3px}
+  .src-chips-label{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--gray-mid);font-weight:500;margin-right:4px}
+  .src-del-chip{display:inline-flex;align-items:center;gap:6px;background:var(--white);border:1px solid var(--rule);border-radius:3px;padding:3px 8px;font-size:11px;cursor:pointer;transition:all .15s;font-family:inherit;color:var(--navy)}
+  .src-del-chip:hover:not(:disabled){background:#fee;border-color:var(--red);color:var(--red)}
+  .src-del-chip .src-name{font-weight:600;font-family:'SFMono-Regular',Menlo,monospace;font-size:10.5px}
+  .src-del-chip .src-count{background:var(--rule);color:var(--gray-mid);padding:1px 5px;border-radius:8px;font-size:10px;font-weight:600;font-variant-numeric:tabular-nums}
+  .src-del-chip:hover:not(:disabled) .src-count{background:var(--red);color:var(--white)}
+  .src-del-chip .src-x{font-size:10px;opacity:0.6}
+  .src-del-chip:hover:not(:disabled) .src-x{opacity:1}
   table.tbl a.ticker-link strong{font-weight:700}
 
   /* ── Alert cells (migrated from /portfolio.html) ───────────────────────── */
@@ -774,8 +783,22 @@ async function loadExisting(){
       return;
     }
     wrap.className='';
+    // Tally rows by source for bulk-delete affordance
+    const txBySrc = {};
+    for(const t of j.transactions){ const s=t.source||'(none)'; txBySrc[s]=(txBySrc[s]||0)+1; }
+    const cfBySrc = {};
+    for(const c of j.cashflows){ const s=c.source||'(none)'; cfBySrc[s]=(cfBySrc[s]||0)+1; }
+    const renderSrcChips = (bySrc, table) => {
+      const keys = Object.keys(bySrc).sort();
+      if(keys.length === 0) return '';
+      return `<div class="src-chips-wrap">
+        <span class="src-chips-label">Borrar fuente completa:</span>
+        ${keys.map(s => `<button type="button" class="src-del-chip" data-table="${table}" data-source="${s.replace(/"/g,'&quot;')}" title="Eliminar todos los rows con source=${s}"><span class="src-name">${s}</span> <span class="src-count">${bySrc[s]}</span> <span class="src-x">✕</span></button>`).join('')}
+      </div>`;
+    };
     wrap.innerHTML=`
       <h2 style="font-size:11px;margin-top:0;border:0;padding-bottom:6px">Transactions (${j.transactions.length})</h2>
+      ${renderSrcChips(txBySrc, 'transactions')}
       <div style="overflow-x:auto;max-height:300px;overflow-y:auto;border:1px solid var(--rule);margin-bottom:16px">
         <table class="tbl">
           <thead><tr><th>Date</th><th>Side</th><th>Symbol</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th><th>Source</th><th class="r" style="width:60px"></th></tr></thead>
@@ -794,6 +817,7 @@ async function loadExisting(){
         </table>
       </div>
       <h2 style="font-size:11px;border:0;padding-bottom:6px">Cashflows (${j.cashflows.length})</h2>
+      ${renderSrcChips(cfBySrc, 'cashflows')}
       <div style="overflow-x:auto;max-height:300px;overflow-y:auto;border:1px solid var(--rule)">
         <table class="tbl">
           <thead><tr><th>Date</th><th>Type</th><th>Symbol</th><th class="r">Amount</th><th>Source</th><th class="r" style="width:60px"></th></tr></thead>
@@ -813,8 +837,41 @@ async function loadExisting(){
     wrap.querySelectorAll('.row-del-btn').forEach(btn => {
       btn.addEventListener('click', () => deleteRow(btn.dataset.kind, parseInt(btn.dataset.id, 10), btn));
     });
+    wrap.querySelectorAll('.src-del-chip').forEach(btn => {
+      btn.addEventListener('click', () => deleteSource(btn.dataset.table, btn.dataset.source, btn));
+    });
   }catch(e){
     wrap.textContent='Network error: '+e.message;
+  }
+}
+
+// ── Bulk delete by source (admin only) ───────
+async function deleteSource(table, source, btn){
+  if(!table || !source){ alert('Tabla o fuente inválida'); return; }
+  const label = table === 'cashflows' ? 'cashflows' : 'transactions';
+  const count = btn ? btn.querySelector('.src-count')?.textContent : '?';
+  const warn = source === 'schwab_csv'
+    ? '\n\n⚠️ Si la fuente es schwab_csv, todos los rows reaparecerán cuando reimportes el CSV (la importación es idempotente).'
+    : '';
+  if(!confirm(`¿Eliminar TODOS los ${label} con source="${source}" (${count} rows)? Esta acción es permanente.${warn}`)) return;
+  if(btn){ btn.disabled=true; btn.style.opacity='0.5'; }
+  try{
+    const r = await fetch('/api/delete-source', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-token':adminToken()},
+      body: JSON.stringify({ table, source })
+    });
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok){
+      alert('Error: '+(j.error||r.status));
+      if(btn){ btn.disabled=false; btn.style.opacity='1'; }
+      return;
+    }
+    setAlert('alert-slot','ok',`Eliminados ${j.count} ${label} con source="${source}".`);
+    loadExisting();
+  }catch(e){
+    alert('Network error: '+e.message);
+    if(btn){ btn.disabled=false; btn.style.opacity='1'; }
   }
 }
 
