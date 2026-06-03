@@ -74,15 +74,19 @@
   .row-del-btn{background:transparent;border:1px solid var(--rule);color:var(--gray-mid);width:24px;height:22px;border-radius:3px;cursor:pointer;font-size:11px;line-height:1;padding:0;transition:all .15s}
   .row-del-btn:hover:not(:disabled){background:#fee;border-color:var(--red);color:var(--red)}
   .row-del-btn:disabled{opacity:0.4;cursor:wait}
-  .src-chips-wrap{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px 0;padding:6px 8px;background:var(--cream);border:1px solid var(--rule);border-radius:3px}
-  .src-chips-label{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--gray-mid);font-weight:500;margin-right:4px}
-  .src-del-chip{display:inline-flex;align-items:center;gap:6px;background:var(--white);border:1px solid var(--rule);border-radius:3px;padding:3px 8px;font-size:11px;cursor:pointer;transition:all .15s;font-family:inherit;color:var(--navy)}
-  .src-del-chip:hover:not(:disabled){background:#fee;border-color:var(--red);color:var(--red)}
-  .src-del-chip .src-name{font-weight:600;font-family:'SFMono-Regular',Menlo,monospace;font-size:10.5px}
-  .src-del-chip .src-count{background:var(--rule);color:var(--gray-mid);padding:1px 5px;border-radius:8px;font-size:10px;font-weight:600;font-variant-numeric:tabular-nums}
-  .src-del-chip:hover:not(:disabled) .src-count{background:var(--red);color:var(--white)}
-  .src-del-chip .src-x{font-size:10px;opacity:0.6}
-  .src-del-chip:hover:not(:disabled) .src-x{opacity:1}
+  .imports-panel{margin:0 0 18px 0;border:1px solid var(--rule);border-radius:4px;background:var(--white)}
+  .imports-head{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--cream);border-bottom:1px solid var(--rule);border-radius:4px 4px 0 0;font-size:12px}
+  .imports-head strong{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--navy)}
+  .imports-toggle{background:transparent;border:0;cursor:pointer;font-size:14px;color:var(--gray-mid);padding:0;width:18px;height:18px;line-height:1}
+  .imports-toggle:hover{color:var(--navy)}
+  .imports-body{padding:8px 10px 10px}
+  .file-pill{display:inline-block;background:var(--cream);border:1px solid var(--rule);border-radius:3px;padding:1px 6px;font-family:'SFMono-Regular',Menlo,monospace;font-size:10.5px;color:var(--navy)}
+  .file-pill.legacy{background:#fff5e6;border-color:#d4a857;color:#8b5a00}
+  .cnt-pill{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;font-variant-numeric:tabular-nums;margin-left:3px}
+  .cnt-tx{background:#e8eef9;color:#1B2642}
+  .cnt-cf{background:#f5ecdc;color:#7a5a28}
+  .imp-del-btn.legacy{border-color:#d4a857;color:#8b5a00}
+  .imp-del-btn.legacy:hover:not(:disabled){background:#fff5e6;border-color:var(--red);color:var(--red)}
   table.tbl a.ticker-link strong{font-weight:700}
 
   /* ── Alert cells (migrated from /portfolio.html) ───────────────────────── */
@@ -635,15 +639,17 @@ async function handleFile(file){
   }
   const text=await file.text();
   setAlert('alert-slot','warn','Parsing CSV…');
+  // Sanitize filename for HTTP header (ASCII safe)
+  const fnSafe = (file.name||'schwab.csv').replace(/[^\x20-\x7E]/g,'_').slice(0,200);
   try{
     const r=await fetch('/api/admin-import-schwab?dryRun=1',{
       method:'POST',
-      headers:{'Content-Type':'text/csv','x-admin-token':adminToken()},
+      headers:{'Content-Type':'text/csv','x-admin-token':adminToken(),'x-filename':fnSafe},
       body:text,
     });
     const j=await r.json();
     if(!r.ok){ setAlert('alert-slot','err','Parse failed: '+(j.error||r.status)); return; }
-    parsedPayload={csv:text,...j};
+    parsedPayload={csv:text,filename:fnSafe,...j};
     renderPreview(j);
     setAlert('alert-slot','ok',`Parsed ${j.summary.transactions} transactions and ${j.summary.cashflows} cashflows. Review below before committing.`);
   }catch(e){
@@ -717,7 +723,7 @@ document.getElementById('btn-commit').addEventListener('click',async()=>{
   try{
     const r=await fetch('/api/admin-import-schwab?dryRun=0',{
       method:'POST',
-      headers:{'Content-Type':'text/csv','x-admin-token':adminToken()},
+      headers:{'Content-Type':'text/csv','x-admin-token':adminToken(),'x-filename':parsedPayload.filename||'schwab.csv'},
       body:parsedPayload.csv,
     });
     const j=await r.json();
@@ -783,22 +789,9 @@ async function loadExisting(){
       return;
     }
     wrap.className='';
-    // Tally rows by source for bulk-delete affordance
-    const txBySrc = {};
-    for(const t of j.transactions){ const s=t.source||'(none)'; txBySrc[s]=(txBySrc[s]||0)+1; }
-    const cfBySrc = {};
-    for(const c of j.cashflows){ const s=c.source||'(none)'; cfBySrc[s]=(cfBySrc[s]||0)+1; }
-    const renderSrcChips = (bySrc, table) => {
-      const keys = Object.keys(bySrc).sort();
-      if(keys.length === 0) return '';
-      return `<div class="src-chips-wrap">
-        <span class="src-chips-label">Borrar fuente completa:</span>
-        ${keys.map(s => `<button type="button" class="src-del-chip" data-table="${table}" data-source="${s.replace(/"/g,'&quot;')}" title="Eliminar todos los rows con source=${s}"><span class="src-name">${s}</span> <span class="src-count">${bySrc[s]}</span> <span class="src-x">✕</span></button>`).join('')}
-      </div>`;
-    };
     wrap.innerHTML=`
+      <div id="imports-panel-slot"></div>
       <h2 style="font-size:11px;margin-top:0;border:0;padding-bottom:6px">Transactions (${j.transactions.length})</h2>
-      ${renderSrcChips(txBySrc, 'transactions')}
       <div style="overflow-x:auto;max-height:300px;overflow-y:auto;border:1px solid var(--rule);margin-bottom:16px">
         <table class="tbl">
           <thead><tr><th>Date</th><th>Side</th><th>Symbol</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th><th>Source</th><th class="r" style="width:60px"></th></tr></thead>
@@ -817,7 +810,6 @@ async function loadExisting(){
         </table>
       </div>
       <h2 style="font-size:11px;border:0;padding-bottom:6px">Cashflows (${j.cashflows.length})</h2>
-      ${renderSrcChips(cfBySrc, 'cashflows')}
       <div style="overflow-x:auto;max-height:300px;overflow-y:auto;border:1px solid var(--rule)">
         <table class="tbl">
           <thead><tr><th>Date</th><th>Type</th><th>Symbol</th><th class="r">Amount</th><th>Source</th><th class="r" style="width:60px"></th></tr></thead>
@@ -837,41 +829,166 @@ async function loadExisting(){
     wrap.querySelectorAll('.row-del-btn').forEach(btn => {
       btn.addEventListener('click', () => deleteRow(btn.dataset.kind, parseInt(btn.dataset.id, 10), btn));
     });
-    wrap.querySelectorAll('.src-del-chip').forEach(btn => {
-      btn.addEventListener('click', () => deleteSource(btn.dataset.table, btn.dataset.source, btn));
-    });
+    // Load Imports panel asynchronously (so the page renders fast)
+    loadImports();
   }catch(e){
     wrap.textContent='Network error: '+e.message;
   }
 }
 
-// ── Bulk delete by source (admin only) ───────
-async function deleteSource(table, source, btn){
-  if(!table || !source){ alert('Tabla o fuente inválida'); return; }
-  const label = table === 'cashflows' ? 'cashflows' : 'transactions';
-  const count = btn ? btn.querySelector('.src-count')?.textContent : '?';
-  const warn = source === 'schwab_csv'
-    ? '\n\n⚠️ Si la fuente es schwab_csv, todos los rows reaparecerán cuando reimportes el CSV (la importación es idempotente).'
-    : '';
-  if(!confirm(`¿Eliminar TODOS los ${label} con source="${source}" (${count} rows)? Esta acción es permanente.${warn}`)) return;
-  if(btn){ btn.disabled=true; btn.style.opacity='0.5'; }
+// ── Imports panel ──────────────────────────────────────
+async function loadImports(){
+  const slot = document.getElementById('imports-panel-slot');
+  if(!slot) return;
+  slot.innerHTML = '<div class="imports-panel"><div class="imports-head"><strong>Imports</strong> <span class="muted" style="font-size:10px">cargando…</span></div></div>';
   try{
-    const r = await fetch('/api/delete-source', {
+    const r = await fetch('/api/list-imports?limit=50', { headers: {'x-admin-token': adminToken()} });
+    const j = await r.json();
+    if(!r.ok){ slot.innerHTML = '<div class="imports-panel"><span class="muted">Error cargando imports: '+(j.error||r.status)+'</span></div>'; return; }
+    const imps = j.imports || [];
+    const legacy = j.legacy || [];
+    const totalEntries = imps.length + legacy.length;
+    if(totalEntries === 0){
+      slot.innerHTML = '<div class="imports-panel"><div class="imports-head"><strong>Imports</strong> <span class="muted" style="font-size:10px">no hay imports registrados</span></div></div>';
+      return;
+    }
+    // Build expandable panel
+    const fmtDate = iso => {
+      if(!iso) return '—';
+      const d = new Date(iso);
+      return d.toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    };
+    const fmtBytes = b => {
+      if(!b) return '—';
+      if(b<1024) return b+' B';
+      if(b<1024*1024) return (b/1024).toFixed(1)+' KB';
+      return (b/(1024*1024)).toFixed(2)+' MB';
+    };
+    let rowsHtml = imps.map(i => `
+      <tr>
+        <td style="font-size:11px">${fmtDate(i.created_at)}</td>
+        <td><span class="file-pill">${(i.filename||'—').replace(/</g,'&lt;')}</span></td>
+        <td class="muted" style="font-size:10.5px">${(i.actor_email||'—').replace(/</g,'&lt;')}</td>
+        <td class="r"><span class="cnt-pill cnt-tx">${i.tx_count} tx</span> <span class="cnt-pill cnt-cf">${i.cf_count} cf</span></td>
+        <td class="muted" style="font-size:10px">${fmtBytes(i.size_bytes)}</td>
+        <td class="r">
+          ${(i.tx_count+i.cf_count)>0
+            ? `<button type="button" class="row-del-btn imp-del-btn" data-batch="${i.batch_id}" data-fn="${(i.filename||'').replace(/"/g,'&quot;')}" data-tx="${i.tx_count}" data-cf="${i.cf_count}" title="Eliminar este import">✕</button>`
+            : '<span class="muted" style="font-size:10px">vacío</span>'
+          }
+        </td>
+      </tr>`).join('');
+    // Legacy entries (rows without batch_id)
+    if(legacy.length > 0){
+      rowsHtml += `<tr class="legacy-sep"><td colspan="6" style="padding:6px 10px;background:var(--cream);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--gray-mid)">Rows legacy (sin batch_id) — borrar por fuente completa</td></tr>`;
+      rowsHtml += legacy.map(L => `
+        <tr>
+          <td class="muted" style="font-size:11px">—</td>
+          <td><span class="file-pill legacy">source=${L.source}</span></td>
+          <td class="muted" style="font-size:10.5px">pre-2026-06-03</td>
+          <td class="r"><span class="cnt-pill cnt-tx">${L.tx_count} tx</span> <span class="cnt-pill cnt-cf">${L.cf_count} cf</span></td>
+          <td class="muted" style="font-size:10px">—</td>
+          <td class="r"><button type="button" class="row-del-btn imp-del-btn legacy" data-source="${L.source.replace(/"/g,'&quot;')}" data-tx="${L.tx_count}" data-cf="${L.cf_count}" title="Eliminar rows legacy con source=${L.source}">✕</button></td>
+        </tr>`).join('');
+    }
+    slot.innerHTML = `
+      <div class="imports-panel">
+        <div class="imports-head">
+          <button type="button" id="imports-toggle" class="imports-toggle">▾</button>
+          <strong>Imports</strong>
+          <span class="muted" style="font-size:10.5px">(${imps.length} batch${imps.length===1?'':'es'}${legacy.length?` · ${legacy.length} legacy`:''})</span>
+        </div>
+        <div id="imports-body" class="imports-body">
+          <div style="overflow-x:auto;max-height:240px;overflow-y:auto;border:1px solid var(--rule)">
+            <table class="tbl">
+              <thead><tr><th>Fecha</th><th>Archivo</th><th>Actor</th><th class="r">Conteo</th><th>Tamaño</th><th class="r" style="width:60px"></th></tr></thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </div>
+          <div style="font-size:10px;color:var(--gray-mid);padding:6px 4px 0">Cada import agrupa los rows insertados en una misma operación. Eliminar un import borra sus transactions y cashflows; el audit log se marca como revertido pero no se elimina.</div>
+        </div>
+      </div>`;
+    // Toggle expand/collapse
+    const toggle = document.getElementById('imports-toggle');
+    const body = document.getElementById('imports-body');
+    // Default: collapsed if >5 imports
+    if((imps.length + legacy.length) > 5){
+      body.style.display = 'none';
+      toggle.textContent = '▸';
+    }
+    toggle.addEventListener('click', () => {
+      const hidden = body.style.display === 'none';
+      body.style.display = hidden ? '' : 'none';
+      toggle.textContent = hidden ? '▾' : '▸';
+    });
+    // Wire delete
+    slot.querySelectorAll('.imp-del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if(btn.classList.contains('legacy')){
+          deleteLegacySource(btn.dataset.source, parseInt(btn.dataset.tx,10), parseInt(btn.dataset.cf,10), btn);
+        } else {
+          deleteImport(btn.dataset.batch, btn.dataset.fn, parseInt(btn.dataset.tx,10), parseInt(btn.dataset.cf,10), btn);
+        }
+      });
+    });
+  }catch(e){
+    slot.innerHTML = '<div class="imports-panel"><span class="muted">Network error: '+e.message+'</span></div>';
+  }
+}
+
+async function deleteImport(batchId, filename, txCount, cfCount, btn){
+  if(!batchId){ alert('batch_id inválido'); return; }
+  const total = (txCount||0) + (cfCount||0);
+  if(!confirm(`¿Eliminar este import?\n\nArchivo: ${filename||'—'}\nbatch_id: ${batchId.slice(0,8)}…\nRows: ${txCount} transactions + ${cfCount} cashflows = ${total} total\n\nEsta acción es permanente. El audit log queda marcado como revertido. Si re-importas el mismo CSV, los rows volverán a entrar.`)) return;
+  if(btn){ btn.disabled=true; btn.textContent='…'; }
+  try{
+    const r = await fetch('/api/delete-import', {
       method:'POST',
       headers:{'Content-Type':'application/json','x-admin-token':adminToken()},
-      body: JSON.stringify({ table, source })
+      body: JSON.stringify({ batch_id: batchId })
     });
     const j = await r.json().catch(()=>({}));
     if(!r.ok){
       alert('Error: '+(j.error||r.status));
-      if(btn){ btn.disabled=false; btn.style.opacity='1'; }
+      if(btn){ btn.disabled=false; btn.textContent='✕'; }
       return;
     }
-    setAlert('alert-slot','ok',`Eliminados ${j.count} ${label} con source="${source}".`);
+    setAlert('alert-slot','ok',`Import eliminado: ${j.tx_deleted} transactions + ${j.cf_deleted} cashflows.`);
     loadExisting();
   }catch(e){
     alert('Network error: '+e.message);
-    if(btn){ btn.disabled=false; btn.style.opacity='1'; }
+    if(btn){ btn.disabled=false; btn.textContent='✕'; }
+  }
+}
+
+async function deleteLegacySource(source, txCount, cfCount, btn){
+  if(!source){ alert('source inválido'); return; }
+  const tables = [];
+  if(txCount>0) tables.push({table:'transactions', count:txCount});
+  if(cfCount>0) tables.push({table:'cashflows', count:cfCount});
+  if(!confirm(`¿Eliminar TODOS los rows legacy con source="${source}"?\n\n${txCount} transactions + ${cfCount} cashflows\n\nSon rows sin batch_id (cargados antes del 2026-06-03). Si la fuente es schwab_csv, reaparecerán al re-importar.`)) return;
+  if(btn){ btn.disabled=true; btn.textContent='…'; }
+  let totalDeleted = 0;
+  try{
+    for(const t of tables){
+      const r = await fetch('/api/delete-source', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-admin-token':adminToken()},
+        body: JSON.stringify({ table: t.table, source })
+      });
+      const j = await r.json().catch(()=>({}));
+      if(!r.ok){
+        alert('Error en '+t.table+': '+(j.error||r.status));
+        if(btn){ btn.disabled=false; btn.textContent='✕'; }
+        return;
+      }
+      totalDeleted += (j.count||0);
+    }
+    setAlert('alert-slot','ok',`Eliminados ${totalDeleted} rows legacy con source="${source}".`);
+    loadExisting();
+  }catch(e){
+    alert('Network error: '+e.message);
+    if(btn){ btn.disabled=false; btn.textContent='✕'; }
   }
 }
 

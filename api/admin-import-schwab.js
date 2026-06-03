@@ -9,6 +9,7 @@
 // Idempotency: each row has source='schwab_csv' and external_id derived from
 // (date|action|symbol|qty|amount|fees) so re-importing the same CSV is a no-op.
 
+const crypto = require('crypto');
 const { requireRole } = require('./_require-role');
 const { sbUpsert, sbInsert } = require('./_supabase');
 const { parseSchwabCsv } = require('./_schwab-parser');
@@ -77,16 +78,26 @@ module.exports = async (req, res) => {
     return;
   }
 
+  // Generate batch_id to group all rows of this import.
+  // Allows listing imports as discrete batches in the audit panel and
+  // bulk-deleting a specific import without touching other Schwab imports.
+  const batchId = crypto.randomUUID();
+  const filename = (req.headers['x-filename'] && String(req.headers['x-filename']).trim().slice(0, 200)) || 'schwab_transactions.csv';
+
+  // Stamp batch_id on every row before upsert
+  const txWithBatch = parsed.transactions.map(t => ({ ...t, batch_id: batchId }));
+  const cfWithBatch = parsed.cashflows.map(c => ({ ...c, batch_id: batchId }));
+
   // Commit: upsert transactions then cashflows
   let txInserted = 0;
   let cfInserted = 0;
   try {
-    if (parsed.transactions.length > 0) {
-      const out = await sbUpsert('transactions', parsed.transactions, 'source,external_id');
+    if (txWithBatch.length > 0) {
+      const out = await sbUpsert('transactions', txWithBatch, 'source,external_id');
       txInserted = Array.isArray(out) ? out.length : 0;
     }
-    if (parsed.cashflows.length > 0) {
-      const out = await sbUpsert('cashflows', parsed.cashflows, 'source,external_id');
+    if (cfWithBatch.length > 0) {
+      const out = await sbUpsert('cashflows', cfWithBatch, 'source,external_id');
       cfInserted = Array.isArray(out) ? out.length : 0;
     }
   } catch (e) {
@@ -94,20 +105,23 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Audit (best-effort)
+  // Audit (best-effort) — also stamped with batch_id so we can list imports
   sbInsert('report_audit', {
     actor_email: actor,
     action: 'import_schwab',
     folder: 'performance',
-    filename: 'schwab_transactions.csv',
+    filename,
     size_bytes: csvText.length,
     detail: `tx=${txInserted} cf=${cfInserted} skipped=${parsed.skipped.length} errors=${parsed.errors.length}`,
+    batch_id: batchId,
   }).catch(() => {});
 
   res.status(200).json({
     ok: true,
     dryRun: false,
     summary: { ...summary, txInserted, cfInserted },
+    batchId,
+    filename,
     skipped: parsed.skipped,
     errors: parsed.errors,
   });
