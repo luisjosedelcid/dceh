@@ -1,7 +1,7 @@
 {
   "_meta": {
     "description": "Single source of truth para el Data Room de dceholdings.app. Se actualiza automaticamente por las skills DCE al generar nuevos entregables. Estructura alineada con Operations Manual v3 seccion 3.4.",
-    "last_updated": "2026-05-30",
+    "last_updated": "2026-06-03",
     "naming_convention": "AAAA-MM - Tipo - Detalle.ext (Operations Manual v3 §3.4)",
     "owner": "CIO"
   },
@@ -370,6 +370,22 @@
               "url": "/docs/UBER/2026-05_Investment_Memo_Uber_Technologies_UBER.docx",
               "uploaded": "2026-05-30",
               "doc_type": "Investment Memo"
+            }
+          ]
+        },
+        "RACE": {
+          "name": "RACE - Ferrari",
+          "ticker": "RACE",
+          "company": "Ferrari",
+          "files": [
+            {
+              "name": "2026-06 - Munger Digital - Ferrari (RACE)",
+              "filename": "2026-06_Munger_Digital_Ferrari_RACE.pdf",
+              "type": "pdf",
+              "detail": "Evaluacion conductual y narrativa",
+              "url": "/docs/RACE/2026-06_Munger_Digital_Ferrari_RACE.pdf",
+              "uploaded": "2026-06-03",
+              "doc_type": "Munger Digital"
             }
           ]
         }
