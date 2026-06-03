@@ -118,6 +118,9 @@
   .file-del-btn{font-family:inherit;font-size:14px;line-height:1;width:24px;height:24px;border:1px solid rgba(155,35,53,0.30);background:var(--white);color:var(--red);cursor:pointer;flex-shrink:0;margin-left:8px;padding:0;display:inline-flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s,background .15s}
   .file-item:hover .file-del-btn{opacity:1}
   .file-del-btn:hover{background:rgba(155,35,53,0.08)}
+  .file-rename-btn{font-family:inherit;font-size:12px;line-height:1;width:24px;height:24px;border:1px solid var(--gold-rule);background:var(--white);color:var(--gold);cursor:pointer;flex-shrink:0;margin-left:8px;padding:0;display:inline-flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s,background .15s}
+  .file-item:hover .file-rename-btn{opacity:1}
+  .file-rename-btn:hover{background:rgba(184,139,71,0.10)}
 
   .empty{text-align:center;padding:40px 20px;color:var(--gray-mid);font-size:13px;background:var(--white);border:1px dashed var(--rule)}
   .empty-icon{font-size:24px;color:var(--gold);margin-bottom:8px;opacity:0.5}
@@ -239,6 +242,22 @@
     <div class="row">
       <button class="btn" onclick="closeUploadModal()">Cancel</button>
       <button class="btn primary" id="upload-save">Upload</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="rename-modal">
+  <div class="modal">
+    <h2>Rename file</h2>
+    <div class="modal-sub">Update display name and detail</div>
+    <label for="ren-name">Display name</label>
+    <input type="text" id="ren-name" maxlength="200">
+    <label for="ren-detail">Detail (optional)</label>
+    <input type="text" id="ren-detail" maxlength="300" placeholder="Short context shown next to file">
+    <div class="modal-error" id="rename-error"></div>
+    <div class="row">
+      <button class="btn" onclick="closeRenameModal()">Cancel</button>
+      <button class="btn primary" id="rename-save">Save</button>
     </div>
   </div>
 </div>
@@ -491,8 +510,10 @@ function fileItemHTML(file, ctx) {
   // For uploaded files (have _uploadId) we hard-delete via the uploaded-files endpoint;
   // for legacy files we tombstone via dataroom-files (hide).
   let delBtn = '';
+  let renameBtn = '';
   if (admin) {
     if (file._uploadId) {
+      renameBtn = `<button class="file-rename-btn" title="Rename" onclick="event.preventDefault();event.stopPropagation();openRenameModal(${JSON.stringify(file._uploadId).replace(/"/g,'&quot;')}, ${JSON.stringify(file.name || '').replace(/"/g,'&quot;')}, ${JSON.stringify(file.detail || '').replace(/"/g,'&quot;')})">✎</button>`;
       delBtn = `<button class="file-del-btn" title="Delete file" onclick="event.preventDefault();event.stopPropagation();deleteUploadedFile(${JSON.stringify(file._uploadId).replace(/"/g,'&quot;')}, ${JSON.stringify(file.name || file.filename || '').replace(/"/g,'&quot;')})">×</button>`;
     } else {
       delBtn = `<button class="file-del-btn" title="Delete file" onclick="event.preventDefault();event.stopPropagation();deleteFile(${JSON.stringify(file.url || '').replace(/"/g,'&quot;')}, ${JSON.stringify(file.filename || '').replace(/"/g,'&quot;')}, ${JSON.stringify(file.name || '').replace(/"/g,'&quot;')}, ${JSON.stringify(ctx && ctx.rootSlug || '').replace(/"/g,'&quot;')}, ${JSON.stringify(ctx && ctx.subSlug || '').replace(/"/g,'&quot;')})">×</button>`;
@@ -521,6 +542,7 @@ function fileItemHTML(file, ctx) {
       </div>
       <div class="file-uploaded">${dateStr}</div>
       <div class="file-action">${action}</div>
+      ${renameBtn}
       ${delBtn}
     </div>`;
   }
@@ -543,6 +565,7 @@ function handleFileRowClick(ev, el) {
   // Ignore clicks on the delete button (it stops propagation itself, but
   // belt + suspenders)
   if (ev.target.closest('.file-del-btn')) return;
+  if (ev.target.closest('.file-rename-btn')) return;
   const url = el.getAttribute('data-file-url');
   const filename = el.getAttribute('data-file-filename') || '';
   if (!url || url === '#') return;
@@ -1143,6 +1166,70 @@ async function saveUpload() {
   }
 }
 
+// Rename state
+let renameState = null; // { id }
+
+function openRenameModal(id, currentName, currentDetail) {
+  if (!isAdmin()) return;
+  renameState = { id };
+  document.getElementById('ren-name').value = currentName || '';
+  document.getElementById('ren-detail').value = currentDetail || '';
+  document.getElementById('rename-error').textContent = '';
+  const btn = document.getElementById('rename-save');
+  btn.removeAttribute('disabled');
+  btn.textContent = 'Save';
+  document.getElementById('rename-modal').classList.add('open');
+  setTimeout(() => {
+    const inp = document.getElementById('ren-name');
+    inp.focus();
+    inp.select();
+  }, 50);
+}
+
+function closeRenameModal() {
+  document.getElementById('rename-modal').classList.remove('open');
+  renameState = null;
+}
+
+async function saveRename() {
+  if (!renameState) return;
+  const errEl = document.getElementById('rename-error');
+  errEl.textContent = '';
+  const name = document.getElementById('ren-name').value.trim();
+  const detail = document.getElementById('ren-detail').value.trim();
+  if (!name) { errEl.textContent = 'Display name is required'; return; }
+
+  const btn = document.getElementById('rename-save');
+  btn.setAttribute('disabled', '1');
+  btn.textContent = 'Saving…';
+  try {
+    const r = await fetch('/api/admin/dataroom-uploaded-files?id=' + encodeURIComponent(renameState.id), {
+      method: 'PATCH',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, detail }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error || `HTTP ${r.status}`);
+    }
+    const { item } = await r.json();
+    // Update local cache
+    const idx = UPLOADS.findIndex(u => u.id === renameState.id);
+    if (idx !== -1) UPLOADS[idx] = item;
+    const arr = UPLOADS_BY_FOLDER.get(item.folder_id);
+    if (arr) {
+      const i2 = arr.findIndex(u => u.id === renameState.id);
+      if (i2 !== -1) arr[i2] = item;
+    }
+    closeRenameModal();
+    render();
+  } catch (e) {
+    errEl.textContent = e.message || 'Save failed';
+    btn.removeAttribute('disabled');
+    btn.textContent = 'Save';
+  }
+}
+
 async function deleteUploadedFile(id, displayName) {
   if (!isAdmin()) return;
   if (!confirm(`Delete file "${displayName || id}"?\n\nThis permanently removes the file from storage.`)) return;
@@ -1204,6 +1291,16 @@ document.getElementById('folder-modal').addEventListener('click', (e) => {
 document.getElementById('upload-save').addEventListener('click', saveUpload);
 document.getElementById('upload-modal').addEventListener('click', (e) => {
   if (e.target.id === 'upload-modal') closeUploadModal();
+});
+document.getElementById('rename-save').addEventListener('click', saveRename);
+document.getElementById('rename-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'rename-modal') closeRenameModal();
+});
+document.getElementById('ren-name').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); saveRename(); }
+});
+document.getElementById('ren-detail').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); saveRename(); }
 });
 
 // ──────────────────────────────────────────────────────────────────
@@ -1343,6 +1440,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     if (document.getElementById('folder-modal').classList.contains('open')) closeFolderModal();
     if (document.getElementById('upload-modal').classList.contains('open')) closeUploadModal();
+    if (document.getElementById('rename-modal').classList.contains('open')) closeRenameModal();
   }
 });
 
