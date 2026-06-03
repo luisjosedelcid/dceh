@@ -128,6 +128,19 @@
   .modal-bg.open{display:flex}
   .modal{background:var(--white);border-top:3px solid var(--gold);padding:28px 32px;max-width:480px;width:100%;box-shadow:0 8px 32px rgba(27,38,66,0.20)}
   .modal h2{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px}
+  /* Drag & drop zones */
+  .drop-zone{position:relative;border:2px dashed var(--gold-rule);background:rgba(184,139,71,0.04);padding:18px 16px;text-align:center;color:var(--gray-mid);font-size:11.5px;letter-spacing:0.04em;cursor:pointer;transition:all .15s;margin-bottom:10px}
+  .drop-zone:hover{border-color:var(--gold);background:rgba(184,139,71,0.08);color:var(--navy)}
+  .drop-zone.drop-active{border-color:var(--gold);background:rgba(184,139,71,0.14);color:var(--navy);border-style:solid}
+  .drop-zone .dz-icon{font-size:18px;color:var(--gold);margin-bottom:4px;display:block}
+  .drop-zone .dz-file{font-size:12px;font-weight:600;color:var(--navy);letter-spacing:-0.01em;display:block;margin-top:4px;word-break:break-all}
+  .drop-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+  #page-drop-overlay{position:fixed;inset:0;background:rgba(27,38,66,0.55);z-index:2000;display:none;align-items:center;justify-content:center;pointer-events:none}
+  #page-drop-overlay.active{display:flex}
+  #page-drop-overlay .pdo-card{background:var(--white);border:3px dashed var(--gold);padding:48px 64px;text-align:center;color:var(--navy)}
+  #page-drop-overlay .pdo-icon{font-size:42px;color:var(--gold);margin-bottom:12px;display:block}
+  #page-drop-overlay .pdo-title{font-size:18px;font-weight:700;letter-spacing:-0.01em;margin-bottom:6px}
+  #page-drop-overlay .pdo-sub{font-size:12px;color:var(--gray-mid);letter-spacing:0.04em}
   .modal .modal-sub{font-size:11px;color:var(--gray-mid);margin-bottom:20px}
   .modal label{display:block;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;margin-top:14px}
   .modal label:first-of-type{margin-top:0}
@@ -211,8 +224,13 @@
   <div class="modal">
     <h2>Upload file</h2>
     <div class="modal-sub">Add a file to <strong id="upload-parent">—</strong></div>
-    <label for="upl-file">File</label>
-    <input type="file" id="upl-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.json,.md,.txt,.png,.jpg,.jpeg,.zip">
+    <label>File</label>
+    <div class="drop-zone" id="upl-drop">
+      <span class="dz-icon">↑</span>
+      <span id="upl-drop-text">Drag and drop a file here, or click to browse</span>
+      <span class="dz-file" id="upl-drop-filename" style="display:none"></span>
+      <input type="file" id="upl-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.json,.md,.txt,.png,.jpg,.jpeg,.zip">
+    </div>
     <label for="upl-name">Display name (optional)</label>
     <input type="text" id="upl-name" maxlength="200" placeholder="Defaults to filename">
     <label for="upl-detail">Detail (optional)</label>
@@ -222,6 +240,15 @@
       <button class="btn" onclick="closeUploadModal()">Cancel</button>
       <button class="btn primary" id="upload-save">Upload</button>
     </div>
+  </div>
+</div>
+
+<!-- Page-wide drop overlay -->
+<div id="page-drop-overlay">
+  <div class="pdo-card">
+    <span class="pdo-icon">↑</span>
+    <div class="pdo-title">Drop files to upload</div>
+    <div class="pdo-sub" id="pdo-sub">to current folder</div>
   </div>
 </div>
 
@@ -1063,6 +1090,33 @@ function closeUploadModal() {
   uploadState = null;
 }
 
+// Core uploader (reusable). Returns the item on success, throws on error.
+async function uploadFile(file, folderId, displayName, detail) {
+  if (!file) throw new Error('No file');
+  if (file.size > 25 * 1024 * 1024) throw new Error('File too large (max 25 MB)');
+  const params = new URLSearchParams({
+    folder_id: folderId,
+    filename: file.name,
+    name: displayName || file.name,
+    detail: detail || '',
+  });
+  const headers = {};
+  const t = adminToken();
+  if (t) headers['x-admin-token'] = t;
+  const r = await fetch('/api/admin/dataroom-upload?' + params.toString(), {
+    method: 'POST', headers, body: file,
+  });
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({}));
+    throw new Error(j.error || `HTTP ${r.status}`);
+  }
+  const { item } = await r.json();
+  UPLOADS.push(item);
+  if (!UPLOADS_BY_FOLDER.has(item.folder_id)) UPLOADS_BY_FOLDER.set(item.folder_id, []);
+  UPLOADS_BY_FOLDER.get(item.folder_id).unshift(item);
+  return item;
+}
+
 async function saveUpload() {
   if (!uploadState) return;
   const errEl = document.getElementById('upload-error');
@@ -1070,7 +1124,6 @@ async function saveUpload() {
   const fileEl = document.getElementById('upl-file');
   if (!fileEl.files || !fileEl.files[0]) { errEl.textContent = 'Select a file'; return; }
   const file = fileEl.files[0];
-  if (file.size > 25 * 1024 * 1024) { errEl.textContent = 'File too large (max 25 MB)'; return; }
 
   const displayName = document.getElementById('upl-name').value.trim() || file.name;
   const detail = document.getElementById('upl-detail').value.trim();
@@ -1080,28 +1133,7 @@ async function saveUpload() {
   btn.textContent = 'Uploading…';
 
   try {
-    const params = new URLSearchParams({
-      folder_id: uploadState.folderId,
-      filename: file.name,
-      name: displayName,
-      detail,
-    });
-    const headers = {};
-    const t = adminToken();
-    if (t) headers['x-admin-token'] = t;
-    const r = await fetch('/api/admin/dataroom-upload?' + params.toString(), {
-      method: 'POST',
-      headers,
-      body: file,
-    });
-    if (!r.ok) {
-      const j = await r.json().catch(() => ({}));
-      throw new Error(j.error || `HTTP ${r.status}`);
-    }
-    const { item } = await r.json();
-    UPLOADS.push(item);
-    if (!UPLOADS_BY_FOLDER.has(item.folder_id)) UPLOADS_BY_FOLDER.set(item.folder_id, []);
-    UPLOADS_BY_FOLDER.get(item.folder_id).unshift(item);
+    await uploadFile(file, uploadState.folderId, displayName, detail);
     closeUploadModal();
     render();
   } catch (e) {
@@ -1173,6 +1205,140 @@ document.getElementById('upload-save').addEventListener('click', saveUpload);
 document.getElementById('upload-modal').addEventListener('click', (e) => {
   if (e.target.id === 'upload-modal') closeUploadModal();
 });
+
+// ──────────────────────────────────────────────────────────────────
+// Drag & drop: modal drop-zone + page-wide overlay
+// ──────────────────────────────────────────────────────────────────
+(function setupDragDrop() {
+  const dz = document.getElementById('upl-drop');
+  const fileInput = document.getElementById('upl-file');
+  const fileLabel = document.getElementById('upl-drop-filename');
+  const fileText = document.getElementById('upl-drop-text');
+
+  function showFilename(name) {
+    if (name) {
+      fileLabel.textContent = name;
+      fileLabel.style.display = 'block';
+      fileText.textContent = 'Click or drop to replace';
+    } else {
+      fileLabel.style.display = 'none';
+      fileLabel.textContent = '';
+      fileText.textContent = 'Drag and drop a file here, or click to browse';
+    }
+  }
+
+  fileInput.addEventListener('change', () => {
+    const f = fileInput.files && fileInput.files[0];
+    showFilename(f ? f.name : '');
+  });
+
+  // Reset filename label when modal closes/opens
+  const _open = window.openUploadModal;
+  window.openUploadModal = function(folderId) {
+    _open(folderId);
+    showFilename('');
+  };
+
+  // Modal drop-zone handlers
+  ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, (e) => {
+    e.preventDefault(); e.stopPropagation();
+    dz.classList.add('drop-active');
+  }));
+  ['dragleave','dragend'].forEach(ev => dz.addEventListener(ev, (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if (ev === 'dragleave' && dz.contains(e.relatedTarget)) return;
+    dz.classList.remove('drop-active');
+  }));
+  dz.addEventListener('drop', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    dz.classList.remove('drop-active');
+    const files = e.dataTransfer && e.dataTransfer.files;
+    if (!files || !files.length) return;
+    try {
+      const dt = new DataTransfer();
+      dt.items.add(files[0]);
+      fileInput.files = dt.files;
+    } catch { /* older browsers */ }
+    showFilename(files[0].name);
+  });
+
+  // Page-wide drop overlay (only when inside a folder, admin signed in, modal closed)
+  const overlay = document.getElementById('page-drop-overlay');
+  const pdoSub = document.getElementById('pdo-sub');
+  let depth = 0;
+
+  function canDropHere() {
+    if (!isAdmin()) return false;
+    if (!currentFolderId) return false;
+    if (String(currentFolderId).startsWith('legacy:')) return false;
+    if (document.getElementById('upload-modal').classList.contains('open')) return false;
+    return true;
+  }
+  function hasFiles(e) {
+    if (!e.dataTransfer) return false;
+    const types = e.dataTransfer.types;
+    if (!types) return false;
+    return Array.from(types).includes('Files');
+  }
+
+  window.addEventListener('dragenter', (e) => {
+    if (!hasFiles(e) || !canDropHere()) return;
+    e.preventDefault();
+    depth++;
+    const f = BY_ID.get(currentFolderId);
+    pdoSub.textContent = f ? `to ${f.name}` : 'to current folder';
+    overlay.classList.add('active');
+  });
+  window.addEventListener('dragover', (e) => {
+    if (!hasFiles(e) || !canDropHere()) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  });
+  window.addEventListener('dragleave', (e) => {
+    if (!hasFiles(e)) return;
+    depth = Math.max(0, depth - 1);
+    if (depth === 0) overlay.classList.remove('active');
+  });
+  window.addEventListener('drop', async (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    depth = 0;
+    overlay.classList.remove('active');
+    if (!canDropHere()) return;
+    const files = Array.from(e.dataTransfer.files || []);
+    if (!files.length) return;
+    const folderId = currentFolderId;
+
+    if (files.length === 1) {
+      // Single file: open modal pre-filled
+      openUploadModal(folderId);
+      try {
+        const dt = new DataTransfer();
+        dt.items.add(files[0]);
+        fileInput.files = dt.files;
+        showFilename(files[0].name);
+      } catch {}
+      return;
+    }
+
+    // Multi-file: upload sequentially with overlay progress
+    overlay.classList.add('active');
+    let ok = 0, fail = 0;
+    for (let i = 0; i < files.length; i++) {
+      pdoSub.textContent = `Uploading ${i+1} of ${files.length}: ${files[i].name}`;
+      try {
+        await uploadFile(files[i], folderId, files[i].name, '');
+        ok++;
+      } catch (err) {
+        fail++;
+        console.error('Upload failed:', files[i].name, err);
+      }
+    }
+    overlay.classList.remove('active');
+    render();
+    if (fail) alert(`Uploaded ${ok} of ${files.length}. ${fail} failed.`);
+  });
+})();
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     if (document.getElementById('folder-modal').classList.contains('open')) closeFolderModal();
