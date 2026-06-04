@@ -55,7 +55,7 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
       const items = await sbSelect(
         'dataroom_files',
-        'select=*&order=uploaded_at.desc&limit=2000'
+        'select=*&order=order_index.asc,uploaded_at.asc&limit=2000'
       );
       res.status(200).json({ items });
       return;
@@ -82,6 +82,14 @@ module.exports = async (req, res) => {
       }
       if (body.name !== undefined) patch.name = String(body.name || '').slice(0, 200) || null;
       if (body.detail !== undefined) patch.detail = String(body.detail || '').slice(0, 500) || null;
+      if (body.order_index !== undefined) {
+        const n = Number(body.order_index);
+        if (!Number.isFinite(n) || n < 0 || n > 100000) {
+          res.status(400).json({ error: 'invalid order_index' });
+          return;
+        }
+        patch.order_index = Math.floor(n);
+      }
       if (Object.keys(patch).length === 0) {
         res.status(400).json({ error: 'no valid fields to update' });
         return;

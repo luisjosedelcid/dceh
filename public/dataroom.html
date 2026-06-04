@@ -79,6 +79,7 @@
   .subfolder.drag-over-target{border-left-color:var(--gold);box-shadow:0 0 0 2px var(--gold) inset;background:rgba(184,139,71,0.06)}
   .file-draggable{cursor:grab}
   .file-draggable.dragging{opacity:0.4;cursor:grabbing}
+  .file-draggable.drag-over-reorder{border-top:2px solid var(--navy);box-shadow:0 0 0 1px var(--navy) inset}
 
 
   /* SUBFOLDER LIST (horizontal rows like file rows) */
@@ -754,6 +755,66 @@ function attachFileDropOnSubfolders(container) {
   });
 }
 
+// ─── File drag & drop → reorder within same folder ───────────────
+function attachFileReorderDnD(content) {
+  const items = Array.from(content.querySelectorAll('.file-draggable'));
+  items.forEach(card => {
+    card.addEventListener('dragover', (e) => {
+      if (!fileDragState) return;
+      // Only allow reorder if dragging another file in this same list
+      const srcId = fileDragState.uploadId;
+      const dstId = card.getAttribute('data-upload-id');
+      if (!srcId || !dstId || srcId === dstId) return;
+      // Must be siblings (same folder) — they all live in this same content
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'move';
+      items.forEach(el => { if (el !== card) el.classList.remove('drag-over-reorder'); });
+      card.classList.add('drag-over-reorder');
+    });
+    card.addEventListener('dragleave', () => {
+      card.classList.remove('drag-over-reorder');
+    });
+    card.addEventListener('drop', async (e) => {
+      if (!fileDragState) return;
+      const srcId = fileDragState.uploadId;
+      const dstId = card.getAttribute('data-upload-id');
+      if (!srcId || !dstId || srcId === dstId) return;
+      e.preventDefault();
+      e.stopPropagation();
+      card.classList.remove('drag-over-reorder');
+      // Identify the folder these files belong to via the source upload row
+      const srcUpload = UPLOADS.find(u => u.id === srcId);
+      const dstUpload = UPLOADS.find(u => u.id === dstId);
+      if (!srcUpload || !dstUpload || srcUpload.folder_id !== dstUpload.folder_id) return;
+      const folderId = srcUpload.folder_id;
+      const arr = UPLOADS_BY_FOLDER.get(folderId) || [];
+      const fromIdx = arr.findIndex(u => u.id === srcId);
+      const toIdx = arr.findIndex(u => u.id === dstId);
+      if (fromIdx < 0 || toIdx < 0) return;
+      const [moved] = arr.splice(fromIdx, 1);
+      arr.splice(toIdx, 0, moved);
+      // Re-render immediately for snappy feedback
+      render();
+      // Persist new order_index for every sibling in this folder
+      await persistFileOrder(arr);
+    });
+  });
+}
+
+async function persistFileOrder(arr) {
+  try {
+    await Promise.all(arr.map((u, i) => fetch('/api/admin/dataroom-uploaded-files?id=' + encodeURIComponent(u.id), {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ order_index: i + 1 }),
+    }).then(r => { if (r.ok) u.order_index = i + 1; })));
+  } catch (e) {
+    console.warn('File reorder persist failed:', e);
+    alert('No se pudo guardar el nuevo orden de archivos: ' + e.message);
+  }
+}
+
 async function moveFileToFolder(uploadId, destFolderId, fileName) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -884,7 +945,10 @@ function renderFolder(id) {
     };
     html += files.map(f => fileItemHTML(f, ctx)).join('');
     if (admin) {
-      setTimeout(() => attachFileDnD(content), 0);
+      setTimeout(() => {
+        attachFileDnD(content);
+        attachFileReorderDnD(content);
+      }, 0);
     }
   } else if (subs.length === 0) {
     html += `<div class="empty">
