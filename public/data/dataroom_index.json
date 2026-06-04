@@ -2,7 +2,8 @@
   "_meta": {
     "description": "Single source of truth para el Data Room de dceholdings.app. Se actualiza automaticamente por las skills DCE al generar nuevos entregables. Estructura alineada con Operations Manual v3 seccion 3.4.",
     "last_updated": "2026-06-03",
-    "naming_convention": "AAAA-MM - Tipo - Detalle.ext (Operations Manual v3 §3.4)",
+    "naming_convention": "Tipo_TICKER_AAAA-MM-DD_v#.ext (Operations Manual v4.6 §8.1)",
+    "naming_convention_display": "Tipo \u2014 TICKER (con detail: Empresa \u00b7 v# \u00b7 fecha)",
     "owner": "CIO"
   },
   "folders": {
