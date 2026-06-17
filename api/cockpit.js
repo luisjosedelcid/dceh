@@ -69,23 +69,22 @@ async function getPipeline() {
 }
 
 // ── 2. Outstanding decisions ──────────────────────────────────────────
-//   Decisions in journal whose committee review has not been finalized:
-//   final_recommendation IS NULL or active=true with pending review_*_outcome
+//   Decisions in journal whose committee ratification is still pending.
+//   Scheduled 3m/6m/12m reviews live in Re-Underwriting Due (section 3) —
+//   they are re-underwriting work and belong with the filing-triggered ones.
 async function getOutstandingDecisions() {
   let rows = [];
   try {
     rows = await sbSelect(
       'decision_journal',
-      `select=id,ticker,decision_type,decision_date,thesis,final_recommendation,active,decision_owner,reviewer,review_3m_date,review_3m_outcome,review_6m_date,review_6m_outcome,review_12m_date,review_12m_outcome&order=decision_date.desc.nullslast&limit=200`
+      `select=id,ticker,decision_type,decision_date,thesis,final_recommendation,decision_owner&order=decision_date.desc.nullslast&limit=200`
     );
   } catch (e) {
     console.error('getOutstandingDecisions failed:', e.message);
     return [];
   }
-  const today = todayISO();
   const out = [];
   for (const r of rows) {
-    // (a) decisions with no final_recommendation yet
     if (!r.final_recommendation) {
       out.push({
         id: r.id,
@@ -97,55 +96,81 @@ async function getOutstandingDecisions() {
         owner: r.decision_owner,
         thesis: r.thesis ? String(r.thesis).slice(0, 120) : null,
       });
-      continue;
-    }
-    // (b) active decisions with overdue scheduled reviews
-    if (r.active) {
-      for (const period of ['3m', '6m', '12m']) {
-        const dateField = r[`review_${period}_date`];
-        const outcomeField = r[`review_${period}_outcome`];
-        if (dateField && !outcomeField && dateField <= today) {
-          out.push({
-            id: `${r.id}_${period}`,
-            ticker: r.ticker,
-            kind: `review_${period}_overdue`,
-            decision_type: r.decision_type,
-            decision_date: r.decision_date,
-            review_due: dateField,
-            days_overdue: -daysUntil(dateField),
-            owner: r.reviewer || r.decision_owner,
-          });
-          break; // one row per ticker
-        }
-      }
     }
   }
   return out.slice(0, 25);
 }
 
 // ── 3. Re-underwriting due ────────────────────────────────────────────
-//   Only truly open work: status IN (pending, in_progress).
-//   Excludes: completed / done / skipped / superseded — those are not actionable.
+//   Two sources, unified for the cockpit:
+//   (a) Filing-triggered: 10-Q/10-K in reunderwriting_due (pending/in_progress)
+//   (b) Calendar-triggered: scheduled 3m/6m/12m reviews on ratified BUYs
+//   Excludes terminal statuses (completed/done/skipped/superseded).
 async function getReunderwritingDue() {
-  let rows = [];
+  const out = [];
+  const today = todayISO();
+
+  // (a) Filing-triggered
   try {
-    rows = await sbSelect(
+    const rows = await sbSelect(
       'reunderwriting_due',
       `select=id,ticker,period_end,doc_type,status,due_at,completed_at,outcome&status=in.(pending,in_progress)&order=due_at.asc.nullslast&limit=30`
     );
+    for (const r of rows) {
+      out.push({
+        id: `filing_${r.id}`,
+        ticker: r.ticker,
+        kind: 'filing',
+        period_end: r.period_end,
+        doc_type: r.doc_type,
+        status: r.status,
+        due_at: r.due_at,
+        days_until_due: r.due_at ? daysUntil(r.due_at) : null,
+      });
+    }
   } catch (e) {
-    console.error('getReunderwritingDue failed:', e.message);
-    return [];
+    console.error('getReunderwritingDue (filing) failed:', e.message);
   }
-  return rows.map(r => ({
-    id: r.id,
-    ticker: r.ticker,
-    period_end: r.period_end,
-    doc_type: r.doc_type,
-    status: r.status,
-    due_at: r.due_at,
-    days_until_due: r.due_at ? daysUntil(r.due_at) : null,
-  }));
+
+  // (b) Calendar-triggered: scheduled 3m/6m/12m reviews from decision_journal
+  try {
+    const journal = await sbSelect(
+      'decision_journal',
+      `select=id,ticker,decision_type,decision_date,active,reviewer,decision_owner,final_recommendation,review_3m_date,review_3m_outcome,review_3m_done_at,review_6m_date,review_6m_outcome,review_6m_done_at,review_12m_date,review_12m_outcome,review_12m_done_at&active=eq.true&order=decision_date.desc.nullslast&limit=200`
+    );
+    for (const r of journal) {
+      if (!r.final_recommendation) continue; // not yet ratified → handled in Outstanding Decisions
+      for (const period of ['3m', '6m', '12m']) {
+        const dateField = r[`review_${period}_date`];
+        const outcomeField = r[`review_${period}_outcome`];
+        const doneField = r[`review_${period}_done_at`];
+        if (dateField && !outcomeField && !doneField && dateField <= today) {
+          out.push({
+            id: `review_${r.id}_${period}`,
+            ticker: r.ticker,
+            kind: 'scheduled_review',
+            period_end: dateField,
+            doc_type: `${period} review`,
+            status: 'pending',
+            due_at: dateField,
+            days_until_due: daysUntil(dateField),
+          });
+          break; // one row per ticker
+        }
+      }
+    }
+  } catch (e) {
+    console.error('getReunderwritingDue (scheduled) failed:', e.message);
+  }
+
+  // Sort: most overdue first (smallest/most-negative days_until_due first)
+  out.sort((a, b) => {
+    const av = a.days_until_due == null ? Infinity : a.days_until_due;
+    const bv = b.days_until_due == null ? Infinity : b.days_until_due;
+    return av - bv;
+  });
+
+  return out.slice(0, 30);
 }
 
 // ── 4. Earnings upcoming ──────────────────────────────────────────────

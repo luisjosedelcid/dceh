@@ -380,7 +380,7 @@ function renderReunderwriting(items) {
   const el = $('reu-body');
   $('cnt-reu').textContent = `${items.length} due`;
   if (!items.length) { el.innerHTML = '<div class="empty">No re-underwriting pending.</div>'; return; }
-  el.innerHTML = items.slice(0, 5).map(r => {
+  el.innerHTML = items.slice(0, 6).map(r => {
     const d = r.days_until_due;
     let badge = '<span class="badge amber">Soon</span>';
     if (d != null) {
@@ -388,11 +388,20 @@ function renderReunderwriting(items) {
       else if (d <= 7) badge = `<span class="badge amber">${d}d</span>`;
       else badge = `<span class="badge navy">${d}d</span>`;
     }
+    // Two kinds: 'filing' (10-Q/10-K) and 'scheduled_review' (3m/6m/12m post-BUY)
+    let title, meta;
+    if (r.kind === 'scheduled_review') {
+      title = `${escapeHtml(r.doc_type || 'review')} · scheduled`;
+      meta = `Due ${fmtDate(r.due_at)} · post-BUY review`;
+    } else {
+      title = `${escapeHtml(r.doc_type || 'Review')} · period ${escapeHtml(r.period_end || '')}`;
+      meta = `Due ${fmtDate(r.due_at)} · status ${escapeHtml(r.status || '—')}`;
+    }
     return `<div class="row">
       <span class="tk">${escapeHtml(r.ticker || '—')}</span>
       <div class="body">
-        <div class="title">${escapeHtml(r.doc_type || 'Review')} · period ${escapeHtml(r.period_end || '')}</div>
-        <div class="meta">Due ${fmtDate(r.due_at)} · status ${escapeHtml(r.status || '—')}</div>
+        <div class="title">${title}</div>
+        <div class="meta">${meta}</div>
       </div>
       ${badge}
     </div>`;
