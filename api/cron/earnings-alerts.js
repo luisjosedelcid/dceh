@@ -100,9 +100,12 @@ module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
 
   // Auth
-  const isVercelCron = req.headers['x-vercel-cron'] === '1' || req.headers['x-vercel-cron'] === 'true';
-  const secretOk = req.headers['x-cron-secret'] === process.env.CRON_SECRET && !!process.env.CRON_SECRET;
-  if (!isVercelCron && !secretOk) {
+  const expected = process.env.CRON_SECRET;
+  const authHdr = req.headers.authorization || '';
+  const bearerOk = !!expected && authHdr === `Bearer ${expected}`;
+  const cronHdrOk = !!expected && req.headers['x-cron-secret'] === expected;
+  const isVercelCron = 'x-vercel-cron-schedule' in req.headers;
+  if (!bearerOk && !cronHdrOk && !isVercelCron) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
