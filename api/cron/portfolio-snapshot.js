@@ -23,15 +23,15 @@ module.exports = async (req, res) => {
     const rows = series.map(d => ({
       snapshot_date: d.date,
       nav_usd: d.nav,
-      invested_usd: null,
+      invested_usd: d.market_value ?? 0,
       cash_usd: d.cash,
       twr_daily: d.twr_daily,
       twr_cumulative: d.twr_cum,
-      benchmark_iwqu: d.iwqu_norm,
+      benchmark_urth: d.iwqu_norm,
       drawdown_pct: d.drawdown,
-      holdings_json: null,
+      holdings_json: {},
     }));
-    rows[rows.length - 1].holdings_json = result.holdings;
+    rows[rows.length - 1].holdings_json = result.holdings || {};
 
     let written = 0;
     for (let i = 0; i < rows.length; i += 500) {
