@@ -95,8 +95,11 @@ async function sendResetEmail({ toEmail, resetUrl, displayName }) {
   });
   if (!res.ok) {
     const t = await res.text().catch(() => '');
+    console.error(`[forgot-password] Resend ${res.status} — from=${from} to=${toEmail} body=${t.slice(0, 400)}`);
     return { ok: false, error: `Resend ${res.status}: ${t.slice(0, 200)}` };
   }
+  const respJson = await res.json().catch(() => ({}));
+  console.log(`[forgot-password] Resend OK — from=${from} to=${toEmail} id=${respJson.id || 'unknown'}`);
   return { ok: true };
 }
 
@@ -156,9 +159,16 @@ module.exports = async (req, res) => {
       const proto = (req.headers['x-forwarded-proto'] || 'https').toString();
       const resetUrl = `${proto}://${host}/reset?token=${rawToken}`;
 
-      // Fire-and-forget email (don't block response on Resend latency)
-      sendResetEmail({ toEmail: email, resetUrl, displayName: user.display_name })
-        .catch(e => console.error('sendResetEmail failed:', e && e.message));
+      // Await email send so we can log real errors, then continue.
+      // We still return ok:true regardless to prevent enumeration.
+      const emailResult = await sendResetEmail({
+        toEmail: email,
+        resetUrl,
+        displayName: user.display_name,
+      }).catch(e => ({ ok: false, error: String(e && e.message || e) }));
+      if (!emailResult.ok) {
+        console.error(`[forgot-password] email send failed for ${email}: ${emailResult.error || emailResult.reason || 'unknown'}`);
+      }
     }
 
     // Always respond OK to prevent user enumeration
