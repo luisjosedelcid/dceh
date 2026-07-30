@@ -21,7 +21,6 @@
     { "source": "/study", "destination": "/study.html" },
     { "source": "/journal", "destination": "/journal.html" },
     { "source": "/performance", "destination": "/performance.html" },
-    { "source": "/account", "destination": "/account.html" },
     { "source": "/premortem", "destination": "/premortem.html" }
   ],
   "crons": [
