@@ -655,8 +655,90 @@
     <input type="password" id="pwd-input" autocomplete="current-password" placeholder="··········" onkeydown="if(event.key==='Enter') checkPwd()">
     <div id="gate-error"></div>
     <button class="gate-btn" onclick="checkPwd()">Enter</button>
+    <div style="margin-top:16px;text-align:center;font-size:13px">
+      <a href="#" id="forgot-link" style="color:#b88b47;text-decoration:none;border-bottom:1px solid transparent" onclick="showForgot(event)">¿Olvidaste tu contraseña?</a>
+    </div>
   </div>
 </div>
+
+<!-- ── FORGOT PASSWORD MODAL ── -->
+<div id="forgot-modal" style="display:none;position:fixed;inset:0;background:rgba(27,38,66,0.85);z-index:10000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:10px;padding:32px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.4)">
+    <div style="text-align:center;margin-bottom:8px">
+      <span style="font-size:18px;color:#1B2642"><strong>DCE</strong>Holdings</span>
+    </div>
+    <div style="height:2px;background:#B88B47;width:40px;margin:12px auto 20px"></div>
+    <h2 style="font-size:17px;font-weight:600;color:#1B2642;margin:0 0 6px;text-align:center">Restablecer contraseña</h2>
+    <p style="text-align:center;color:#6b7280;font-size:13px;margin-bottom:24px">Ingresá tu email y te enviaremos un link para elegir una nueva.</p>
+    <form id="forgot-form" onsubmit="return submitForgot(event)">
+      <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:6px">Email</label>
+      <input type="email" id="forgot-email" required style="width:100%;padding:11px 12px;font-size:14px;font-family:inherit;border:1px solid #e5e7eb;border-radius:6px;box-sizing:border-box" placeholder="tu@correo.com" />
+      <button type="submit" id="forgot-btn" style="width:100%;background:#1B2642;color:white;border:none;border-radius:6px;padding:12px;font-size:14px;font-family:inherit;font-weight:500;cursor:pointer;margin-top:20px">Enviar link</button>
+      <div id="forgot-msg" style="display:none;margin-top:14px;padding:10px 12px;border-radius:6px;font-size:13px"></div>
+      <div style="text-align:center;margin-top:16px">
+        <a href="#" onclick="hideForgot(event)" style="color:#6b7280;font-size:13px;text-decoration:none">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function showForgot(e) {
+  if (e) e.preventDefault();
+  document.getElementById('forgot-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('forgot-email').focus(), 50);
+  // Pre-fill email from login if present
+  const loginEmail = document.getElementById('email-input');
+  if (loginEmail && loginEmail.value) {
+    document.getElementById('forgot-email').value = loginEmail.value;
+  }
+}
+function hideForgot(e) {
+  if (e) e.preventDefault();
+  document.getElementById('forgot-modal').style.display = 'none';
+  document.getElementById('forgot-msg').style.display = 'none';
+  document.getElementById('forgot-btn').disabled = false;
+  document.getElementById('forgot-btn').textContent = 'Enviar link';
+}
+async function submitForgot(e) {
+  e.preventDefault();
+  const email = document.getElementById('forgot-email').value.trim();
+  const btn = document.getElementById('forgot-btn');
+  const msg = document.getElementById('forgot-msg');
+  if (!email) return false;
+  btn.disabled = true;
+  btn.textContent = 'Enviando…';
+  msg.style.display = 'none';
+  try {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    // Always show success regardless of result (no enumeration)
+    msg.style.display = 'block';
+    msg.style.background = '#f0fdf4';
+    msg.style.color = '#16a34a';
+    msg.style.border = '1px solid #bbf7d0';
+    msg.innerHTML = 'Si <strong>' + email.replace(/</g,'&lt;') + '</strong> corresponde a una cuenta activa, te enviamos un link para restablecer tu contraseña. Revisá tu correo (incluyendo spam).';
+    btn.textContent = 'Enviado';
+    btn.disabled = true;
+  } catch (err) {
+    msg.style.display = 'block';
+    msg.style.background = '#fef2f2';
+    msg.style.color = '#dc2626';
+    msg.style.border = '1px solid #fecaca';
+    msg.textContent = 'Error de red. Intentá de nuevo.';
+    btn.disabled = false;
+    btn.textContent = 'Enviar link';
+  }
+  return false;
+}
+// Close on background click
+document.getElementById('forgot-modal').addEventListener('click', function(e) {
+  if (e.target === this) hideForgot();
+});
+</script>
 
 <!-- ── MAIN ── -->
 <div id="main">

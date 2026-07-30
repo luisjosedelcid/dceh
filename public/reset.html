@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Restablecer contraseña · DCE Holdings</title>
+  <style>
+    :root {
+      --navy: #1B2642;
+      --gold: #B88B47;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --red: #dc2626;
+      --green: #16a34a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(180deg, #1B2642 0%, #263354 100%);
+      color: var(--gray-900);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .brand {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .brand .mark {
+      display: inline-block;
+      font-size: 20px;
+      letter-spacing: 0.02em;
+      color: var(--navy);
+    }
+    .brand .mark strong { font-weight: 800; }
+    .brand .mark .h { color: var(--navy); font-weight: 400; }
+    .divider {
+      height: 2px;
+      background: var(--gold);
+      width: 40px;
+      margin: 12px auto 20px;
+    }
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--navy);
+      margin: 0 0 6px 0;
+      text-align: center;
+    }
+    .subtitle {
+      text-align: center;
+      color: var(--gray-500);
+      font-size: 13px;
+      margin-bottom: 28px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+    label:first-of-type { margin-top: 0; }
+    input[type="password"] {
+      width: 100%;
+      padding: 11px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      background: white;
+      transition: border 0.15s, box-shadow 0.15s;
+    }
+    input[type="password"]:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(184, 139, 71, 0.15);
+    }
+    .hint {
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+    button {
+      background: var(--navy);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 24px;
+      width: 100%;
+      transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.92; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .msg {
+      margin-top: 16px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+    }
+    .msg.error {
+      background: #fef2f2;
+      color: var(--red);
+      border: 1px solid #fecaca;
+      display: block;
+    }
+    .msg.success {
+      background: #f0fdf4;
+      color: var(--green);
+      border: 1px solid #bbf7d0;
+      display: block;
+    }
+    .footer-link {
+      margin-top: 22px;
+      text-align: center;
+      font-size: 13px;
+    }
+    .footer-link a {
+      color: var(--navy);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
+    .footer-link a:hover { border-bottom-color: var(--gold); }
+    .state-view { display: none; }
+    .state-view.active { display: block; }
+    .success-icon {
+      display: block;
+      margin: 0 auto 12px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #f0fdf4;
+      color: var(--green);
+      line-height: 48px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">
+      <span class="mark"><strong>DCE</strong><span class="h">Holdings</span></span>
+    </div>
+    <div class="divider"></div>
+
+    <!-- FORM STATE -->
+    <div class="state-view active" id="state-form">
+      <h1>Restablecer contraseña</h1>
+      <p class="subtitle">Elegí una contraseña nueva para tu cuenta.</p>
+
+      <form id="reset-form" autocomplete="off">
+        <label for="new1">Contraseña nueva</label>
+        <input type="password" id="new1" name="new_password"
+               autocomplete="new-password" minlength="8" required autofocus />
+        <div class="hint">Mínimo 8 caracteres. Recomendado: 16+ con mix de tipos.</div>
+
+        <label for="new2">Repetir contraseña</label>
+        <input type="password" id="new2" autocomplete="new-password" minlength="8" required />
+
+        <button type="submit" id="submit-btn">Cambiar contraseña</button>
+
+        <div class="msg" id="msg"></div>
+      </form>
+    </div>
+
+    <!-- SUCCESS STATE -->
+    <div class="state-view" id="state-success">
+      <div class="success-icon">✓</div>
+      <h1>Contraseña actualizada</h1>
+      <p class="subtitle">Tu contraseña se cambió correctamente. Ya podés entrar con la nueva.</p>
+      <a href="/" style="text-decoration:none">
+        <button type="button">Ir al login</button>
+      </a>
+    </div>
+
+    <!-- INVALID TOKEN STATE -->
+    <div class="state-view" id="state-invalid">
+      <h1 style="color:var(--red)">Link inválido</h1>
+      <p class="subtitle" id="invalid-msg">El link es inválido, expiró, o ya fue utilizado.</p>
+      <div class="footer-link">
+        <a href="/">← Volver al login</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token') || '';
+
+      if (!token || token.length < 20) {
+        show('state-invalid');
+        document.getElementById('invalid-msg').textContent = 'El link no contiene un token válido.';
+        return;
+      }
+
+      const form = document.getElementById('reset-form');
+      const msg = document.getElementById('msg');
+      const btn = document.getElementById('submit-btn');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        msg.className = 'msg';
+        msg.textContent = '';
+
+        const new1 = document.getElementById('new1').value;
+        const new2 = document.getElementById('new2').value;
+
+        if (new1 !== new2) {
+          msg.className = 'msg error';
+          msg.textContent = 'Las contraseñas no coinciden.';
+          return;
+        }
+        if (new1.length < 8) {
+          msg.className = 'msg error';
+          msg.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Guardando…';
+
+        try {
+          const res = await fetch('/api/auth/reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, new_password: new1 }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            msg.className = 'msg error';
+            msg.textContent = data.error || `Error ${res.status}`;
+            btn.disabled = false;
+            btn.textContent = 'Cambiar contraseña';
+            return;
+          }
+          show('state-success');
+        } catch (err) {
+          msg.className = 'msg error';
+          msg.textContent = 'Error de red: ' + (err.message || err);
+          btn.disabled = false;
+          btn.textContent = 'Cambiar contraseña';
+        }
+      });
+
+      function show(id) {
+        document.querySelectorAll('.state-view').forEach(el => el.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+      }
+    })();
+  </script>
+</body>
+</html>
