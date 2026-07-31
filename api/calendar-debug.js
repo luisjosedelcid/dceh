@@ -20,6 +20,7 @@ module.exports = async (req, res) => {
     },
   };
 
+  let accessToken = null;
   try {
     const params = new URLSearchParams({
       client_id: cid,
@@ -33,6 +34,7 @@ module.exports = async (req, res) => {
       body: params.toString(),
     });
     const data = await r.json().catch(() => ({}));
+    accessToken = data.access_token;
     out.refresh_response = {
       http_status: r.status,
       ok: r.ok,
@@ -43,6 +45,32 @@ module.exports = async (req, res) => {
     };
   } catch (e) {
     out.refresh_error = e.message;
+  }
+
+  // List all events (no filter) for the next 14d to see what's there
+  if (accessToken) {
+    try {
+      const now = new Date();
+      const in14d = new Date(now.getTime() + 14 * 24 * 3600 * 1000);
+      const q = new URLSearchParams({
+        timeMin: now.toISOString(),
+        timeMax: in14d.toISOString(),
+        singleEvents: 'true',
+        orderBy: 'startTime',
+        maxResults: '20',
+      });
+      const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${q}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+      const data = await r.json().catch(() => ({}));
+      out.events_count = (data.items || []).length;
+      out.events_summary = (data.items || []).slice(0, 10).map(e => ({
+        summary: e.summary,
+        start: e.start?.dateTime || e.start?.date,
+        attendee_emails: (e.attendees || []).map(a => a.email),
+        organizer: e.organizer?.email,
+      }));
+    } catch (e) {
+      out.events_error = e.message;
+    }
   }
 
   res.status(200).json(out);
