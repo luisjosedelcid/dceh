@@ -1,8 +1,8 @@
 // /api/me — self-service endpoint. Any authenticated active user can use it.
 //
 //   GET    /api/me                      → current user profile
-//   PATCH  /api/me                      → update own display_name
-//                                         body: { display_name }
+//   PATCH  /api/me                      → update own display_name and/or job_title
+//                                         body: { display_name?, job_title? }
 //   POST   /api/me?action=password      → change own password
 //                                         body: { current_password, new_password }
 //
@@ -57,7 +57,7 @@ module.exports = async function handler(req, res) {
       // Return fresh row (last_login etc.)
       const rows = await sbSelect(
         'admin_users',
-        `select=email,display_name,role,is_active,created_at,last_login&email=eq.${encodeURIComponent(me.email)}&limit=1`
+        `select=email,display_name,job_title,role,is_active,created_at,last_login&email=eq.${encodeURIComponent(me.email)}&limit=1`
       );
       res.statusCode = 200;
       res.end(JSON.stringify({ ok: true, user: rows[0] || me }));
@@ -66,17 +66,41 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'PATCH') {
       const body = await readJson(req);
-      const display_name = (body.display_name || '').trim();
-      if (display_name.length < 2) {
+      const patch = {};
+      const auditParts = [];
+
+      if (body.display_name !== undefined) {
+        const display_name = (body.display_name || '').trim();
+        if (display_name.length < 2) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: 'display_name min 2 chars' }));
+          return;
+        }
+        patch.display_name = display_name;
+        auditParts.push(`name="${display_name}"`);
+      }
+
+      if (body.job_title !== undefined) {
+        const raw = (body.job_title == null ? '' : String(body.job_title)).trim();
+        if (raw.length > 120) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: 'job_title max 120 chars' }));
+          return;
+        }
+        patch.job_title = raw.length ? raw : null;
+        auditParts.push(`job_title="${patch.job_title || ''}"`);
+      }
+
+      if (Object.keys(patch).length === 0) {
         res.statusCode = 400;
-        res.end(JSON.stringify({ error: 'display_name min 2 chars' }));
+        res.end(JSON.stringify({ error: 'No fields to update (display_name, job_title)' }));
         return;
       }
-      await sbUpdate('admin_users', `email=eq.${encodeURIComponent(me.email)}`,
-                      { display_name });
-      await audit(me.email, 'user.self_update', `name="${display_name}"`);
+
+      await sbUpdate('admin_users', `email=eq.${encodeURIComponent(me.email)}`, patch);
+      await audit(me.email, 'user.self_update', auditParts.join(' '));
       res.statusCode = 200;
-      res.end(JSON.stringify({ ok: true, user: { email: me.email, display_name } }));
+      res.end(JSON.stringify({ ok: true, user: { email: me.email, ...patch } }));
       return;
     }
 

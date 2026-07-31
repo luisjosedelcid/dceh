@@ -292,7 +292,7 @@
         <div class="section-meta" id="acct-role-meta">—</div>
       </div>
       <div class="section-desc">
-        Update your display name or change your password. Role and access level are managed by an administrator.
+        Update your display name, job title, or change your password. Role and access level are managed by an administrator.
       </div>
       <div style="padding:0 24px 22px">
         <div id="acct-summary" style="margin-bottom:18px;padding:14px 18px;background:rgba(184,139,71,0.06);border-left:3px solid var(--gold);font-size:12px;color:var(--gray-mid)">
@@ -304,6 +304,13 @@
           <input type="text" name="display_name" id="acct-name" required minlength="2" style="padding:8px;border:1px solid var(--rule);font-family:inherit;min-width:280px">
           <button class="btn" type="submit">Save</button>
           <span id="acct-name-status" style="font-size:11px;font-style:italic"></span>
+        </form>
+
+        <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:18px 0 10px">Change job title</h4>
+        <form onsubmit="return updateOwnJobTitle(event)" style="display:flex;gap:10px;align-items:center;font-size:12px;flex-wrap:wrap">
+          <input type="text" name="job_title" id="acct-job-title" maxlength="120" placeholder="e.g. Chief Investment Officer" style="padding:8px;border:1px solid var(--rule);font-family:inherit;min-width:280px">
+          <button class="btn" type="submit">Save</button>
+          <span id="acct-job-title-status" style="font-size:11px;font-style:italic"></span>
         </form>
 
         <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:24px 0 10px">Change password</h4>
@@ -1183,10 +1190,13 @@ async function loadMyAccount() {
     if (!r.ok) throw new Error(data.error || 'Error');
     const me = data.user || {};
     if (nameInput) nameInput.value = me.display_name || '';
+    const jobInput = document.getElementById('acct-job-title');
+    if (jobInput) jobInput.value = me.job_title || '';
     if (meta) meta.textContent = (me.role || '').toUpperCase();
     summary.innerHTML = `
       <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 18px;font-size:12px;color:var(--ink)">
         <span style="color:var(--gray-mid);font-size:10px;letter-spacing:0.14em;text-transform:uppercase">Email</span><span><strong>${escapeHtml(me.email||'—')}</strong></span>
+        <span style="color:var(--gray-mid);font-size:10px;letter-spacing:0.14em;text-transform:uppercase">Job title</span><span>${escapeHtml(me.job_title||'—')}</span>
         <span style="color:var(--gray-mid);font-size:10px;letter-spacing:0.14em;text-transform:uppercase">Role</span><span style="text-transform:capitalize">${escapeHtml(me.role||'—')}</span>
         <span style="color:var(--gray-mid);font-size:10px;letter-spacing:0.14em;text-transform:uppercase">Member since</span><span>${me.created_at ? fmtTs(me.created_at) : '—'}</span>
         <span style="color:var(--gray-mid);font-size:10px;letter-spacing:0.14em;text-transform:uppercase">Last login</span><span>${me.last_login ? fmtTs(me.last_login) : 'never'}</span>
@@ -1218,6 +1228,30 @@ async function updateOwnName(ev) {
     } catch {}
     status.textContent = 'Saved.'; status.style.color = 'var(--green)';
     refreshAdminUI();
+    loadMyAccount();
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = 'var(--red)';
+  }
+  return false;
+}
+
+async function updateOwnJobTitle(ev) {
+  ev.preventDefault();
+  const f = ev.target;
+  const status = document.getElementById('acct-job-title-status');
+  status.textContent = 'Saving…'; status.style.color = 'var(--gray-mid)';
+  const token = localStorage.getItem(TOKEN_KEY);
+  const job_title = (f.job_title.value || '').trim();
+  try {
+    const r = await fetch('/api/me', {
+      method: 'PATCH',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ job_title }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    status.textContent = 'Saved.'; status.style.color = 'var(--green)';
     loadMyAccount();
   } catch (e) {
     status.textContent = 'Error: ' + e.message;
