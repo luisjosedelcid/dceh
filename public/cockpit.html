@@ -608,7 +608,7 @@ async function loadApi() {
 
 async function loadTeamMeetings() {
   try {
-    const cr = await fetch('/data/team_meetings.json', { cache: 'no-store' });
+    const cr = await fetch('/api/team-meetings', { cache: 'no-store' });
     renderTeamMeetings(cr.ok ? await cr.json() : null);
   } catch (e) { console.warn('team meetings load failed:', e); renderTeamMeetings(null); }
 }
