@@ -4,17 +4,27 @@
 // GET    /api/admin/earnings-tickers
 //   → { items: [{ ticker, name, sources, in_calendar, last_event_date,
 //                  event_count, stage?, watchlist_status?, blocked }] }
+//   Where `sources` may include:
+//     - 'shortlist' — in `radar` (Find > Shortlist)
+//     - 'pipeline'  — in `pipeline_cards` (Universe). Includes `stage`.
+//     - 'extras'    — in `calendar_extras` (one-off ad-hoc adds)
+//     - 'watchlist' — in `watchlist`
+//     - 'calendar'  — currently has rows in `earnings_calendar`
+//     - 'blocklist' — in `calendar_blocklist`
 //
-// DELETE /api/admin/earnings-tickers?ticker=XXX[&scope=calendar|universe]
-//   → { ok, deleted, deleted_pipeline, blocked } — scope=calendar (default)
-//     removes earnings_calendar rows AND adds the ticker to
-//     calendar_blocklist so the cron / refresh will not re-import it.
-//     scope=universe also drops the pipeline_cards row (still adds the
-//     blocklist row as a safety net). watchlist is never touched here.
+// DELETE /api/admin/earnings-tickers?ticker=XXX[&scope=calendar|universe|extras]
+//   → scope=calendar (default): removes earnings_calendar rows AND adds the
+//     ticker to calendar_blocklist so the cron / refresh will not re-import it.
+//     scope=universe also drops the pipeline_cards row.
+//     scope=extras removes the calendar_extras row (does NOT blocklist).
+//     watchlist is never touched here.
 //
 // POST   /api/admin/earnings-tickers?action=unblock&ticker=XXX
-//   → { ok, removed } — removes ticker from calendar_blocklist so the
-//     next cron / refresh can pull its events again.
+//   → { ok, removed } — removes ticker from calendar_blocklist.
+//
+// POST   /api/admin/earnings-tickers?action=add&ticker=XXX[&note=...]
+//   → { ok, added } — adds ticker to `calendar_extras` so the next cron /
+//     refresh includes it. Also removes any matching row from `calendar_blocklist`.
 // ═══════════════════════════════════════════════════════════════════
 
 const { verifyAdminToken } = require('../_admin-auth');
@@ -42,18 +52,38 @@ module.exports = async (req, res) => {
   if (req.method === 'POST') {
     const action = (req.query.action || '').toString().toLowerCase();
     const ticker = (req.query.ticker || '').toString().toUpperCase().trim();
-    if (action !== 'unblock') {
-      res.status(400).json({ error: 'Unknown action (expected ?action=unblock)' });
+    if (!['unblock', 'add'].includes(action)) {
+      res.status(400).json({ error: 'Unknown action (expected ?action=unblock or ?action=add)' });
       return;
     }
     if (!validTicker(ticker)) {
       res.status(400).json({ error: 'Invalid ticker' });
       return;
     }
+
+    if (action === 'unblock') {
+      try {
+        const before = await sbSelect('calendar_blocklist', `select=ticker&ticker=eq.${ticker}`);
+        await sbDelete('calendar_blocklist', `ticker=eq.${ticker}`);
+        res.status(200).json({ ok: true, ticker, removed: before.length });
+      } catch (e) {
+        res.status(500).json({ error: String(e).slice(0, 300) });
+      }
+      return;
+    }
+
+    // action === 'add' — register ad-hoc ticker so the next refresh includes it
     try {
-      const before = await sbSelect('calendar_blocklist', `select=ticker&ticker=eq.${ticker}`);
-      await sbDelete('calendar_blocklist', `ticker=eq.${ticker}`);
-      res.status(200).json({ ok: true, ticker, removed: before.length });
+      const note = (req.query.note || '').toString().slice(0, 200) || null;
+      await sbUpsert('calendar_extras', [{
+        ticker,
+        added_by: actor,
+        added_at: new Date().toISOString(),
+        note,
+      }], 'ticker');
+      // Also remove from blocklist — admin explicitly wants to follow this ticker
+      try { await sbDelete('calendar_blocklist', `ticker=eq.${ticker}`); } catch {}
+      res.status(200).json({ ok: true, ticker, added: true });
     } catch (e) {
       res.status(500).json({ error: String(e).slice(0, 300) });
     }
@@ -68,10 +98,34 @@ module.exports = async (req, res) => {
       res.status(400).json({ error: 'Invalid ticker' });
       return;
     }
-    if (!['calendar', 'universe'].includes(scope)) {
-      res.status(400).json({ error: 'Invalid scope (calendar|universe)' });
+    if (!['calendar', 'universe', 'extras'].includes(scope)) {
+      res.status(400).json({ error: 'Invalid scope (calendar|universe|extras)' });
       return;
     }
+
+    // scope=extras — remove from calendar_extras only (does NOT blocklist)
+    if (scope === 'extras') {
+      try {
+        await sbDelete('calendar_extras', `ticker=eq.${ticker}`);
+        // Also clear earnings rows if the ticker is not tracked anywhere else,
+        // so it disappears from the UI immediately.
+        const shortlisted = await sbSelect('radar', `select=ticker&ticker=eq.${ticker}`);
+        const pipelined = await sbSelect('pipeline_cards', `select=ticker&ticker=eq.${ticker}`);
+        const watched = await sbSelect('watchlist', `select=ticker&ticker=eq.${ticker}`);
+        const stillTracked = shortlisted.length || pipelined.length || watched.length;
+        let cleared = 0;
+        if (!stillTracked) {
+          const evBefore = await sbSelect('earnings_calendar', `select=ticker&ticker=eq.${ticker}`);
+          await sbDelete('earnings_calendar', `ticker=eq.${ticker}`);
+          cleared = evBefore.length;
+        }
+        res.status(200).json({ ok: true, ticker, scope: 'extras', removed_extra: true, cleared });
+      } catch (e) {
+        res.status(500).json({ error: String(e).slice(0, 300) });
+      }
+      return;
+    }
+
     try {
       const before = await sbSelect('earnings_calendar', `select=ticker&ticker=eq.${ticker}`);
       await sbDelete('earnings_calendar', `ticker=eq.${ticker}`);
@@ -141,7 +195,16 @@ module.exports = async (req, res) => {
       return map.get(t);
     }
 
-    // 1) covered universe
+    // 1) shortlist (radar) — Find > Shortlist
+    try {
+      const rad = await sbSelect('radar', 'select=ticker,name&limit=500');
+      rad.forEach(r => {
+        const it = ensure(r.ticker, r.name);
+        if (it) it.sources.push('shortlist');
+      });
+    } catch {}
+
+    // 2) covered universe (pipeline_cards) with stage tag
     try {
       const cards = await sbSelect('pipeline_cards', 'select=ticker,name,stage&limit=500');
       cards.forEach(c => {
@@ -153,7 +216,21 @@ module.exports = async (req, res) => {
       });
     } catch {}
 
-    // 2) watchlist
+    // 3) calendar extras (one-off ad-hoc tickers added from the calendar UI)
+    try {
+      const ex = await sbSelect('calendar_extras', 'select=ticker,note,added_at,added_by&limit=500');
+      ex.forEach(e => {
+        const r = ensure(e.ticker);
+        if (r) {
+          r.sources.push('extras');
+          r.extra_note = e.note || null;
+          r.extra_added_at = e.added_at || null;
+          r.extra_added_by = e.added_by || null;
+        }
+      });
+    } catch {}
+
+    // 4) watchlist
     try {
       const wl = await sbSelect('watchlist', 'select=ticker,status&limit=500');
       wl.forEach(w => {

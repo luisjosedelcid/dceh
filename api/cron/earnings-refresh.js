@@ -97,13 +97,32 @@ async function upsertEvent(supabaseUrl, serviceKey, row) {
 }
 
 // Pull tickers + display names from every relevant source so any company
-// the team adds to the covered universe / watchlist starts producing
-// earnings rows automatically on the next run.
+// the team adds to the shortlist / covered universe / watchlist starts
+// producing earnings rows automatically on the next run.
+//
+// Primary sources (per user):
+//   1. `radar`           — Shortlist in Find (highest-conviction watchlist)
+//   2. `pipeline_cards`  — Universe (all stages: followed, review, invested, passed)
+//   3. `calendar_extras` — One-off tickers added directly from the calendar UI
+// Secondary sources kept for backwards compat:
+//   4. `watchlist`, `positions`, `price_alerts`
 async function getTrackedTickers() {
   const set = new Set(ALWAYS_TRACK);
   const names = {};
 
-  // Covered universe = pipeline_cards (any stage)
+  // 1. Shortlist (radar) — Find > Shortlist
+  try {
+    const rad = await sbSelect('radar', 'select=ticker,name&limit=500');
+    rad.forEach(r => {
+      if (r && r.ticker) {
+        const tk = r.ticker.toUpperCase();
+        set.add(tk);
+        if (r.name && !names[tk]) names[tk] = r.name;
+      }
+    });
+  } catch {}
+
+  // 2. Covered universe = pipeline_cards (any stage)
   try {
     const cards = await sbSelect('pipeline_cards', 'select=ticker,name&limit=500');
     cards.forEach(c => {
@@ -115,19 +134,25 @@ async function getTrackedTickers() {
     });
   } catch {}
 
-  // Active watchlist (price targets / catalysts)
+  // 3. Calendar extras (one-off tickers added from the calendar Manage UI)
+  try {
+    const ex = await sbSelect('calendar_extras', 'select=ticker&limit=500');
+    ex.forEach(e => e && e.ticker && set.add(e.ticker.toUpperCase()));
+  } catch {}
+
+  // 4. Active watchlist (price targets / catalysts)
   try {
     const wl = await sbSelect('watchlist', 'select=ticker&limit=500');
     wl.forEach(w => w && w.ticker && set.add(w.ticker.toUpperCase()));
   } catch {}
 
-  // Portfolio (positions). Optional table — silently skip if missing.
+  // 5. Portfolio (positions). Optional table — silently skip if missing.
   try {
     const pos = await sbSelect('positions', 'select=ticker&limit=500');
     pos.forEach(p => p && p.ticker && set.add(p.ticker.toUpperCase()));
   } catch {}
 
-  // Price alerts
+  // 6. Price alerts
   try {
     const pa = await sbSelect('price_alerts', 'select=ticker&limit=500');
     pa.forEach(a => a && a.ticker && set.add(a.ticker.toUpperCase()));

@@ -121,6 +121,28 @@
   .tk-row .tk-remove{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:4px 8px;border:1px solid var(--rule);background:transparent;color:var(--gray-mid);cursor:pointer;transition:all .2s}
   .tk-row .tk-remove:hover{border-color:var(--red);color:var(--red)}
   .tk-row .tk-remove[disabled]{opacity:.5;cursor:not-allowed}
+  /* Section headers inside the Manage tickers modal */
+  .tk-section{margin-top:14px}
+  .tk-section:first-child{margin-top:0}
+  .tk-section-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:4px 2px 6px;border-bottom:1px solid var(--rule);margin-bottom:2px}
+  .tk-section-title{font-family:'Archivo',sans-serif;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--navy)}
+  .tk-section-count{font-size:10px;color:var(--gray-mid);font-weight:400}
+  .tk-section-desc{font-size:10px;color:var(--gray-mid);margin:2px 2px 6px;line-height:1.5}
+  .tk-section-empty{font-size:11px;color:var(--gray-mid);padding:8px;font-style:italic}
+  /* Source-tag pills inside a ticker row */
+  .tk-tag{display:inline-block;font-size:8px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;padding:2px 6px;border-radius:2px;margin-right:4px;vertical-align:middle}
+  .tk-tag.shortlist{background:rgba(184,139,71,.15);color:var(--gold)}
+  .tk-tag.pipeline{background:rgba(27,38,66,.08);color:var(--navy)}
+  .tk-tag.extras{background:rgba(42,122,86,.10);color:var(--green)}
+  .tk-tag.watchlist{background:rgba(120,120,120,.10);color:var(--gray-mid)}
+  /* Add-extra input row */
+  .tk-add-row{display:flex;gap:8px;align-items:center;padding:10px;background:#fafaf7;border:1px dashed var(--rule);margin-top:14px}
+  .tk-add-row label{font-family:'Archivo',sans-serif;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--navy);white-space:nowrap}
+  .tk-add-row input{flex:1;padding:6px 8px;font-family:'Archivo',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border:1px solid var(--rule);background:#fff;color:var(--navy);font-size:12px}
+  .tk-add-row input:focus{outline:none;border-color:var(--gold)}
+  .tk-add-row button{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:6px 12px;border:1px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer}
+  .tk-add-row button:hover{background:#0f172a}
+  .tk-add-row button:disabled{opacity:.5;cursor:wait}
 
   .info-bar{background:rgba(184,139,71,0.06);border:1px solid var(--gold-rule);padding:12px 16px;font-size:11px;color:var(--gray-txt);margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
   .info-bar code{background:var(--cream);padding:2px 6px;font-size:11px;color:var(--navy)}
@@ -201,8 +223,14 @@
         <button class="x" id="import-close" aria-label="close">×</button>
       </div>
       <div class="modal-b">
-        <p>Select tickers to refresh into the calendar. Removing a ticker also blocks it — the daily cron and Refresh Now will skip blocked tickers until you Unblock them. Blocked tickers appear at the top of the list with a red badge.</p>
+        <p style="margin-bottom:6px">Tickers come from three sources: <strong>Shortlist</strong> (Find → Shortlist), <strong>Followed in Universe</strong>, and one-off <strong>Extras</strong> added below. Select the ones you want in this refresh cycle.</p>
+        <p style="font-size:11px;color:var(--gray-mid);margin-bottom:10px">Removing a ticker blocks it — the daily cron and Refresh Now will skip blocked tickers until you Unblock them. Blocked tickers appear at the top.</p>
         <div id="tk-list"><div class="empty" style="padding:24px">Loading…</div></div>
+        <div class="tk-add-row">
+          <label for="tk-add-input">Follow extra:</label>
+          <input type="text" id="tk-add-input" placeholder="e.g. NVDA" maxlength="10" autocomplete="off">
+          <button type="button" id="tk-add-btn">Add</button>
+        </div>
         <div class="modal-error" id="import-error"></div>
       </div>
       <div class="modal-f">
@@ -461,48 +489,109 @@
       const j = await r.json();
       const items = j.items || [];
       if (!items.length) {
-        list.innerHTML = '<div class="empty" style="padding:24px">No tickers in the covered universe or watchlist yet.</div>';
+        list.innerHTML = '<div class="empty" style="padding:24px">No tickers yet. Add one below.</div>';
         return;
       }
-      let html = '';
+
+      // Bucket items by primary source. Priority: blocked > shortlist > followed > pipeline (other stages) > extras > other.
+      const blockedRows = [];
+      const shortlistRows = [];
+      const followedRows = [];
+      const universeOtherRows = [];
+      const extrasRows = [];
+      const otherRows = [];
+
       for (const it of items) {
+        const src = new Set(it.sources || []);
+        if (it.blocked) blockedRows.push(it);
+        else if (src.has('shortlist')) shortlistRows.push(it);
+        else if (src.has('pipeline') && it.stage === 'followed') followedRows.push(it);
+        else if (src.has('pipeline')) universeOtherRows.push(it);
+        else if (src.has('extras')) extrasRows.push(it);
+        else otherRows.push(it);
+      }
+
+      // Row renderer with source-tag pills
+      function renderRow(it) {
         const blocked = !!it.blocked;
-        const sources = (it.sources || [])
-          .filter(s => s !== 'blocklist')
-          .map(s => s[0].toUpperCase() + s.slice(1))
-          .join(' · ') || '—';
-        const tracked = it.in_calendar;
-        const stillInUniverse = (it.sources || []).some(s => s === 'pipeline' || s === 'watchlist');
+        const src = new Set(it.sources || []);
+        const isExtraOnly = src.has('extras') && !src.has('shortlist') && !src.has('pipeline') && !src.has('watchlist');
+        const stillInUniverse = src.has('shortlist') || src.has('pipeline') || src.has('watchlist');
+
+        const tags = [];
+        if (src.has('shortlist')) tags.push('<span class="tk-tag shortlist">SL</span>');
+        if (src.has('pipeline')) {
+          const stageLabel = it.stage ? ` ${String(it.stage).toUpperCase()}` : '';
+          tags.push(`<span class="tk-tag pipeline">UNI${stageLabel}</span>`);
+        }
+        if (src.has('extras')) tags.push('<span class="tk-tag extras">EXTRA</span>');
+        if (src.has('watchlist')) tags.push('<span class="tk-tag watchlist">WL</span>');
+        const tagsHtml = tags.join('') || '<span class="tk-tag watchlist">—</span>';
+
         let meta;
         if (blocked) {
           const reason = it.blocked_reason ? ` · ${it.blocked_reason}` : '';
           meta = `Blocked${reason}`;
-        } else if (tracked) {
+        } else if (it.in_calendar) {
           meta = `${it.event_count} event${it.event_count===1?'':'s'} · last ${it.last_event_date || '—'}`;
         } else {
           meta = 'Not yet in calendar';
         }
-        // Default unchecked — admin must explicitly opt in. Prevents
-        // a just-removed ticker from being silently re-imported. Blocked
-        // tickers are also disabled — admin must Unblock first.
+
         const disabled = blocked ? 'disabled' : '';
         let stateClass = 'untracked', stateLabel = 'New';
         if (blocked) { stateClass = 'blocked'; stateLabel = 'Blocked'; }
-        else if (tracked) { stateClass = 'tracked'; stateLabel = 'Tracked'; }
+        else if (it.in_calendar) { stateClass = 'tracked'; stateLabel = 'Tracked'; }
+
         let actionBtn = '';
         if (blocked) {
           actionBtn = `<button class="tk-unblock" data-unblock="${it.ticker}" type="button">Unblock</button>`;
-        } else if (tracked) {
+        } else if (isExtraOnly) {
+          // Extra-only rows get a lighter remove that just drops the extra (no blocklist)
+          actionBtn = `<button class="tk-remove" data-remove="${it.ticker}" data-extra="1" data-stillin="0" type="button">Unfollow</button>`;
+        } else if (it.in_calendar) {
           actionBtn = `<button class="tk-remove" data-remove="${it.ticker}" data-stillin="${stillInUniverse?'1':'0'}" type="button">Remove</button>`;
         }
-        html += `<div class="tk-row${blocked?' is-blocked':''}">
+
+        return `<div class="tk-row${blocked?' is-blocked':''}">
           <input type="checkbox" data-tk="${it.ticker}" ${disabled}>
           <span class="tk-tk">${it.ticker}</span>
-          <span class="tk-name">${it.name||it.ticker}<div class="tk-meta">${sources} · ${meta}</div></span>
+          <span class="tk-name">${it.name||it.ticker}<div class="tk-meta">${tagsHtml} · ${meta}</div></span>
           <span class="tk-state ${stateClass}">${stateLabel}</span>
           ${actionBtn}
         </div>`;
       }
+
+      function renderSection(id, title, desc, rows, emptyMsg) {
+        const rowsHtml = rows.length
+          ? rows.map(renderRow).join('')
+          : `<div class="tk-section-empty">${emptyMsg}</div>`;
+        return `<div class="tk-section">
+          <div class="tk-section-h">
+            <span class="tk-section-title">${title}</span>
+            <span class="tk-section-count">${rows.length} ticker${rows.length===1?'':'s'}</span>
+          </div>
+          ${desc ? `<div class="tk-section-desc">${desc}</div>` : ''}
+          ${rowsHtml}
+        </div>`;
+      }
+
+      let html = '';
+      if (blockedRows.length) {
+        html += renderSection('blocked', 'Blocked', 'Skipped by cron and Refresh Now. Unblock to resume tracking.', blockedRows, '');
+      }
+      html += renderSection('shortlist', 'Shortlist', 'From Find → Shortlist. Highest-conviction watchlist.', shortlistRows, 'No shortlist tickers yet. Add them in Find → Shortlist.');
+      html += renderSection('followed', 'Followed · Universe', 'Companies in the Universe pipeline with stage = Followed.', followedRows, 'No followed tickers yet. Move a card to Followed in Universe.');
+      if (universeOtherRows.length) {
+        html += renderSection('universe-other', 'Universe · Other stages', 'Review / Invested / Passed cards in Universe.', universeOtherRows, '');
+      }
+      if (extrasRows.length) {
+        html += renderSection('extras', 'Extras · Ad-hoc', 'One-off tickers added directly from this modal.', extrasRows, '');
+      }
+      if (otherRows.length) {
+        html += renderSection('other', 'Other sources', 'From watchlist / positions / price alerts only.', otherRows, '');
+      }
+
       list.innerHTML = html;
       // Wire up action buttons
       list.querySelectorAll('button.tk-remove').forEach(btn => {
@@ -632,12 +721,19 @@
 
   async function removeTicker(btn) {
     const ticker = btn.dataset.remove;
+    const isExtra = btn.dataset.extra === '1';
     const stillIn = btn.dataset.stillin === '1';
-    const scope = pickRemoveScope(ticker, stillIn);
-    if (!scope) return;
+    let scope;
+    if (isExtra) {
+      if (!confirm(`Unfollow ${ticker}? It will be removed from the extras list and its calendar rows will disappear.`)) return;
+      scope = 'extras';
+    } else {
+      scope = pickRemoveScope(ticker, stillIn);
+      if (!scope) return;
+    }
     btn.disabled = true;
     const original = btn.textContent;
-    btn.textContent = scope === 'universe' ? 'Removing all…' : 'Removing…';
+    btn.textContent = scope === 'universe' ? 'Removing all…' : (scope === 'extras' ? 'Unfollowing…' : 'Removing…');
     try {
       const url = `/api/admin/earnings-tickers?ticker=${encodeURIComponent(ticker)}&scope=${scope}`;
       const r = await fetch(url, { method: 'DELETE', headers: authHeaders() });
@@ -660,11 +756,54 @@
     }
   }
 
+  async function addExtraTicker() {
+    const input = document.getElementById('tk-add-input');
+    const btn = document.getElementById('tk-add-btn');
+    const err = document.getElementById('import-error');
+    err.classList.remove('show');
+    const raw = (input.value || '').trim().toUpperCase();
+    if (!raw) return;
+    if (!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(raw)) {
+      err.textContent = `Invalid ticker: ${raw}`;
+      err.classList.add('show');
+      return;
+    }
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = 'Adding…';
+    try {
+      const url = `/api/admin/earnings-tickers?action=add&ticker=${encodeURIComponent(raw)}`;
+      const r = await fetch(url, { method: 'POST', headers: authHeaders() });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || ('http ' + r.status));
+      input.value = '';
+      // Also trigger an immediate refresh for just this ticker so it appears in the calendar
+      try {
+        await fetch('/api/admin/earnings-refresh-now', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ tickers: [raw] }),
+        });
+      } catch {}
+      await Promise.all([loadTickerSources(), load()]);
+    } catch (e) {
+      err.textContent = `Add failed: ${e.message || e}`;
+      err.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+
   document.getElementById('btn-import').addEventListener('click', openImport);
   document.getElementById('btn-refresh').addEventListener('click', refreshNow);
   document.getElementById('import-close').addEventListener('click', closeImport);
   document.getElementById('import-cancel').addEventListener('click', closeImport);
   document.getElementById('import-confirm').addEventListener('click', confirmImport);
+  document.getElementById('tk-add-btn').addEventListener('click', addExtraTicker);
+  document.getElementById('tk-add-input').addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') { ev.preventDefault(); addExtraTicker(); }
+  });
   document.getElementById('import-modal').addEventListener('click', (ev) => {
     if (ev.target.id === 'import-modal') closeImport();
   });
