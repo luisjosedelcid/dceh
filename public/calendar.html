@@ -503,11 +503,14 @@
       // Sort Universe rows: followed first, then review, invested, passed, others.
       const STAGE_ORDER = { followed: 0, review: 1, invested: 2, passed: 3 };
 
+      // Universe is the source of truth for tracked companies. If a ticker is
+      // in Universe it appears ONLY in Universe here — even if it is also in
+      // the Shortlist (radar) table. This avoids duplicate rows in the modal.
       for (const it of items) {
         if (it.blocked) continue; // hidden
         const src = new Set(it.sources || []);
-        if (src.has('shortlist')) shortlistRows.push(it);
-        else if (src.has('pipeline')) universeRows.push(it);
+        if (src.has('pipeline')) universeRows.push(it);
+        else if (src.has('shortlist')) shortlistRows.push(it);
         else if (src.has('extras')) extrasRows.push(it);
         else otherRows.push(it);
       }
