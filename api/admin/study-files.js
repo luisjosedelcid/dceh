@@ -52,6 +52,17 @@ module.exports = async (req, res) => {
         'study_files',
         'select=*&order=uploaded_at.desc&limit=2000'
       );
+      // Resolve uploaded_by email -> display_name (from admin_users)
+      try {
+        const admins = await sbSelect('admin_users', 'select=email,display_name&active=eq.true&limit=500');
+        const map = new Map(admins.map(a => [(a.email || '').toLowerCase(), a.display_name || a.email]));
+        for (const it of items) {
+          const raw = (it.uploaded_by || '').toLowerCase();
+          if (raw && map.has(raw)) it.uploaded_by = map.get(raw);
+        }
+      } catch (e) {
+        // fail-safe: leave uploaded_by as-is if admin_users lookup fails
+      }
       res.status(200).json({ items });
       return;
     }
