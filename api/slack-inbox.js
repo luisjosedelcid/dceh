@@ -60,23 +60,28 @@ async function loadUsers() {
   return map;
 }
 
-async function loadDMs(users) {
-  // conversations.list only for DMs (im) and group DMs (mpim)
+async function loadConversations(users) {
+  // conversations.list: DMs (im), group DMs (mpim), and channels where the bot is a member
   const out = [];
   try {
     let cursor = '';
     for (let i = 0; i < 5; i++) {
       const data = await slack('conversations.list', {
-        types: 'im,mpim',
+        types: 'im,mpim,public_channel,private_channel',
         exclude_archived: 'true',
-        limit: '100',
+        limit: '200',
         ...(cursor ? { cursor } : {}),
       });
       for (const c of data.channels || []) {
+        // For channels, only include ones where the bot is a member
+        if ((c.is_channel || c.is_group) && !c.is_member) continue;
         out.push({
           id: c.id,
           is_im: !!c.is_im,
           is_mpim: !!c.is_mpim,
+          is_channel: !!c.is_channel,
+          is_private: !!c.is_private,
+          name: c.name || null,
           user: c.user || null, // for IMs
         });
       }
@@ -122,18 +127,19 @@ async function historyMessages(channel, users, cutoffTs) {
 
 async function fetchInbox() {
   const users = await loadUsers();
-  const dms = await loadDMs(users);
+  const convos = await loadConversations(users);
 
   // Look back 14 days
   const cutoffTs = Math.floor((Date.now() - 14 * 24 * 3600 * 1000) / 1000);
-  const buckets = await Promise.all(dms.map(dm => historyMessages(dm.id, users, cutoffTs).then(msgs => ({ dm, msgs }))));
+  const buckets = await Promise.all(convos.map(c => historyMessages(c.id, users, cutoffTs).then(msgs => ({ c, msgs }))));
 
   const messages = [];
-  for (const { dm, msgs } of buckets) {
+  for (const { c, msgs } of buckets) {
     for (const m of msgs) {
       let channel_label = 'DM';
-      if (dm.is_im && dm.user && users[dm.user]) channel_label = `DM · ${users[dm.user].name}`;
-      else if (dm.is_mpim) channel_label = 'Group DM';
+      if (c.is_im && c.user && users[c.user]) channel_label = `DM · ${users[c.user].name}`;
+      else if (c.is_mpim) channel_label = 'Group DM';
+      else if (c.is_channel && c.name) channel_label = `#${c.name}`;
       messages.push({
         channel_id: m.channel_id,
         channel_label,
