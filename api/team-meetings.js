@@ -6,11 +6,11 @@
 // Auth: uses OAuth refresh token to mint access tokens on demand.
 // Env:  GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN
 //
-// Caching: 5 min in-memory per lambda instance.
+// Caching: 60s in-memory per lambda instance.
 
 'use strict';
 
-const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_TTL_MS = 60 * 1000;
 let cached = null;
 let cachedAt = 0;
 
@@ -134,14 +134,14 @@ module.exports = async (req, res) => {
   try {
     const now = Date.now();
     if (cached && now - cachedAt < CACHE_TTL_MS) {
-      res.setHeader('Cache-Control', 'public, max-age=300');
+      res.setHeader('Cache-Control', 'public, max-age=60');
       res.status(200).json(cached);
       return;
     }
     const payload = await fetchTeamMeetings();
     cached = payload;
     cachedAt = now;
-    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.setHeader('Cache-Control', 'public, max-age=60');
     res.status(200).json(payload);
   } catch (e) {
     console.error('team-meetings failed:', e.message);
