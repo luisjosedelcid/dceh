@@ -639,7 +639,8 @@
   }
 </style>
 <link rel="stylesheet" href="/responsive.css"><script src="/dce-auth.js"></script>
-</head>
+    <script src="/nyse-clock.js" defer></script>
+  </head>
 <body data-dce-auth="manual">
 
 <!-- ── PASSWORD GATE ── -->
@@ -781,8 +782,6 @@ document.getElementById('forgot-modal').addEventListener('click', function(e) {
       <a href="/research.html">Research</a>
       <a href="/calendar.html">Calendar</a>
       <div class="h-date" id="hdr-date" style="font-size:9px;letter-spacing:0.15em;color:rgba(255,255,255,0.3);margin-left:8px"></div>
-      <div class="h-nyse" id="hdr-nyse" title="NYSE market status"
-           style="display:none;font-size:9px;letter-spacing:0.14em;color:rgba(255,255,255,0.55);margin-left:10px;padding-left:10px;border-left:1px solid rgba(255,255,255,0.15);white-space:nowrap;font-variant-numeric:tabular-nums"></div>
     </nav>
   </header>
 
@@ -1051,126 +1050,12 @@ function passThrough(e, url) {
   window.location.href = url;
 }
 
-// ── NYSE mini clock ──
-// Fetches live status from BellHour API (free, no key). Falls back to a
-// hardcoded 2026-2027 holiday table + local session windows if the API fails.
-const NYSE_HOLIDAYS_2026_2027 = {
-  // full closures
-  '2026-01-01':'closed','2026-01-19':'closed','2026-02-16':'closed',
-  '2026-04-03':'closed','2026-05-25':'closed','2026-06-19':'closed',
-  '2026-07-03':'closed','2026-09-07':'closed','2026-11-26':'closed',
-  '2026-12-25':'closed',
-  '2027-01-01':'closed','2027-01-18':'closed','2027-02-15':'closed',
-  '2027-03-26':'closed','2027-05-31':'closed','2027-06-18':'closed',
-  '2027-07-05':'closed','2027-09-06':'closed','2027-11-25':'closed',
-  '2027-12-24':'closed',
-  // early closes at 13:00 ET
-  '2026-11-27':'early','2026-12-24':'early',
-  '2027-11-26':'early','2027-12-23':'early',
-};
-function nyseFallbackStatus() {
-  // Compute status using Intl in America/New_York tz
-  const fmt = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York', hour12: false,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', weekday: 'short',
-  });
-  const parts = Object.fromEntries(fmt.formatToParts(new Date()).map(p => [p.type, p.value]));
-  const dateKey = `${parts.year}-${parts.month}-${parts.day}`;
-  const hhmm = `${parts.hour}:${parts.minute}`;
-  const minutes = parseInt(parts.hour,10)*60 + parseInt(parts.minute,10);
-  const wd = parts.weekday; // Mon, Tue...
-  const isWeekend = (wd === 'Sat' || wd === 'Sun');
-  const holiday = NYSE_HOLIDAYS_2026_2027[dateKey];
-  let status = 'closed';
-  let label = 'CLOSED';
-  if (isWeekend) { status='closed'; label='CLOSED'; }
-  else if (holiday === 'closed') { status='closed'; label='HOLIDAY'; }
-  else if (holiday === 'early') {
-    // Early close at 13:00 ET
-    if (minutes < 240) { status='closed'; label='CLOSED'; }
-    else if (minutes < 570) { status='pre-market'; label='PRE-MKT'; }
-    else if (minutes < 780) { status='open'; label='OPEN'; }         // 09:30-13:00
-    else if (minutes < 1200) { status='after-hours'; label='AFTER'; }// 13:00-20:00
-    else { status='closed'; label='CLOSED'; }
-  } else {
-    // Normal weekday
-    if (minutes < 240) { status='closed'; label='CLOSED'; }          // <04:00
-    else if (minutes < 570) { status='pre-market'; label='PRE-MKT'; }// 04:00-09:30
-    else if (minutes < 960) { status='open'; label='OPEN'; }         // 09:30-16:00
-    else if (minutes < 1200) { status='after-hours'; label='AFTER'; }// 16:00-20:00
-    else { status='closed'; label='CLOSED'; }
-  }
-  return { status, label, localTime: hhmm };
-}
-function renderNyseClock({ status, label, localTime }) {
-  const el = document.getElementById('hdr-nyse');
-  if (!el) return;
-  const colors = {
-    'open':          '#4ade80',  // green
-    'pre-market':    '#facc15',  // amber
-    'after-hours':   '#fb923c',  // orange
-    'closed':        'rgba(255,255,255,0.45)',
-    'holiday':       'rgba(255,255,255,0.45)',
-    'lunch-break':   '#facc15',
-  };
-  const color = colors[status] || 'rgba(255,255,255,0.45)';
-  el.innerHTML = `<span style="color:rgba(255,255,255,0.4)">NY</span> `
-    + `<span style="color:rgba(255,255,255,0.85);font-weight:600">${localTime}</span> `
-    + `<span style="color:rgba(255,255,255,0.2);margin:0 3px">·</span> `
-    + `<span style="color:${color};font-weight:700;letter-spacing:0.18em">${label}</span>`;
-  el.style.display = '';
-}
-async function updateNyseClock() {
-  try {
-    const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 4000);
-    const r = await fetch('https://bellhour.com/api/markets/nyse', { signal: ctl.signal });
-    clearTimeout(timer);
-    if (!r.ok) throw new Error('http ' + r.status);
-    const d = await r.json();
-    // localTime comes as "10:30:00 AM" — convert to 24h HH:MM
-    const dt = new Date(); dt.setHours(0,0,0,0);
-    let time24 = d.localTime;
-    const m = String(d.localTime || '').match(/(\d{1,2}):(\d{2}):\d{2}\s*(AM|PM)?/i);
-    if (m) {
-      let hh = parseInt(m[1],10);
-      const mm = m[2];
-      const ampm = (m[3] || '').toUpperCase();
-      if (ampm === 'PM' && hh < 12) hh += 12;
-      if (ampm === 'AM' && hh === 12) hh = 0;
-      time24 = `${String(hh).padStart(2,'0')}:${mm}`;
-    }
-    const labelMap = {
-      'open': 'OPEN',
-      'pre-market': 'PRE-MKT',
-      'after-hours': 'AFTER',
-      'closed': d.holidayName ? 'HOLIDAY' : 'CLOSED',
-      'holiday': 'HOLIDAY',
-      'lunch-break': 'LUNCH',
-    };
-    renderNyseClock({
-      status: d.status || 'closed',
-      label: labelMap[d.status] || String(d.status || 'CLOSED').toUpperCase(),
-      localTime: time24,
-    });
-  } catch (err) {
-    // Fallback local
-    renderNyseClock(nyseFallbackStatus());
-  }
-}
-
 // Auto-unlock if already authenticated as admin
 window.addEventListener('DOMContentLoaded', () => {
   const d = new Date();
   const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   document.getElementById('hdr-date').textContent =
     d.getDate().toString().padStart(2,'0') + '-' + months[d.getMonth()] + '-' + d.getFullYear();
-
-  // NYSE clock: render immediately from local fallback (no wait), then refresh with API
-  renderNyseClock(nyseFallbackStatus());
-  updateNyseClock();
-  setInterval(updateNyseClock, 30000); // refresh every 30s
 
   // Wait for dceAuth to be available, then check
   const tryUnlock = () => {
