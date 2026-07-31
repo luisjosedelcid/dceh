@@ -678,6 +678,28 @@ async function loadAlerts() {
   } catch (e) { /* ignore */ }
 }
 
+// Margin of safety applied to EPV to derive the default floor suggestion.
+// Matches Columbia buy-zone convention used elsewhere in the app.
+const ALERT_FLOOR_MOS = 0.85;   // Suggested floor = EPV × (1 − MoS) is too aggressive; we use EPV × 0.85 as buy-zone anchor.
+const ALERT_CEILING_MULT = 1.25; // Fallback ceiling if RV/share not available.
+
+// Compute the suggested threshold from the fundamentals row (EPV, RV/share)
+// and return { value, source } so the prompt can show where the number came from.
+function suggestAlertThreshold(company, type, livePrice) {
+  if (!company) return { value: livePrice * (type === 'floor' ? 0.85 : 1.15), source: 'Live × ' + (type === 'floor' ? '0.85' : '1.15') };
+  const vals = calcCompany(company, livePrice || company.defaultPrice);
+  const epv = vals && vals.epvPs > 0 ? vals.epvPs : null;
+  const rv = company.rvPerShare > 0 ? company.rvPerShare : null;
+  if (type === 'floor') {
+    if (epv) return { value: epv * ALERT_FLOOR_MOS, source: `EPV $${epv.toFixed(2)} × ${ALERT_FLOOR_MOS} (buy zone)` };
+    return { value: livePrice * 0.85, source: 'Live × 0.85 (no EPV loaded)' };
+  } else {
+    if (rv) return { value: rv, source: `RV $${rv.toFixed(2)} (reproduction value cap)` };
+    if (epv) return { value: epv * ALERT_CEILING_MULT, source: `EPV $${epv.toFixed(2)} × ${ALERT_CEILING_MULT} (overvaluation trim)` };
+    return { value: livePrice * 1.15, source: 'Live × 1.15 (no valuation)' };
+  }
+}
+
 async function openAlertEditor(ticker, type, livePrice) {
   if (!isAdmin()) {
     alert('Admin login required. Open /reporting and log in first, then come back.');
@@ -688,11 +710,16 @@ async function openAlertEditor(ticker, type, livePrice) {
   const arrow = type === 'floor' ? '↓' : '↑';
   const dirLabel = type === 'floor' ? 'floor (alerts when price falls to this level)' : 'ceiling (alerts when price rises to this level)';
 
+  const company = UNIVERSE.find(x => x.ticker === ticker);
+  const suggestion = suggestAlertThreshold(company, type, livePrice);
+  const suggestedStr = suggestion.value.toFixed(2);
+
   let prompt1 = `${ticker} ${arrow} alert ${dirLabel}\n\nLive price: $${(livePrice||0).toFixed(2)}\n`;
   if (existing) prompt1 += `Current threshold: $${Number(existing.threshold).toFixed(2)}${fired ? ' (FIRED)' : ''}\n`;
+  prompt1 += `Suggested: $${suggestedStr}  (${suggestion.source})\n`;
   prompt1 += `\nEnter threshold (or empty to delete):`;
 
-  const val = window.prompt(prompt1, existing ? Number(existing.threshold).toFixed(2) : (livePrice * (type === 'floor' ? 0.85 : 1.15)).toFixed(2));
+  const val = window.prompt(prompt1, existing ? Number(existing.threshold).toFixed(2) : suggestedStr);
   if (val === null) return;
   const trimmed = val.trim();
 
