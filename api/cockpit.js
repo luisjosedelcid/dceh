@@ -239,6 +239,15 @@ async function getLastDeliverables() {
     console.error('getLastDeliverables failed:', e.message);
     return [];
   }
+  // Resolve email → display_name so the UI shows people's names.
+  const emailToName = {};
+  try {
+    const users = await sbSelect('admin_users', `select=email,display_name&is_active=eq.true`);
+    for (const u of users) if (u.email) emailToName[u.email.toLowerCase()] = u.display_name || u.email;
+  } catch (e) {
+    console.error('getLastDeliverables (users) failed:', e.message);
+  }
+
   return rows.map(r => {
     const fname = r.filename || r.name || '';
     const ext = (fname.split('.').pop() || '').toLowerCase();
@@ -247,6 +256,10 @@ async function getLastDeliverables() {
     else if (['xls', 'xlsx', 'csv'].includes(ext)) kind = 'xls';
     else if (['doc', 'docx'].includes(ext)) kind = 'doc';
     else if (['png', 'jpg', 'jpeg', 'svg'].includes(ext)) kind = 'img';
+    const rawUploader = r.uploaded_by || '';
+    const uploaderName = rawUploader && emailToName[rawUploader.toLowerCase()]
+      ? emailToName[rawUploader.toLowerCase()]
+      : rawUploader;
     return {
       id: r.id,
       name: r.name || r.filename,
@@ -255,7 +268,7 @@ async function getLastDeliverables() {
       kind,
       uploaded_at: r.uploaded_at,
       days_ago: daysSince(r.uploaded_at),
-      uploaded_by: r.uploaded_by,
+      uploaded_by: uploaderName,
     };
   });
 }
