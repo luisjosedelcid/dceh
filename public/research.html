@@ -260,7 +260,7 @@ async function boot() {
   } catch (e) {
     console.error(e);
     document.getElementById('main-content').innerHTML =
-      `<div class="loading">Error cargando workflow: ${esc(e.message)}</div>`;
+      `<div class="loading">Error loading workflow: ${esc(e.message)}</div>`;
   }
 }
 

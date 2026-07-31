@@ -182,7 +182,7 @@
 <main>
   <div class="slbl">DCE Holdings — Investment Office</div>
   <h1>Data Room</h1>
-  <div class="sub">Repositorio institucional. Naming convention: Tipo_TICKER_AAAA-MM-DD_v#.ext (Operations Manual §8.1)</div>
+  <div class="sub">Institutional repository. Naming convention: Type_TICKER_YYYY-MM-DD_v#.ext (Operations Manual §8.1)</div>
 
   <div class="top-row">
     <div class="breadcrumb" id="breadcrumb">
@@ -192,7 +192,7 @@
   </div>
 
   <div class="search-bar" id="search-bar" style="display:none">
-    <input type="text" id="search-input" placeholder="Buscar por nombre, ticker, tipo de documento...">
+    <input type="text" id="search-input" placeholder="Search by name, ticker, document type...">
     <span class="search-meta" id="search-meta"></span>
   </div>
 
@@ -701,7 +701,7 @@ async function persistOrder(arr) {
     }).then(r => { if (r.ok) f.order_index = i + 1; })));
   } catch (e) {
     console.warn('Reorder persist failed:', e);
-    alert('No se pudo guardar el nuevo orden: ' + e.message);
+    alert('Could not save new order: ' + e.message);
   }
 }
 
@@ -812,7 +812,7 @@ async function persistFileOrder(arr) {
     }).then(r => { if (r.ok) u.order_index = i + 1; })));
   } catch (e) {
     console.warn('File reorder persist failed:', e);
-    alert('No se pudo guardar el nuevo orden de archivos: ' + e.message);
+    alert('Could not save new file order: ' + e.message);
   }
 }
 

@@ -2222,7 +2222,7 @@ function renderReunderwriting() {
       const ocBadge = oc && ocStyles[oc]
         ? `<span style="background:${ocStyles[oc].bg};color:${ocStyles[oc].fg};font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600;padding:3px 8px;border-radius:3px;margin-left:8px">${ocStyles[oc].label}</span>`
         : '';
-      return `<div class="review-block done" style="margin-bottom:10px;cursor:pointer" onclick="openReundDetail(${d.id})" title="Ver detalle del re-underwriting firmado">
+      return `<div class="review-block done" style="margin-bottom:10px;cursor:pointer" onclick="openReundDetail(${d.id})" title="View signed re-underwriting details">
         <div class="review-head">
           <span class="review-label">${escapeHtml(d.ticker)} · ${escapeHtml(d.doc_type)} · period ${fmtDate(d.period_end)}${ocBadge}</span>
           <span class="review-pill done">Done ${fmtDate(d.completed_at)}</span>

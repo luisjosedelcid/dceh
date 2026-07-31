@@ -1121,7 +1121,7 @@
         </div>
         <input type="range" class="slider" id="sl-exit" min="10" max="40" step="1" value="20">
         <div class="inp-range-labels"><span>15×</span><span>50×</span></div>
-        <div class="inp-formula">Actual: 18.5× · Reversión a media — Decision #15</div>
+        <div class="inp-formula">Actual: 18.5× · Mean reversion — Decision #15</div>
       </div>
 
       <!-- Buybacks -->
@@ -1365,8 +1365,8 @@
       <div class="memo-row"><span class="mk">Normalized NOPAT</span><span class="mv">$7,420M</span></div>
       <div class="memo-row"><span class="mk">WACC</span><span class="mv">8.61% (β=1.20, Ke=9.23%, ERP=4.23%)</span></div>
       <div class="memo-row"><span class="mk">Distribution Yield</span><span class="mv" id="memo-dist-yield">6.48%</span></div>
-      <div class="memo-row"><span class="mk">Growth orgánico</span><span class="mv">1.5%</span></div>
-      <div class="memo-row"><span class="mk">Growth por reinversión (ROIC 91.5%)</span><span class="mv">9.5%</span></div>
+      <div class="memo-row"><span class="mk">Organic growth</span><span class="mv">1.5%</span></div>
+      <div class="memo-row"><span class="mk">Growth from reinvestment (ROIC 91.5%)</span><span class="mv">9.5%</span></div>
       <div class="memo-row"><span class="mk">Assumed exit multiple</span><span class="mv">20× EV/NOPAT (actual 18.5×)</span></div>
       <div class="memo-row"><span class="mk">Implied IRR (Equity)</span><span class="mv" style="color:var(--green);font-size:16px" id="memo-irr">19.7%</span></div>
       <div class="memo-row"><span class="mk">DCE Hurdle Rate</span><span class="mv">12.0%</span></div>
@@ -2587,7 +2587,7 @@ setTimeout(() => {
 </script>
 <div id="review-modal" style="display:none;position:fixed;inset:0;background:rgba(27,38,66,0.6);z-index:1000;align-items:center;justify-content:center">
   <div style="background:var(--white);padding:32px;width:360px;border-top:3px solid var(--gold)">
-    <div style="font-size:11px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--navy);margin-bottom:16px">Actualizar fecha de revisión</div>
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--navy);margin-bottom:16px">Update review date</div>
     <input id="review-date-input" type="text" placeholder="06-Mar-2026" style="width:100%;padding:10px 14px;border:1px solid var(--rule);font-family:'Archivo',sans-serif;font-size:14px;margin-bottom:16px;outline:none">
     <div style="display:flex;gap:10px">
       <button onclick="saveReviewDate()" style="flex:1;background:var(--navy);color:var(--white);border:none;padding:10px;font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer">Save</button>

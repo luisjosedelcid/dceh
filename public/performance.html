@@ -232,8 +232,8 @@
   <!-- ====== TAB: CONSOLIDADO ====== -->
   <section class="tab-pane active" id="tab-consolidado" role="tabpanel">
     <div class="panel">
-      <h2>Consolidado — Todas las clases de activo</h2>
-      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:14px">Vista agregada de los sleeves Equity, Real Estate y Crypto, con bandas de asignación IPS §3.1.</div>
+      <h2>Consolidated — All asset classes</h2>
+      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:14px">Aggregated view of the Equity, Real Estate and Crypto sleeves, with IPS §3.1 allocation bands.</div>
 
       <div id="cons-loading" class="nodata">Loading…</div>
 
@@ -241,10 +241,10 @@
         <!-- KPI strip -->
         <div class="kpi-grid">
           <div class="kpi"><div class="kpi-label">NAV total (USD)</div><div class="kpi-value" id="cons-kpi-nav">—</div><div class="kpi-sub" id="cons-kpi-nav-sub">— sleeves</div></div>
-          <div class="kpi"><div class="kpi-label">Capital aportado</div><div class="kpi-value" id="cons-kpi-cap">—</div><div class="kpi-sub">neto de retiros</div></div>
-          <div class="kpi" title="Incluye realized histórico de Crypto (utilidades ya cristalizadas vía retiros) + unrealized de Equity, RE y Crypto."><div class="kpi-label">P&amp;L total</div><div class="kpi-value" id="cons-kpi-pnl">—</div><div class="kpi-sub" id="cons-kpi-pnl-sub">vs capital aportado</div></div>
-          <div class="kpi"><div class="kpi-label">MOIC consolidado</div><div class="kpi-value" id="cons-kpi-moic">—</div><div class="kpi-sub">NAV / Capital</div></div>
-          <div class="kpi" title="Time-weighted return cumulativo consolidado: promedio ponderado por NAV de los TWR de cada sleeve. Neutraliza el efecto de aportes/retiros (estándar institucional GIPS)."><div class="kpi-label">TWR consolidado</div><div class="kpi-value" id="cons-kpi-twr">—</div><div class="kpi-sub" id="cons-kpi-twr-sub">weighted avg by NAV</div></div>
+          <div class="kpi"><div class="kpi-label">Capital contributed</div><div class="kpi-value" id="cons-kpi-cap">—</div><div class="kpi-sub">net of withdrawals</div></div>
+          <div class="kpi" title="Includes historical Crypto realized P&amp;L (gains already crystallized via withdrawals) + unrealized from Equity, RE and Crypto."><div class="kpi-label">Total P&amp;L</div><div class="kpi-value" id="cons-kpi-pnl">—</div><div class="kpi-sub" id="cons-kpi-pnl-sub">vs capital contributed</div></div>
+          <div class="kpi"><div class="kpi-label">Consolidated MOIC</div><div class="kpi-value" id="cons-kpi-moic">—</div><div class="kpi-sub">NAV / Capital</div></div>
+          <div class="kpi" title="Consolidated cumulative time-weighted return: NAV-weighted average of each sleeve's TWR. Neutralizes the effect of contributions/withdrawals (GIPS institutional standard)."><div class="kpi-label">Consolidated TWR</div><div class="kpi-value" id="cons-kpi-twr">—</div><div class="kpi-sub" id="cons-kpi-twr-sub">weighted avg by NAV</div></div>
         </div>
 
         <!-- Allocation por sleeve -->
@@ -258,9 +258,9 @@
                   <th class="right">NAV (USD)</th>
                   <th class="right">% NAV</th>
                   <th class="right">Capital (USD)</th>
-                  <th class="right" title="Realized histórico cristalizado (sólo Crypto) + Unrealized (NAV vs cost basis). Hover sobre cada fila para descomposición.">P&amp;L total (USD)</th>
+                  <th class="right" title="Crystallized historical realized (Crypto only) + Unrealized (NAV vs cost basis). Hover each row for the breakdown.">Total P&amp;L (USD)</th>
                   <th class="right">MOIC</th>
-                  <th class="right" title="Time-weighted return cumulativo desde inception del sleeve. Para Equity viene del backend (encadenado). Para RE: derivado de XIRR USD (proxy). Para Crypto: (NAV + realized cristalizado + withdrawals) / capital neto aportado − 1.">TWR cum.</th>
+                  <th class="right" title="Cumulative time-weighted return since sleeve inception. Equity comes from the backend (chained). RE: derived from XIRR USD (proxy). Crypto: (NAV + crystallized realized + withdrawals) / net capital contributed − 1.">TWR cum.</th>
                   <th>Last update</th>
                 </tr>
               </thead>
@@ -273,16 +273,16 @@
         <!-- IPS Bands §3.1 -->
         <div class="ips-card" id="cons-ips-card" style="margin-top:24px">
           <div class="ips-head">
-            IPS §3.1 — Bandas de asignación estratégica
-            <span style="font-size:9px;font-weight:400;opacity:0.7">Política institucional DCE Holdings</span>
+            IPS §3.1 — Strategic allocation bands
+            <span style="font-size:9px;font-weight:400;opacity:0.7">DCE Holdings institutional policy</span>
           </div>
-          <div class="ips-note">Lectura actual contra rangos definidos en el IPS v1.0 §3.1. Verde: dentro de banda. Ámbar: cerca del límite (±2pp). Rojo: fuera de banda. Sleeves no implementados (PE, Renta fija) figuran como 0% — fuera de banda por convención.</div>
+          <div class="ips-note">Current reading against ranges defined in IPS v1.0 §3.1. Green: within band. Amber: near the limit (±2pp). Red: out of band. Non-implemented sleeves (PE, Fixed income) appear as 0% — out of band by convention.</div>
           <table class="ips-bands-table">
             <thead>
               <tr>
-                <th>Clase de activo</th>
-                <th class="right">Mín</th>
-                <th class="right">Máx</th>
+                <th>Asset class</th>
+                <th class="right">Min</th>
+                <th class="right">Max</th>
                 <th class="right">Actual</th>
                 <th>Status</th>
               </tr>
@@ -538,7 +538,7 @@
 
         <!-- FX y disclaimer -->
         <div style="margin-top:18px;padding:14px 16px;background:var(--cream);border:1px solid var(--rule);font-size:11px;color:var(--gray-txt);line-height:1.6">
-          <div style="font-weight:600;color:var(--navy);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px">Bases métodológicas</div>
+          <div style="font-weight:600;color:var(--navy);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px">Methodological basis</div>
           <div id="re-fx-detail">—</div>
           <div id="re-disclaimer" style="margin-top:8px;font-style:italic;color:var(--gray-mid)">—</div>
         </div>
@@ -561,11 +561,11 @@
 
         <!-- KPI strip Crypto -->
         <div class="kpi-grid">
-          <div class="kpi"><div class="kpi-label">Capital neto aportado</div><div class="kpi-value" id="cr-kpi-cap">—</div><div class="kpi-sub">depósitos − retiros fiat</div></div>
+          <div class="kpi"><div class="kpi-label">Net capital contributed</div><div class="kpi-value" id="cr-kpi-cap">—</div><div class="kpi-sub">deposits − fiat withdrawals</div></div>
           <div class="kpi"><div class="kpi-label">NAV crypto (live)</div><div class="kpi-value" id="cr-kpi-nav">—</div><div class="kpi-sub" id="cr-kpi-nav-sub">—</div></div>
-          <div class="kpi"><div class="kpi-label">P&amp;L total acumulado</div><div class="kpi-value" id="cr-kpi-pnl">—</div><div class="kpi-sub" id="cr-kpi-pnl-sub">unrealized + realized hist.</div></div>
-          <div class="kpi"><div class="kpi-label">MOIC</div><div class="kpi-value" id="cr-kpi-moic">—</div><div class="kpi-sub">sobre capital neto</div></div>
-          <div class="kpi"><div class="kpi-label">ROI sobre capital neto</div><div class="kpi-value" id="cr-kpi-roi">—</div><div class="kpi-sub" id="cr-kpi-hold">—</div></div>
+          <div class="kpi"><div class="kpi-label">Cumulative total P&amp;L</div><div class="kpi-value" id="cr-kpi-pnl">—</div><div class="kpi-sub" id="cr-kpi-pnl-sub">unrealized + realized hist.</div></div>
+          <div class="kpi"><div class="kpi-label">MOIC</div><div class="kpi-value" id="cr-kpi-moic">—</div><div class="kpi-sub">over net capital</div></div>
+          <div class="kpi"><div class="kpi-label">ROI over net capital</div><div class="kpi-value" id="cr-kpi-roi">—</div><div class="kpi-sub" id="cr-kpi-hold">—</div></div>
         </div>
 
         <!-- Tabla holdings Crypto -->
@@ -579,9 +579,9 @@
           </div>
         </div>
 
-        <!-- Realized histórico + Bases metodológicas -->
+        <!-- Historical realized + Methodological basis -->
         <div style="margin-top:18px;padding:14px 16px;background:var(--cream);border:1px solid var(--rule);font-size:11px;color:var(--gray-txt);line-height:1.6">
-          <div style="font-weight:600;color:var(--navy);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px">Bases metodológicas</div>
+          <div style="font-weight:600;color:var(--navy);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px">Methodological basis</div>
           <div id="cr-method">—</div>
           <div id="cr-realized" style="margin-top:8px">—</div>
           <div id="cr-disclaimer" style="margin-top:8px;font-style:italic;color:var(--gray-mid)">—</div>
@@ -805,7 +805,7 @@ async function loadExisting(){
               <td class="r">${fmtNum(t.price_native,4)}</td>
               <td class="r"><strong>$${fmtUsd(t.qty*t.price_native)}</strong></td>
               <td class="muted">${t.source}</td>
-              <td class="r"><button type="button" class="row-del-btn" data-kind="tx" data-id="${t.id}" title="Eliminar transacción">✕</button></td>
+              <td class="r"><button type="button" class="row-del-btn" data-kind="tx" data-id="${t.id}" title="Delete transaction">✕</button></td>
             </tr>`).join('')}
           </tbody>
         </table>
@@ -821,7 +821,7 @@ async function loadExisting(){
               <td>${c.ticker||'—'}</td>
               <td class="r ${c.amount_native>=0?'':'red'}">$${fmtUsd(c.amount_native)}</td>
               <td class="muted">${c.source}</td>
-              <td class="r"><button type="button" class="row-del-btn" data-kind="cf" data-id="${c.id}" title="Eliminar cashflow">✕</button></td>
+              <td class="r"><button type="button" class="row-del-btn" data-kind="cf" data-id="${c.id}" title="Delete cashflow">✕</button></td>
             </tr>`).join('')}
           </tbody>
         </table>
@@ -841,11 +841,11 @@ async function loadExisting(){
 async function loadImports(){
   const slot = document.getElementById('imports-panel-slot');
   if(!slot) return;
-  slot.innerHTML = '<div class="imports-panel"><div class="imports-head"><strong>Imports</strong> <span class="muted" style="font-size:10px">cargando…</span></div></div>';
+  slot.innerHTML = '<div class="imports-panel"><div class="imports-head"><strong>Imports</strong> <span class="muted" style="font-size:10px">loading…</span></div></div>';
   try{
     const r = await fetch('/api/list-imports?limit=50', { headers: {'x-admin-token': adminToken()} });
     const j = await r.json();
-    if(!r.ok){ slot.innerHTML = '<div class="imports-panel"><span class="muted">Error cargando imports: '+(j.error||r.status)+'</span></div>'; return; }
+    if(!r.ok){ slot.innerHTML = '<div class="imports-panel"><span class="muted">Error loading imports: '+(j.error||r.status)+'</span></div>'; return; }
     const imps = j.imports || [];
     const legacy = j.legacy || [];
     const totalEntries = imps.length + legacy.length;
@@ -874,8 +874,8 @@ async function loadImports(){
         <td class="muted" style="font-size:10px">${fmtBytes(i.size_bytes)}</td>
         <td class="r">
           ${(i.tx_count+i.cf_count)>0
-            ? `<button type="button" class="row-del-btn imp-del-btn" data-batch="${i.batch_id}" data-fn="${(i.filename||'').replace(/"/g,'&quot;')}" data-tx="${i.tx_count}" data-cf="${i.cf_count}" title="Eliminar este import">✕</button>`
-            : '<span class="muted" style="font-size:10px">vacío</span>'
+            ? `<button type="button" class="row-del-btn imp-del-btn" data-batch="${i.batch_id}" data-fn="${(i.filename||'').replace(/"/g,'&quot;')}" data-tx="${i.tx_count}" data-cf="${i.cf_count}" title="Delete this import">✕</button>`
+            : '<span class="muted" style="font-size:10px">empty</span>'
           }
         </td>
       </tr>`).join('');
@@ -889,7 +889,7 @@ async function loadImports(){
           <td class="muted" style="font-size:10.5px">pre-2026-06-03</td>
           <td class="r"><span class="cnt-pill cnt-tx">${L.tx_count} tx</span> <span class="cnt-pill cnt-cf">${L.cf_count} cf</span></td>
           <td class="muted" style="font-size:10px">—</td>
-          <td class="r"><button type="button" class="row-del-btn imp-del-btn legacy" data-source="${L.source.replace(/"/g,'&quot;')}" data-tx="${L.tx_count}" data-cf="${L.cf_count}" title="Eliminar rows legacy con source=${L.source}">✕</button></td>
+          <td class="r"><button type="button" class="row-del-btn imp-del-btn legacy" data-source="${L.source.replace(/"/g,'&quot;')}" data-tx="${L.tx_count}" data-cf="${L.cf_count}" title="Delete legacy rows with source=${L.source}">✕</button></td>
         </tr>`).join('');
     }
     slot.innerHTML = `
@@ -902,11 +902,11 @@ async function loadImports(){
         <div id="imports-body" class="imports-body">
           <div style="overflow-x:auto;max-height:240px;overflow-y:auto;border:1px solid var(--rule)">
             <table class="tbl">
-              <thead><tr><th>Fecha</th><th>Archivo</th><th>Actor</th><th class="r">Conteo</th><th>Tamaño</th><th class="r" style="width:60px"></th></tr></thead>
+              <thead><tr><th>Date</th><th>File</th><th>Actor</th><th class="r">Count</th><th>Size</th><th class="r" style="width:60px"></th></tr></thead>
               <tbody>${rowsHtml}</tbody>
             </table>
           </div>
-          <div style="font-size:10px;color:var(--gray-mid);padding:6px 4px 0">Cada import agrupa los rows insertados en una misma operación. Eliminar un import borra sus transactions y cashflows; el audit log se marca como revertido pero no se elimina.</div>
+          <div style="font-size:10px;color:var(--gray-mid);padding:6px 4px 0">Each import groups the rows inserted in a single operation. Deleting an import removes its transactions and cashflows; the audit log is marked as reverted but not deleted.</div>
         </div>
       </div>`;
     // Toggle expand/collapse
@@ -938,9 +938,9 @@ async function loadImports(){
 }
 
 async function deleteImport(batchId, filename, txCount, cfCount, btn){
-  if(!batchId){ alert('batch_id inválido'); return; }
+  if(!batchId){ alert('Invalid batch_id'); return; }
   const total = (txCount||0) + (cfCount||0);
-  if(!confirm(`¿Eliminar este import?\n\nArchivo: ${filename||'—'}\nbatch_id: ${batchId.slice(0,8)}…\nRows: ${txCount} transactions + ${cfCount} cashflows = ${total} total\n\nEsta acción es permanente. El audit log queda marcado como revertido. Si re-importas el mismo CSV, los rows volverán a entrar.`)) return;
+  if(!confirm(`Delete this import?\n\nFile: ${filename||'—'}\nbatch_id: ${batchId.slice(0,8)}…\nRows: ${txCount} transactions + ${cfCount} cashflows = ${total} total\n\nThis action is permanent. The audit log is marked as reverted. If you re-import the same CSV, the rows will come back.`)) return;
   if(btn){ btn.disabled=true; btn.textContent='…'; }
   try{
     const r = await fetch('/api/delete-import', {
@@ -963,11 +963,11 @@ async function deleteImport(batchId, filename, txCount, cfCount, btn){
 }
 
 async function deleteLegacySource(source, txCount, cfCount, btn){
-  if(!source){ alert('source inválido'); return; }
+  if(!source){ alert('Invalid source'); return; }
   const tables = [];
   if(txCount>0) tables.push({table:'transactions', count:txCount});
   if(cfCount>0) tables.push({table:'cashflows', count:cfCount});
-  if(!confirm(`¿Eliminar TODOS los rows legacy con source="${source}"?\n\n${txCount} transactions + ${cfCount} cashflows\n\nSon rows sin batch_id (cargados antes del 2026-06-03). Si la fuente es schwab_csv, reaparecerán al re-importar.`)) return;
+  if(!confirm(`Delete ALL legacy rows with source="${source}"?\n\n${txCount} transactions + ${cfCount} cashflows\n\nThese are rows without a batch_id (loaded before 2026-06-03). If the source is schwab_csv, they will reappear on re-import.`)) return;
   if(btn){ btn.disabled=true; btn.textContent='…'; }
   let totalDeleted = 0;
   try{
@@ -995,9 +995,9 @@ async function deleteLegacySource(source, txCount, cfCount, btn){
 
 // ── Row delete handler (admin only) ───────────
 async function deleteRow(kind, id, btn){
-  if(!Number.isFinite(id) || id<=0){ alert('ID inválido'); return; }
-  const label = kind==='cf' ? 'cashflow' : 'transacción';
-  if(!confirm(`¿Eliminar este ${label} (#${id})? Esta acción es permanente. Si la fuente es schwab_csv, reaparecerá en la siguiente importación.`)) return;
+  if(!Number.isFinite(id) || id<=0){ alert('Invalid ID'); return; }
+  const label = kind==='cf' ? 'cashflow' : 'transaction';
+  if(!confirm(`Delete this ${label} (#${id})? This action is permanent. If the source is schwab_csv, it will reappear on the next import.`)) return;
   const url = kind==='cf' ? '/api/delete-cashflow' : '/api/delete-transaction';
   const originalText = btn ? btn.textContent : null;
   if(btn){ btn.disabled=true; btn.textContent='…'; }
@@ -1226,10 +1226,10 @@ function renderDashboard(j){
 function renderIpsBands(j) {
   // Tactical bands per IPS §3.5-3.7
   const BANDS = [
-    { label: 'Cash / equivalentes',   min: 0.15, max: 0.25, getValue: (nav, cash, mv, holdings) => nav > 0 ? cash / nav : 0 },
+    { label: 'Cash / equivalents',   min: 0.15, max: 0.25, getValue: (nav, cash, mv, holdings) => nav > 0 ? cash / nav : 0 },
     { label: 'Equity — quality',       min: 0.60, max: 0.80, getValue: (nav, cash, mv, holdings) => nav > 0 ? mv / nav : 0 },
     { label: 'Equity — special sit',   min: 0.00, max: 0.15, getValue: (nav, cash, mv, holdings) => 0 },
-    { label: 'Renta fija / coberturas', min: 0.00, max: 0.10, getValue: (nav, cash, mv, holdings) => 0 },
+    { label: 'Fixed income / hedges', min: 0.00, max: 0.10, getValue: (nav, cash, mv, holdings) => 0 },
   ];
 
   const k = j.kpis;
@@ -1645,9 +1645,9 @@ function reYears(d1,d2){ return (d2-d1)/(1000*60*60*24*365.25); }
 function reFmtMonths(months){
   if(months==null||isNaN(months)||months<=0) return '—';
   const y = Math.floor(months/12), m = Math.round(months%12);
-  if(y===0) return m+' meses';
-  if(m===0) return y+(y===1?' año':' años');
-  return y+(y===1?' año ':' años ')+m+' meses';
+  if(y===0) return m+' mo';
+  if(m===0) return y+(y===1?' yr':' yrs');
+  return y+(y===1?' yr ':' yrs ')+m+' mo';
 }
 function reXirr(cashflows){
   const d0 = Math.min(...cashflows.map(c=>c.date.getTime()));
@@ -1741,7 +1741,7 @@ function renderRealEstate(){
     +'<th class="r">MOIC USD</th>'
     +'<th class="r">IRR USD (ann.)</th>'
     +'<th class="r" title="% sobre NAV total del portfolio Real Estate">Weight RE</th>'
-    +'<th class="r" title="Tiempo restante hasta el final del Target Investment Period del vehículo">Lock-up rem.</th>'
+    +'<th class="r" title="Time remaining until the end of the vehicle Target Investment Period">Lock-up rem.</th>'
     +'</tr></thead><tbody>';
   for(const p of enriched){
     const weight = p.navUsdToday/totNavUsd;
@@ -1768,12 +1768,12 @@ function renderRealEstate(){
   tbl.innerHTML = html;
 
   document.getElementById('re-asof-badge').textContent = 'NAV as of '+RE_DATA.nav_as_of+' · FX as of '+RE_DATA.fx_eur_usd.today_date;
-  const fxDetail = 'FX EUR/USD utilizado: '+fxToday.toFixed(4)+' al '+RE_DATA.fx_eur_usd.today_date
-    +' (NAV mark al '+RE_DATA.nav_as_of+' a '+Number(RE_DATA.fx_eur_usd.nav_close).toFixed(4)+'). '
-    +'Cada aporte se convirtió a USD al FX vigente en la fecha de deployment; NAV vigente se convierte al FX de hoy. '
-    +'XIRR USD calculado por bisección sobre cashflows individuales (deployment negativo, NAV agregado positivo a hoy).';
+  const fxDetail = 'FX EUR/USD used: '+fxToday.toFixed(4)+' on '+RE_DATA.fx_eur_usd.today_date
+    +' (NAV mark on '+RE_DATA.nav_as_of+' at '+Number(RE_DATA.fx_eur_usd.nav_close).toFixed(4)+'). '
+    +'Each contribution was converted to USD at the FX in effect on deployment date; current NAV is converted at today\'s FX. '
+    +'XIRR USD calculated by bisection over individual cashflows (deployment negative, aggregate NAV positive today).';
   document.getElementById('re-fx-detail').textContent = fxDetail;
-  document.getElementById('re-disclaimer').textContent = RE_DATA.disclaimer + ' Fuente: '+RE_DATA.source+'.';
+  document.getElementById('re-disclaimer').textContent = RE_DATA.disclaimer + ' Source: '+RE_DATA.source+'.';
 }
 
 document.getElementById('btn-re-reload').addEventListener('click', loadRealEstate);
@@ -1796,9 +1796,9 @@ function crMonthsBetween(startIso, endDate){
 function crFmtHold(months){
   if(months==null||isNaN(months)||months<=0) return '—';
   const y = Math.floor(months/12), m = Math.round(months%12);
-  if(y===0) return m+' meses';
-  if(m===0) return y+(y===1?' año':' años');
-  return y+(y===1?' año ':' años ')+m+' meses';
+  if(y===0) return m+' mo';
+  if(m===0) return y+(y===1?' yr':' yrs');
+  return y+(y===1?' yr ':' yrs ')+m+' mo';
 }
 
 async function crFetchPricesBatch(positions){
@@ -1908,15 +1908,15 @@ function renderCrypto(){
   const tbl = document.getElementById('cr-tbl-holdings');
   let html = '<thead><tr>'
     +'<th>Asset</th>'
-    +'<th>Custodia</th>'
-    +'<th class="r">Cantidad</th>'
+    +'<th>Custody</th>'
+    +'<th class="r">Quantity</th>'
     +'<th class="r">Cost basis unit</th>'
     +'<th class="r">Cost basis total</th>'
-    +'<th class="r">Precio spot live</th>'
-    +'<th class="r">Valor mercado</th>'
+    +'<th class="r">Live spot price</th>'
+    +'<th class="r">Market value</th>'
     +'<th class="r">P&amp;L unrealized</th>'
     +'<th class="r">% vs cost</th>'
-    +'<th class="r" title="% del NAV total del sleeve crypto">% sleeve</th>'
+    +'<th class="r" title="% of the total NAV of the crypto sleeve">% sleeve</th>'
     +'</tr></thead><tbody>';
   for(const p of enriched){
     const weight = (totMarket>0 && p.marketUsd!=null) ? p.marketUsd/totMarket : null;
@@ -1940,15 +1940,15 @@ function renderCrypto(){
   // Footer info
   const liveTs = enriched.find(p=>p.priceLive!=null);
   const latestTs = (CR_PRICE && Object.values(CR_PRICE).length) ? Math.max(...Object.values(CR_PRICE).map(x=>x.ts.getTime())) : null;
-  document.getElementById('cr-asof-badge').textContent = 'Datos estáticos as of '+CR_DATA.as_of_static_data+' · Precio live: '+(latestTs?new Date(latestTs).toLocaleTimeString('es-ES'):'—');
+  document.getElementById('cr-asof-badge').textContent = 'Static data as of '+CR_DATA.as_of_static_data+' · Live price: '+(latestTs?new Date(latestTs).toLocaleTimeString('en-US'):'—');
 
-  document.getElementById('cr-method').innerHTML = '<strong>Método contable:</strong> '+CR_DATA.accounting_method+'. '
-    +'<strong>NAV crypto</strong> = Σ (cantidad × precio spot live de Crypto.com Exchange API). '
-    +'<strong>Capital neto aportado:</strong> depósitos fiat '+crFmtUsd0(CR_DATA.capital.deposits_fiat_acumulados_usd)
-    +' − retiros fiat a banco '+crFmtUsd0(Math.abs(CR_DATA.capital.withdrawals_fiat_to_bank_usd))
+  document.getElementById('cr-method').innerHTML = '<strong>Accounting method:</strong> '+CR_DATA.accounting_method+'. '
+    +'<strong>NAV crypto</strong> = Σ (quantity × live spot price from Crypto.com Exchange API). '
+    +'<strong>Net capital contributed:</strong> fiat deposits '+crFmtUsd0(CR_DATA.capital.deposits_fiat_acumulados_usd)
+    +' − fiat withdrawals to bank '+crFmtUsd0(Math.abs(CR_DATA.capital.withdrawals_fiat_to_bank_usd))
     +' = '+crFmtUsd0(capNeto)+'.';
 
-  document.getElementById('cr-realized').innerHTML = '<strong>P&amp;L realizado histórico (2024 + Q1 2025):</strong> '
+  document.getElementById('cr-realized').innerHTML = '<strong>Historical realized P&amp;L (2024 + Q1 2025):</strong> '
     +crFmtUsd0(CR_DATA.realized_pnl_historico.y2024_usd)+' (2024) + '
     +crFmtUsd0(CR_DATA.realized_pnl_historico.y2025_q1_usd)+' (Q1 2025) '
     +crFmtUsd2(CR_DATA.realized_pnl_historico.fees_intereses_usdc_usd+CR_DATA.realized_pnl_historico.fees_red_xrp_usd)+' fees = '
@@ -2149,7 +2149,7 @@ function renderConsolidado(eqK, eqHoldings){
     +'<td class="r">'+consFmtUsd0(totNav)+'</td>'
     +'<td class="r">100.00%</td>'
     +'<td class="r">'+consFmtUsd0(totCap)+'</td>'
-    +'<td class="r '+(totPnlUnr>=0?'pos':'neg')+'" title="Incluye realized histórico Crypto: '+(crPnlRealized>=0?'+':'')+consFmtUsd0(crPnlRealized)+'">'+(totPnlUnr>=0?'+':'')+consFmtUsd0(totPnlUnr)+'</td>'
+    +'<td class="r '+(totPnlUnr>=0?'pos':'neg')+'" title="Includes historical Crypto realized: '+(crPnlRealized>=0?'+':'')+consFmtUsd0(crPnlRealized)+'">'+(totPnlUnr>=0?'+':'')+consFmtUsd0(totPnlUnr)+'</td>'
     +'<td class="r">'+consFmtMoic(totMoicF)+'</td>'
     +'<td class="r '+(totTwr!=null&&totTwr>=0?'pos':'neg')+'">'+consFmtPct(totTwr)+'</td>'
     +'<td></td>'
@@ -2161,22 +2161,22 @@ function renderConsolidado(eqK, eqHoldings){
   const eqMv = eqK ? Number(eqK.market_value_usd||0) : 0;
   const eqCash = eqK ? Number(eqK.cash_usd||0) : 0;
   const bands = [
-    {label:'Equities públicos', min:0.50, max:0.80, actual: totNav>0 ? eqMv/totNav : 0},
+    {label:'Public equities', min:0.50, max:0.80, actual: totNav>0 ? eqMv/totNav : 0},
     {label:'Private equity', min:0.00, max:0.20, actual: 0},
     {label:'Real estate', min:0.00, max:0.20, actual: totNav>0 ? reNav/totNav : 0},
-    {label:'Renta fija', min:0.05, max:0.15, actual: 0},
-    {label:'Efectivo y equivalentes', min:0.15, max:0.25, actual: totNav>0 ? eqCash/totNav : 0},
-    {label:'Alternativos (incl. Crypto)', min:0.00, max:0.15, actual: totNav>0 ? crNav/totNav : 0},
+    {label:'Fixed income', min:0.05, max:0.15, actual: 0},
+    {label:'Cash & equivalents', min:0.15, max:0.25, actual: totNav>0 ? eqCash/totNav : 0},
+    {label:'Alternatives (incl. Crypto)', min:0.00, max:0.15, actual: totNav>0 ? crNav/totNav : 0},
   ];
   const ipsTbody = document.getElementById('cons-ips-tbody');
   let ipsHtml = '';
   for(const b of bands){
     let status, color;
     const tol = 0.02; // ±2pp
-    if(b.actual >= b.min && b.actual <= b.max){ status = 'OK — dentro de banda'; color = 'var(--green)'; }
-    else if(b.actual >= (b.min - tol) && b.actual <= (b.max + tol)){ status = 'Cerca del límite'; color = '#B88B47'; }
-    else if(b.actual < b.min){ status = 'BAJO mínimo'; color = 'var(--red)'; }
-    else { status = 'SOBRE máximo'; color = 'var(--red)'; }
+    if(b.actual >= b.min && b.actual <= b.max){ status = 'OK — within band'; color = 'var(--green)'; }
+    else if(b.actual >= (b.min - tol) && b.actual <= (b.max + tol)){ status = 'Near limit'; color = '#B88B47'; }
+    else if(b.actual < b.min){ status = 'BELOW min'; color = 'var(--red)'; }
+    else { status = 'ABOVE max'; color = 'var(--red)'; }
     ipsHtml += '<tr>'
       +'<td>'+b.label+'</td>'
       +'<td class="right">'+(b.min*100).toFixed(0)+'%</td>'
@@ -2188,11 +2188,11 @@ function renderConsolidado(eqK, eqHoldings){
   // Iliquidez consolidada = RE + PE
   const illiq = totNav>0 ? (reNav)/totNav : 0; // PE = 0 hoy
   let illiqStatus, illiqColor;
-  if(illiq <= 0.50){ illiqStatus = 'OK — dentro de banda'; illiqColor = 'var(--green)'; }
-  else if(illiq <= 0.52){ illiqStatus = 'Cerca del límite'; illiqColor = '#B88B47'; }
-  else { illiqStatus = 'SOBRE máximo'; illiqColor = 'var(--red)'; }
+  if(illiq <= 0.50){ illiqStatus = 'OK — within band'; illiqColor = 'var(--green)'; }
+  else if(illiq <= 0.52){ illiqStatus = 'Near limit'; illiqColor = '#B88B47'; }
+  else { illiqStatus = 'ABOVE max'; illiqColor = 'var(--red)'; }
   ipsHtml += '<tr style="border-top:2px solid var(--rule)">'
-    +'<td><em>Iliquidez consolidada (máx)</em></td>'
+    +'<td><em>Consolidated illiquidity (max)</em></td>'
     +'<td class="right">—</td>'
     +'<td class="right">50%</td>'
     +'<td class="right" style="font-weight:600">'+(illiq*100).toFixed(2)+'%</td>'

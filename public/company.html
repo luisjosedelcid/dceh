@@ -362,12 +362,12 @@
   <div class="card" style="margin-bottom:20px;padding:24px 28px">
     <div class="g3" style="gap:0 28px;margin-bottom:0">
       <div class="kv">
-        <div class="row"><span class="k">Nombre</span><span class="v" id="prof-name">—</span></div>
-        <div class="row"><span class="k">Ticker / Bolsa</span><span class="v" id="prof-ticker">—</span></div>
+        <div class="row"><span class="k">Name</span><span class="v" id="prof-name">—</span></div>
+        <div class="row"><span class="k">Ticker / Exchange</span><span class="v" id="prof-ticker">—</span></div>
         <div class="row"><span class="k">Sector (GICS)</span><span class="v" id="prof-sector">—</span></div>
       </div>
       <div class="kv">
-        <div class="row"><span class="k">Modelo de Negocio</span><span class="v" id="prof-bizmodel">—</span></div>
+        <div class="row"><span class="k">Business Model</span><span class="v" id="prof-bizmodel">—</span></div>
         <div class="row"><span class="k">Fiscal Year End</span><span class="v" id="prof-fye">—</span></div>
         <div class="row"><span class="k">CEO</span><span class="v" id="prof-ceo">—</span></div>
       </div>
@@ -383,7 +383,7 @@
   <div class="slbl">Market Data</div>
   <div class="g4" style="margin-bottom:14px">
     <div class="card">
-      <div class="clbl">Precio Actual</div>
+      <div class="clbl">Current Price</div>
       <div class="cval" id="md-price">—</div>
       <div class="csub" id="md-price-sub">—</div>
     </div>
@@ -1233,7 +1233,7 @@
      10b. PROBABILITY WORKSHEET
      ══════════════════════════════════════════════════════════ -->
 <div id="tab-probability" class="tab-content">
-  <div class="slbl">Probability Worksheet — Asignación CIO de pesos a escenarios IRR</div>
+  <div class="slbl">Probability Worksheet — CIO weight assignment to IRR scenarios</div>
   <div id="probability-body"></div>
 </div>
 
@@ -1384,7 +1384,7 @@ function renderDocTiles() {
   const docs = window.D.documents;
   const tiles = [
     { label: 'Company Brief', desc: 'Columbia framework base case — descriptive-quantitative document with EPV, RV, IRR and reconciled narrative. Audited via Phase 4 Audit Gate; feeds Thesis Builder, Thesis Breaker and Munger Digital.', url: docs.valuationReportUrl, accent: 'var(--gold)' },
-    { label: 'Columbia Model', desc: 'Modelo Columbia completo — 14 hojas Excel con Reproduction Value, EPV, ROIC, IRR escalado, escenarios y audit trail. Fórmulas auditables.', url: docs.columbiaModelUrl, accent: 'var(--navy)', download: true, cta: 'Download Excel ↓' },
+    { label: 'Columbia Model', desc: 'Complete Columbia model — 14 Excel sheets with Reproduction Value, EPV, ROIC, scaled IRR, scenarios and audit trail. Auditable formulas.', url: docs.columbiaModelUrl, accent: 'var(--navy)', download: true, cta: 'Download Excel ↓' },
     { label: 'Thesis Breaker', desc: 'Stress test of the investment thesis — quantitative challenges to the bull case. Adversarial scenario analysis (Bear Analyst input, Week 2).', url: docs.thesisBreakerUrl, accent: 'var(--red)' },
     { label: 'Thesis Builder', desc: 'Quantitative defense of the investment thesis — Columbia (Greenwald) compounding mechanics that confirm the bull case (Bull Analyst input, Week 2).', url: docs.thesisBuilderUrl, accent: 'var(--green)' },
     { label: 'Munger Digital', desc: 'Behavioral and narrative investment evaluation inspired by Charlie Munger — mental models, incentives, and latticework.', url: docs.mungerDigitalUrl, accent: '#6b4fa0' },

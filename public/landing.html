@@ -648,7 +648,7 @@ function passThrough(e, url) {
 
 window.addEventListener('DOMContentLoaded', () => {
   const d = new Date();
-  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   document.getElementById('hdr-date').textContent =
     d.getDate().toString().padStart(2,'0') + '-' + months[d.getMonth()] + '-' + d.getFullYear();
 

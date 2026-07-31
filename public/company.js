@@ -133,7 +133,7 @@ async function buildVersionControls(ticker) {
         const tag = v.is_latest ? ' (latest)' : '';
         return `<option value="${v.fiscal_period}"${sel}>${v.fiscal_period}${tag}</option>`;
       }).join('');
-      selector.innerHTML = `<span style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:0.12em;font-weight:600">Versión</span>
+      selector.innerHTML = `<span style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:0.12em;font-weight:600">Version</span>
         <select id="version-select" onchange="onVersionChange(this.value)"
           style="background:#fff;border:1px solid var(--line);color:var(--navy);font-family:Archivo,sans-serif;font-size:12px;font-weight:600;padding:5px 10px;border-radius:4px;outline:none;cursor:pointer">
           ${opts}
@@ -147,12 +147,12 @@ async function buildVersionControls(ticker) {
     const showBanner = v && v.is_latest === false;
     if (showBanner) {
       const latest = versions.find(x => x.is_latest);
-      const latestPeriod = latest ? latest.fiscal_period : 'la más reciente';
+      const latestPeriod = latest ? latest.fiscal_period : 'the most recent';
       const latestUrl = `?ticker=${encodeURIComponent(ticker)}` + (latest ? `&period=${encodeURIComponent(latest.fiscal_period)}` : '');
       banner.style.display = '';
       banner.innerHTML = `
-        <strong>Versión histórica:</strong> Estás viendo <code style="background:rgba(0,0,0,0.08);padding:1px 6px;border-radius:3px">${v.fiscal_period}</code>.
-        La versión actual es <a href="/${ticker.toLowerCase()}" style="color:#5b3c0f;text-decoration:underline;font-weight:600">${latestPeriod}</a>.`;
+        <strong>Historical version:</strong> You are viewing <code style="background:rgba(0,0,0,0.08);padding:1px 6px;border-radius:3px">${v.fiscal_period}</code>.
+        The current version is <a href="/${ticker.toLowerCase()}" style="color:#5b3c0f;text-decoration:underline;font-weight:600">${latestPeriod}</a>.`;
     } else {
       banner.style.display = 'none';
     }
@@ -341,7 +341,7 @@ function renderOverview() {
   setEl('md-price', fmtPrice(livePrice));
   setEl('md-price-sub', isLive
     ? `Live · snapshot ${fmtPrice(ov.stockPrice)} (${D.valuationDate || ''})`
-    : (ov.priceNote || `Cotización ${D.valuationDate || ''}`));
+    : (ov.priceNote || `Quote ${D.valuationDate || ''}`));
   setEl('md-shares', fmtDec(ov.shares, 1));
   setEl('md-shares-sub', ov.sharesNote || `10-K ${D.fiscalYear || ''}`);
 
@@ -349,7 +349,7 @@ function renderOverview() {
   const mcapLive = (ov.shares != null && livePrice != null) ? ov.shares * livePrice : ov.marketCap;
   const evLive   = mcapLive + (ov.debt || 0) + (ov.leases || 0) - (ov.cash || 0);
   setEl('md-mcap', B(mcapLive));
-  setEl('md-mcap-sub', isLive ? `Snapshot ${B(ov.marketCap)} · live` : (ov.marketCapNote || 'Precio × Acciones'));
+  setEl('md-mcap-sub', isLive ? `Snapshot ${B(ov.marketCap)} · live` : (ov.marketCapNote || 'Price × Shares'));
   setEl('md-ev', B(evLive));
   setEl('md-ev-sub', isLive ? `Snapshot ${B(ov.ev)} · live` : (ov.evNote || 'MCap + Debt + Leases − Cash'));
 
@@ -364,7 +364,7 @@ function renderOverview() {
   setEl('md-netdebt-sub', ov.netDebtNote || 'Debt + Leases − Cash');
 
   /* ----- 3. Key Financials (FY cerrado) ----- */
-  setEl('kf-fy-label', `Métricas Financieras Clave (${D.fiscalYear || 'FY'})`);
+  setEl('kf-fy-label', `Key Financial Metrics (${D.fiscalYear || 'FY'})`);
   setEl('kf-revenue',   M(ov.revenue));
   setEl('kf-opinc',     M(ov.operatingIncome));
   setEl('kf-opmargin',  ov.operMargin != null ? Pct(ov.operMargin*100) : '—');
@@ -597,8 +597,8 @@ async function renderMarketContext() {
   }
   const { dates, prices, pe, reference } = payload;
   if (!Array.isArray(dates) || !dates.length) {
-    setEl('c-price-note', 'Sin datos históricos');
-    setEl('c-pe-note', 'Sin datos históricos');
+    setEl('c-price-note', 'No historical data');
+    setEl('c-pe-note', 'No historical data');
     return;
   }
 
@@ -608,7 +608,7 @@ async function renderMarketContext() {
     const epv = reference && reference.epvPerShare;
     const buy = reference && reference.buyZone;
     const datasets = [{
-      label: 'Precio',
+      label: 'Price',
       data: prices,
       borderColor: '#1b2642',
       backgroundColor: 'rgba(27,38,66,0.06)',
@@ -654,8 +654,8 @@ async function renderMarketContext() {
     });
     const last = prices[prices.length - 1];
     const mosNow = (epv && last) ? ((epv - last) / epv * 100) : null;
-    const mosTxt = mosNow != null ? `· MoS hoy: ${mosNow >= 0 ? '+' : ''}${mosNow.toFixed(1)}%` : '';
-    setEl('c-price-note', `Último: $${(last||0).toFixed(2)} · EPV: $${(epv||0).toFixed(2)} · BUY ≤ $${(buy||0).toFixed(2)} ${mosTxt}`);
+    const mosTxt = mosNow != null ? `· MoS today: ${mosNow >= 0 ? '+' : ''}${mosNow.toFixed(1)}%` : '';
+    setEl('c-price-note', `Last: $${(last||0).toFixed(2)} · EPV: $${(epv||0).toFixed(2)} · BUY ≤ $${(buy||0).toFixed(2)} ${mosTxt}`);
   }
 
   // B. P/E TTM proxy (5Y)
@@ -847,10 +847,10 @@ function renderSales() {
   if (s.sourcingLabel) setTxt('slbl-sales-sourcing', s.sourcingLabel);
   // Override segment/geo block labels if provided (mostly to swap currency in heading text)
   const curM = `(${sym()}M)`;
-  setTxt('slbl-sales-segment', `Ventas por Segmento ${curM}`);
-  setTxt('slbl-sales-geo',     `Ventas por Geografía ${curM}`);
-  setTxt('clbl-sales-seg',     `Revenue por Segmento ${curM}`);
-  setTxt('clbl-sales-geo',     `Revenue por Geografía ${curM}`);
+  setTxt('slbl-sales-segment', `Sales by Segment ${curM}`);
+  setTxt('slbl-sales-geo',     `Sales by Geography ${curM}`);
+  setTxt('clbl-sales-seg',     `Revenue by Segment ${curM}`);
+  setTxt('clbl-sales-geo',     `Revenue by Geography ${curM}`);
 
   // --- 2. Notas + source ---
   const ul = document.getElementById('sales-notes');
@@ -876,7 +876,7 @@ function renderSales() {
     type:'bar', data:{ labels: years,
       datasets: s.byGeography.map((r,i) => ({ label: r.label, data: r.values, backgroundColor: palette[i % palette.length] }))
     },
-    options: { ...chartOpts(`${sym()}M`, `Revenue por Geografía (${sym()}M)`),
+    options: { ...chartOpts(`${sym()}M`, `Revenue by Geography (${sym()}M)`),
       scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: v => fmt(v) } } }
     }
   });
@@ -2043,11 +2043,11 @@ function updateIRRCalc() {
   setEl('irr-cs-pct',   `<span class="${netCls}">${Pct(netCashPct)}</span>`);
   let note;
   if (netCash >= 0 && netCashPct < 20) {
-    note = 'Reinversión + distribución absorben casi todo el NOPAT — sostenible pero sin colchón. Si se materializa un downturn, hay que reducir buybacks antes que CapEx de crecimiento.';
+    note = 'Reinvestment + distribution absorb almost all of NOPAT — sustainable but no cushion. If a downturn materializes, buybacks must be cut before growth CapEx.';
   } else if (netCash >= 0) {
-    note = 'Sobra cash después de reinvertir y distribuir — colchón saludable para opcionalidad (M&A, debt paydown, buybacks oportunísticos).';
+    note = 'Excess cash after reinvesting and distributing — healthy cushion for optionality (M&A, debt paydown, opportunistic buybacks).';
   } else {
-    note = 'Atención: NOPAT no cubre Reinversión + Distribución actual. O bien el supuesto de buybacks no es sostenible, o la empresa está apalancando para distribuir.';
+    note = 'Warning: NOPAT does not cover current Reinvestment + Distribution. Either the buyback assumption is not sustainable, or the company is leveraging to distribute.';
   }
   setEl('irr-cs-note', note);
 }
@@ -2672,10 +2672,10 @@ function renderProbability() {
       <table class="pw-t">
         <thead>
           <tr>
-            <th>Escenario</th>
-            <th class="num">Peso</th>
+            <th>Scenario</th>
+            <th class="num">Weight</th>
             <th class="num">IRR 5y</th>
-            <th class="num">Contribución</th>
+            <th class="num">Contribution</th>
           </tr>
         </thead>
         <tbody>
@@ -2724,7 +2724,7 @@ function renderProbability() {
 
     <!-- 5 · SENSITIVITY -->
     <div class="pw-section">
-      <div class="pw-stitle">5 · Sensibilidad — Base fijo, varía Bear/Bull</div>
+      <div class="pw-stitle">5 · Sensitivity — Base fixed, varies Bear/Bull</div>
       <table class="pw-t pw-sens">
         <thead>
           <tr>
@@ -2742,8 +2742,8 @@ function renderProbability() {
 
     <!-- 6 · JUSTIFICATION -->
     <div class="pw-section">
-      <div class="pw-stitle">6 · Justificación CIO</div>
-      <textarea class="pw-just" id="pw-justification" placeholder="Anclaje a base rates de la industria · diferenciales de moat · catalizadores específicos · factores correlacionados..."></textarea>
+      <div class="pw-stitle">6 · CIO Rationale</div>
+      <textarea class="pw-just" id="pw-justification" placeholder="Anchoring to industry base rates · moat differentials · specific catalysts · correlated factors..."></textarea>
     </div>
   `;
 
@@ -2911,19 +2911,19 @@ function probRecalc() {
   if (nPass === 4) {
     decBox.classList.add('buy');
     document.getElementById('pw-decisionText').textContent = 'BUY CANDIDATE';
-    document.getElementById('pw-decisionSummary').textContent = '4/4 métricas pasan';
+    document.getElementById('pw-decisionSummary').textContent = '4/4 metrics pass';
   } else if (m1Pass && nPass === 3) {
     decBox.classList.add('borderline');
     document.getElementById('pw-decisionText').textContent = 'BORDERLINE BUY';
-    document.getElementById('pw-decisionSummary').textContent = '3/4 métricas — revisar la que falla';
+    document.getElementById('pw-decisionSummary').textContent = '3/4 metrics — review the failing one';
   } else if (m1Pass) {
     decBox.classList.add('borderline');
-    document.getElementById('pw-decisionText').textContent = 'REVISAR';
-    document.getElementById('pw-decisionSummary').textContent = nPass + '/4 métricas — Weighted IRR pasa pero hay fails secundarios';
+    document.getElementById('pw-decisionText').textContent = 'REVIEW';
+    document.getElementById('pw-decisionSummary').textContent = nPass + '/4 metrics — Weighted IRR passes but there are secondary fails';
   } else {
     decBox.classList.add('pass');
     document.getElementById('pw-decisionText').textContent = 'PASS / WAIT';
-    document.getElementById('pw-decisionSummary').textContent = 'Weighted IRR debajo del hurdle (' + (PROB_HURDLE*100).toFixed(2) + '%)';
+    document.getElementById('pw-decisionSummary').textContent = 'Weighted IRR below hurdle (' + (PROB_HURDLE*100).toFixed(2) + '%)';
   }
 
   const tbody = document.getElementById('pw-sensBody');

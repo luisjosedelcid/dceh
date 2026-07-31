@@ -856,11 +856,11 @@ document.getElementById('forgot-modal').addEventListener('click', function(e) {
           </div>
           <div>
             <div class="metric-val" data-slot="last-price">—</div>
-            <div class="metric-lbl">Precio live</div>
+            <div class="metric-lbl">Live price</div>
           </div>
           <div>
             <div class="metric-val" data-slot="realized-irr">—</div>
-            <div class="metric-lbl">IRR a la fecha</div>
+            <div class="metric-lbl">IRR to date</div>
           </div>
         </div>
         <div class="card-footer">
@@ -896,11 +896,11 @@ document.getElementById('forgot-modal').addEventListener('click', function(e) {
           </div>
           <div>
             <div class="metric-val" data-slot="last-price">—</div>
-            <div class="metric-lbl">Precio live</div>
+            <div class="metric-lbl">Live price</div>
           </div>
           <div>
             <div class="metric-val" data-slot="realized-irr">—</div>
-            <div class="metric-lbl">IRR a la fecha</div>
+            <div class="metric-lbl">IRR to date</div>
           </div>
         </div>
         <div class="card-footer">
@@ -1053,7 +1053,7 @@ function passThrough(e, url) {
 // Auto-unlock if already authenticated as admin
 window.addEventListener('DOMContentLoaded', () => {
   const d = new Date();
-  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   document.getElementById('hdr-date').textContent =
     d.getDate().toString().padStart(2,'0') + '-' + months[d.getMonth()] + '-' + d.getFullYear();
 
