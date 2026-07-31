@@ -36,6 +36,40 @@
   .chip .x:hover{color:var(--red)}
   .add-inp{background:var(--white);border:1px solid var(--rule);padding:6px 10px;font-size:12px;font-family:'Archivo',monospace;width:70px;outline:none;font-weight:700;letter-spacing:0.05em}
   .add-inp:focus{border-color:var(--gold)}
+  .add-btn{background:var(--white);border:1px dashed var(--gold-rule);padding:6px 12px;font-size:11px;font-family:'Archivo',sans-serif;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);cursor:pointer;transition:all .2s}
+  .add-btn:hover{background:var(--gold-dim);border-style:solid;border-color:var(--gold)}
+
+  /* MODAL */
+  .modal-back{position:fixed;inset:0;background:rgba(27,38,66,0.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .modal-back.open{display:flex}
+  .modal{background:var(--cream);border:1px solid var(--gold);width:100%;max-width:520px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.25)}
+  .modal-head{padding:16px 20px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center}
+  .modal-title{font-size:14px;font-weight:700;color:var(--navy);letter-spacing:0.05em}
+  .modal-close{background:none;border:none;font-size:22px;color:var(--gray-mid);cursor:pointer;line-height:1;padding:0 4px}
+  .modal-close:hover{color:var(--red)}
+  .modal-tabs{display:flex;border-bottom:1px solid var(--rule);background:var(--white)}
+  .m-tab{flex:1;padding:10px;background:none;border:none;border-bottom:2px solid transparent;font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray-mid);cursor:pointer;transition:all .2s}
+  .m-tab:hover{color:var(--navy)}
+  .m-tab.active{color:var(--gold);border-bottom-color:var(--gold);background:var(--gold-dim)}
+  .modal-body{flex:1;overflow-y:auto;padding:16px 20px}
+  .m-pane{display:none}
+  .m-pane.active{display:block}
+  .m-sub{font-size:9px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-mid);margin:14px 0 8px}
+  .m-sub:first-child{margin-top:0}
+  .m-list{display:flex;flex-direction:column;gap:4px}
+  .m-item{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--white);border:1px solid var(--rule);cursor:pointer;transition:all .15s}
+  .m-item:hover:not(.m-item-added){border-color:var(--gold);background:var(--gold-dim)}
+  .m-item.m-item-added{cursor:default;opacity:0.55;background:rgba(27,38,66,0.03)}
+  .m-item-tk{font-family:'Archivo',monospace;font-weight:700;font-size:12px;color:var(--navy);letter-spacing:0.05em}
+  .m-item-nm{font-size:11px;color:var(--gray-txt);margin-left:10px;flex:1}
+  .m-item-tag{font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-mid);padding:2px 6px;background:rgba(27,38,66,0.05);border-radius:2px}
+  .m-item-added .m-item-tag{background:rgba(42,122,86,0.1);color:var(--green)}
+  .m-empty{text-align:center;padding:24px;color:var(--gray-mid);font-size:12px;font-style:italic}
+  .m-manual{display:flex;gap:8px;margin-top:8px}
+  .m-manual input{flex:1;background:var(--white);border:1px solid var(--rule);padding:9px 12px;font-family:'Archivo',monospace;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;outline:none}
+  .m-manual input:focus{border-color:var(--gold)}
+  .m-manual button{background:var(--navy);border:1px solid var(--gold-rule);color:var(--gold);padding:9px 18px;font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer}
+  .m-manual button:hover{background:#243352;border-color:var(--gold)}
 
   /* TABS */
   .tabs{display:flex;gap:4px;margin-bottom:20px}
@@ -165,30 +199,47 @@ const CATEGORIES = {
 };
 
 // ═══ STATE ═══
+// ledger.tickers[T] = { events: [...], lastReport: '...' }   -> localStorage cache only
+// tickerList = [T, T, ...]                                    -> server-persisted (user_news_tickers)
 let ledger = { tickers: {} };
+let tickerList = [];
 let activeTicker = '';
 let currentView = 'tracker';
 let freshNews = null;
 
-// Default tickers from covered universe + portfolio
-const DEFAULT_TICKERS = ['BKNG', 'SAP', 'MSFT'];
+function authHeaders(extra) {
+  const tok = (function(){ try { return localStorage.getItem('dce_admin_token') || ''; } catch { return ''; } })();
+  return Object.assign({ 'x-admin-token': tok }, extra || {});
+}
 
-function init() {
-  // Load ledger from localStorage
+async function init() {
+  // Local cache of news events per ticker (Claude responses)
   try {
     const saved = localStorage.getItem('dce-news-ledger');
     if (saved) ledger = JSON.parse(saved);
   } catch(e) {}
 
-  // Ensure default tickers exist
-  DEFAULT_TICKERS.forEach(t => {
+  // Load the user's ticker list from the server
+  await loadTickerList();
+
+  // Ensure each server ticker has a ledger entry
+  tickerList.forEach(t => {
     if (!ledger.tickers[t]) ledger.tickers[t] = { events: [], lastReport: null };
   });
 
-  activeTicker = Object.keys(ledger.tickers)[0] || 'BKNG';
+  activeTicker = tickerList[0] || '';
   saveLedger();
   renderTickers();
   renderView();
+}
+
+async function loadTickerList() {
+  try {
+    const r = await fetch('/api/news-tickers', { headers: authHeaders() });
+    if (!r.ok) { tickerList = []; return; }
+    const j = await r.json();
+    tickerList = (j.items || []).map(x => x.ticker);
+  } catch (e) { tickerList = []; }
 }
 
 function saveLedger() {
@@ -203,11 +254,11 @@ function getTicker(t) {
 function renderTickers() {
   const row = document.getElementById('ticker-row');
   let html = '';
-  Object.keys(ledger.tickers).forEach(t => {
+  tickerList.forEach(t => {
     const cls = t === activeTicker ? 'chip active' : 'chip';
     html += `<div class="${cls}" onclick="selectTicker('${t}')">${t}<span class="x" onclick="event.stopPropagation();removeTicker('${t}')">×</span></div>`;
   });
-  html += `<input class="add-inp" id="add-ticker" placeholder="+ ADD" onkeydown="if(event.key==='Enter')addTicker(this.value)">`;
+  html += `<button class="add-btn" onclick="openAddModal()">+ ADD</button>`;
   row.innerHTML = html;
 }
 
@@ -221,9 +272,24 @@ function selectTicker(t) {
   renderView();
 }
 
-function addTicker(val) {
-  const t = val.trim().toUpperCase();
+async function addTicker(val, source) {
+  const t = (val || '').trim().toUpperCase();
   if (!t) return;
+  const src = source || 'manual';
+  try {
+    const r = await fetch('/api/news-tickers', {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ ticker: t, source: src })
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      alert('Could not add ticker: ' + (j.error || r.status));
+      return;
+    }
+  } catch (e) { alert('Network error: ' + e.message); return; }
+
+  if (!tickerList.includes(t)) tickerList.push(t);
   if (!ledger.tickers[t]) ledger.tickers[t] = { events: [], lastReport: null };
   activeTicker = t;
   saveLedger();
@@ -232,10 +298,23 @@ function addTicker(val) {
   renderView();
 }
 
-function removeTicker(t) {
-  if (Object.keys(ledger.tickers).length <= 1) return;
+async function removeTicker(t) {
+  if (tickerList.length <= 1) return;
+  if (!confirm('Remove ' + t + ' from your News tracker?')) return;
+  try {
+    const r = await fetch('/api/news-tickers?ticker=' + encodeURIComponent(t), {
+      method: 'DELETE', headers: authHeaders()
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      alert('Could not remove: ' + (j.error || r.status));
+      return;
+    }
+  } catch (e) { alert('Network error: ' + e.message); return; }
+
+  tickerList = tickerList.filter(x => x !== t);
   delete ledger.tickers[t];
-  if (activeTicker === t) activeTicker = Object.keys(ledger.tickers)[0];
+  if (activeTicker === t) activeTicker = tickerList[0] || '';
   saveLedger();
   freshNews = null;
   renderTickers();
@@ -455,9 +534,163 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+// ═══ ADD-TICKER MODAL ═══
+let modalShortlist = null;   // cached
+let modalUniverse = null;    // cached
+
+function openAddModal() {
+  document.getElementById('add-modal').classList.add('open');
+  switchModalTab('shortlist');
+}
+
+function closeAddModal() {
+  document.getElementById('add-modal').classList.remove('open');
+}
+
+function switchModalTab(name) {
+  ['shortlist','universe','manual'].forEach(k => {
+    document.getElementById('mtab-' + k).className = 'm-tab' + (k === name ? ' active' : '');
+    document.getElementById('mpane-' + k).className = 'm-pane' + (k === name ? ' active' : '');
+  });
+  if (name === 'shortlist') loadShortlistPane();
+  if (name === 'universe') loadUniversePane();
+  if (name === 'manual') {
+    setTimeout(() => { const inp = document.getElementById('manual-input'); if (inp) inp.focus(); }, 50);
+  }
+}
+
+async function loadShortlistPane() {
+  const pane = document.getElementById('mpane-shortlist');
+  if (modalShortlist) { renderShortlistPane(pane); return; }
+  pane.innerHTML = '<div class="m-empty">Loading…</div>';
+  try {
+    const r = await fetch('/api/admin/radar', { headers: authHeaders() });
+    if (!r.ok) { pane.innerHTML = '<div class="m-empty">Shortlist not available (' + r.status + ')</div>'; return; }
+    const j = await r.json();
+    modalShortlist = (j.items || []).map(it => ({ ticker: it.ticker, name: it.name || '' }));
+    renderShortlistPane(pane);
+  } catch (e) {
+    pane.innerHTML = '<div class="m-empty">Error loading shortlist</div>';
+  }
+}
+
+function renderShortlistPane(pane) {
+  if (!modalShortlist || modalShortlist.length === 0) {
+    pane.innerHTML = '<div class="m-empty">No shortlist items yet. Add them in Find → Shortlist.</div>';
+    return;
+  }
+  const html = ['<div class="m-list">'];
+  modalShortlist.forEach(it => {
+    const added = tickerList.includes(it.ticker);
+    html.push(renderModalItem(it.ticker, it.name, added, 'shortlist', added ? 'Added' : 'Add →'));
+  });
+  html.push('</div>');
+  pane.innerHTML = html.join('');
+}
+
+async function loadUniversePane() {
+  const pane = document.getElementById('mpane-universe');
+  if (modalUniverse) { renderUniversePane(pane); return; }
+  pane.innerHTML = '<div class="m-empty">Loading…</div>';
+  try {
+    const r = await fetch('/api/pipeline-stages');
+    if (!r.ok) { pane.innerHTML = '<div class="m-empty">Universe not available (' + r.status + ')</div>'; return; }
+    const j = await r.json();
+    // Map raw kanban stages to funnel buckets (same map as universe.html)
+    const STAGE_TO_FUNNEL = { invested:'invested', followed:'watchlist', passed:'passed', analysis:'research', review:'research', decision:'research', approved:'research' };
+    modalUniverse = { invested: [], research: [] };
+    (j.items || []).forEach(it => {
+      const bucket = STAGE_TO_FUNNEL[it.stage];
+      if (bucket === 'invested' || bucket === 'research') modalUniverse[bucket].push(it.ticker);
+    });
+    renderUniversePane(pane);
+  } catch (e) {
+    pane.innerHTML = '<div class="m-empty">Error loading universe</div>';
+  }
+}
+
+function renderUniversePane(pane) {
+  const inv = modalUniverse.invested;
+  const res = modalUniverse.research;
+  if (inv.length === 0 && res.length === 0) {
+    pane.innerHTML = '<div class="m-empty">No invested or research names yet.</div>';
+    return;
+  }
+  const html = [];
+  if (inv.length > 0) {
+    html.push('<div class="m-sub">Invested</div><div class="m-list">');
+    inv.forEach(t => {
+      const added = tickerList.includes(t);
+      html.push(renderModalItem(t, '', added, 'universe', added ? 'Added' : 'Add →'));
+    });
+    html.push('</div>');
+  }
+  if (res.length > 0) {
+    html.push('<div class="m-sub">Research</div><div class="m-list">');
+    res.forEach(t => {
+      const added = tickerList.includes(t);
+      html.push(renderModalItem(t, '', added, 'universe', added ? 'Added' : 'Add →'));
+    });
+    html.push('</div>');
+  }
+  pane.innerHTML = html.join('');
+}
+
+function renderModalItem(ticker, name, added, source, tag) {
+  const cls = 'm-item' + (added ? ' m-item-added' : '');
+  const click = added ? '' : `onclick="pickModalTicker('${ticker}','${source}')"`;
+  const nameHtml = name ? `<span class="m-item-nm">${name.replace(/</g,'&lt;')}</span>` : '<span class="m-item-nm"></span>';
+  return `<div class="${cls}" ${click}><span class="m-item-tk">${ticker}</span>${nameHtml}<span class="m-item-tag">${tag}</span></div>`;
+}
+
+async function pickModalTicker(ticker, source) {
+  await addTicker(ticker, source);
+  // Re-render both panes (state changed)
+  const active = document.querySelector('.m-tab.active');
+  const activeName = active ? active.dataset.tab : 'shortlist';
+  if (activeName === 'shortlist') renderShortlistPane(document.getElementById('mpane-shortlist'));
+  else if (activeName === 'universe') renderUniversePane(document.getElementById('mpane-universe'));
+}
+
+function submitManual() {
+  const inp = document.getElementById('manual-input');
+  const val = (inp.value || '').trim();
+  if (!val) return;
+  addTicker(val, 'manual').then(() => {
+    inp.value = '';
+    closeAddModal();
+  });
+}
+
 // ═══ INIT ═══
 init();
 </script>
 <script src="/search.js" defer></script>
+
+<!-- ADD-TICKER MODAL -->
+<div class="modal-back" id="add-modal" onclick="if(event.target===this)closeAddModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">ADD TICKER TO NEWS TRACKER</div>
+      <button class="modal-close" onclick="closeAddModal()">×</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="m-tab active" id="mtab-shortlist" data-tab="shortlist" onclick="switchModalTab('shortlist')">Shortlist</button>
+      <button class="m-tab" id="mtab-universe" data-tab="universe" onclick="switchModalTab('universe')">Universe</button>
+      <button class="m-tab" id="mtab-manual" data-tab="manual" onclick="switchModalTab('manual')">Manual</button>
+    </div>
+    <div class="modal-body">
+      <div class="m-pane active" id="mpane-shortlist"></div>
+      <div class="m-pane" id="mpane-universe"></div>
+      <div class="m-pane" id="mpane-manual">
+        <div class="m-sub">Enter ticker symbol</div>
+        <div class="m-manual">
+          <input type="text" id="manual-input" placeholder="e.g. NVDA" autocomplete="off" onkeydown="if(event.key==='Enter')submitManual()">
+          <button onclick="submitManual()">Add</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
