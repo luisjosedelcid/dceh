@@ -209,13 +209,13 @@
   <p class="page-sub">Columbia Framework valuation summary. Prices stream live from Finnhub; IRR and Margin of Safety recompute on each update. <span id="live-note" style="font-size:11px;font-weight:500;color:var(--gray-mid)">Fetching live prices...</span></p>
 
   <div class="tabs">
-    <button class="tab-btn" data-tab="research">In Research <span class="count" id="research-count">0</span></button>
-    <button class="tab-btn active" data-tab="invested">Invested <span class="count" id="invested-count">0</span></button>
+    <button class="tab-btn active" data-tab="research">In Research <span class="count" id="research-count">0</span></button>
+    <button class="tab-btn" data-tab="invested">Invested <span class="count" id="invested-count">0</span></button>
     <button class="tab-btn" data-tab="watchlist">Watchlist <span class="count" id="watchlist-count">0</span></button>
     <button class="tab-btn" data-tab="passed">Passed <span class="count" id="passed-count">0</span></button>
   </div>
 
-  <div class="tab-pane active" id="pane-invested">
+  <div class="tab-pane" id="pane-invested">
     <div style="overflow-x:auto;">
       <table class="universe-tbl" id="universe-table-invested">
         <thead>
@@ -241,7 +241,7 @@
     <div id="empty-invested" class="funnel-empty" style="display:none;">No invested positions yet.</div>
   </div><!-- /pane-invested -->
 
-  <div class="tab-pane" id="pane-research">
+  <div class="tab-pane active" id="pane-research">
     <div style="overflow-x:auto;">
       <table class="universe-tbl" id="universe-table-research">
         <thead>
