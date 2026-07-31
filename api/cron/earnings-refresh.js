@@ -188,10 +188,43 @@ async function runEarningsRefresh(opts) {
 
   const summary = { ok: true, from: fromIso, to: toIso, tickers, blocked, fetched: 0, upserted: 0, skipped: 0, errors: [] };
 
+  summary.stale_removed = 0;
+
   for (const ticker of tickers) {
     try {
       const events = await fetchEarningsForSymbol(ticker, fhKey, fromIso, toIso);
       summary.fetched += events.length;
+
+      // Fresh set of dates returned by Finnhub for this ticker.
+      // Anything currently marked 'upcoming' for this ticker inside our window
+      // that is NOT in this fresh set is stale (Finnhub moved the reported
+      // date) and must be removed to prevent duplicate calendar entries.
+      const freshDates = new Set(events.map(e => e.date).filter(Boolean));
+      if (freshDates.size > 0) {
+        try {
+          const staleRows = await sbSelect(
+            'earnings_calendar',
+            `select=date&ticker=eq.${ticker}&status=eq.upcoming&date=gte.${fromIso}&date=lte.${toIso}`
+          );
+          const staleDates = staleRows
+            .map(r => r.date)
+            .filter(d => d && !freshDates.has(d));
+          for (const d of staleDates) {
+            const delUrl = `${SUPABASE_URL}/rest/v1/earnings_calendar?ticker=eq.${encodeURIComponent(ticker)}&date=eq.${encodeURIComponent(d)}&status=eq.upcoming`;
+            const delRes = await fetch(delUrl, {
+              method: 'DELETE',
+              headers: {
+                'apikey': SUPABASE_SERVICE_KEY,
+                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                'Prefer': 'return=minimal',
+              },
+            });
+            if (delRes.ok) summary.stale_removed++;
+          }
+        } catch (delErr) {
+          summary.errors.push({ ticker, error: `stale-cleanup: ${String(delErr).slice(0, 160)}` });
+        }
+      }
 
       for (const ev of events) {
         const date = ev.date;
