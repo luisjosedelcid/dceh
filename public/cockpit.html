@@ -235,7 +235,7 @@
 
     <!-- 7. WATCHLIST ALERTS -->
     <div class="card">
-      <div class="card-h"><h3>Watchlist alerts</h3><span class="count" id="cnt-watch">—</span></div>
+      <div class="card-h"><h3>Price &amp; watch alerts</h3><span class="count" id="cnt-watch">—</span></div>
       <div class="card-b" id="watch-body"><div class="loading">Loading…</div></div>
       <div class="card-f"><a href="/screener.html">Open watchlist →</a></div>
     </div>
@@ -497,7 +497,14 @@ function renderWatchlist(items) {
     let badge = '<span class="badge amber">Soon</span>';
     let title = '';
     let meta = '';
-    if (w.kind === 'triggered') {
+    if (w.kind === 'price_triggered') {
+      const arrow = w.alert_type === 'floor' ? '↓' : '↑';
+      const label = w.alert_type === 'floor' ? 'below floor' : 'above ceiling';
+      pulse = 'pulse red';
+      badge = `<span class="badge red">${arrow} Fired</span>`;
+      title = `Price ${label} ${w.threshold != null ? '$' + Number(w.threshold).toFixed(2) : ''}`;
+      meta = `${w.triggered_price != null ? 'Hit $' + Number(w.triggered_price).toFixed(2) : ''}${w.days_since_fire != null ? ' · ' + w.days_since_fire + 'd ago' : ''} · ${w.scope || 'covered'}`;
+    } else if (w.kind === 'triggered') {
       pulse = 'pulse red';
       badge = '<span class="badge red">Triggered</span>';
       title = 'Crossed entry target';

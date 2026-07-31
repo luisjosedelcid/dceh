@@ -275,6 +275,10 @@ async function getLastDeliverables() {
 
 // ── 6. Watchlist alerts ───────────────────────────────────────────────
 async function getWatchlistAlerts() {
+  const today = todayISO();
+  const out = [];
+
+  // (a) Buy-Zone watchlist (target_price + MoS + catalyst)
   let rows = [];
   try {
     rows = await sbSelect(
@@ -282,11 +286,9 @@ async function getWatchlistAlerts() {
       `select=id,ticker,target_price,anchor_type,mos_required_pct,catalyst,deadline_review,status,triggered_at,triggered_price,triggered_mos_pct&order=triggered_at.desc.nullslast&limit=200`
     );
   } catch (e) {
-    console.error('getWatchlistAlerts failed:', e.message);
-    return [];
+    console.error('getWatchlistAlerts (watchlist) failed:', e.message);
+    rows = [];
   }
-  const today = todayISO();
-  const out = [];
   for (const r of rows) {
     const isTriggered = r.status === 'triggered';
     const reviewSoon = r.deadline_review && r.deadline_review >= today
@@ -295,7 +297,7 @@ async function getWatchlistAlerts() {
                          && r.status !== 'closed';
     if (isTriggered || reviewSoon || reviewOverdue) {
       out.push({
-        id: r.id,
+        id: `watch_${r.id}`,
         ticker: r.ticker,
         kind: isTriggered ? 'triggered' : (reviewOverdue ? 'review_overdue' : 'review_soon'),
         target_price: r.target_price,
@@ -310,6 +312,35 @@ async function getWatchlistAlerts() {
       });
     }
   }
+
+  // (b) Price floor/ceiling alerts fired by /api/cron/price-alerts (last 14 days)
+  let priceRows = [];
+  try {
+    priceRows = await sbSelect(
+      'price_alerts',
+      `select=id,ticker,alert_type,threshold,scope,active,triggered_at,triggered_price&order=triggered_at.desc.nullslast&limit=200`
+    );
+  } catch (e) {
+    console.error('getWatchlistAlerts (price_alerts) failed:', e.message);
+    priceRows = [];
+  }
+  for (const r of priceRows) {
+    if (r.active || !r.triggered_at) continue;
+    const daysSinceFire = daysSince(r.triggered_at);
+    if (daysSinceFire != null && daysSinceFire > 14) continue;
+    out.push({
+      id: `price_${r.id}`,
+      ticker: r.ticker,
+      kind: 'price_triggered',
+      alert_type: r.alert_type,
+      threshold: r.threshold,
+      scope: r.scope,
+      triggered_at: r.triggered_at,
+      triggered_price: r.triggered_price,
+      days_since_fire: daysSinceFire,
+    });
+  }
+
   return out.slice(0, 12);
 }
 
