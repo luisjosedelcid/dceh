@@ -69,35 +69,63 @@ async function getPipeline() {
 }
 
 // ── 2. Outstanding decisions ──────────────────────────────────────────
-//   Decisions in journal whose committee ratification is still pending.
-//   Scheduled 3m/6m/12m reviews live in Re-Underwriting Due (section 3) —
-//   they are re-underwriting work and belong with the filing-triggered ones.
+//   Two sources of "decision pending" work for the CIO/committee:
+//   (a) pipeline_cards in stage='decision' — Committee Review column of the
+//       kanban; the analyst has finished, CIO has signed off, and the card
+//       is waiting for the Investment Committee to formally ratify/reject.
+//   (b) decision_journal rows without final_recommendation — a decision
+//       that was drafted in the journal but never closed with the final
+//       BUY/PASS write-up.
+//   Scheduled 3m/6m/12m reviews live in Re-Underwriting Due (section 3).
 async function getOutstandingDecisions() {
-  let rows = [];
+  const out = [];
+
+  // (a) Committee Review kanban cards
   try {
-    rows = await sbSelect(
+    const rows = await sbSelect(
+      'pipeline_cards',
+      `select=id,ticker,name,stage,note,moved_at,created_at&stage=eq.decision&order=moved_at.desc.nullslast&limit=50`
+    );
+    for (const r of rows) {
+      out.push({
+        id: `card_${r.id}`,
+        ticker: r.ticker,
+        kind: 'committee_review',
+        decision_type: 'Committee Review',
+        decision_date: r.moved_at || r.created_at,
+        days_open: daysSince(r.moved_at || r.created_at),
+        owner: null,
+        thesis: r.note ? String(r.note).slice(0, 120) : (r.name || null),
+      });
+    }
+  } catch (e) {
+    console.error('getOutstandingDecisions (kanban) failed:', e.message);
+  }
+
+  // (b) Journal drafts without final_recommendation
+  try {
+    const rows = await sbSelect(
       'decision_journal',
       `select=id,ticker,decision_type,decision_date,thesis,final_recommendation,decision_owner&order=decision_date.desc.nullslast&limit=200`
     );
-  } catch (e) {
-    console.error('getOutstandingDecisions failed:', e.message);
-    return [];
-  }
-  const out = [];
-  for (const r of rows) {
-    if (!r.final_recommendation) {
-      out.push({
-        id: r.id,
-        ticker: r.ticker,
-        kind: 'pending_ratification',
-        decision_type: r.decision_type,
-        decision_date: r.decision_date,
-        days_open: daysSince(r.decision_date),
-        owner: r.decision_owner,
-        thesis: r.thesis ? String(r.thesis).slice(0, 120) : null,
-      });
+    for (const r of rows) {
+      if (!r.final_recommendation) {
+        out.push({
+          id: `journal_${r.id}`,
+          ticker: r.ticker,
+          kind: 'pending_ratification',
+          decision_type: r.decision_type,
+          decision_date: r.decision_date,
+          days_open: daysSince(r.decision_date),
+          owner: r.decision_owner,
+          thesis: r.thesis ? String(r.thesis).slice(0, 120) : null,
+        });
+      }
     }
+  } catch (e) {
+    console.error('getOutstandingDecisions (journal) failed:', e.message);
   }
+
   return out.slice(0, 25);
 }
 

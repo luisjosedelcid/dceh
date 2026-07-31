@@ -356,7 +356,13 @@ function renderDecisions(items) {
     let badge = '<span class="badge amber">This week</span>';
     let title = '';
     let meta = '';
-    if (d.kind === 'pending_ratification') {
+    if (d.kind === 'committee_review') {
+      title = `Committee Review — ${escapeHtml(d.ticker || '')}`;
+      meta = (d.thesis || '').slice(0, 80);
+      const days = d.days_open;
+      if (days != null) meta = meta ? `${meta} · ${days}d waiting` : `${days}d waiting`;
+      if (days != null && days >= 7) badge = '<span class="badge red">Now</span>';
+    } else if (d.kind === 'pending_ratification') {
       title = `Ratify ${escapeHtml(d.decision_type || 'decision')}`;
       meta = (d.thesis || '').slice(0, 80);
       if (d.days_open != null && d.days_open >= 14) badge = '<span class="badge red">Now</span>';
