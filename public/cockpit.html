@@ -615,7 +615,7 @@ async function loadTeamMeetings() {
 
 async function loadSlackInbox() {
   try {
-    const sr = await fetch('/data/slack_highlights.json', { cache: 'no-store' });
+    const sr = await fetch('/api/slack-inbox', { cache: 'no-store' });
     renderHighlights(sr.ok ? await sr.json() : null);
   } catch (e) { console.warn('slack inbox load failed:', e); renderHighlights(null); }
 }
