@@ -696,28 +696,102 @@ async function openAlertEditor(ticker, type, livePrice) {
   if (val === null) return;
   const trimmed = val.trim();
 
+  // Snapshot prior value so we can rollback on failure
+  const prevValue = (ALERTS_BY_TICKER[ticker] || {})[type] || null;
+
   // Empty → delete
   if (trimmed === '') {
     if (!existing) return;
     if (!confirm(`Delete ${type} alert for ${ticker}?`)) return;
-    const r = await fetch(`/api/admin/alerts?id=${existing.id}`, { method: 'DELETE', headers: { 'x-admin-token': adminToken() } });
-    if (!r.ok) { alert('Delete failed: ' + r.status); return; }
-    await loadAlerts();
-    renderTable();
+    // Optimistic: remove locally + repaint the affected row now
+    if (ALERTS_BY_TICKER[ticker]) {
+      ALERTS_BY_TICKER[ticker][type] = null;
+      if (!ALERTS_BY_TICKER[ticker].floor && !ALERTS_BY_TICKER[ticker].ceiling) delete ALERTS_BY_TICKER[ticker];
+    }
+    repaintAlertsForTicker(ticker);
+    try {
+      const r = await fetch(`/api/admin/alerts?id=${existing.id}`, { method: 'DELETE', headers: { 'x-admin-token': adminToken() } });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+    } catch (e) {
+      // Rollback + surface error
+      if (prevValue) {
+        ALERTS_BY_TICKER[ticker] = ALERTS_BY_TICKER[ticker] || {};
+        ALERTS_BY_TICKER[ticker][type] = prevValue;
+      }
+      repaintAlertsForTicker(ticker);
+      alert('Delete failed: ' + e.message);
+    }
     return;
   }
 
   const num = Number(trimmed);
   if (!Number.isFinite(num) || num <= 0) { alert('Invalid threshold'); return; }
 
-  // POST to upsert
-  const r = await fetch('/api/admin/alerts', {
-    method: 'POST',
-    headers: { 'x-admin-token': adminToken(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ticker, alert_type: type, threshold: num, scope: 'covered' }),
-  });
-  if (!r.ok) { const d = await r.json().catch(()=>({})); alert('Save failed: ' + (d.error || r.status)); return; }
-  await loadAlerts();
+  // Optimistic: place the pending row locally and repaint immediately
+  const optimistic = {
+    id: prevValue ? prevValue.id : `pending-${ticker}-${type}`,
+    ticker,
+    alert_type: type,
+    threshold: num,
+    active: true,
+    triggered_at: null,
+    scope: 'covered',
+  };
+  ALERTS_BY_TICKER[ticker] = ALERTS_BY_TICKER[ticker] || {};
+  ALERTS_BY_TICKER[ticker][type] = optimistic;
+  repaintAlertsForTicker(ticker);
+
+  try {
+    const r = await fetch('/api/admin/alerts', {
+      method: 'POST',
+      headers: { 'x-admin-token': adminToken(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticker, alert_type: type, threshold: num, scope: 'covered' }),
+    });
+    if (!r.ok) { const d = await r.json().catch(()=>({})); throw new Error(d.error || ('HTTP ' + r.status)); }
+    const data = await r.json().catch(()=>({}));
+    // Reconcile with the server row (real id, triggered_at, etc.)
+    if (data && data.item) {
+      ALERTS_BY_TICKER[ticker][type] = data.item;
+      repaintAlertsForTicker(ticker);
+    }
+  } catch (e) {
+    // Rollback
+    if (prevValue) {
+      ALERTS_BY_TICKER[ticker][type] = prevValue;
+    } else {
+      delete ALERTS_BY_TICKER[ticker][type];
+      if (!ALERTS_BY_TICKER[ticker].floor && !ALERTS_BY_TICKER[ticker].ceiling) delete ALERTS_BY_TICKER[ticker];
+    }
+    repaintAlertsForTicker(ticker);
+    alert('Save failed: ' + e.message);
+  }
+}
+
+// Fast targeted repaint: re-render only the row for one ticker,
+// avoiding a full renderTable() over all funnel stages.
+function repaintAlertsForTicker(ticker) {
+  const c = UNIVERSE.find(x => x.ticker === ticker);
+  if (!c) { renderTable(); return; }
+  const stage = c.funnelStage;
+  const tbody = document.getElementById('universe-body-' + stage);
+  if (!tbody) { renderTable(); return; }
+  const livePx = LIVE_PRICES[ticker];
+  const price = (typeof livePx === 'number' && livePx > 0) ? livePx : c.defaultPrice;
+  const vals = calcCompany(c, price);
+  const newRowHtml = renderRow(c, vals);
+  // Locate current row (rendered as <tr ...>) and swap it in place
+  const rows = tbody.querySelectorAll('tr');
+  for (const row of rows) {
+    const cell = row.querySelector('td');
+    if (cell && cell.textContent && cell.textContent.trim().startsWith(ticker)) {
+      const tpl = document.createElement('tbody');
+      tpl.innerHTML = newRowHtml.trim();
+      const replacement = tpl.querySelector('tr');
+      if (replacement) row.replaceWith(replacement);
+      return;
+    }
+  }
+  // Fallback: full re-render if we couldn't locate the row
   renderTable();
 }
 
