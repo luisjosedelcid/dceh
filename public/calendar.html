@@ -223,8 +223,8 @@
         <button class="x" id="import-close" aria-label="close">×</button>
       </div>
       <div class="modal-b">
-        <p style="margin-bottom:6px">Tickers come from three sources: <strong>Shortlist</strong> (Find → Shortlist), <strong>Followed in Universe</strong>, and one-off <strong>Extras</strong> added below. Select the ones you want in this refresh cycle.</p>
-        <p style="font-size:11px;color:var(--gray-mid);margin-bottom:10px">Removing a ticker blocks it — the daily cron and Refresh Now will skip blocked tickers until you Unblock them. Blocked tickers appear at the top.</p>
+        <p style="margin-bottom:6px">Tickers come from three sources: <strong>Shortlist</strong> (Find → Shortlist), <strong>Universe</strong> pipeline, and one-off <strong>Extras</strong> added below. Select the ones you want in this refresh cycle.</p>
+        <p style="font-size:11px;color:var(--gray-mid);margin-bottom:10px">Removing a ticker blocks it — the daily cron and Refresh Now will skip blocked tickers until you unblock them from Settings.</p>
         <div id="tk-list"><div class="empty" style="padding:24px">Loading…</div></div>
         <div class="tk-add-row">
           <label for="tk-add-input">Follow extra:</label>
@@ -493,23 +493,30 @@
         return;
       }
 
-      // Bucket items by primary source. Priority: blocked > shortlist > followed > pipeline (other stages) > extras > other.
-      const blockedRows = [];
+      // Bucket items by primary source. Blocked tickers are hidden from the modal
+      // (they only appear if unblocked via Settings or the API).
       const shortlistRows = [];
-      const followedRows = [];
-      const universeOtherRows = [];
+      const universeRows = [];
       const extrasRows = [];
       const otherRows = [];
 
+      // Sort Universe rows: followed first, then review, invested, passed, others.
+      const STAGE_ORDER = { followed: 0, review: 1, invested: 2, passed: 3 };
+
       for (const it of items) {
+        if (it.blocked) continue; // hidden
         const src = new Set(it.sources || []);
-        if (it.blocked) blockedRows.push(it);
-        else if (src.has('shortlist')) shortlistRows.push(it);
-        else if (src.has('pipeline') && it.stage === 'followed') followedRows.push(it);
-        else if (src.has('pipeline')) universeOtherRows.push(it);
+        if (src.has('shortlist')) shortlistRows.push(it);
+        else if (src.has('pipeline')) universeRows.push(it);
         else if (src.has('extras')) extrasRows.push(it);
         else otherRows.push(it);
       }
+      universeRows.sort((a, b) => {
+        const oa = STAGE_ORDER[a.stage] ?? 99;
+        const ob = STAGE_ORDER[b.stage] ?? 99;
+        if (oa !== ob) return oa - ob;
+        return String(a.ticker).localeCompare(String(b.ticker));
+      });
 
       // Row renderer with source-tag pills
       function renderRow(it) {
@@ -577,14 +584,8 @@
       }
 
       let html = '';
-      if (blockedRows.length) {
-        html += renderSection('blocked', 'Blocked', 'Skipped by cron and Refresh Now. Unblock to resume tracking.', blockedRows, '');
-      }
       html += renderSection('shortlist', 'Shortlist', 'From Find → Shortlist. Highest-conviction watchlist.', shortlistRows, 'No shortlist tickers yet. Add them in Find → Shortlist.');
-      html += renderSection('followed', 'Followed · Universe', 'Companies in the Universe pipeline with stage = Followed.', followedRows, 'No followed tickers yet. Move a card to Followed in Universe.');
-      if (universeOtherRows.length) {
-        html += renderSection('universe-other', 'Universe · Other stages', 'Review / Invested / Passed cards in Universe.', universeOtherRows, '');
-      }
+      html += renderSection('universe', 'Universe', 'Pipeline cards from Universe (sorted: Followed → Review → Invested → Passed).', universeRows, 'No universe cards yet.');
       if (extrasRows.length) {
         html += renderSection('extras', 'Extras · Ad-hoc', 'One-off tickers added directly from this modal.', extrasRows, '');
       }
