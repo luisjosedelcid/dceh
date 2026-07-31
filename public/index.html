@@ -656,7 +656,7 @@
     <div id="gate-error"></div>
     <button class="gate-btn" onclick="checkPwd()">Enter</button>
     <div style="margin-top:16px;text-align:center;font-size:13px">
-      <a href="#" id="forgot-link" style="color:#b88b47;text-decoration:none;border-bottom:1px solid transparent" onclick="showForgot(event)">¿Olvidaste tu contraseña?</a>
+      <a href="#" id="forgot-link" style="color:#b88b47;text-decoration:none;border-bottom:1px solid transparent" onclick="showForgot(event)">Forgot your password?</a>
     </div>
   </div>
 </div>
@@ -668,15 +668,15 @@
       <span style="font-size:18px;color:#1B2642"><strong>DCE</strong>Holdings</span>
     </div>
     <div style="height:2px;background:#B88B47;width:40px;margin:12px auto 20px"></div>
-    <h2 style="font-size:17px;font-weight:600;color:#1B2642;margin:0 0 6px;text-align:center">Restablecer contraseña</h2>
-    <p style="text-align:center;color:#6b7280;font-size:13px;margin-bottom:24px">Ingresá tu email y te enviaremos un link para elegir una nueva.</p>
+    <h2 style="font-size:17px;font-weight:600;color:#1B2642;margin:0 0 6px;text-align:center">Reset password</h2>
+    <p style="text-align:center;color:#6b7280;font-size:13px;margin-bottom:24px">Enter your email and we'll send you a link to choose a new password.</p>
     <form id="forgot-form" onsubmit="return submitForgot(event)">
       <label style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:6px">Email</label>
-      <input type="email" id="forgot-email" required style="width:100%;padding:11px 12px;font-size:14px;font-family:inherit;border:1px solid #e5e7eb;border-radius:6px;box-sizing:border-box" placeholder="tu@correo.com" />
-      <button type="submit" id="forgot-btn" style="width:100%;background:#1B2642;color:white;border:none;border-radius:6px;padding:12px;font-size:14px;font-family:inherit;font-weight:500;cursor:pointer;margin-top:20px">Enviar link</button>
+      <input type="email" id="forgot-email" required style="width:100%;padding:11px 12px;font-size:14px;font-family:inherit;border:1px solid #e5e7eb;border-radius:6px;box-sizing:border-box" placeholder="you@example.com" />
+      <button type="submit" id="forgot-btn" style="width:100%;background:#1B2642;color:white;border:none;border-radius:6px;padding:12px;font-size:14px;font-family:inherit;font-weight:500;cursor:pointer;margin-top:20px">Send reset link</button>
       <div id="forgot-msg" style="display:none;margin-top:14px;padding:10px 12px;border-radius:6px;font-size:13px"></div>
       <div style="text-align:center;margin-top:16px">
-        <a href="#" onclick="hideForgot(event)" style="color:#6b7280;font-size:13px;text-decoration:none">Cancelar</a>
+        <a href="#" onclick="hideForgot(event)" style="color:#6b7280;font-size:13px;text-decoration:none">Cancel</a>
       </div>
     </form>
   </div>
@@ -698,7 +698,7 @@ function hideForgot(e) {
   document.getElementById('forgot-modal').style.display = 'none';
   document.getElementById('forgot-msg').style.display = 'none';
   document.getElementById('forgot-btn').disabled = false;
-  document.getElementById('forgot-btn').textContent = 'Enviar link';
+  document.getElementById('forgot-btn').textContent = 'Send reset link';
 }
 async function submitForgot(e) {
   e.preventDefault();
@@ -707,7 +707,7 @@ async function submitForgot(e) {
   const msg = document.getElementById('forgot-msg');
   if (!email) return false;
   btn.disabled = true;
-  btn.textContent = 'Enviando…';
+  btn.textContent = 'Sending…';
   msg.style.display = 'none';
   try {
     const res = await fetch('/api/auth/forgot-password', {
@@ -720,17 +720,17 @@ async function submitForgot(e) {
     msg.style.background = '#f0fdf4';
     msg.style.color = '#16a34a';
     msg.style.border = '1px solid #bbf7d0';
-    msg.innerHTML = 'Si <strong>' + email.replace(/</g,'&lt;') + '</strong> corresponde a una cuenta activa, te enviamos un link para restablecer tu contraseña. Revisá tu correo (incluyendo spam).';
-    btn.textContent = 'Enviado';
+    msg.innerHTML = 'If <strong>' + email.replace(/</g,'&lt;') + '</strong> matches an active account, we’ve sent you a link to reset your password. Check your inbox (including spam).';
+    btn.textContent = 'Sent';
     btn.disabled = true;
   } catch (err) {
     msg.style.display = 'block';
     msg.style.background = '#fef2f2';
     msg.style.color = '#dc2626';
     msg.style.border = '1px solid #fecaca';
-    msg.textContent = 'Error de red. Intentá de nuevo.';
+    msg.textContent = 'Network error. Please try again.';
     btn.disabled = false;
-    btn.textContent = 'Enviar link';
+    btn.textContent = 'Send reset link';
   }
   return false;
 }

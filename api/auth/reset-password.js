@@ -53,12 +53,12 @@ module.exports = async (req, res) => {
 
     if (!rawToken || rawToken.length < 20) {
       res.statusCode = 400;
-      res.end(JSON.stringify({ error: 'Token inválido' }));
+      res.end(JSON.stringify({ error: 'Invalid token' }));
       return;
     }
     if (newPassword.length < 8) {
       res.statusCode = 400;
-      res.end(JSON.stringify({ error: 'La contraseña nueva debe tener al menos 8 caracteres' }));
+      res.end(JSON.stringify({ error: 'New password must be at least 8 characters' }));
       return;
     }
 
@@ -73,17 +73,17 @@ module.exports = async (req, res) => {
     const row = rows[0];
     if (!row) {
       res.statusCode = 400;
-      res.end(JSON.stringify({ error: 'Link inválido o ya utilizado' }));
+      res.end(JSON.stringify({ error: 'Invalid or already-used link' }));
       return;
     }
     if (row.used_at) {
       res.statusCode = 400;
-      res.end(JSON.stringify({ error: 'Este link ya fue utilizado. Solicitá uno nuevo.' }));
+      res.end(JSON.stringify({ error: 'This link has already been used. Please request a new one.' }));
       return;
     }
     if (new Date(row.expires_at).getTime() < Date.now()) {
       res.statusCode = 400;
-      res.end(JSON.stringify({ error: 'El link expiró. Solicitá uno nuevo.' }));
+      res.end(JSON.stringify({ error: 'This link has expired. Please request a new one.' }));
       return;
     }
 
@@ -95,7 +95,7 @@ module.exports = async (req, res) => {
     const user = users[0];
     if (!user || !user.is_active) {
       res.statusCode = 400;
-      res.end(JSON.stringify({ error: 'Usuario no encontrado o inactivo' }));
+      res.end(JSON.stringify({ error: 'User not found or inactive' }));
       return;
     }
 
@@ -128,6 +128,6 @@ module.exports = async (req, res) => {
   } catch (e) {
     console.error('/api/auth/reset-password error:', e);
     res.statusCode = 500;
-    res.end(JSON.stringify({ error: 'Error interno' }));
+    res.end(JSON.stringify({ error: 'Internal error' }));
   }
 };

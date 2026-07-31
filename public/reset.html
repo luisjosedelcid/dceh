@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Restablecer contraseña · DCE Holdings</title>
+  <title>Reset password · DCE Holdings</title>
   <style>
     :root {
       --navy: #1B2642;
@@ -168,19 +168,19 @@
 
     <!-- FORM STATE -->
     <div class="state-view active" id="state-form">
-      <h1>Restablecer contraseña</h1>
-      <p class="subtitle">Elegí una contraseña nueva para tu cuenta.</p>
+      <h1>Reset password</h1>
+      <p class="subtitle">Choose a new password for your account.</p>
 
       <form id="reset-form" autocomplete="off">
-        <label for="new1">Contraseña nueva</label>
+        <label for="new1">New password</label>
         <input type="password" id="new1" name="new_password"
                autocomplete="new-password" minlength="8" required autofocus />
-        <div class="hint">Mínimo 8 caracteres. Recomendado: 16+ con mix de tipos.</div>
+        <div class="hint">Minimum 8 characters. Recommended: 16+ with mixed character types.</div>
 
-        <label for="new2">Repetir contraseña</label>
+        <label for="new2">Confirm password</label>
         <input type="password" id="new2" autocomplete="new-password" minlength="8" required />
 
-        <button type="submit" id="submit-btn">Cambiar contraseña</button>
+        <button type="submit" id="submit-btn">Update password</button>
 
         <div class="msg" id="msg"></div>
       </form>
@@ -189,19 +189,19 @@
     <!-- SUCCESS STATE -->
     <div class="state-view" id="state-success">
       <div class="success-icon">✓</div>
-      <h1>Contraseña actualizada</h1>
-      <p class="subtitle">Tu contraseña se cambió correctamente. Ya podés entrar con la nueva.</p>
+      <h1>Password updated</h1>
+      <p class="subtitle">Your password has been changed. You can now sign in with your new credentials.</p>
       <a href="/" style="text-decoration:none">
-        <button type="button">Ir al login</button>
+        <button type="button">Go to login</button>
       </a>
     </div>
 
     <!-- INVALID TOKEN STATE -->
     <div class="state-view" id="state-invalid">
-      <h1 style="color:var(--red)">Link inválido</h1>
-      <p class="subtitle" id="invalid-msg">El link es inválido, expiró, o ya fue utilizado.</p>
+      <h1 style="color:var(--red)">Invalid link</h1>
+      <p class="subtitle" id="invalid-msg">This link is invalid, expired, or has already been used.</p>
       <div class="footer-link">
-        <a href="/">← Volver al login</a>
+        <a href="/">← Back to login</a>
       </div>
     </div>
   </div>
@@ -213,7 +213,7 @@
 
       if (!token || token.length < 20) {
         show('state-invalid');
-        document.getElementById('invalid-msg').textContent = 'El link no contiene un token válido.';
+        document.getElementById('invalid-msg').textContent = 'This link does not contain a valid token.';
         return;
       }
 
@@ -231,17 +231,17 @@
 
         if (new1 !== new2) {
           msg.className = 'msg error';
-          msg.textContent = 'Las contraseñas no coinciden.';
+          msg.textContent = 'Passwords do not match.';
           return;
         }
         if (new1.length < 8) {
           msg.className = 'msg error';
-          msg.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+          msg.textContent = 'Password must be at least 8 characters.';
           return;
         }
 
         btn.disabled = true;
-        btn.textContent = 'Guardando…';
+        btn.textContent = 'Saving…';
 
         try {
           const res = await fetch('/api/auth/reset-password', {
@@ -254,15 +254,15 @@
             msg.className = 'msg error';
             msg.textContent = data.error || `Error ${res.status}`;
             btn.disabled = false;
-            btn.textContent = 'Cambiar contraseña';
+            btn.textContent = 'Update password';
             return;
           }
           show('state-success');
         } catch (err) {
           msg.className = 'msg error';
-          msg.textContent = 'Error de red: ' + (err.message || err);
+          msg.textContent = 'Network error: ' + (err.message || err);
           btn.disabled = false;
-          btn.textContent = 'Cambiar contraseña';
+          btn.textContent = 'Update password';
         }
       });
 

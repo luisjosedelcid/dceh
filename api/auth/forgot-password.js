@@ -53,22 +53,22 @@ async function sendResetEmail({ toEmail, resetUrl, displayName }) {
       <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e6e6e6">
         <tr><td style="background:#1B2642;padding:18px 24px;color:#ffffff">
           <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#B88B47">DCE Holdings</div>
-          <div style="font-size:18px;font-weight:bold;margin-top:4px">Restablecer contraseña</div>
+          <div style="font-size:18px;font-weight:bold;margin-top:4px">Reset your password</div>
         </td></tr>
         <tr><td style="padding:28px 24px;font-size:14px;line-height:1.6">
-          <p style="margin:0 0 16px 0">Hola${displayName ? ' ' + displayName.split(/\\s+/)[0] : ''},</p>
-          <p style="margin:0 0 16px 0">Recibimos una solicitud para restablecer la contraseña de tu cuenta en <strong>dceholdings.app</strong>. Hacé clic en el botón para elegir una nueva contraseña:</p>
+          <p style="margin:0 0 16px 0">Hi${displayName ? ' ' + displayName.split(/\\s+/)[0] : ' there'},</p>
+          <p style="margin:0 0 16px 0">We received a request to reset the password for your account on <strong>dceholdings.app</strong>. Click the button below to choose a new password:</p>
           <div style="margin:24px 0">
-            <a href="${resetUrl}" style="display:inline-block;background:#1B2642;color:#ffffff;padding:12px 28px;text-decoration:none;font-size:14px;font-weight:bold;letter-spacing:0.04em;border-radius:4px">Restablecer contraseña →</a>
+            <a href="${resetUrl}" style="display:inline-block;background:#1B2642;color:#ffffff;padding:12px 28px;text-decoration:none;font-size:14px;font-weight:bold;letter-spacing:0.04em;border-radius:4px">Reset password →</a>
           </div>
           <p style="margin:0 0 12px 0;font-size:13px;color:#606060">
-            El link vence en 60 minutos y solo puede usarse una vez.
+            This link expires in 60 minutes and can only be used once.
           </p>
           <p style="margin:0 0 8px 0;font-size:13px;color:#606060">
-            Si vos no solicitaste este cambio, ignorá este correo — tu contraseña no cambia hasta que abras el link y elijas una nueva.
+            If you didn't request this change, you can ignore this email — your password won't change unless you open the link and choose a new one.
           </p>
           <p style="margin:24px 0 0 0;font-size:12px;color:#606060;word-break:break-all">
-            Si el botón no funciona, copiá este link en el navegador:<br>
+            If the button doesn't work, copy and paste this link into your browser:<br>
             <span style="color:#1B2642">${resetUrl}</span>
           </p>
         </td></tr>
@@ -89,7 +89,7 @@ async function sendResetEmail({ toEmail, resetUrl, displayName }) {
     body: JSON.stringify({
       from,
       to: [toEmail],
-      subject: 'Restablecer tu contraseña — DCE Holdings',
+      subject: 'Reset your password — DCE Holdings',
       html,
     }),
   });
@@ -118,7 +118,7 @@ module.exports = async (req, res) => {
     const email = String(body.email || '').trim().toLowerCase();
     if (!email || !email.includes('@')) {
       res.statusCode = 400;
-      res.end(JSON.stringify({ error: 'Email inválido' }));
+      res.end(JSON.stringify({ error: 'Invalid email' }));
       return;
     }
 
