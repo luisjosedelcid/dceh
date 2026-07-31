@@ -506,11 +506,14 @@
       // Universe is the source of truth for tracked companies. If a ticker is
       // in Universe it appears ONLY in Universe here — even if it is also in
       // the Shortlist (radar) table. This avoids duplicate rows in the modal.
+      // Passed cards are hidden — they are no longer actionable.
       for (const it of items) {
         if (it.blocked) continue; // hidden
         const src = new Set(it.sources || []);
-        if (src.has('pipeline')) universeRows.push(it);
-        else if (src.has('shortlist')) shortlistRows.push(it);
+        if (src.has('pipeline')) {
+          if (it.stage === 'passed') continue; // hidden
+          universeRows.push(it);
+        } else if (src.has('shortlist')) shortlistRows.push(it);
         else if (src.has('extras')) extrasRows.push(it);
         else otherRows.push(it);
       }
@@ -588,7 +591,7 @@
 
       let html = '';
       html += renderSection('shortlist', 'Shortlist', 'From Find → Shortlist. Highest-conviction watchlist.', shortlistRows, 'No shortlist tickers yet. Add them in Find → Shortlist.');
-      html += renderSection('universe', 'Universe', 'Pipeline cards from Universe (sorted: Followed → Review → Invested → Passed).', universeRows, 'No universe cards yet.');
+      html += renderSection('universe', 'Universe', 'Active pipeline cards from Universe (sorted: Followed → Review → Invested). Passed cards are hidden.', universeRows, 'No active universe cards yet.');
       if (extrasRows.length) {
         html += renderSection('extras', 'Extras · Ad-hoc', 'One-off tickers added directly from this modal.', extrasRows, '');
       }
