@@ -188,9 +188,10 @@
         <div class="section-meta">RSS · cron every 6h</div>
       </div>
       <div class="section-desc">
-        Manage the blog/Substack/podcast sources monitored by the Idea Feed. Tickers are extracted via regex with an LLM fallback. View results in <a href="/screener#ideafeed" style="color:var(--gold)">Find → Idea Feed</a>.
+        All connected blog / Substack / podcast sources monitored by the Idea Feed. Tickers are extracted via regex with an LLM fallback. View results in <a href="/screener#ideafeed" style="color:var(--gold)">Find → Idea Feed</a>.
       </div>
       <div style="padding:0 24px 22px">
+        <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:0 0 10px">Connected sources</h4>
         <div id="if-admin-list" style="margin-bottom:18px"><div class="loading-files">Sign in to manage sources</div></div>
 
         <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:18px 0 10px">Add new source</h4>
@@ -1255,10 +1256,163 @@ async function changeOwnPassword(ev) {
   return false;
 }
 
+// ── IDEA FEED SOURCES ─────────────────────────────────────────────────────────────────────────────
+async function loadIdeaFeedSources() {
+  const cont = document.getElementById('if-admin-list');
+  if (!cont) return;
+  if (!isAdmin()) {
+    cont.innerHTML = '<div class="loading-files">Sign in to manage sources</div>';
+    return;
+  }
+  cont.innerHTML = '<div class="loading-files">Loading…</div>';
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const r = await fetch('/api/admin/idea-feed-sources', { headers: { 'x-admin-token': token } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    const items = data.sources || [];
+    if (items.length === 0) {
+      cont.innerHTML = '<div class="loading-files">No sources yet. Add one below.</div>';
+      return;
+    }
+    const kindLabels = { blog: 'Blog', substack: 'Substack', podcast: 'Podcast', twitter: 'Twitter', other: 'Other' };
+    const activeCount = items.filter(s => s.active !== false).length;
+    let html = `<div style="font-size:11px;color:var(--gray-mid);margin-bottom:8px;letter-spacing:0.06em">${items.length} source${items.length===1?'':'s'} · ${activeCount} active</div>`;
+    html += '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--navy);color:var(--white)">'
+      + '<th style="text-align:left;padding:8px 10px">Name</th>'
+      + '<th style="text-align:left;padding:8px 10px">Kind</th>'
+      + '<th style="text-align:left;padding:8px 10px">URL</th>'
+      + '<th style="padding:8px 10px">Paid</th>'
+      + '<th style="padding:8px 10px">Active</th>'
+      + '<th style="padding:8px 10px"></th>'
+      + '</tr></thead><tbody>';
+    for (const it of items) {
+      const active = it.active !== false;
+      const paid = !!it.is_paid;
+      html += `<tr style="border-bottom:1px solid var(--rule)">
+        <td style="padding:8px 10px">
+          <strong>${escapeHtml(it.name || '—')}</strong>
+          ${it.notes ? `<div style="font-size:10px;color:var(--gray-mid);margin-top:2px">${escapeHtml(it.notes)}</div>` : ''}
+        </td>
+        <td style="padding:8px 10px;font-size:11px;color:var(--gray-mid);letter-spacing:0.06em">${kindLabels[it.kind] || escapeHtml(it.kind || '—')}</td>
+        <td style="padding:8px 10px;font-size:11px">
+          <a href="${escapeHtml(it.url || '#')}" target="_blank" style="color:var(--navy);text-decoration:none;border-bottom:1px dotted var(--gray-mid)">${escapeHtml((it.url || '').replace(/^https?:\/\//, '').slice(0,50))}${(it.url || '').length > 55 ? '…' : ''}</a>
+          <div style="font-size:10px;color:var(--gray-mid);margin-top:2px">RSS: <a href="${escapeHtml(it.rss_url || '#')}" target="_blank" style="color:var(--gray-mid)">${escapeHtml((it.rss_url || '').replace(/^https?:\/\//, '').slice(0,45))}${(it.rss_url || '').length > 50 ? '…' : ''}</a></div>
+        </td>
+        <td style="padding:8px 10px;text-align:center;font-size:11px">${paid ? '<span style="color:var(--gold);font-weight:600">$</span>' : '—'}</td>
+        <td style="padding:8px 10px;text-align:center">
+          <label style="cursor:pointer"><input type="checkbox" ${active ? 'checked' : ''} onchange="toggleIdeaFeedActive(${it.id}, this.checked)"></label>
+        </td>
+        <td style="padding:8px 10px;text-align:right;white-space:nowrap">
+          <button class="btn" style="font-size:10px;padding:4px 10px;background:var(--red-dark,#8a2222)" onclick="deleteIdeaFeedSource(${it.id}, '${escapeHtml((it.name || '').replace(/'/g, "\\'"))}')">Delete</button>
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    cont.innerHTML = html;
+  } catch (e) {
+    cont.innerHTML = '<div class="loading-files" style="color:var(--red)">Error: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function addIdeaFeedSource(ev) {
+  ev.preventDefault();
+  const f = ev.target;
+  const status = document.getElementById('if-add-status');
+  status.textContent = 'Saving…'; status.style.color = 'var(--gray-mid)';
+  const token = localStorage.getItem(TOKEN_KEY);
+  try {
+    const r = await fetch('/api/admin/idea-feed-sources', {
+      method: 'POST',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: f.name.value.trim(),
+        kind: f.kind.value,
+        url: f.url.value.trim(),
+        rss_url: f.rss_url.value.trim(),
+        notes: f.notes.value.trim(),
+        is_paid: f.is_paid.checked,
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    status.textContent = 'Saved'; status.style.color = 'var(--green)';
+    f.reset();
+    loadIdeaFeedSources();
+  } catch (e) {
+    status.textContent = e.message; status.style.color = 'var(--red)';
+  }
+  return false;
+}
+
+async function toggleIdeaFeedActive(id, active) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  try {
+    const r = await fetch(`/api/admin/idea-feed-sources?id=${id}`, {
+      method: 'PATCH',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active }),
+    });
+    if (!r.ok) throw new Error((await r.json()).error || 'Error');
+    loadIdeaFeedSources();
+  } catch (e) {
+    alert('Error: ' + e.message);
+    loadIdeaFeedSources();
+  }
+}
+
+async function deleteIdeaFeedSource(id, name) {
+  if (!confirm(`Delete source "${name}"? This cannot be undone.`)) return;
+  const token = localStorage.getItem(TOKEN_KEY);
+  try {
+    const r = await fetch(`/api/admin/idea-feed-sources?id=${id}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-token': token },
+    });
+    if (!r.ok) throw new Error((await r.json()).error || 'Error');
+    loadIdeaFeedSources();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+async function runFeedRefreshNow() {
+  const btn = document.getElementById('if-run-now');
+  const status = document.getElementById('if-run-status');
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!isAdmin()) { status.textContent = 'Sign in as admin first.'; status.style.color = 'var(--red)'; return; }
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'Running…';
+  status.textContent = 'Triggering cron…'; status.style.color = 'var(--gray-mid)';
+  try {
+    const r = await fetch('/api/admin/refresh-feed-now', {
+      method: 'POST',
+      headers: { 'x-admin-token': token },
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    const inserted = (data.inserted != null) ? data.inserted : (data.new_items != null ? data.new_items : '?');
+    status.textContent = `Done · ${inserted} new item${inserted===1?'':'s'}`; status.style.color = 'var(--green)';
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message; status.style.color = 'var(--red)';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
 // INIT
 refreshAdminUI();
 // Settings page: activity tab is active by default — load audit log immediately
 loadAudit({ reset: true });
+// Deep-link support: if URL hash targets a specific tab, activate it
+(function activateFromHash() {
+  const h = (location.hash || '').replace('#', '').trim();
+  if (!h) return;
+  const btn = document.querySelector(`.tab[data-tab="${h}"]`);
+  if (btn) btn.click();
+})();
 </script>
 <script src="/search.js" defer></script>
 </body>
