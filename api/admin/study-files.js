@@ -54,7 +54,7 @@ module.exports = async (req, res) => {
       );
       // Resolve uploaded_by email -> display_name (from admin_users)
       try {
-        const admins = await sbSelect('admin_users', 'select=email,display_name&active=eq.true&limit=500');
+        const admins = await sbSelect('admin_users', 'select=email,display_name&is_active=eq.true&limit=500');
         const map = new Map(admins.map(a => [(a.email || '').toLowerCase(), a.display_name || a.email]));
         for (const it of items) {
           const raw = (it.uploaded_by || '').toLowerCase();
