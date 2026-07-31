@@ -57,29 +57,52 @@ function hasDceAttendee(event) {
   return attendees.some(a => (a.email || '').toLowerCase().endsWith('@dceholdings.com'));
 }
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const TZ = 'Europe/Madrid';
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function partsInTz(iso) {
+  const d = new Date(iso);
+  const fmt = new Intl.DateTimeFormat('en-GB', {
+    timeZone: TZ,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', weekday: 'short',
+    hour12: false,
+  });
+  const parts = Object.fromEntries(fmt.formatToParts(d).map(p => [p.type, p.value]));
+  return {
+    year: parts.year,
+    month: parts.month,
+    day: parts.day,
+    hour: parts.hour === '24' ? '00' : parts.hour,
+    minute: parts.minute,
+    weekday: parts.weekday, // e.g. 'Tue'
+    monthName: MONTHS[parseInt(parts.month, 10) - 1],
+  };
+}
 
 function fmtTime(iso, isAllDay) {
   if (isAllDay) return 'All day';
-  const d = new Date(iso);
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  return `${hh}:${mm}`;
+  const p = partsInTz(iso);
+  return `${p.hour}:${p.minute}`;
 }
 
 function fmtDate(iso) {
-  const d = new Date(iso);
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
-  return `${dd} ${mon}`;
+  const p = partsInTz(iso);
+  return `${p.day} ${p.monthName}`;
+}
+
+function fmtWeekday(iso) {
+  const p = partsInTz(iso);
+  return p.weekday;
 }
 
 function daysUntil(iso) {
-  const start = new Date(iso);
-  start.setHours(0, 0, 0, 0);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.round((start - today) / (24 * 3600 * 1000));
+  // Compare dates in Madrid TZ
+  const startP = partsInTz(iso);
+  const todayP = partsInTz(new Date().toISOString());
+  const startDate = new Date(`${startP.year}-${startP.month}-${startP.day}T00:00:00Z`);
+  const todayDate = new Date(`${todayP.year}-${todayP.month}-${todayP.day}T00:00:00Z`);
+  return Math.round((startDate - todayDate) / (24 * 3600 * 1000));
 }
 
 function normalize(event) {
@@ -94,7 +117,6 @@ function normalize(event) {
       is_dce: (a.email || '').toLowerCase().endsWith('@dceholdings.com'),
       response: a.responseStatus || 'needsAction',
     }));
-  const startDate = new Date(startIso);
   const endTimeLabel = endIso && !isAllDay ? fmtTime(endIso, false) : '';
   const timeLabel = isAllDay ? 'All day' : (endTimeLabel ? `${fmtTime(startIso, false)}–${endTimeLabel}` : fmtTime(startIso, false));
   return {
@@ -103,7 +125,7 @@ function normalize(event) {
     start: startIso,
     end: endIso,
     is_all_day: isAllDay,
-    weekday: WEEKDAYS[startDate.getDay()],
+    weekday: fmtWeekday(startIso),
     date_label: fmtDate(startIso),
     time_label: timeLabel,
     days_until: daysUntil(startIso),
