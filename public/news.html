@@ -388,12 +388,29 @@ function renderEventCard(item, showReported) {
     </div>
     <div class="evt-headline">${item.headline}</div>
     <div class="evt-summary">${item.summary}</div>`;
+  if (Array.isArray(item.sources) && item.sources.length > 0) {
+    html += '<div class="evt-sources"><div class="evt-sources-lbl">Sources</div><ul>';
+    item.sources.slice(0, 6).forEach(src => {
+      const url = (src && src.url ? String(src.url) : '').trim();
+      if (!/^https?:\/\//i.test(url)) return;
+      let host = '';
+      try { host = new URL(url).hostname.replace(/^www\./, ''); } catch {}
+      const title = escapeHtml((src.title || host || url).slice(0, 140));
+      html += `<li><a href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">${title}</a>${host && title !== host ? `<span class="src-host">${escapeHtml(host)}</span>` : ''}</li>`;
+    });
+    html += '</ul></div>';
+  }
   if (showReported && item.reportedOn) {
     html += `<div class="evt-reported">Reported ${fmtDate(item.reportedOn)}</div>`;
   }
   html += `</div>`;
   return html;
 }
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' }[c]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
 
 // ═══ FETCH NEWS ═══
 async function fetchNews() {
@@ -419,13 +436,16 @@ async function fetchNews() {
 
   const prompt = `Search the web for recent material news about ${ticker} ${since}. Focus on: earnings, capital allocation, management changes, competitive dynamics, guidance changes, regulatory issues, strategic moves. Ignore daily price moves and minor analyst notes.${prevCtx}
 
-After searching, respond with ONLY a JSON array. Each object: {"headline":"...","category":"earnings|capital|management|competitive|guidance|regulatory|operational","date":"YYYY-MM-DD","summary":"2-3 sentences","materiality":"high|medium|low"}
+After searching, respond with ONLY a JSON array. Each object: {"headline":"...","category":"earnings|capital|management|competitive|guidance|regulatory|operational","date":"YYYY-MM-DD","summary":"2-3 sentences","materiality":"high|medium|low","sources":[{"title":"page title","url":"https://..."}]}
+
+For sources, include 2-5 direct URLs (news articles, SEC filings, press releases, earnings transcripts) that back each event. Use the exact URLs you visited during web search. Do not fabricate URLs. If a source lacks a clean title, use the site name.
 
 If nothing new, respond with exactly: []`;
 
   try {
     let convo = [{ role: 'user', content: prompt }];
     let round = 0;
+    const allContent = []; // accumulate ALL content blocks across rounds
 
     statusEl.textContent = 'Calling API with web search...';
     let resp = await fetch(PROXY, {
@@ -447,6 +467,7 @@ If nothing new, respond with exactly: []`;
       round++;
       statusEl.textContent = `Web search round ${round}...`;
 
+      (data.content || []).forEach(b => allContent.push(b));
       convo.push({ role: 'assistant', content: data.content });
 
       const toolUses = (data.content || []).filter(b => b.type === 'tool_use');
@@ -470,6 +491,9 @@ If nothing new, respond with exactly: []`;
       if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
     }
 
+    // Accumulate final round
+    (data.content || []).forEach(b => allContent.push(b));
+
     // Extract JSON from response
     statusEl.textContent = 'Parsing results...';
     const textBlocks = (data.content || []).filter(b => b.type === 'text');
@@ -484,6 +508,36 @@ If nothing new, respond with exactly: []`;
       }
     } else {
       freshNews = JSON.parse(jsonMatch[0]);
+    }
+
+    // Fallback: harvest URLs from web_search_tool_result blocks + text citations
+    // so we can enrich events that Claude returned without a sources[] array.
+    const harvested = [];
+    const seenUrls = new Set();
+    const pushSrc = (url, title) => {
+      if (!url || !/^https?:\/\//i.test(url)) return;
+      if (seenUrls.has(url)) return;
+      seenUrls.add(url);
+      harvested.push({ url, title: title || '' });
+    };
+    allContent.forEach(b => {
+      // Anthropic web_search returns tool_result blocks with content: [{ type:'web_search_result', url, title }]
+      if (b && b.type === 'web_search_tool_result' && Array.isArray(b.content)) {
+        b.content.forEach(r => { if (r && r.type === 'web_search_result') pushSrc(r.url, r.title); });
+      }
+      // text blocks can carry citations[]
+      if (b && b.type === 'text' && Array.isArray(b.citations)) {
+        b.citations.forEach(c => pushSrc(c.url, c.title || c.cited_text));
+      }
+    });
+
+    // If any event is missing sources, seed it with the top harvested urls (best-effort)
+    if (harvested.length > 0 && Array.isArray(freshNews)) {
+      freshNews.forEach(ev => {
+        if (!Array.isArray(ev.sources) || ev.sources.length === 0) {
+          ev.sources = harvested.slice(0, 4);
+        }
+      });
     }
 
     statusEl.textContent = freshNews.length > 0
