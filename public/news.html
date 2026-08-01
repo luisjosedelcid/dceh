@@ -430,7 +430,8 @@ function renderEventCard(item, showReported) {
       let host = '';
       try { host = new URL(url).hostname.replace(/^www\./, ''); } catch {}
       const title = escapeHtml((src.title || host || url).slice(0, 140));
-      html += `<li><a href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">${title}</a>${host && title !== host ? `<span class="src-host">${escapeHtml(host)}</span>` : ''}</li>`;
+      // Belt-and-braces: inline the separator + spacing so it still works if CSS is cached
+      html += `<li><a href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">${title}</a>${host && title !== host ? ` <span class="src-host" style="margin-left:10px;padding-left:10px;border-left:1px solid rgba(27,38,66,0.15);color:#7a7d85;font-size:10px">${escapeHtml(host)}</span>` : ''}</li>`;
     });
     html += '</ul></div>';
   }
