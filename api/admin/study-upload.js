@@ -11,6 +11,7 @@
 
 const { verifyAdminToken } = require('../_admin-auth');
 const { sbInsert } = require('../_supabase');
+const { mirrorStudyToDataroom } = require('../_sector_mirror');
 
 const MAX_BYTES = 25 * 1024 * 1024; // 25 MB
 const ALLOWED_EXT = /\.(pdf|docx?|xlsx?|pptx?|csv|json|md|txt|png|jpe?g|zip)$/i;
@@ -136,6 +137,15 @@ module.exports = async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: 'Metadata insert failed', detail: String(e).slice(0, 200), url: publicUrl });
     return;
+  }
+
+  // Mirror to Data Room / Sector Briefs (fail-safe: log but don't fail the upload)
+  try {
+    if (section === 'sector' && item) {
+      await mirrorStudyToDataroom(item);
+    }
+  } catch (e) {
+    console.error('mirrorStudyToDataroom failed:', e.message);
   }
 
   res.status(200).json({ ok: true, item });

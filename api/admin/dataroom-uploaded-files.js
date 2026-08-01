@@ -16,6 +16,7 @@
 
 const { verifyAdminToken } = require('../_admin-auth');
 const { sbSelect, sbUpdate, sbDelete } = require('../_supabase');
+const { deleteSibling, SECTOR_BRIEFS_FOLDER_ID } = require('../_sector_mirror');
 
 function parseBody(req) {
   let body = req.body;
@@ -97,6 +98,17 @@ module.exports = async (req, res) => {
       const result = await sbUpdate('dataroom_files', `id=eq.${id}`, patch);
       const item = Array.isArray(result) ? result[0] : result;
       if (!item) { res.status(404).json({ error: 'not found' }); return; }
+      // Propagate name/detail edits to study_files sibling (if any)
+      try {
+        if (item.mirror_id && item.folder_id === SECTOR_BRIEFS_FOLDER_ID) {
+          const mirrorPatch = {};
+          if (patch.name !== undefined) mirrorPatch.name = patch.name;
+          if (patch.detail !== undefined) mirrorPatch.detail = patch.detail;
+          if (Object.keys(mirrorPatch).length > 0) {
+            await sbUpdate('study_files', `mirror_id=eq.${item.mirror_id}`, mirrorPatch);
+          }
+        }
+      } catch (e) { console.error('mirror PATCH sync failed:', e.message); }
       res.status(200).json({ item });
       return;
     }
@@ -107,8 +119,8 @@ module.exports = async (req, res) => {
         res.status(400).json({ error: 'invalid id' });
         return;
       }
-      // Look up the row first to get storage_path
-      const rows = await sbSelect('dataroom_files', `select=id,storage_path&id=eq.${id}&limit=1`);
+      // Look up the row first to get storage_path + mirror_id
+      const rows = await sbSelect('dataroom_files', `select=id,storage_path,mirror_id,folder_id&id=eq.${id}&limit=1`);
       if (rows.length === 0) {
         res.status(404).json({ error: 'not found' });
         return;
@@ -119,6 +131,8 @@ module.exports = async (req, res) => {
       try { await deleteStorageObject(row.storage_path); } catch {}
 
       await sbDelete('dataroom_files', `id=eq.${id}`);
+      // Delete the mirrored study_files row too (if any)
+      try { if (row.mirror_id) await deleteSibling(row.mirror_id, 'dataroom'); } catch (e) { console.error('deleteSibling failed:', e.message); }
       res.status(200).json({ ok: true });
       return;
     }

@@ -13,6 +13,7 @@
 
 const { verifyAdminToken } = require('../_admin-auth');
 const { sbSelect, sbDelete, sbUpdate } = require('../_supabase');
+const { deleteSibling } = require('../_sector_mirror');
 
 function requireAuth(req, res) {
   const tok = req.headers['x-admin-token'];
@@ -73,11 +74,13 @@ module.exports = async (req, res) => {
         res.status(400).json({ error: 'invalid id' });
         return;
       }
-      const rows = await sbSelect('study_files', `select=id,storage_path&id=eq.${id}&limit=1`);
+      const rows = await sbSelect('study_files', `select=id,storage_path,mirror_id&id=eq.${id}&limit=1`);
       if (rows.length === 0) { res.status(404).json({ error: 'not found' }); return; }
       const row = rows[0];
       try { await deleteStorageObject(row.storage_path); } catch {}
       await sbDelete('study_files', `id=eq.${id}`);
+      // Delete the mirrored dataroom_files row too (if any)
+      try { if (row.mirror_id) await deleteSibling(row.mirror_id, 'study'); } catch (e) { console.error('deleteSibling failed:', e.message); }
       res.status(200).json({ ok: true });
       return;
     }
@@ -104,6 +107,12 @@ module.exports = async (req, res) => {
       }
       const result = await sbUpdate('study_files', `id=eq.${id}`, patch);
       const item = Array.isArray(result) ? result[0] : result;
+      // Propagate name/detail edits to the mirror (dataroom_files)
+      try {
+        if (item && item.mirror_id) {
+          await sbUpdate('dataroom_files', `mirror_id=eq.${item.mirror_id}`, patch);
+        }
+      } catch (e) { console.error('mirror PATCH sync failed:', e.message); }
       res.status(200).json({ ok: true, item });
       return;
     }
