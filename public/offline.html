@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Offline · DCE Holdings</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png?v=3">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png?v=3">
+  <meta name="theme-color" content="#1B2642">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="/pwa-shell.css?v=3">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      background: #1B2642;
+      color: #FFFFFF;
+      font-family: 'Archivo', 'Calibri', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      text-align: center;
+    }
+    .wordmark { margin-bottom: 48px; }
+    .wordmark-main {
+      font-size: 44px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #FFFFFF;
+      line-height: 1;
+    }
+    .wordmark-sub {
+      font-size: 18px;
+      font-weight: 300;
+      letter-spacing: 0.14em;
+      color: #B88B47;
+      margin-top: 6px;
+      text-transform: capitalize;
+    }
+    .icon {
+      width: 64px; height: 64px;
+      color: rgba(184, 139, 71, 0.6);
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      margin-bottom: 12px;
+    }
+    p {
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.6;
+      max-width: 320px;
+      margin-bottom: 32px;
+    }
+    button {
+      background: #B88B47;
+      color: #1B2642;
+      border: 0;
+      border-radius: 999px;
+      padding: 14px 32px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.12s ease;
+    }
+    button:active { transform: scale(0.96); }
+    .hint {
+      margin-top: 24px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.4);
+      letter-spacing: 0.05em;
+    }
+  </style>
+<!--PWA:START-->
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png?v=3">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png?v=3">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png?v=3">
+<meta name="theme-color" content="#1B2642">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DCE">
+<meta name="application-name" content="DCE Holdings">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-startup-image" href="/splash/iphone-6.7.png?v=1" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/splash/iphone-6.1.png?v=1" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/splash/iphone-6.1-14.png?v=1" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/splash/iphone-6.7-13pm.png?v=1" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/splash/iphone-mini.png?v=1" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+<link rel="stylesheet" href="/pwa-shell.css?v=3">
+<script defer src="/pwa-shell.js?v=3"></script>
+<!--PWA:END-->
+</head>
+<body>
+  <div class="wordmark">
+    <div class="wordmark-main">DCE</div>
+    <div class="wordmark-sub">Holdings</div>
+  </div>
+  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1 1l22 22"/>
+    <path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/>
+    <path d="M5 12.55a10.94 10.94 0 015.17-2.39"/>
+    <path d="M10.71 5.05A16 16 0 0122.58 9"/>
+    <path d="M1.42 9a15.91 15.91 0 014.7-2.88"/>
+    <path d="M8.53 16.11a6 6 0 016.95 0"/>
+    <line x1="12" y1="20" x2="12.01" y2="20"/>
+  </svg>
+  <h1>You're offline</h1>
+  <p>No internet connection right now. Cached pages you visited recently are still available from the tab bar below.</p>
+  <button type="button" onclick="location.reload()">Try again</button>
+  <div class="hint">Your last-viewed data is preserved for 15 min.</div>
+
+  <script defer src="/pwa-shell.js?v=3"></script>
+</body>
+</html>

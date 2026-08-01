@@ -33,15 +33,8 @@ BLOCK = f"""{START}
 <meta name="application-name" content="DCE Holdings">
 <meta name="format-detection" content="telephone=no">
 {SPLASH_LINKS}
-<link rel="stylesheet" href="/pwa-shell.css?v=2">
-<script defer src="/pwa-shell.js?v=2"></script>
-<script>
-  if ('serviceWorker' in navigator) {{
-    window.addEventListener('load', () => {{
-      navigator.serviceWorker.register('/sw.js', {{ scope: '/' }}).catch(() => {{}});
-    }});
-  }}
-</script>
+<link rel="stylesheet" href="/pwa-shell.css?v=3">
+<script defer src="/pwa-shell.js?v=3"></script>
 {END}"""
 
 BLOCK_RE = re.compile(re.escape(START) + r".*?" + re.escape(END), re.DOTALL)

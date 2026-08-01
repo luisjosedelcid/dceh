@@ -86,6 +86,11 @@
     }).join('');
     document.body.appendChild(nav);
 
+    // Haptic on any tab tap (Android; iOS silently ignores)
+    nav.querySelectorAll('.dce-tab').forEach(t => {
+      t.addEventListener('click', () => haptic(8));
+    });
+
     // Wire "Menu" button
     const menuBtn = nav.querySelector('[data-menu]');
     if (menuBtn) menuBtn.addEventListener('click', openMenuSheet);
@@ -168,11 +173,132 @@
     document.body.appendChild(btn);
   }
 
+  // ── Haptic feedback (L) ──────────────────────────────
+  // navigator.vibrate: Android/Chrome supported, iOS Safari ignored.
+  function haptic(ms) {
+    try { if (navigator.vibrate) navigator.vibrate(ms || 8); } catch (e) {}
+  }
+
+  // ── SW update banner (P) ────────────────────────────
+  function showUpdateBanner() {
+    if (document.getElementById('dce-update-banner')) return;
+    const el = document.createElement('div');
+    el.id = 'dce-update-banner';
+    el.innerHTML = `
+      <span class="dce-update-text">New version available</span>
+      <button class="dce-update-btn" type="button">Reload</button>
+      <button class="dce-update-close" type="button" aria-label="Dismiss">×</button>
+    `;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('is-open'));
+    el.querySelector('.dce-update-btn').addEventListener('click', () => location.reload());
+    el.querySelector('.dce-update-close').addEventListener('click', () => {
+      el.classList.remove('is-open');
+      setTimeout(() => el.remove(), 240);
+    });
+  }
+
+  function registerSW() {
+    if (!('serviceWorker' in navigator)) return;
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(reg => {
+        // Listen for a new SW installing after page load
+        reg.addEventListener('updatefound', () => {
+          const sw = reg.installing;
+          if (!sw) return;
+          sw.addEventListener('statechange', () => {
+            if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+              // A new SW is waiting → user is on an older version.
+              showUpdateBanner();
+            }
+          });
+        });
+      }).catch(() => {});
+
+      navigator.serviceWorker.addEventListener('message', ev => {
+        if (ev.data && ev.data.type === 'SW_UPDATED') showUpdateBanner();
+      });
+    });
+  }
+
+  // ── Long-press context menu disable (R) ────────────────
+  // Disable text/image callout on non-input elements for native feel.
+  function disableCallout() {
+    document.addEventListener('contextmenu', (e) => {
+      const tag = (e.target && e.target.tagName) || '';
+      if (['INPUT','TEXTAREA'].includes(tag)) return;
+      if (e.target && e.target.isContentEditable) return;
+      e.preventDefault();
+    });
+  }
+
+  // ── Pull-to-refresh (M) ────────────────────────────
+  // Enabled only on pages that declare data-pull-refresh="1" on <body>.
+  // Triggers window.dceRefresh() if defined, else location.reload().
+  function initPullToRefresh() {
+    if (!document.body.dataset.pullRefresh) return;
+    let startY = 0, pulling = false, dist = 0;
+    const THRESHOLD = 70;
+
+    const indicator = document.createElement('div');
+    indicator.id = 'dce-ptr';
+    indicator.innerHTML = '<div class="dce-ptr-spinner"></div>';
+    document.body.appendChild(indicator);
+
+    document.addEventListener('touchstart', (e) => {
+      if (window.scrollY > 0) return;
+      startY = e.touches[0].clientY;
+      pulling = true;
+      dist = 0;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+      if (!pulling) return;
+      dist = e.touches[0].clientY - startY;
+      if (dist > 0 && window.scrollY === 0) {
+        const d = Math.min(dist, THRESHOLD * 1.6);
+        indicator.style.transform = `translate(-50%, ${d - 40}px)`;
+        indicator.style.opacity = String(Math.min(1, d / THRESHOLD));
+        if (d >= THRESHOLD) indicator.classList.add('is-armed');
+        else indicator.classList.remove('is-armed');
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+      if (!pulling) return;
+      pulling = false;
+      if (dist >= THRESHOLD) {
+        indicator.classList.add('is-loading');
+        haptic(12);
+        setTimeout(() => {
+          if (typeof window.dceRefresh === 'function') {
+            Promise.resolve(window.dceRefresh()).finally(() => resetIndicator());
+          } else {
+            location.reload();
+          }
+        }, 120);
+      } else {
+        resetIndicator();
+      }
+    });
+
+    function resetIndicator() {
+      indicator.style.transform = '';
+      indicator.style.opacity = '';
+      indicator.classList.remove('is-armed');
+      indicator.classList.remove('is-loading');
+    }
+  }
+
   // ── Init ──────────────────────────────────────────────────────
+  registerSW();
+  disableCallout();
+
   function init() {
     if (!isMobile()) return;
     buildTabBar();
     buildShareBtn();
+    initPullToRefresh();
     // Padding at page bottom so content doesn't hide behind tab bar
     document.body.classList.add('dce-has-tabbar');
   }

@@ -9,7 +9,7 @@
  *
  * Bump SW_VERSION whenever the app shell needs a fresh install.
  */
-const SW_VERSION = 'dce-v4';
+const SW_VERSION = 'dce-v5';
 const SHELL_CACHE = `dce-shell-${SW_VERSION}`;
 const RUNTIME_CACHE = `dce-runtime-${SW_VERSION}`;
 const API_CACHE     = `dce-api-${SW_VERSION}`;
@@ -36,6 +36,7 @@ const SHELL_ASSETS = [
   '/manifest.webmanifest',
   '/pwa-shell.css',
   '/pwa-shell.js',
+  '/offline.html',
   '/icons/apple-touch-icon.png',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
@@ -53,9 +54,18 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
-      keys.filter(k => k !== SHELL_CACHE && k !== RUNTIME_CACHE).map(k => caches.delete(k))
-    )).then(() => self.clients.claim())
+      keys.filter(k => k !== SHELL_CACHE && k !== RUNTIME_CACHE && k !== API_CACHE).map(k => caches.delete(k))
+    )).then(() => self.clients.claim()).then(() => {
+      // Notify all open pages there's a new active SW.
+      return self.clients.matchAll({ type: 'window' }).then(clients => {
+        clients.forEach(c => c.postMessage({ type: 'SW_UPDATED', version: SW_VERSION }));
+      });
+    })
   );
+});
+
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('fetch', event => {
@@ -82,7 +92,7 @@ self.addEventListener('fetch', event => {
         const copy = res.clone();
         caches.open(RUNTIME_CACHE).then(c => c.put(req, copy)).catch(() => {});
         return res;
-      }).catch(() => caches.match(req).then(hit => hit || caches.match('/index.html') || caches.match('/')))
+      }).catch(() => caches.match(req).then(hit => hit || caches.match('/offline.html') || caches.match('/index.html')))
     );
     return;
   }
