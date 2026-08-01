@@ -9,12 +9,14 @@
  *
  * Bump SW_VERSION whenever the app shell needs a fresh install.
  */
-const SW_VERSION = 'dce-v2';
+const SW_VERSION = 'dce-v3';
 const SHELL_CACHE = `dce-shell-${SW_VERSION}`;
 const RUNTIME_CACHE = `dce-runtime-${SW_VERSION}`;
 
 const SHELL_ASSETS = [
   '/manifest.webmanifest',
+  '/pwa-shell.css',
+  '/pwa-shell.js',
   '/icons/apple-touch-icon.png',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
@@ -61,8 +63,8 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Static icons/fonts: cache-first.
-  if (url.pathname.startsWith('/icons/') || url.pathname.startsWith('/fonts/')) {
+  // Static icons/fonts/splash: cache-first.
+  if (url.pathname.startsWith('/icons/') || url.pathname.startsWith('/fonts/') || url.pathname.startsWith('/splash/')) {
     event.respondWith(
       caches.match(req).then(hit => hit || fetch(req).then(res => {
         const copy = res.clone();

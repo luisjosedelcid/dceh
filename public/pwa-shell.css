@@ -1,0 +1,186 @@
+/* DCE Holdings — PWA shell styles
+ * Only visible on mobile. Bottom tab bar + bottom sheet + native feel tweaks.
+ * Brand: navy #1B2642, gold #B88B47.
+ */
+
+/* ─── E) Kill overscroll bounce & pull-to-refresh (feels native) ─── */
+html {
+  overscroll-behavior-y: none;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  overscroll-behavior-y: none;
+  /* Prevent horizontal rubber-band scroll on iOS */
+  overscroll-behavior-x: none;
+}
+
+/* When running as installed PWA, use the full viewport minus safe areas */
+@media all and (display-mode: standalone) {
+  body {
+    /* Extra padding for status bar (translucent) */
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* ─── Mobile-only shell: below 720px ─── */
+@media (max-width: 720px) {
+
+  /* Hide the desktop top nav in favor of the bottom tab bar */
+  .hnav {
+    display: none !important;
+  }
+  /* Some pages use variants of the header — hide their top nav container too if it uses <nav> */
+  header nav.hnav { display: none !important; }
+
+  /* Give room at the page bottom for the tab bar (56px + safe-area) */
+  body.dce-has-tabbar {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ─── Bottom tab bar ─── */
+  #dce-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9998;
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+    background: rgba(27, 38, 66, 0.96);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    border-top: 1px solid rgba(184, 139, 71, 0.22);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+    font-family: 'Archivo', 'Calibri', system-ui, -apple-system, sans-serif;
+  }
+  .dce-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 4px 2px;
+    background: transparent;
+    border: 0;
+    color: rgba(255, 255, 255, 0.55);
+    text-decoration: none;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.15s ease;
+  }
+  .dce-tab:active { transform: scale(0.96); }
+  .dce-tab.is-active { color: #B88B47; }
+  .dce-tab-icon {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .dce-tab-icon svg { width: 100%; height: 100%; }
+  .dce-tab-label {
+    font-size: 10px;
+    line-height: 1;
+  }
+
+  /* ─── Bottom sheet (Menu) ─── */
+  #dce-sheet-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0);
+    transition: background 0.22s ease;
+  }
+  #dce-sheet-overlay.is-open {
+    background: rgba(0, 0, 0, 0.5);
+  }
+  #dce-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    background: #FFFFFF;
+    color: #1B2642;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    padding: 8px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+    transform: translateY(100%);
+    transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1);
+    font-family: 'Archivo', 'Calibri', system-ui, -apple-system, sans-serif;
+    max-height: 78vh;
+    overflow-y: auto;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.16);
+  }
+  #dce-sheet.is-open { transform: translateY(0); }
+
+  .dce-sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: rgba(27, 38, 66, 0.18);
+    border-radius: 2px;
+    margin: 8px auto 12px;
+  }
+  .dce-sheet-title {
+    font-family: 'Archivo', system-ui, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(27, 38, 66, 0.5);
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .dce-sheet-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .dce-sheet-item {
+    background: #F7F7F5;
+    border: 1px solid rgba(27, 38, 66, 0.08);
+    border-radius: 10px;
+    padding: 14px 12px;
+    color: #1B2642;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 0.01em;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.12s ease;
+  }
+  .dce-sheet-item:active { background: #EDEDE7; }
+
+  .dce-sheet-close {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 14px;
+    background: transparent;
+    border: 0;
+    color: #B88B47;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Prevent background scroll while sheet is open */
+  body.dce-sheet-open {
+    overflow: hidden;
+  }
+}
+
+/* Desktop — ensure no leaks */
+@media (min-width: 721px) {
+  #dce-tabbar, #dce-sheet, #dce-sheet-overlay { display: none !important; }
+}

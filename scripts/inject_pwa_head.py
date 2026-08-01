@@ -10,6 +10,16 @@ PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 START = "<!--PWA:START-->"
 END   = "<!--PWA:END-->"
 
+# iOS launch (splash) screens — one per device class
+SPLASH_LINKS = '''<link rel="apple-touch-startup-image" href="/splash/iphone-6.7.png?v=1" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/splash/iphone-6.1.png?v=1" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/splash/iphone-6.1-14.png?v=1" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/splash/iphone-6.7-13pm.png?v=1" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/splash/iphone-mini.png?v=1" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">'''
+
 BLOCK = f"""{START}
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png?v=3">
@@ -22,6 +32,9 @@ BLOCK = f"""{START}
 <meta name="apple-mobile-web-app-title" content="DCE">
 <meta name="application-name" content="DCE Holdings">
 <meta name="format-detection" content="telephone=no">
+{SPLASH_LINKS}
+<link rel="stylesheet" href="/pwa-shell.css?v=1">
+<script defer src="/pwa-shell.js?v=1"></script>
 <script>
   if ('serviceWorker' in navigator) {{
     window.addEventListener('load', () => {{
