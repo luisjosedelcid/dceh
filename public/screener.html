@@ -144,20 +144,122 @@
   </div>
 
   <!-- ════════════════════════════════════════════════════════════ -->
-  <!-- MODE 0: SCREENER (full US universe — placeholder)               -->
+  <!-- MODE 0: SCREENER (full US universe — powered by ROIC.ai)        -->
   <!-- ════════════════════════════════════════════════════════════ -->
   <div class="mode-pane" id="mode-screener">
-    <div class="meta">Full US listed universe (NYSE / NASDAQ — ~7,000 tickers). Pure quantitative filters: size, valuation, quality, growth, leverage, capital allocation. Pre-curated screeners live under <em>Sector Tracker</em>.</div>
+    <div class="meta">Full US listed universe (NYSE / NASDAQ / AMEX — ~6,800 tickers). Daily snapshot from ROIC.ai. <span id="scr-snapshot-hint" style="color:var(--gray-mid)">Loading…</span></div>
 
-    <div style="margin-top:32px;padding:48px 28px;background:var(--white);border:1px solid var(--rule);text-align:center">
-      <div style="font-family:'Archivo',sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:14px">In construction</div>
-      <div style="font-size:12px;color:var(--gray-mid);max-width:560px;margin:0 auto;line-height:1.6">
-        Daily ROIC.ai snapshot of the US universe into Supabase, with 15+ filters grouped by size,
-        valuation, quality, growth, leverage and capital allocation. Results feed directly into
-        Shortlist. Schema, cron and UI to be wired in subsequent commits.
+    <!-- ─── Filter panel (6 essentials, Columbia-style) ─── -->
+    <div style="margin-top:20px;padding:18px 20px;background:var(--white);border:1px solid var(--rule)">
+      <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:16px 22px">
+
+        <!-- Market Cap -->
+        <div>
+          <label style="font-family:'Archivo',sans-serif;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--gray-mid);font-weight:700;display:block;margin-bottom:6px">Market Cap ≥</label>
+          <select id="scr-mcap" class="scr-input">
+            <option value="">Any</option>
+            <option value="100000000">$100M+</option>
+            <option value="1000000000" selected>$1B+</option>
+            <option value="10000000000">$10B+</option>
+            <option value="50000000000">$50B+</option>
+            <option value="200000000000">$200B+</option>
+          </select>
+        </div>
+
+        <!-- Sector -->
+        <div>
+          <label style="font-family:'Archivo',sans-serif;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--gray-mid);font-weight:700;display:block;margin-bottom:6px">Sector</label>
+          <select id="scr-sector" class="scr-input">
+            <option value="">All sectors</option>
+          </select>
+        </div>
+
+        <!-- ROIC -->
+        <div>
+          <label style="font-family:'Archivo',sans-serif;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--gray-mid);font-weight:700;display:block;margin-bottom:6px">ROIC LTM ≥ (%)</label>
+          <input id="scr-roic" class="scr-input" type="number" step="1" placeholder="e.g. 15" />
+        </div>
+
+        <!-- Gross Margin -->
+        <div>
+          <label style="font-family:'Archivo',sans-serif;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--gray-mid);font-weight:700;display:block;margin-bottom:6px">Gross Margin ≥ (%)</label>
+          <input id="scr-gm" class="scr-input" type="number" step="1" placeholder="e.g. 40" />
+        </div>
+
+        <!-- Revenue growth 5y -->
+        <div>
+          <label style="font-family:'Archivo',sans-serif;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--gray-mid);font-weight:700;display:block;margin-bottom:6px">Rev Growth 5y CAGR ≥ (%)</label>
+          <input id="scr-growth" class="scr-input" type="number" step="1" placeholder="e.g. 5" />
+        </div>
+
+        <!-- Debt / EBITDA -->
+        <div>
+          <label style="font-family:'Archivo',sans-serif;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--gray-mid);font-weight:700;display:block;margin-bottom:6px">Debt/EBITDA ≤ (x)</label>
+          <input id="scr-dte" class="scr-input" type="number" step="0.5" placeholder="e.g. 3" />
+        </div>
+
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center;margin-top:18px;padding-top:14px;border-top:1px dashed var(--rule)">
+        <div style="font-family:'Archivo',sans-serif;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gray-mid);font-weight:600">Sort by</div>
+        <select id="scr-sort" class="scr-input" style="width:auto">
+          <option value="mcap_desc">Market Cap ↓</option>
+          <option value="roic_desc">ROIC ↓</option>
+          <option value="growth_desc">Rev Growth 5y ↓</option>
+          <option value="gm_desc">Gross Margin ↓</option>
+          <option value="pe_asc">P/E ↑</option>
+          <option value="ticker_asc">Ticker A→Z</option>
+        </select>
+        <button id="scr-run" onclick="runScreener()" style="margin-left:auto;font-size:10px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.14em;text-transform:uppercase;border:1px solid var(--navy);padding:8px 20px;cursor:pointer;font-family:inherit">Screen</button>
+        <button onclick="resetScreener()" style="font-size:10px;font-weight:600;color:var(--gray-mid);background:transparent;letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--rule);padding:8px 14px;cursor:pointer;font-family:inherit">Reset</button>
+        <button id="scr-admin-refresh" onclick="refreshScreenerNow()" style="display:none;font-size:9px;font-weight:600;color:var(--gold);background:transparent;letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--gold);padding:8px 12px;cursor:pointer;font-family:inherit" title="Admin: force refresh snapshot now">↻ Refresh data</button>
       </div>
     </div>
+
+    <!-- ─── Results ─── -->
+    <div id="scr-results" style="margin-top:20px"></div>
   </div>
+
+  <style>
+    .scr-input {
+      width:100%;
+      padding:8px 10px;
+      font-family:'Archivo',sans-serif;
+      font-size:11px;
+      color:var(--navy);
+      background:var(--white);
+      border:1px solid var(--rule);
+      outline:none;
+    }
+    .scr-input:focus { border-color:var(--gold); }
+    #scr-results table {
+      width:100%;
+      border-collapse:collapse;
+      background:var(--white);
+      font-family:'Archivo',sans-serif;
+      font-size:11px;
+    }
+    #scr-results th {
+      font-size:9px;
+      letter-spacing:0.14em;
+      text-transform:uppercase;
+      color:var(--gray-mid);
+      font-weight:700;
+      text-align:left;
+      padding:10px 8px;
+      border-bottom:2px solid var(--rule);
+      background:#fafafa;
+      position:sticky;
+      top:0;
+    }
+    #scr-results td {
+      padding:8px;
+      border-bottom:1px solid var(--rule);
+      color:var(--navy);
+    }
+    #scr-results td.num { text-align:right; font-variant-numeric:tabular-nums; }
+    #scr-results tr:hover td { background:#fcfaf5; }
+  </style>
 
   <!-- ════════════════════════════════════════════════════════════ -->
   <!-- MODE 1: SECTOR SCREENER (pre-curated by quality)                -->
@@ -302,6 +404,209 @@ function showMode(mode, btn) {
   if (mode === 'ideafeed' && !window._ifLoaded) {
     loadIdeaFeed();
     window._ifLoaded = true;
+  }
+  if (mode === 'screener' && !window._scrLoaded) {
+    initScreener();
+    window._scrLoaded = true;
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// FULL US SCREENER — backed by /api/screener-query (Supabase snapshot)
+// ════════════════════════════════════════════════════════════
+const SCR_SECTORS = [
+  'Technology','Health Care','Financial Services','Consumer Cyclical','Consumer Defensive',
+  'Industrials','Energy','Utilities','Real Estate','Basic Materials','Communication Services'
+];
+
+function _scrFmtN(x) {
+  if (x == null || isNaN(x)) return '—';
+  const v = Number(x);
+  if (Math.abs(v) >= 1e12) return (v/1e12).toFixed(2) + 'T';
+  if (Math.abs(v) >= 1e9)  return (v/1e9).toFixed(2) + 'B';
+  if (Math.abs(v) >= 1e6)  return (v/1e6).toFixed(1) + 'M';
+  return v.toLocaleString();
+}
+function _scrFmtPct(x, digits=1) {
+  if (x == null || isNaN(x)) return '—';
+  return Number(x).toFixed(digits) + '%';
+}
+function _scrFmtX(x, digits=1) {
+  if (x == null || isNaN(x)) return '—';
+  return Number(x).toFixed(digits) + 'x';
+}
+function _scrEsc(s) { return String(s || '').replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'})[c]); }
+
+function initScreener() {
+  // Populate sector dropdown
+  const sel = document.getElementById('scr-sector');
+  if (sel && sel.options.length <= 1) {
+    SCR_SECTORS.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s; o.textContent = s;
+      sel.appendChild(o);
+    });
+  }
+  // Show admin-only refresh button
+  try {
+    const t = (window.dceAuth && dceAuth.getToken) ? dceAuth.getToken() : null;
+    const role = (window.dceAuth && dceAuth.getRole) ? dceAuth.getRole() : null;
+    if (t && role === 'admin') {
+      const b = document.getElementById('scr-admin-refresh');
+      if (b) b.style.display = 'inline-block';
+    }
+  } catch(e) {}
+  // Fetch snapshot meta ("Last snapshot: ...")
+  fetchSnapshotMeta();
+  // Kick off first render
+  runScreener();
+}
+
+async function fetchSnapshotMeta() {
+  try {
+    const tk = window.dceAuth ? dceAuth.getToken() : null;
+    if (!tk) return;
+    const r = await fetch('/api/screener-query?limit=1', { headers: { 'x-admin-token': tk } });
+    if (!r.ok) return;
+    const d = await r.json();
+    const hint = document.getElementById('scr-snapshot-hint');
+    if (!hint) return;
+    if (d.snapshot && d.snapshot.finished_at) {
+      const dt = new Date(d.snapshot.finished_at);
+      const ago = Math.round((Date.now() - dt.getTime()) / 3_600_000);
+      const okN = d.snapshot.tickers_ok || 0;
+      hint.textContent = `Last snapshot: ${dt.toISOString().slice(0,10)} (${ago}h ago, ${okN.toLocaleString()} tickers)`;
+    } else if (d.snapshot) {
+      hint.textContent = 'Snapshot in progress…';
+    } else {
+      hint.textContent = 'No snapshot yet — admin, click ↻ Refresh data.';
+    }
+  } catch(e) {}
+}
+
+function resetScreener() {
+  document.getElementById('scr-mcap').value = '1000000000';
+  document.getElementById('scr-sector').value = '';
+  document.getElementById('scr-roic').value = '';
+  document.getElementById('scr-gm').value = '';
+  document.getElementById('scr-growth').value = '';
+  document.getElementById('scr-dte').value = '';
+  document.getElementById('scr-sort').value = 'mcap_desc';
+  runScreener();
+}
+
+async function runScreener() {
+  const box = document.getElementById('scr-results');
+  const btn = document.getElementById('scr-run');
+  box.innerHTML = '<div style="padding:24px;text-align:center;color:var(--gray-mid);font-family:Archivo,sans-serif;font-size:11px;letter-spacing:0.14em;text-transform:uppercase">Running screen…</div>';
+  btn.disabled = true;
+
+  const params = new URLSearchParams();
+  const mcap = document.getElementById('scr-mcap').value;
+  const sec = document.getElementById('scr-sector').value;
+  const roic = document.getElementById('scr-roic').value;
+  const gm = document.getElementById('scr-gm').value;
+  const gr = document.getElementById('scr-growth').value;
+  const dte = document.getElementById('scr-dte').value;
+  const sort = document.getElementById('scr-sort').value;
+
+  if (mcap) params.set('mcap_min', mcap);
+  if (sec) params.set('sectors', sec);
+  if (roic) params.set('roic_min', roic);
+  if (gm) params.set('gm_min', gm);
+  if (gr) params.set('growth_min', gr);
+  if (dte) params.set('dte_max', dte);
+  if (sort) params.set('sort', sort);
+  params.set('limit', '200');
+
+  try {
+    const tk = window.dceAuth ? dceAuth.getToken() : null;
+    if (!tk) {
+      box.innerHTML = '<div style="padding:24px;color:var(--gray-mid);font-family:Archivo,sans-serif;font-size:12px">Sign in to run the screener.</div>';
+      btn.disabled = false;
+      return;
+    }
+    const r = await fetch('/api/screener-query?' + params.toString(), { headers: { 'x-admin-token': tk } });
+    if (!r.ok) {
+      const err = await r.text();
+      box.innerHTML = `<div style="padding:24px;color:#c93636;font-family:Archivo,sans-serif;font-size:12px">Error ${r.status}: ${_scrEsc(err.slice(0,200))}</div>`;
+      btn.disabled = false;
+      return;
+    }
+    const d = await r.json();
+    renderScreenerResults(d.rows || [], d.count || 0);
+
+    // Refresh meta hint
+    if (d.snapshot) {
+      const hint = document.getElementById('scr-snapshot-hint');
+      if (hint && d.snapshot.finished_at) {
+        const dt = new Date(d.snapshot.finished_at);
+        const ago = Math.round((Date.now() - dt.getTime()) / 3_600_000);
+        hint.textContent = `Last snapshot: ${dt.toISOString().slice(0,10)} (${ago}h ago, ${(d.snapshot.tickers_ok || 0).toLocaleString()} tickers)`;
+      }
+    }
+  } catch(e) {
+    box.innerHTML = `<div style="padding:24px;color:#c93636;font-family:Archivo,sans-serif;font-size:12px">${_scrEsc(e.message)}</div>`;
+  }
+  btn.disabled = false;
+}
+
+function renderScreenerResults(rows, count) {
+  const box = document.getElementById('scr-results');
+  if (!rows.length) {
+    box.innerHTML = '<div style="padding:32px;text-align:center;color:var(--gray-mid);font-family:Archivo,sans-serif;font-size:12px">No matches. Try loosening some filters.</div>';
+    return;
+  }
+  const meta = `<div style="font-family:Archivo,sans-serif;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:10px">${rows.length} results${count > rows.length ? ` (of ${count})` : ''}</div>`;
+  const head = `
+    <thead><tr>
+      <th>Ticker</th>
+      <th>Company</th>
+      <th>Sector</th>
+      <th style="text-align:right">MCap</th>
+      <th style="text-align:right">ROIC</th>
+      <th style="text-align:right">GM</th>
+      <th style="text-align:right">OM</th>
+      <th style="text-align:right">Rev 5y</th>
+      <th style="text-align:right">D/EBITDA</th>
+      <th style="text-align:right">P/E</th>
+      <th style="text-align:right">EV/EBITDA</th>
+      <th></th>
+    </tr></thead>`;
+  const body = rows.map(r => {
+    const nm = _scrEsc(r.company_name || '');
+    return `<tr>
+      <td style="font-weight:700"><a href="/company.html?ticker=${_scrEsc(r.ticker)}" style="color:var(--navy);text-decoration:none;border-bottom:1px dotted var(--gold)">${_scrEsc(r.ticker)}</a></td>
+      <td>${nm}</td>
+      <td style="color:var(--gray-mid);font-size:10px">${_scrEsc(r.sector || '—')}</td>
+      <td class="num">$${_scrFmtN(r.market_cap)}</td>
+      <td class="num">${_scrFmtPct(r.roic, 1)}</td>
+      <td class="num">${_scrFmtPct(r.gross_margin, 1)}</td>
+      <td class="num">${_scrFmtPct(r.operating_margin, 1)}</td>
+      <td class="num">${_scrFmtPct(r.revenue_cagr_5y, 1)}</td>
+      <td class="num">${_scrFmtX(r.debt_to_ebitda, 1)}</td>
+      <td class="num">${_scrFmtX(r.pe_ratio, 1)}</td>
+      <td class="num">${_scrFmtX(r.ev_to_ebitda, 1)}</td>
+      <td><button onclick="sendToShortlist(this)" data-tk="${_scrEsc(r.ticker)}" data-nm="${nm}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:4px 9px;cursor:pointer;font-family:inherit" title="Add to Shortlist">→ Shortlist</button></td>
+    </tr>`;
+  }).join('');
+  box.innerHTML = meta + `<div style="max-height:70vh;overflow:auto;border:1px solid var(--rule)"><table>${head}<tbody>${body}</tbody></table></div>`;
+}
+
+async function refreshScreenerNow() {
+  if (!confirm('Force a full refresh of the ROIC.ai snapshot? Takes ~90 minutes and rate-limits the API. Continue?')) return;
+  try {
+    const tk = window.dceAuth ? dceAuth.getToken() : null;
+    const r = await fetch('/api/admin/screener-refresh-now', { method: 'POST', headers: { 'x-admin-token': tk } });
+    const d = await r.json();
+    if (r.ok) {
+      alert(`Refresh started (chunk 0 done, ${d.upserted} tickers upserted, ${d.failed} failed). It will continue in the background — check back in ~90 min.`);
+      fetchSnapshotMeta();
+    } else {
+      alert('Refresh failed: ' + (d.error || r.status));
+    }
+  } catch(e) {
+    alert('Refresh failed: ' + e.message);
   }
 }
 
