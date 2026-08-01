@@ -14,12 +14,23 @@ body {
   overscroll-behavior-x: none;
 }
 
-/* When running as installed PWA, use the full viewport minus safe areas */
+/* When running as installed PWA (standalone mode)
+ * Push page content below the translucent status bar, respect notch,
+ * and hide any web-only elements marked with .pwa-hide.
+ */
 @media all and (display-mode: standalone) {
   body {
-    /* Extra padding for status bar (translucent) */
     padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
+  /* Any element the site marks as web-only can hide itself in standalone */
+  .pwa-hide { display: none !important; }
+  /* Mark class the site can use to show elements only when installed */
+  .pwa-only { display: initial; }
+}
+@media all and (display-mode: browser) {
+  .pwa-only { display: none !important; }
 }
 
 /* ─── Mobile-only shell: below 720px ─── */
@@ -178,9 +189,35 @@ body {
   body.dce-sheet-open {
     overflow: hidden;
   }
+
+  /* ─── Share FAB (top-right, native iOS look) ─── */
+  #dce-share-fab {
+    position: fixed;
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    right: calc(12px + env(safe-area-inset-right, 0px));
+    z-index: 9997;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(27, 38, 66, 0.86);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    backdrop-filter: saturate(180%) blur(14px);
+    color: #B88B47;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.12s ease, background 0.12s ease;
+  }
+  #dce-share-fab:active { transform: scale(0.92); background: rgba(27, 38, 66, 0.95); }
+  #dce-share-fab svg { width: 18px; height: 18px; }
 }
 
 /* Desktop — ensure no leaks */
 @media (min-width: 721px) {
-  #dce-tabbar, #dce-sheet, #dce-sheet-overlay { display: none !important; }
+  #dce-tabbar, #dce-sheet, #dce-sheet-overlay, #dce-share-fab { display: none !important; }
 }

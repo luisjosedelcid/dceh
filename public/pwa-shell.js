@@ -145,10 +145,34 @@
     }, 220);
   }
 
+  // ── Native Share button (top-right floating on mobile) ────────
+  function buildShareBtn() {
+    if (document.getElementById('dce-share-fab')) return;
+    if (!navigator.share) return; // graceful skip if unsupported
+    const btn = document.createElement('button');
+    btn.id = 'dce-share-fab';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Share this page');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>';
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.share({
+          title: document.title || 'DCE Holdings',
+          text: (document.querySelector('meta[name="description"]') || {}).content || 'DCE Holdings',
+          url: location.href
+        });
+      } catch (e) {
+        // user cancelled or unsupported — no-op
+      }
+    });
+    document.body.appendChild(btn);
+  }
+
   // ── Init ──────────────────────────────────────────────────────
   function init() {
     if (!isMobile()) return;
     buildTabBar();
+    buildShareBtn();
     // Padding at page bottom so content doesn't hide behind tab bar
     document.body.classList.add('dce-has-tabbar');
   }
@@ -168,6 +192,8 @@
       if (isMobile() && !tb) init();
       if (!isMobile() && tb) {
         tb.remove();
+        const sb = document.getElementById('dce-share-fab');
+        if (sb) sb.remove();
         document.body.classList.remove('dce-has-tabbar');
         closeMenuSheet();
       }

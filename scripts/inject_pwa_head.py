@@ -33,8 +33,8 @@ BLOCK = f"""{START}
 <meta name="application-name" content="DCE Holdings">
 <meta name="format-detection" content="telephone=no">
 {SPLASH_LINKS}
-<link rel="stylesheet" href="/pwa-shell.css?v=1">
-<script defer src="/pwa-shell.js?v=1"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=2">
+<script defer src="/pwa-shell.js?v=2"></script>
 <script>
   if ('serviceWorker' in navigator) {{
     window.addEventListener('load', () => {{

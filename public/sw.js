@@ -9,9 +9,28 @@
  *
  * Bump SW_VERSION whenever the app shell needs a fresh install.
  */
-const SW_VERSION = 'dce-v3';
+const SW_VERSION = 'dce-v4';
 const SHELL_CACHE = `dce-shell-${SW_VERSION}`;
 const RUNTIME_CACHE = `dce-runtime-${SW_VERSION}`;
+const API_CACHE     = `dce-api-${SW_VERSION}`;
+
+// Read-only GET endpoints that are safe to serve stale.
+// Anything NOT in this list is passed straight to network.
+const API_SWR_ALLOW = [
+  '/api/cockpit',
+  '/api/screener-query',
+  '/api/screener-snapshot',
+  '/api/universe',
+  '/api/sector-tracker',
+  '/api/superinvestors',
+  '/api/idea-feed',
+  '/api/performance',
+  '/api/calendar',
+  '/api/news',
+  '/api/portfolio',
+  '/api/covered'
+];
+const API_TTL_MS = 15 * 60 * 1000; // 15 min freshness window
 
 const SHELL_ASSETS = [
   '/manifest.webmanifest',
@@ -45,8 +64,13 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(req.url);
 
-  // Never touch API calls — always network.
-  if (url.pathname.startsWith('/api/')) return;
+  // API calls: SWR only for whitelisted read endpoints; everything else network-only.
+  if (url.pathname.startsWith('/api/')) {
+    const allowed = API_SWR_ALLOW.some(p => url.pathname === p || url.pathname.startsWith(p + '/'));
+    if (!allowed) return; // let it hit the network un-cached
+    event.respondWith(swrApi(req));
+    return;
+  }
 
   // Only handle same-origin.
   if (url.origin !== self.location.origin) return;
@@ -86,3 +110,47 @@ self.addEventListener('fetch', event => {
     }).catch(() => caches.match(req))
   );
 });
+
+/**
+ * Stale-While-Revalidate for whitelisted /api/* GETs.
+ * Serves cached response instantly (if any), then updates cache from network.
+ * Adds x-dce-cache: hit|miss|stale so pages can flag stale data if needed.
+ */
+async function swrApi(req) {
+  const cache = await caches.open(API_CACHE);
+  const cached = await cache.match(req);
+  const networkPromise = fetch(req).then(res => {
+    if (res && res.status === 200) {
+      const copy = res.clone();
+      const headers = new Headers(copy.headers);
+      headers.set('x-dce-cached-at', Date.now().toString());
+      // Rewrap so we can attach the timestamp header.
+      copy.blob().then(body => {
+        cache.put(req, new Response(body, { status: copy.status, statusText: copy.statusText, headers }));
+      }).catch(() => {});
+    }
+    return res;
+  }).catch(() => null);
+
+  if (cached) {
+    const ts = parseInt(cached.headers.get('x-dce-cached-at') || '0', 10);
+    const age = Date.now() - ts;
+    // Return cache immediately; fire network in background.
+    networkPromise; // no await
+    const hdrs = new Headers(cached.headers);
+    hdrs.set('x-dce-cache', age < API_TTL_MS ? 'hit' : 'stale');
+    hdrs.set('x-dce-cache-age-ms', age.toString());
+    return new Response(await cached.blob(), { status: cached.status, statusText: cached.statusText, headers: hdrs });
+  }
+
+  // No cache — wait for network. If offline, return a synthetic 503.
+  const res = await networkPromise;
+  if (res) {
+    const hdrs = new Headers(res.headers);
+    hdrs.set('x-dce-cache', 'miss');
+    return new Response(await res.clone().blob(), { status: res.status, statusText: res.statusText, headers: hdrs });
+  }
+  return new Response(JSON.stringify({ error: 'offline', cached: false }), {
+    status: 503, headers: { 'Content-Type': 'application/json', 'x-dce-cache': 'offline' }
+  });
+}
