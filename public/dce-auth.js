@@ -530,10 +530,20 @@
     const hnavForGroup = document.querySelector('.hnav');
     if (hnavForGroup) _groupNav(hnavForGroup);
     // Settings gear: mount even in 'manual' mode (so performance/settings pages
-    // still expose the gear next to their own Sign Out button)
+    // still expose the gear next to their own Sign Out button).
+    // NEW 2026-08-01: Manual pages that expose an explicit [data-dce-mount-signout]
+    // slot also get the Sign Out button auto-mounted. This lets pages with their
+    // own gate (index/landing) opt into the standard button without abandoning
+    // manual mode.
     if (document.body.dataset.dceAuth === 'manual') {
+      const explicitSlot = document.querySelector('[data-dce-mount-signout]');
       const t = _findNavTarget();
-      if (t) _mountSettingsLink(t);
+      if (explicitSlot) {
+        mountAdminButton(explicitSlot);
+        _mountSettingsLink(explicitSlot);
+      } else if (t) {
+        _mountSettingsLink(t);
+      }
       return;
     }
     const target = _findNavTarget();
