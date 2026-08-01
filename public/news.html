@@ -412,6 +412,37 @@ function escapeHtml(s) {
 }
 function escapeAttr(s) { return escapeHtml(s); }
 
+// Extract the outermost JSON array from arbitrary text using balanced-bracket
+// parsing that is string-literal aware. Returns the parsed array, or null.
+function extractJsonArray(text) {
+  if (!text) return null;
+  const s = String(text);
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] !== '[') continue;
+    let depth = 0, inStr = false, esc = false;
+    for (let j = i; j < s.length; j++) {
+      const c = s[j];
+      if (esc) { esc = false; continue; }
+      if (c === '\\') { esc = true; continue; }
+      if (c === '"') { inStr = !inStr; continue; }
+      if (inStr) continue;
+      if (c === '[') depth++;
+      else if (c === ']') {
+        depth--;
+        if (depth === 0) {
+          const candidate = s.slice(i, j + 1);
+          try {
+            const parsed = JSON.parse(candidate);
+            if (Array.isArray(parsed)) return parsed;
+          } catch { /* not valid JSON — keep scanning */ }
+          break;
+        }
+      }
+    }
+  }
+  return null;
+}
+
 // ═══ FETCH NEWS ═══
 async function fetchNews() {
   const ticker = activeTicker;
@@ -499,15 +530,15 @@ If nothing new, respond with exactly: []`;
     const textBlocks = (data.content || []).filter(b => b.type === 'text');
     const fullText = textBlocks.map(b => b.text).join('\n');
 
-    const jsonMatch = fullText.match(/\[[\s\S]*?\]/);
-    if (!jsonMatch) {
-      if (fullText.includes('[]') || fullText.trim() === '[]') {
+    // Find the outermost JSON array with balanced-bracket parsing
+    // (a naive non-greedy regex breaks now that events contain nested sources[] arrays).
+    freshNews = extractJsonArray(fullText);
+    if (freshNews === null) {
+      if (fullText.trim() === '[]' || /\[\s*\]/.test(fullText)) {
         freshNews = [];
       } else {
-        throw new Error('Could not parse response. Raw: ' + fullText.substring(0, 300));
+        throw new Error('Could not parse response. Raw: ' + fullText.substring(0, 500));
       }
-    } else {
-      freshNews = JSON.parse(jsonMatch[0]);
     }
 
     // Fallback: harvest URLs from web_search_tool_result blocks + text citations
