@@ -386,6 +386,7 @@ function renderSector(sector) {
   const summaryRows = tickers.map(t => {
     const s = t.summary || {};
     const v = t.valuation_metrics || {};
+    const safeName = (t.name || '').replace(/"/g, '&quot;');
     return `<tr>
       <td class="ticker-cell">${t.ticker}</td>
       <td>${t.name || ''}</td>
@@ -401,6 +402,7 @@ function renderSector(sector) {
       <td>${fmtMktCapM(v.mkt_cap_m)}</td>
       <td class="${colorClassNum(s.score_10, 7.5, 6.0)}" style="font-weight:700">${fmtNum(s.score_10)}</td>
       <td>${verdictBadge(s.verdict)}</td>
+      <td style="white-space:nowrap"><button onclick="sendToShortlist(this)" data-tk="${t.ticker}" data-nm="${safeName}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:4px 9px;cursor:pointer;font-family:inherit" title="Add to Shortlist (radar)">→ Shortlist</button></td>
     </tr>`;
   }).join('');
 
@@ -451,6 +453,7 @@ function renderSector(sector) {
           <th data-sort="percent">IRR</th><th data-sort="mktcap">Mkt Cap</th>
           <th data-sort="number" title="Quality + Valuation, on a /10 scale">Score /10</th>
           <th data-sort="verdict">Verdict</th>
+          <th>Action</th>
         </tr></thead>
         <tbody>${summaryRows}</tbody>
       </table>
@@ -1059,7 +1062,7 @@ function renderNewBuys() {
     <div style="overflow-x:auto">
       <table class="stbl">
         <thead><tr>
-          <th>Ticker</th><th>Company</th><th>New</th><th>Add</th><th>Total $ moved</th><th>Funds making moves</th>
+          <th>Ticker</th><th>Company</th><th>New</th><th>Add</th><th>Total $ moved</th><th>Funds making moves</th><th>Action</th>
         </tr></thead>
         <tbody>`;
 
@@ -1085,6 +1088,7 @@ function renderNewBuys() {
         return `<span class="verdict ${cls}" style="margin:1px 2px;font-size:8.5px" title="${tipParts.join(' \u2014 ')}">${m.fund.split(' ')[0]} ${lbl}</span>`;
       }).join('');
 
+    const safeName = (r.name || '').replace(/"/g, '&quot;');
     html += `<tr>
       <td class="ticker-cell">${tickerLink}</td>
       <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name}</td>
@@ -1092,6 +1096,7 @@ function renderNewBuys() {
       <td class="${r.addCount>0?'green':'dim'}" style="font-weight:${r.addCount>0?'700':'400'}">${r.addCount||'\u2014'}</td>
       <td>${fmtMoney(r.totalValue)}</td>
       <td style="text-align:left;max-width:420px">${moves}</td>
+      <td style="white-space:nowrap"><button onclick="sendToShortlist(this)" data-tk="${r.symbol}" data-nm="${safeName}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:4px 9px;cursor:pointer;font-family:inherit" title="Add to Shortlist (radar)">→ Shortlist</button></td>
     </tr>`;
   }
 
@@ -1178,7 +1183,7 @@ function renderAggregate() {
       <table class="stbl">
         <thead><tr>
           <th>Ticker</th><th>Company</th><th>Funds</th><th>Total $</th>
-          <th>New</th><th>Add</th><th>Trim</th><th>Hold</th><th>Holders</th>
+          <th>New</th><th>Add</th><th>Trim</th><th>Hold</th><th>Holders</th><th>Action</th>
         </tr></thead>
         <tbody>`;
 
@@ -1191,6 +1196,7 @@ function renderAggregate() {
         return `<span class="verdict ${cls}" style="margin:1px 2px;font-size:8.5px" title="${h.fund}: ${fmtShares(h.shares)} sh, ${fmtPct(h.allocation/100,1)} allocation, ${h.action}">${h.fund.split(' ')[0]}</span>`;
       }).join('');
 
+    const safeName = (r.name || '').replace(/"/g, '&quot;');
     html += `<tr>
       <td class="ticker-cell"><a href="https://fintel.io/so/us/${r.symbol.toLowerCase()}" target="_blank" rel="noopener">${r.symbol}</a></td>
       <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name}</td>
@@ -1201,6 +1207,7 @@ function renderAggregate() {
       <td class="${r.trimCount>0?'amber':'dim'}" style="font-weight:${r.trimCount>0?'700':'400'}">${r.trimCount||'—'}</td>
       <td class="dim">${r.holdCount||'—'}</td>
       <td style="text-align:left;max-width:380px">${holders}</td>
+      <td style="white-space:nowrap"><button onclick="sendToShortlist(this)" data-tk="${r.symbol}" data-nm="${safeName}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:4px 9px;cursor:pointer;font-family:inherit" title="Add to Shortlist (radar)">→ Shortlist</button></td>
     </tr>`;
   }
 
@@ -1245,7 +1252,7 @@ function renderByFund() {
       <table class="stbl">
         <thead><tr>
           <th>Ticker</th><th>Company</th><th>Shares</th><th>Δ Shares</th><th>% Δ</th>
-          <th>Value</th><th>Allocation</th><th>Δ Alloc</th><th>Action</th>
+          <th>Value</th><th>Allocation</th><th>Δ Alloc</th><th>Action</th><th>Shortlist</th>
         </tr></thead>
         <tbody>`;
 
@@ -1255,6 +1262,7 @@ function renderByFund() {
     if (!sym) continue;
     const action = classifyAction(h);
     const cls = action === 'new' ? 'v-new' : action === 'add' ? 'v-add' : action === 'trim' ? 'v-trim' : action === 'exit' ? 'v-exit' : 'v-pass';
+    const safeName = (name || '').replace(/"/g, '&quot;');
     html += `<tr>
       <td class="ticker-cell"><a href="https://fintel.io/so/us/${sym.toLowerCase()}" target="_blank" rel="noopener">${sym}</a></td>
       <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</td>
@@ -1265,6 +1273,7 @@ function renderByFund() {
       <td style="font-weight:600">${h.allocation != null ? h.allocation.toFixed(2) + '%' : '—'}</td>
       <td class="${(h.allocationChange||0)>0?'green':(h.allocationChange||0)<0?'red':'dim'}">${h.allocationChange != null ? ((h.allocationChange>0?'+':'') + h.allocationChange.toFixed(2) + 'pp') : '—'}</td>
       <td><span class="verdict ${cls}">${action}</span></td>
+      <td style="white-space:nowrap"><button onclick="sendToShortlist(this)" data-tk="${sym}" data-nm="${safeName}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:4px 9px;cursor:pointer;font-family:inherit" title="Add to Shortlist (radar)">→ Shortlist</button></td>
     </tr>`;
   }
   html += '</tbody></table></div>';
@@ -1315,8 +1324,9 @@ function renderTicker() {
     </tr>`;
   }
   html += `</tbody></table></div>
-    <div class="meta" style="margin-top:14px">
-      View on <a href="https://fintel.io/so/us/${symRaw.toLowerCase()}" target="_blank" rel="noopener" style="color:var(--gold)">Fintel ↗</a>
+    <div class="meta" style="margin-top:14px;display:flex;align-items:center;gap:12px">
+      <button onclick="sendToShortlist(this)" data-tk="${symRaw}" data-nm="${symRaw}" style="font-size:10px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:6px 12px;cursor:pointer;font-family:inherit" title="Add ${symRaw} to Shortlist (radar)">→ Shortlist</button>
+      <span>View on <a href="https://fintel.io/so/us/${symRaw.toLowerCase()}" target="_blank" rel="noopener" style="color:var(--gold)">Fintel ↗</a></span>
     </div>`;
   return html;
 }
@@ -1435,7 +1445,7 @@ async function loadIdeaFeed() {
         <div style="font-size:14px;line-height:1.4;margin-bottom:8px">${titleHtml}${methodBadge}</div>
         ${tickers ? `<div style="margin-bottom:8px">${tickers}</div>` : ''}
         ${it.snippet ? `<div style="font-size:12px;color:var(--gray-mid);line-height:1.5;margin-bottom:8px">${_ifEscape(it.snippet.slice(0, 240))}${it.snippet.length > 240 ? '…' : ''}</div>` : ''}
-        ${(it.tickers || []).length > 0 ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed var(--rule)">${(it.tickers || []).map(tk => `<button onclick="sendToWorkflow(this)" data-tk="${_ifEscape(tk)}" data-nm="${_ifEscape(it.title)}" data-url="${_ifEscape(it.url || '')}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:4px 9px;cursor:pointer;font-family:inherit" title="Add ${_ifEscape(tk)} to Workflow">${_ifEscape(tk)} → Workflow</button>`).join('')}</div>` : ''}
+        ${(it.tickers || []).length > 0 ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed var(--rule)">${(it.tickers || []).map(tk => `<button onclick="sendToShortlist(this)" data-tk="${_ifEscape(tk)}" data-nm="${_ifEscape(it.title)}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:4px 9px;cursor:pointer;font-family:inherit" title="Add ${_ifEscape(tk)} to Shortlist">${_ifEscape(tk)} → Shortlist</button>`).join('')}</div>` : ''}
       </div>`;
     }
     html += '</div>';
@@ -1505,7 +1515,7 @@ async function renderIdeaFeedTickers(items, status, cont) {
             </td>
             <td style="white-space:nowrap">
               <a href="/company.html?ticker=${encodeURIComponent(r.ticker)}" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px;margin-right:4px">Open →</a>
-              <button onclick="sendToWorkflow(this)" data-tk="${_ifEscape(r.ticker)}" data-nm="${_ifEscape(r.thesisItem?.title || '')}" data-url="${_ifEscape(r.mentions[0].url || '')}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:5px 10px;cursor:pointer;font-family:inherit" title="Add to Workflow kanban (backlog)">→ Workflow</button>
+              <button onclick="sendToShortlist(this)" data-tk="${_ifEscape(r.ticker)}" data-nm="${_ifEscape(r.thesisItem?.title || '')}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:5px 10px;cursor:pointer;font-family:inherit" title="Add to Shortlist (radar)">→ Shortlist</button>
             </td>
           </tr>`).join('')}
         </tbody>
@@ -1601,6 +1611,55 @@ async function sendToWorkflow(btn) {
   }
 }
 window.sendToWorkflow = sendToWorkflow;
+
+// ─── Any Find tab → Shortlist handoff ────────────────────────────────
+// Adds a ticker to the Shortlist (radar) table. Called from Sector Tracker,
+// Idea Feed and Superinvestors. Deliberately keeps thesis/link empty per user
+// preference — Shortlist is now the mandatory intermediate step before Workflow.
+// A 409 (already on radar) is treated as success (silent "already tracked").
+async function sendToShortlist(btn) {
+  const ticker = (btn.dataset.tk || '').toUpperCase().trim();
+  const name   = (btn.dataset.nm  || '').trim() || ticker;
+  if (!ticker) { alert('Ticker missing'); return; }
+
+  const tk = (window.dceAuth && window.dceAuth.token) ? window.dceAuth.token() : null;
+  if (!tk) { alert('Log in as admin to add to Shortlist.'); return; }
+
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Adding…';
+  try {
+    const r = await fetch('/api/admin/radar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': tk },
+      body: JSON.stringify({ ticker, name }),
+    });
+    const data = await r.json().catch(() => ({}));
+    // 409 = already on radar. Treat as soft success.
+    if (r.status === 409) {
+      btn.textContent = '✓ Already tracked';
+      btn.style.background = 'var(--gray-mid, #8a8d94)';
+      btn.style.borderColor = 'var(--gray-mid, #8a8d94)';
+    } else if (!r.ok) {
+      throw new Error(data.error || ('HTTP ' + r.status));
+    } else {
+      btn.textContent = '✓ Shortlisted';
+      btn.style.background = 'var(--green, #2a7a56)';
+      btn.style.borderColor = 'var(--green, #2a7a56)';
+    }
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.style.background = 'var(--navy)';
+      btn.style.borderColor = 'var(--navy)';
+      btn.disabled = false;
+    }, 2500);
+  } catch (e) {
+    btn.textContent = original;
+    btn.disabled = false;
+    alert('Could not add to Shortlist: ' + e.message);
+  }
+}
+window.sendToShortlist = sendToShortlist;
 </script>
 <script src="/search.js" defer></script>
 </body>
