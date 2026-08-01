@@ -672,6 +672,18 @@ function signedFmt(v, dec) {
 }
 
 // ── Render Summary, Quality, Valuation tables ─────────────────────
+// Cross-link ticker cells in Sector Tracker: covered → internal analysis, otherwise → Roic.ai (external, new tab)
+const _SECTOR_COVERED = ['BKNG', 'SAP', 'LULU', 'MSFT', 'RACE', 'UBER'];
+function _sectorTickerLink(tk){
+  const t = String(tk || '');
+  const up = t.toUpperCase();
+  const style = 'color:var(--navy);text-decoration:none;border-bottom:1px dotted var(--gold);font-weight:700';
+  if (_SECTOR_COVERED.includes(up)) {
+    return `<a href="/company.html?ticker=${encodeURIComponent(t)}" style="${style}" title="Open DCE analysis">${t}</a>`;
+  }
+  return `<a href="https://www.roic.ai/quote/${encodeURIComponent(t)}" target="_blank" rel="noopener noreferrer" style="${style}" title="Open in Roic.ai (external)">${t} ↗</a>`;
+}
+
 function renderSector(sector) {
   _activeSector = sector.slug;
   const cfg = sector.config || {};
@@ -690,8 +702,9 @@ function renderSector(sector) {
     const s = t.summary || {};
     const v = t.valuation_metrics || {};
     const safeName = (t.name || '').replace(/"/g, '&quot;');
+    const _tk = _sectorTickerLink(t.ticker);
     return `<tr>
-      <td class="ticker-cell">${t.ticker}</td>
+      <td class="ticker-cell">${_tk}</td>
       <td>${t.name || ''}</td>
       <td data-live-price="${t.ticker}" class="gold">—</td>
       <td>${fmtNum(s.q_abs)}</td>
@@ -711,8 +724,9 @@ function renderSector(sector) {
 
   const qualityRows = tickers.map(t => {
     const q = t.quality_metrics || {};
+    const _tk = _sectorTickerLink(t.ticker);
     return `<tr>
-      <td class="ticker-cell">${t.ticker}</td>
+      <td class="ticker-cell">${_tk}</td>
       <td class="${colorClassPct(q.roic_3yr, 0.20, 0.10)}">${fmtPct(q.roic_3yr)}</td>
       <td class="${signClass(q.roic_trend)}">${fmtPct(q.roic_trend, true)}</td>
       <td>${fmtNum(q.gm_cv)}</td>
@@ -730,8 +744,9 @@ function renderSector(sector) {
 
   const valuationRows = tickers.map(t => {
     const v = t.valuation_metrics || {};
+    const _tk = _sectorTickerLink(t.ticker);
     return `<tr>
-      <td class="ticker-cell">${t.ticker}</td>
+      <td class="ticker-cell">${_tk}</td>
       <td>${fmtMult(v.ev_ebit)}</td>
       <td>${fmtMult(v.pe)}</td>
       <td>${fmtMult(v.ev_ebitda)}</td>
@@ -1064,7 +1079,7 @@ async function loadShortlist() {
       }
 
       return `<tr>
-        <td class="ticker-cell" style="text-align:left">${escapeHtmlW(it.ticker)}</td>
+        <td class="ticker-cell" style="text-align:left">${_sectorTickerLink(it.ticker)}</td>
         <td style="text-align:left">${escapeHtmlW(company)}</td>
         <td style="text-align:left;color:var(--gray-mid);font-size:11px">${escapeHtmlW(sector)}</td>
         <td class="gold" style="font-weight:700">${price ? '$' + price.toFixed(2) : '—'}</td>
@@ -1350,7 +1365,7 @@ function renderNewBuys() {
   const conviction = rows.filter(r => r.newCount + r.addCount >= 2).length;
 
   // Universe tickers we already cover, for cross-link badges
-  const COVERED = ['BKNG', 'SAP'];
+  const COVERED = _SECTOR_COVERED;
 
   let html = `
     <div class="section-hdr">Idea Generation — Latest Quarter Moves</div>
@@ -1373,7 +1388,7 @@ function renderNewBuys() {
     const inUniverse = COVERED.includes(r.symbol);
     const tickerLink = inUniverse
       ? `<a href="/company.html?ticker=${r.symbol}" style="color:var(--gold);font-weight:700" title="In DCE universe">${r.symbol}</a> <span class="tag tag-watch" style="font-size:8px;padding:1px 6px;margin-left:4px">covered</span>`
-      : `<a href="https://fintel.io/so/us/${r.symbol.toLowerCase()}" target="_blank" rel="noopener">${r.symbol}</a>`;
+      : _sectorTickerLink(r.symbol);
 
     const moves = r.moves
       .sort((a, b) => (b.value || 0) - (a.value || 0))
@@ -1501,7 +1516,7 @@ function renderAggregate() {
 
     const safeName = (r.name || '').replace(/"/g, '&quot;');
     html += `<tr>
-      <td class="ticker-cell"><a href="https://fintel.io/so/us/${r.symbol.toLowerCase()}" target="_blank" rel="noopener">${r.symbol}</a></td>
+      <td class="ticker-cell">${_sectorTickerLink(r.symbol)}</td>
       <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name}</td>
       <td><span class="${pillCls}">${r.n}</span></td>
       <td>${fmtMoney(r.totalValue)}</td>
@@ -1567,7 +1582,7 @@ function renderByFund() {
     const cls = action === 'new' ? 'v-new' : action === 'add' ? 'v-add' : action === 'trim' ? 'v-trim' : action === 'exit' ? 'v-exit' : 'v-pass';
     const safeName = (name || '').replace(/"/g, '&quot;');
     html += `<tr>
-      <td class="ticker-cell"><a href="https://fintel.io/so/us/${sym.toLowerCase()}" target="_blank" rel="noopener">${sym}</a></td>
+      <td class="ticker-cell">${_sectorTickerLink(sym)}</td>
       <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</td>
       <td>${fmtShares(h.shares)}</td>
       <td class="${(h.sharesChange||0)>0?'green':(h.sharesChange||0)<0?'red':'dim'}">${(h.sharesChange||0)>0?'+':''}${fmtShares(h.sharesChange)}</td>
@@ -1728,9 +1743,14 @@ async function loadIdeaFeed() {
     html += '<div style="display:flex;flex-direction:column;gap:10px">';
     for (const it of list) {
       const src = _ifSourcesIndex[it.source_id] || { name: 'Unknown', is_paid: false };
-      const tickers = (it.tickers || []).map(t =>
-        `<a href="/company.html?ticker=${encodeURIComponent(t)}" style="display:inline-block;background:var(--gold-dim);color:var(--gold);font-family:'Roboto Mono',Menlo,monospace;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;margin-right:5px;text-decoration:none">${_ifEscape(t)}</a>`
-      ).join('');
+      const tickers = (it.tickers || []).map(t => {
+        const tUp = String(t).toUpperCase();
+        const isCovered = COVERED.includes(tUp);
+        const href = isCovered ? `/company.html?ticker=${encodeURIComponent(t)}` : `https://www.roic.ai/quote/${encodeURIComponent(t)}`;
+        const extra = isCovered ? '' : ' target="_blank" rel="noopener noreferrer"';
+        const arrow = isCovered ? '' : ' ↗';
+        return `<a href="${href}"${extra} style="display:inline-block;background:var(--gold-dim);color:var(--gold);font-family:'Roboto Mono',Menlo,monospace;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;margin-right:5px;text-decoration:none">${_ifEscape(t)}${arrow}</a>`;
+      }).join('');
       const methodBadge = it.extraction_method === 'llm'
         ? '<span title="AI-extracted" style="font-size:9px;color:var(--gray-mid);margin-left:6px">AI</span>'
         : '';
@@ -1817,7 +1837,9 @@ async function renderIdeaFeedTickers(items, status, cont) {
                 : '<span style="color:var(--gray-mid);font-style:italic">Pending next refresh…</span>'}
             </td>
             <td style="white-space:nowrap">
-              <a href="/company.html?ticker=${encodeURIComponent(r.ticker)}" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px;margin-right:4px">Open →</a>
+              ${(function(){ const tUp = String(r.ticker).toUpperCase(); const isCov = COVERED.includes(tUp); return isCov
+                ? `<a href="/company.html?ticker=${encodeURIComponent(r.ticker)}" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px;margin-right:4px">Open →</a>`
+                : `<a href="https://www.roic.ai/quote/${encodeURIComponent(r.ticker)}" target="_blank" rel="noopener noreferrer" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px;margin-right:4px">Roic.ai ↗</a>`; })()}
               <button onclick="sendToShortlist(this)" data-tk="${_ifEscape(r.ticker)}" data-nm="${_ifEscape(r.thesisItem?.title || '')}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:5px 10px;cursor:pointer;font-family:inherit" title="Add to Shortlist (radar)">→ Shortlist</button>
             </td>
           </tr>`).join('')}
