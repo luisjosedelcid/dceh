@@ -388,10 +388,10 @@ function ownerAvatarHTML(c) {
 
 function cardHTML(c) {
   const cmtCount = (commentsByCard[c.id] || []).length;
+  // Q/V/IRR badges hidden per user preference — cards stay clean, values
+  // live inside the model. Keep the array so the joining code below still
+  // renders nothing when empty.
   const badges = [];
-  if (c.quality != null)   badges.push(`<span class="b q">Q ${c.quality}</span>`);
-  if (c.valuation != null) badges.push(`<span class="b v">V ${c.valuation}</span>`);
-  if (c.irr)               badges.push(`<span class="b irr">IRR ${esc(c.irr)}</span>`);
 
   const created = c.created_at ? fmtDate(c.created_at) : '';
   const moved   = c.moved_at   ? fmtDate(c.moved_at)   : '';
@@ -521,10 +521,8 @@ function renderModal() {
   if (!c) { closeModal(); return; }
   const comments = commentsByCard[c.id] || [];
 
+  // Q/V/IRR badges hidden per user preference (see cardHTML above).
   const badges = [];
-  if (c.quality != null)   badges.push(`<span class="b q">Q ${c.quality}</span>`);
-  if (c.valuation != null) badges.push(`<span class="b v">V ${c.valuation}</span>`);
-  if (c.irr)               badges.push(`<span class="b irr">IRR ${esc(c.irr)}</span>`);
 
   document.getElementById('modal').innerHTML = `
     <div class="modal-h">
