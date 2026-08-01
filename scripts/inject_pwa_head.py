@@ -33,8 +33,8 @@ BLOCK = f"""{START}
 <meta name="application-name" content="DCE Holdings">
 <meta name="format-detection" content="telephone=no">
 {SPLASH_LINKS}
-<link rel="stylesheet" href="/pwa-shell.css?v=4">
-<script defer src="/pwa-shell.js?v=4"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=5">
+<script defer src="/pwa-shell.js?v=5"></script>
 {END}"""
 
 BLOCK_RE = re.compile(re.escape(START) + r".*?" + re.escape(END), re.DOTALL)
