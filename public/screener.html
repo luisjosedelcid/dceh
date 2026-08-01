@@ -449,9 +449,7 @@ function initScreener() {
   }
   // Show admin-only refresh button
   try {
-    const t = (window.dceAuth && dceAuth.getToken) ? dceAuth.getToken() : null;
-    const role = (window.dceAuth && dceAuth.getRole) ? dceAuth.getRole() : null;
-    if (t && role === 'admin') {
+    if (window.dceAuth && dceAuth.isAdmin && dceAuth.isAdmin()) {
       const b = document.getElementById('scr-admin-refresh');
       if (b) b.style.display = 'inline-block';
     }
@@ -464,7 +462,7 @@ function initScreener() {
 
 async function fetchSnapshotMeta() {
   try {
-    const tk = window.dceAuth ? dceAuth.getToken() : null;
+    const tk = (window.dceAuth && dceAuth.token) ? dceAuth.token() : null;
     if (!tk) return;
     const r = await fetch('/api/screener-query?limit=1', { headers: { 'x-admin-token': tk } });
     if (!r.ok) return;
@@ -520,7 +518,7 @@ async function runScreener() {
   params.set('limit', '200');
 
   try {
-    const tk = window.dceAuth ? dceAuth.getToken() : null;
+    const tk = (window.dceAuth && dceAuth.token) ? dceAuth.token() : null;
     if (!tk) {
       box.innerHTML = '<div style="padding:24px;color:var(--gray-mid);font-family:Archivo,sans-serif;font-size:12px">Sign in to run the screener.</div>';
       btn.disabled = false;
@@ -596,7 +594,7 @@ function renderScreenerResults(rows, count) {
 async function refreshScreenerNow() {
   if (!confirm('Force a full refresh of the ROIC.ai snapshot? Takes ~90 minutes and rate-limits the API. Continue?')) return;
   try {
-    const tk = window.dceAuth ? dceAuth.getToken() : null;
+    const tk = (window.dceAuth && dceAuth.token) ? dceAuth.token() : null;
     const r = await fetch('/api/admin/screener-refresh-now', { method: 'POST', headers: { 'x-admin-token': tk } });
     const d = await r.json();
     if (r.ok) {
