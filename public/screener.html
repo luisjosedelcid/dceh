@@ -574,7 +574,7 @@ function renderScreenerResults(rows, count) {
   const body = rows.map(r => {
     const nm = _scrEsc(r.company_name || '');
     return `<tr>
-      <td style="font-weight:700"><a href="https://app.koyfin.com/company/${_scrEsc(r.ticker)}/overview" target="_blank" rel="noopener noreferrer" style="color:var(--navy);text-decoration:none;border-bottom:1px dotted var(--gold)" title="Open in Koyfin (external)">${_scrEsc(r.ticker)} ↗</a></td>
+      <td style="font-weight:700"><a href="https://www.roic.ai/quote/${_scrEsc(r.ticker)}" target="_blank" rel="noopener noreferrer" style="color:var(--navy);text-decoration:none;border-bottom:1px dotted var(--gold)" title="Open in Roic.ai (external)">${_scrEsc(r.ticker)} ↗</a></td>
       <td>${nm}</td>
       <td style="color:var(--gray-mid);font-size:10px">${_scrEsc(r.sector || '—')}</td>
       <td class="num">$${_scrFmtN(r.market_cap)}</td>
