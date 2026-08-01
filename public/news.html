@@ -208,7 +208,30 @@ const CATEGORIES = {
 // ═══ STATE ═══
 // ledger.tickers[T] = { events: [...], lastReport: '...' }   -> localStorage cache only
 // tickerList = [T, T, ...]                                    -> server-persisted (user_news_tickers)
+// History auto-purge: any event with reportedOn older than HISTORY_MAX_DAYS is dropped
+const HISTORY_MAX_DAYS = 180;
 let ledger = { tickers: {} };
+
+// Drop events older than HISTORY_MAX_DAYS from every ticker in the ledger.
+// Returns number of events removed. Events without reportedOn are kept (they
+// are fresh unreported items, not yet in history).
+function purgeOldHistory() {
+  const cutoffMs = Date.now() - HISTORY_MAX_DAYS * 24 * 60 * 60 * 1000;
+  let removed = 0;
+  Object.keys(ledger.tickers || {}).forEach(t => {
+    const td = ledger.tickers[t];
+    if (!td || !Array.isArray(td.events)) return;
+    const before = td.events.length;
+    td.events = td.events.filter(e => {
+      if (!e || !e.reportedOn) return true; // keep un-reported
+      const ts = Date.parse(e.reportedOn);
+      if (!isFinite(ts)) return true; // keep if unparseable
+      return ts >= cutoffMs;
+    });
+    removed += before - td.events.length;
+  });
+  return removed;
+}
 let tickerList = [];
 let activeTicker = '';
 let currentView = 'tracker';
@@ -225,6 +248,10 @@ async function init() {
     const saved = localStorage.getItem('dce-news-ledger');
     if (saved) ledger = JSON.parse(saved);
   } catch(e) {}
+
+  // Auto-purge history older than 180 days on every load
+  const purged = purgeOldHistory();
+  if (purged > 0) console.log('news history auto-purge: dropped ' + purged + ' event(s) older than ' + HISTORY_MAX_DAYS + ' days');
 
   // Load the user's ticker list from the server
   await loadTickerList();
@@ -375,7 +402,7 @@ function renderHistory() {
     el.innerHTML = `<div class="empty"><p>No events tracked yet for ${activeTicker}.</p></div>`;
     return;
   }
-  let html = `<div class="res-head"><span class="res-title">History — ${activeTicker}</span><button class="clear-btn" onclick="clearHistory()">Clear</button></div>`;
+  let html = `<div class="res-head"><span class="res-title">History — ${activeTicker}</span><span style="font-size:10px;color:var(--gray-mid);letter-spacing:0.06em;margin-right:auto;margin-left:12px">Auto-purged after ${HISTORY_MAX_DAYS} days</span><button class="clear-btn" onclick="clearHistory()">Clear</button></div>`;
   cur.events.slice().reverse().forEach(item => {
     html += renderEventCard(item, true);
   });
@@ -454,6 +481,10 @@ function extractJsonArray(text) {
 async function fetchNews() {
   const ticker = activeTicker;
   if (!ticker) return;
+
+  // Enforce 180-day retention before we build the ALREADY REPORTED context.
+  const purged = purgeOldHistory();
+  if (purged > 0) { saveLedger(); }
 
   const btn = document.getElementById('fetch-btn');
   const statusEl = document.getElementById('status');
