@@ -272,7 +272,10 @@
         haptic(12);
         setTimeout(() => {
           if (typeof window.dceRefresh === 'function') {
-            Promise.resolve(window.dceRefresh()).finally(() => resetIndicator());
+            Promise.resolve(window.dceRefresh())
+              .then(() => showToast('Refreshed'))
+              .catch(() => showToast('Refresh failed'))
+              .finally(() => resetIndicator());
           } else {
             location.reload();
           }
@@ -288,6 +291,21 @@
       indicator.classList.remove('is-armed');
       indicator.classList.remove('is-loading');
     }
+  }
+
+  // ── Toast (short-lived notice) ──────────────────────
+  let toastTimer = null;
+  function showToast(msg) {
+    let el = document.getElementById('dce-toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'dce-toast';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add('is-open');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('is-open'), 1400);
   }
 
   // ── Init ──────────────────────────────────────────────────────

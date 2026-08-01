@@ -187,8 +187,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=3">
-<script defer src="/pwa-shell.js?v=3"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=4">
+<script defer src="/pwa-shell.js?v=4"></script>
 <!--PWA:END-->
 </head>
 <body data-pull-refresh="1" data-dce-auth="manual">
@@ -2311,6 +2311,22 @@ whenAuthReady(()=>{
   if(a && a.onChange) a.onChange(applyAdminGate);
   applyAdminGate();
 });
+
+// Hook for PWA pull-to-refresh (M) — refetches active tab + shared summaries
+window.dceRefresh = async function(){
+  const activeTab = document.querySelector('.tab-btn.active');
+  const tabId = activeTab && activeTab.dataset.tab;
+  const tasks = [typeof loadDashboard === 'function' ? loadDashboard() : null];
+  if(tabId === 'tab-consolidado' && typeof loadConsolidado === 'function'){ CONS_LOADED = false; tasks.push(loadConsolidado()); }
+  if(tabId === 'tab-realestate'  && typeof loadRealEstate  === 'function'){ RE_DATA = null;    tasks.push(loadRealEstate()); }
+  if(tabId === 'tab-crypto'      && typeof loadCrypto      === 'function'){ CR_DATA = null;    tasks.push(loadCrypto()); }
+  if(tabId === 'tab-data' && typeof loadExisting === 'function'){
+    tasks.push(loadExisting());
+    if(typeof loadPricesSummary === 'function') tasks.push(loadPricesSummary());
+  }
+  if(typeof loadAlerts === 'function') tasks.push(loadAlerts());
+  return Promise.all(tasks.filter(Boolean));
+};
 </script>
 <script src="/search.js" defer></script>
 </body>

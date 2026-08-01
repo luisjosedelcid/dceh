@@ -128,8 +128,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=3">
-<script defer src="/pwa-shell.js?v=3"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=4">
+<script defer src="/pwa-shell.js?v=4"></script>
 <!--PWA:END-->
 </head>
 <body data-pull-refresh="1">
@@ -2000,6 +2000,30 @@ async function sendToShortlist(btn) {
   }
 }
 window.sendToShortlist = sendToShortlist;
+
+// Hook for PWA pull-to-refresh (M) — refetches only the active tab
+window.dceRefresh = async function() {
+  const active = document.querySelector('.mode-tab.active');
+  const mode = active && active.dataset.mode;
+  const tasks = [];
+  if (mode === 'ideafeed') {
+    window._ifLoaded = false;
+    tasks.push(typeof loadIdeaFeed === 'function' ? loadIdeaFeed() : null);
+  } else if (mode === 'superinvestors') {
+    window._supLoaded = false;
+    tasks.push(typeof loadSuperinvestors === 'function' ? loadSuperinvestors(true) : null);
+  } else if (mode === 'sectors') {
+    const activeSector = document.querySelector('.sector-tab.active');
+    const slug = activeSector && activeSector.getAttribute('onclick') || '';
+    const m = slug.match(/showSector\('([^']+)'/);
+    if (m && typeof loadSector === 'function') tasks.push(loadSector(m[1]));
+  } else if (mode === 'screener') {
+    if (typeof refreshScreenerNow === 'function') tasks.push(refreshScreenerNow());
+  } else if (mode === 'shortlist') {
+    if (typeof loadShortlist === 'function') tasks.push(loadShortlist());
+  }
+  return Promise.all(tasks.filter(Boolean));
+};
 </script>
 <script src="/search.js" defer></script>
 </body>
