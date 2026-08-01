@@ -754,7 +754,7 @@ async function loadShortlist() {
         actions.push(`<a href="${escapeHtmlW(it.link)}" target="_blank" rel="noopener" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px">Open →</a>`);
       }
       if (isAdmin) {
-        actions.push(`<button onclick="sendToWorkflow(this)" data-tk="${escapeHtmlW(it.ticker)}" data-nm="${escapeHtmlW(company)}" data-url="${escapeHtmlW(it.link || '')}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:5px 10px;cursor:pointer;font-family:inherit" title="Add to Workflow kanban">→ Workflow</button>`);
+        actions.push(`<button onclick="sendToWorkflow(this)" data-tk="${escapeHtmlW(it.ticker)}" data-nm="${escapeHtmlW(company)}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:5px 10px;cursor:pointer;font-family:inherit" title="Add to Workflow kanban">→ Workflow</button>`);
         if (it.id) {
           actions.push(`<button onclick="deleteFromRadar('${it.id}','${escapeHtmlW(it.ticker)}')" style="font-size:9px;font-weight:700;color:var(--gray-mid);background:none;letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--rule);padding:5px 10px;cursor:pointer;font-family:inherit" title="Remove from radar">×</button>`);
         }
@@ -1558,26 +1558,20 @@ document.addEventListener('DOMContentLoaded', () => {
   if (t) t.addEventListener('keydown', e => { if (e.key === 'Enter') loadIdeaFeed(); });
 });
 
-// ─── Idea Feed → Workflow handoff ─────────────────────────────────────
-// Click "→ Workflow" button to push the idea to the kanban as a backlog card.
-// Uses /api/admin/pipeline-cards (requires admin login). Falls back to navigating
-// to /research.html with prefill query string if not logged in.
+// ─── Shortlist → Workflow handoff ─────────────────────────────────────
+// Click "→ Workflow" from the Shortlist page to push a ticker to the kanban
+// as a backlog card. Does NOT auto-populate the note field — any commentary
+// must be added manually inside Workflow so the note stays curated.
 async function sendToWorkflow(btn) {
   const ticker = (btn.dataset.tk || '').toUpperCase().trim();
-  const title  = (btn.dataset.nm  || '').trim();
-  const url    = (btn.dataset.url || '').trim();
+  const name   = (btn.dataset.nm  || '').trim() || ticker;
   if (!ticker) { alert('Ticker missing'); return; }
-
-  // Note body combines title + source URL
-  let note = '';
-  if (title) note += title;
-  if (url)   note += (note ? '\n' : '') + url;
 
   // Prefer admin-token API (rapid add, stays on current page).
   const tk = (window.dceAuth && window.dceAuth.token) ? window.dceAuth.token() : null;
   if (!tk) {
-    // Not logged in: send user to /research.html with prefill
-    const qs = new URLSearchParams({ ticker, name: ticker, note });
+    // Not logged in: send user to /research.html with prefill (ticker + name only).
+    const qs = new URLSearchParams({ ticker, name });
     window.location.href = '/research.html?' + qs.toString();
     return;
   }
@@ -1586,12 +1580,10 @@ async function sendToWorkflow(btn) {
   btn.disabled = true;
   btn.textContent = 'Adding…';
   try {
-    // Use ticker as initial 'name' since we don't always know company name here.
-    // User can rename inside Workflow.
     const r = await fetch('/api/admin/pipeline-cards', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-token': tk },
-      body: JSON.stringify({ ticker, name: ticker, stage: 'backlog', note: note || null }),
+      body: JSON.stringify({ ticker, name, stage: 'backlog' }),
     });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
