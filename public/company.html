@@ -322,14 +322,8 @@
   </div>
   <div class="hright">
     <div class="hkpi" style="min-width:140px">
-      <div style="display:flex;align-items:center;gap:6px">
-        <input id="price-input" type="text" value=""
-          style="background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.25);color:var(--gold-lt);font-family:Archivo,sans-serif;font-size:18px;font-weight:700;width:110px;text-align:right;outline:none;padding:2px 4px"
-          oninput="onPriceInput(this.value)"
-          onfocus="this.select()"
-          placeholder="Price">
-      </div>
-      <div class="sub">Market price</div>
+      <div class="val" id="hdr-price" style="font-family:Archivo,sans-serif;font-size:22px;font-weight:700;color:var(--gold-lt)">—</div>
+      <div class="sub">Market price <span id="price-status" style="font-size:9px;color:rgba(255,255,255,0.35);margin-left:4px"></span></div>
     </div>
     <div class="hkpi"><div class="val" id="hdr-irr">—</div><div class="sub">Implied IRR</div></div>
     <div class="hkpi"><div class="val gold" id="hdr-epv-ps">—</div><div class="sub">EPV / Share</div></div>

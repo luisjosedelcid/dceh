@@ -178,9 +178,46 @@ function buildMeta() {
 /* ── header ─────────────────────────────────────────────────── */
 function buildHeader() {
   setEl('hdr-company', `${D.name} (${D.ticker}) &nbsp;·&nbsp; ${D.exchange} &nbsp;·&nbsp; ${D.fiscalYear}`);
-  document.getElementById('price-input').value = fmtDec(currentPrice, currentPrice >= 100 ? 0 : 2);
+  renderHeaderPrice();
   updateHeaderKPIs();
   setEl('last-review-display', reviewDate);
+  // Fire-and-forget: refresh price from Finnhub. Snapshot stays as fallback.
+  refreshLivePrice().catch(err => console.warn('[company] live price refresh failed', err && err.message));
+}
+
+function renderHeaderPrice() {
+  const el = document.getElementById('hdr-price');
+  if (!el) return;
+  const p = currentPrice;
+  el.textContent = (p != null && !isNaN(p) && p > 0)
+    ? `${sym()}${fmtDec(p, p >= 100 ? 0 : 2)}`
+    : '—';
+}
+
+async function refreshLivePrice() {
+  const status = document.getElementById('price-status');
+  if (!D.ticker) return;
+  if (status) status.textContent = '· live…';
+  try {
+    const r = await fetch(`/api/finnhub-quote?symbol=${encodeURIComponent(D.ticker)}`);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const q = await r.json();
+    const px = Number(q && q.c);
+    if (!isFinite(px) || px <= 0) throw new Error('bad price');
+    currentPrice = px;
+    renderHeaderPrice();
+    updateHeaderKPIs();
+    refreshPriceDependents();
+    if (status) {
+      const snap = Number(D.overview && D.overview.stockPrice);
+      const drift = isFinite(snap) && snap > 0 ? ((px - snap) / snap) * 100 : null;
+      status.textContent = drift != null
+        ? `· live (snap ${sym()}${fmtDec(snap, snap >= 100 ? 0 : 2)}, ${drift >= 0 ? '+' : ''}${drift.toFixed(1)}%)`
+        : '· live';
+    }
+  } catch (e) {
+    if (status) status.textContent = '· snapshot';
+  }
 }
 
 function updateHeaderKPIs() {
@@ -199,15 +236,9 @@ function updateHeaderKPIs() {
   setEl('hdr-price-epv', `<span style="color:${ratioColor}">${fmtDec(ratio,2)}×</span>`);
 }
 
-function onPriceInput(val) {
-  const n = parseFloat(val.replace(/[,\s]/g,''));
-  if (!isNaN(n) && n > 0) {
-    currentPrice = n;
-    updateHeaderKPIs();
-    // re-render active tab outputs that use price
-    refreshPriceDependents();
-  }
-}
+// onPriceInput removed 2026-08-01 — header market price is now read-only
+// and refreshed via /api/finnhub-quote in refreshLivePrice(). Snapshot from
+// the JSON stays as the fallback until the live fetch resolves.
 
 function refreshPriceDependents() {
   // re-render summary/IRR elements that depend on price
