@@ -39,6 +39,11 @@ async function runScreenerRefresh(opts = {}) {
     logId = null,           // if provided, reuse this log row instead of creating a new one
   } = opts;
 
+  // Kill switch — env var to stop all refresh activity without redeploy
+  if (process.env.SCREENER_KILL_SWITCH === '1') {
+    return { killed: true, chunk, isLast: true, nextChunk: null, logId, upserted: 0, failed: 0 };
+  }
+
   const startedAt = Date.now();
 
   // 1) Fetch or reuse universe
@@ -49,9 +54,21 @@ async function runScreenerRefresh(opts = {}) {
   const end = Math.min(start + chunkSize, universe.length);
   const slice = universe.slice(start, end);
 
-  // 3) Log start (only on chunk 0)
+  // 3) Log start (only on chunk 0). Anti-duplicate guard: if a chain started
+  //    in the last 10 min hasn't finished, skip.
   let currentLogId = logId;
   if (chunk === 0 && !logId) {
+    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const active = await sbSelect('screener_refresh_log',
+      `finished_at=is.null&started_at=gte.${encodeURIComponent(tenMinAgo)}&order=id.desc&limit=1`);
+    if (active && active.length > 0) {
+      return {
+        skipped: true,
+        reason: 'Another refresh is already active',
+        activeLogId: active[0].id,
+        chunk, isLast: true, nextChunk: null, logId: active[0].id, upserted: 0, failed: 0,
+      };
+    }
     const [logRow] = await sbInsert('screener_refresh_log', {
       tickers_attempted: universe.length,
       tickers_ok: 0,
