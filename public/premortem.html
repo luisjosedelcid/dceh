@@ -158,7 +158,27 @@
 <link rel="stylesheet" href="/responsive.css">
 <script src="/dce-auth.js" defer></script>
     <script src="/nyse-clock.js" defer></script>
-  </head>
+  <!--PWA:START-->
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+<meta name="theme-color" content="#1B2642">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DCE">
+<meta name="application-name" content="DCE Holdings">
+<meta name="format-detection" content="telephone=no">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+    });
+  }
+</script>
+<!--PWA:END-->
+</head>
 <body data-dce-auth="manual">
 
 <header>

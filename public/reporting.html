@@ -5,6 +5,26 @@
 <title>DCE Holdings — Redirecting</title>
 <meta http-equiv="refresh" content="0; url=/dataroom.html">
 <script>window.location.replace('/dataroom.html');</script>
+<!--PWA:START-->
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+<meta name="theme-color" content="#1B2642">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DCE">
+<meta name="application-name" content="DCE Holdings">
+<meta name="format-detection" content="telephone=no">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+    });
+  }
+</script>
+<!--PWA:END-->
 </head>
 <body>
 <p style="font-family:Archivo,sans-serif;color:#606060;padding:24px">
