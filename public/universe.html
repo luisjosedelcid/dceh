@@ -233,11 +233,6 @@
   <h1>Covered Universe</h1>
   <p class="page-sub">Columbia Framework valuation summary. Prices stream live from Finnhub; IRR and Margin of Safety recompute on each update. <span id="live-note" style="font-size:11px;font-weight:500;color:var(--gray-mid)">Fetching live prices...</span></p>
 
-  <div id="adhoc-dashboards" style="display:none;margin-bottom:24px;padding:16px 20px;background:var(--white);border:1px solid var(--rule);border-left:3px solid var(--gold)">
-    <div style="font-size:10px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Ad-hoc Dashboards</div>
-    <div id="adhoc-list" style="display:flex;flex-wrap:wrap;gap:10px"></div>
-  </div>
-
   <div class="tabs">
     <button class="tab-btn active" data-tab="research">In Research <span class="count" id="research-count">0</span></button>
     <button class="tab-btn" data-tab="invested">Invested <span class="count" id="invested-count">0</span></button>
@@ -870,9 +865,19 @@ window.openAlertEditor = openAlertEditor;
 
 const FUNNEL_STAGES = ['invested', 'research', 'watchlist', 'passed'];
 
+// PUBLISHED_ROWS = filas sintetizadas desde company_dashboards (populated by
+// loadPublishedRows()). Ticker-deduped against UNIVERSE: hardcoded wins.
+var PUBLISHED_ROWS = [];
+
+function getMergedUniverse() {
+  const known = new Set(UNIVERSE.map(c => String(c.ticker).toUpperCase()));
+  const extras = PUBLISHED_ROWS.filter(r => !known.has(String(r.ticker).toUpperCase()));
+  return UNIVERSE.concat(extras);
+}
+
 function renderTable() {
   const buckets = { invested: [], research: [], watchlist: [], passed: [] };
-  UNIVERSE.forEach(c => {
+  getMergedUniverse().forEach(c => {
     const stage = c.funnelStage;
     if (!buckets[stage]) return; // ignore unknown stages
     // Live prices are stored in LIVE_PRICES map (filled by fetchLivePrices());
@@ -940,31 +945,19 @@ const LIVE_PRICES = {};
 renderTable();
 loadAlerts().then(() => renderTable());
 syncFunnelStagesFromKanban().then(() => renderTable());
-loadDashboardTickers().then(() => renderTable());
+loadPublishedRows().then(() => renderTable());
 
-async function loadDashboardTickers() {
+async function loadPublishedRows() {
   try {
     const token = localStorage.getItem('dce_admin_token') || '';
-    const r = await fetch('/api/dashboard-tickers', { headers: { 'x-admin-token': token } });
+    const r = await fetch('/api/dashboard-universe-rows', { headers: { 'x-admin-token': token } });
     if (!r.ok) return;
     const j = await r.json();
-    watchState.dashboardTickers = new Set((j.tickers || []).map(t => String(t).toUpperCase()));
-    renderAdhocDashboards();
+    PUBLISHED_ROWS = Array.isArray(j.rows) ? j.rows : [];
+    // Also feed the 🌐 badge cache so renderDashboardCell + watchlist know
+    // which tickers have a live dashboard.
+    watchState.dashboardTickers = new Set(PUBLISHED_ROWS.map(r => String(r.ticker).toUpperCase()));
   } catch (e) { /* silent */ }
-}
-
-function renderAdhocDashboards() {
-  const container = document.getElementById('adhoc-dashboards');
-  const list = document.getElementById('adhoc-list');
-  if (!container || !list) return;
-  const known = new Set(UNIVERSE.map(c => String(c.ticker).toUpperCase()));
-  const adhoc = [...(watchState.dashboardTickers || [])].filter(t => !known.has(t));
-  if (!adhoc.length) { container.style.display = 'none'; return; }
-  container.style.display = 'block';
-  list.innerHTML = adhoc.map(t => {
-    const url = `/company.html?ticker=${encodeURIComponent(t)}`;
-    return `<a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--cream);border:1px solid var(--gold-rule);color:var(--navy);font-size:12px;font-weight:600;text-decoration:none;letter-spacing:0.02em;transition:all .15s" onmouseover="this.style.background='var(--navy)';this.style.color='var(--white)'" onmouseout="this.style.background='var(--cream)';this.style.color='var(--navy)'">🌐 ${t}</a>`;
-  }).join('');
 }
 
 // ═══ LIVE PRICE FETCH (Finnhub) ═══
