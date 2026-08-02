@@ -615,7 +615,7 @@ function calcCompany(c, price) {
   return { mktCap, ev, epvPs, priceEpv, nopatMult, eqReturn, mos, epvRv, price };
 }
 
-// Global state shared by watchlist tab + universe rows (dashboardTickers used to show 🌐).
+// Global state shared by watchlist tab + universe rows (dashboardTickers used to show the dashboard link).
 // Declared as `var` (not const) to survive being referenced before init from renderTable.
 var watchState = window.__watchState || { items: [], loaded: false, editingId: null, dashboardTickers: new Set() };
 window.__watchState = watchState;
@@ -654,7 +654,7 @@ function renderDashboardCell(c) {
   const hasGenerated = watchState.dashboardTickers && watchState.dashboardTickers.has(String(c.ticker).toUpperCase());
   if (hasGenerated) {
     const url = `/company.html?ticker=${encodeURIComponent(c.ticker)}`;
-    return `<a class="dash-link gold" href="${url}" target="_blank" rel="noopener" title="Published dashboard">🌐 Dashboard →</a>`;
+    return `<a class="dash-link gold" href="${url}" target="_blank" rel="noopener" title="Published dashboard">Dashboard →</a>`;
   }
   return c.link ? `<a class="dash-link" href="${c.link}">Dashboard →</a>` : '<span style="color:var(--gray-mid);font-size:11px">—</span>';
 }
@@ -964,7 +964,7 @@ async function loadPublishedRows() {
     // If kanban stages were already fetched, apply them to the new rows so
     // published tickers don't get stuck in the default 'research' bucket.
     PUBLISHED_ROWS.forEach(applyKanbanStage);
-    // Also feed the 🌐 badge cache so renderDashboardCell + watchlist know
+    // Also feed the dashboard badge cache so renderDashboardCell + watchlist know
     // which tickers have a live dashboard.
     watchState.dashboardTickers = new Set(PUBLISHED_ROWS.map(r => String(r.ticker).toUpperCase()));
   } catch (e) { /* silent */ }
@@ -1095,7 +1095,7 @@ function renderWatchCard(it) {
     <div class="watch-card${triggered ? ' triggered' : ''}">
       <div class="wc-head">
         <div>
-          <div class="wc-tkr">${escHtml(it.ticker)}${u ? `<span style="font-size:11px;font-weight:300;color:var(--gray-mid);margin-left:8px;">${escHtml(u.name)}</span>` : ''}${watchState.dashboardTickers.has(String(it.ticker).toUpperCase()) ? `<a class="wc-dash" href="/company.html?ticker=${encodeURIComponent(it.ticker)}" target="_blank" rel="noopener" title="Open dashboard">🌐</a>` : ''}</div>
+          <div class="wc-tkr">${escHtml(it.ticker)}${u ? `<span style="font-size:11px;font-weight:300;color:var(--gray-mid);margin-left:8px;">${escHtml(u.name)}</span>` : ''}${watchState.dashboardTickers.has(String(it.ticker).toUpperCase()) ? `<a class="wc-dash" href="/company.html?ticker=${encodeURIComponent(it.ticker)}" target="_blank" rel="noopener" title="Open dashboard">Dashboard</a>` : ''}</div>
         </div>
         <div class="wc-status ${triggered ? 'triggered' : 'active'}">${triggered ? 'Buy Zone' : (inZone ? 'In Zone *' : 'Active')}</div>
       </div>
