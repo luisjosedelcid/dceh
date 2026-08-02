@@ -54,12 +54,22 @@
   <h1 class="brand">DCE Holdings</h1>
   <p class="tagline">Family office · Investment platform</p>
 
-  <button class="btn" id="btn-faceid">Unlock with Face ID</button>
-  <button class="btn ghost" id="btn-showpin">Use PIN instead</button>
+  <div id="unlock-panel">
+    <button class="btn" id="btn-faceid">Unlock with Face ID</button>
+    <button class="btn ghost" id="btn-showpin">Use PIN instead</button>
 
-  <div class="pin-panel" id="pin-panel">
-    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" class="pin-input" id="pin" placeholder="••••••" autocomplete="off">
-    <button class="btn" id="btn-pin-submit" style="margin-top:12px">Unlock</button>
+    <div class="pin-panel" id="pin-panel">
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" class="pin-input" id="pin" placeholder="••••••" autocomplete="off">
+      <button class="btn" id="btn-pin-submit" style="margin-top:12px">Unlock</button>
+    </div>
+  </div>
+
+  <div id="enroll-panel" style="display:none">
+    <p style="font-size:14px; color:var(--gray); margin:0 0 20px; line-height:1.5">
+      This device isn't set up yet. You need to enroll Face ID and a PIN before you can unlock.
+    </p>
+    <a href="/enroll.html" class="btn" style="text-decoration:none; display:block; text-align:center">Enroll this device</a>
+    <button class="btn ghost" id="btn-emergency" style="margin-top:8px">Sign in with password</button>
   </div>
 
   <div class="status" id="status"></div>
@@ -156,15 +166,51 @@ $('btn-pin-submit').addEventListener('click', async () => {
   }
 });
 
-// Auto-trigger Face ID on load if supported (better UX)
-window.addEventListener('load', () => {
-  if (window.PublicKeyCredential) {
-    // Small delay so the user sees the branded screen briefly
+$('btn-emergency').addEventListener('click', () => {
+  location.href = '/admin-login.html';
+});
+
+// On load: check if this device is already enrolled. If not, show the
+// enrollment CTA instead of auto-triggering Face ID (which would just
+// pop the iOS "no passkey saved" sheet and confuse the user).
+window.addEventListener('load', async () => {
+  if (!window.PublicKeyCredential) {
+    $('unlock-panel').style.display = 'none';
+    $('enroll-panel').style.display = 'block';
+    setStatus('Face ID not supported on this device', true);
+    return;
+  }
+
+  const email = localStorage.getItem('dce_admin_email');
+  if (!email) {
+    // No email cached => this device has never logged in.
+    $('unlock-panel').style.display = 'none';
+    $('enroll-panel').style.display = 'block';
+    return;
+  }
+
+  // Ask the server whether this email has a passkey/PIN registered.
+  try {
+    const r = await fetch(`/api/auth/status?email=${encodeURIComponent(email)}`);
+    const j = await r.json();
+    if (!j.hasPasskey && !j.hasPin) {
+      $('unlock-panel').style.display = 'none';
+      $('enroll-panel').style.display = 'block';
+      return;
+    }
+    if (!j.hasPasskey) {
+      // Only PIN is set — hide Face ID, show PIN by default.
+      $('btn-faceid').style.display = 'none';
+      $('btn-showpin').style.display = 'none';
+      $('pin-panel').classList.add('on');
+      $('pin').focus();
+      return;
+    }
+    // Passkey exists — auto-trigger Face ID after a beat
     setTimeout(tryFaceID, 400);
-  } else {
-    $('btn-faceid').disabled = true;
-    setStatus('Face ID not supported on this device — use PIN', true);
-    $('pin-panel').classList.add('on');
+  } catch (e) {
+    // Fallback: assume unlock is possible; user can pick a method.
+    setStatus('Could not check enrollment status', true);
   }
 });
 </script>
