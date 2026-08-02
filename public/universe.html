@@ -130,6 +130,8 @@
   .watch-card.triggered { border-left-color:var(--green); background:rgba(42,122,86,0.04); }
   .watch-card .wc-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
   .watch-card .wc-tkr { font-size:18px; font-weight:700; color:var(--navy); letter-spacing:-0.02em; }
+  .watch-card .wc-dash { display:inline-block; margin-left:10px; font-size:16px; text-decoration:none; transition:transform .15s; vertical-align:middle; }
+  .watch-card .wc-dash:hover { transform:scale(1.15); }
   .watch-card .wc-status { font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; padding:3px 8px; }
   .watch-card .wc-status.active { background:var(--gold-dim); color:var(--gold); }
   .watch-card .wc-status.triggered { background:rgba(42,122,86,0.14); color:var(--green); }
@@ -1045,7 +1047,7 @@ function renderWatchCard(it) {
     <div class="watch-card${triggered ? ' triggered' : ''}">
       <div class="wc-head">
         <div>
-          <div class="wc-tkr">${escHtml(it.ticker)}${u ? `<span style="font-size:11px;font-weight:300;color:var(--gray-mid);margin-left:8px;">${escHtml(u.name)}</span>` : ''}</div>
+          <div class="wc-tkr">${escHtml(it.ticker)}${u ? `<span style="font-size:11px;font-weight:300;color:var(--gray-mid);margin-left:8px;">${escHtml(u.name)}</span>` : ''}${watchState.dashboardTickers.has(String(it.ticker).toUpperCase()) ? `<a class="wc-dash" href="/api/dashboard-view?ticker=${encodeURIComponent(it.ticker)}&token=${encodeURIComponent(localStorage.getItem('dce_admin_token')||'')}" target="_blank" rel="noopener" title="Open dashboard">🌐</a>` : ''}</div>
         </div>
         <div class="wc-status ${triggered ? 'triggered' : 'active'}">${triggered ? 'Buy Zone' : (inZone ? 'In Zone *' : 'Active')}</div>
       </div>
