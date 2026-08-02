@@ -8,6 +8,67 @@ const fs = require('fs');
 const path = require('path');
 const { sbSelect } = require('./_supabase');
 
+// Map pipeline_card_assets.kind → dashboard-JSON `documents.<key>` key.
+// Any kind not listed here is ignored for the document panel.
+const KIND_TO_DOC_KEY = {
+  excel:              'valuationReportUrl',
+  company_brief_pdf:  'companyBriefUrl',
+  thesis_builder_pdf: 'thesisBuilderUrl',
+  thesis_breaker_pdf: 'thesisBreakerUrl',
+  munger_digital_pdf: 'mungerDigitalUrl',
+};
+
+async function signPipelineAsset(storagePath) {
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!SUPABASE_URL || !KEY) return null;
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/sign/pipeline-assets/${encodeURIComponent(storagePath).replace(/%2F/g, '/')}`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${KEY}`,
+          'apikey': KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ expiresIn: 3600 }),
+      }
+    );
+    if (!r.ok) return null;
+    const j = await r.json();
+    return `${SUPABASE_URL}/storage/v1${j.signedURL || j.signedUrl || ''}`;
+  } catch (_) { return null; }
+}
+
+// Look up the latest active assets for a ticker in pipeline_card_assets
+// and return { <docKey>: <signed url>, ... } for the panel in company.html.
+async function fetchDocumentUrlsForTicker(ticker) {
+  try {
+    const assets = await sbSelect(
+      'pipeline_card_assets',
+      `select=kind,storage_path,uploaded_at&ticker=eq.${ticker}&active=eq.true&order=uploaded_at.desc`
+    );
+    if (!Array.isArray(assets) || !assets.length) return {};
+    // Pick the most-recent active per kind (defensive; upload endpoint already dedupes).
+    const byKind = {};
+    for (const a of assets) {
+      if (!byKind[a.kind]) byKind[a.kind] = a;
+    }
+    const out = {};
+    await Promise.all(Object.entries(byKind).map(async ([kind, a]) => {
+      const key = KIND_TO_DOC_KEY[kind];
+      if (!key) return;
+      const url = await signPipelineAsset(a.storage_path);
+      if (url) out[key] = url;
+    }));
+    return out;
+  } catch (e) {
+    console.warn('[dashboard] doc-url lookup failed:', e.message);
+    return {};
+  }
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
 
@@ -46,6 +107,13 @@ module.exports = async (req, res) => {
           excel_url: row.excel_url,
           notes: row.notes,
         };
+        // Resolve `documents.*` from the pipeline_card_assets bucket so the
+        // Excel/PDF download buttons always point at the analyst's uploads,
+        // not stale paths baked into the dashboard JSON.
+        const docUrls = await fetchDocumentUrlsForTicker(ticker);
+        if (Object.keys(docUrls).length) {
+          payload.documents = { ...(payload.documents || {}), ...docUrls };
+        }
         return res.status(200).json(payload);
       }
       // If period was specified but missing, return 404 explicitly.
