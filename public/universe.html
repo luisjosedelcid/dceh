@@ -620,6 +620,11 @@ function calcCompany(c, price) {
   return { mktCap, ev, epvPs, priceEpv, nopatMult, eqReturn, mos, epvRv, price };
 }
 
+// Global state shared by watchlist tab + universe rows (dashboardTickers used to show 🌐).
+// Declared as `var` (not const) to survive being referenced before init from renderTable.
+var watchState = window.__watchState || { items: [], loaded: false, editingId: null, dashboardTickers: new Set() };
+window.__watchState = watchState;
+
 function renderRow(c, vals) {
   const irrPct = (vals.eqReturn * 100).toFixed(1);
   const mosPct = (vals.mos * 100).toFixed(1);
@@ -1008,7 +1013,7 @@ async function fetchLivePrices() {
 fetchLivePrices();
 
 // =================== WATCHLIST ===================
-const watchState = { items: [], loaded: false, editingId: null };
+// (watchState declared globally above so renderRow can safely check dashboardTickers)
 
 function wmEl(id) { return document.getElementById(id); }
 function watchToken() { try { return localStorage.getItem('dce_admin_token') || ''; } catch (e) { return ''; } }
