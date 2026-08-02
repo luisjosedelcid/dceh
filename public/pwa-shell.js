@@ -2,7 +2,7 @@
  * DCE Holdings — PWA shell enhancements
  *
  * Only active on mobile screens (≤820px — iPhone + iPad Mini portrait). Provides:
- *  - Bottom tab bar (iOS-native feel): Home · Find · Universe · Journal · Menu
+ *  - Bottom tab bar (iOS-native feel): Home · Cockpit · Universe · Performance · Menu
  *  - "Menu" opens a bottom sheet with the rest of the app sections
  *  - Hides the desktop top nav on mobile
  *  - Locks overscroll bounce (E)
@@ -26,7 +26,7 @@
   // Primary tabs (always visible)
   const PRIMARY = [
     { id: 'home',     label: 'Home',     href: '/',                match: ['/', '/index.html', '/landing.html'] },
-    { id: 'find',     label: 'Find',     href: '/screener.html',   match: ['/screener.html'] },
+    { id: 'cockpit',  label: 'Cockpit',  href: '/cockpit.html',    match: ['/cockpit.html'] },
     { id: 'universe', label: 'Universe', href: '/universe.html',   match: ['/universe.html', '/company.html'] },
     { id: 'performance', label: 'Performance', href: '/performance.html', match: ['/performance.html'] },
     { id: 'menu',     label: 'Menu',     href: '#menu',            match: [] }
@@ -34,7 +34,7 @@
 
   // Secondary items (bottom sheet)
   const SECONDARY = [
-    { label: 'Cockpit',   href: '/cockpit.html' },
+    { label: 'Find',      href: '/screener.html' },
     { label: 'Journal',   href: '/journal.html' },
     { label: 'Study',     href: '/study.html' },
     { label: 'News',      href: '/news.html' },
@@ -47,6 +47,7 @@
   // SVG icons — line-style, iOS-flavor
   const ICONS = {
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1v-9.5z"/></svg>',
+    cockpit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M7.5 9l1.6 1.6L12 8"/><path d="M14 9.2h4"/><path d="M7.5 15l1.6 1.6L12 14"/><path d="M14 15.2h4"/></svg>',
     find: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
     universe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="9" ry="3.5"/><ellipse cx="12" cy="12" rx="3.5" ry="9"/></svg>',
     performance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>',
