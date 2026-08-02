@@ -15,6 +15,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 const { sbSelect, sbUpdate } = require('../_supabase.js');
+const { sendPushBroadcast } = require('../_push');
 
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
@@ -165,8 +166,36 @@ module.exports = async (req, res) => {
     }
 
     let email = null;
+    let push = null;
     if (triggers.length > 0) {
       email = await sendAlertEmail(triggers);
+      // Push notification (best-effort; do not fail cron on push error)
+      try {
+        const isFloor = triggers.filter(t => t.alert_type === 'floor');
+        const isCeil  = triggers.filter(t => t.alert_type === 'ceiling');
+        const parts = [];
+        if (isFloor.length) {
+          parts.push(`${isFloor.length} in buy zone: ` +
+            isFloor.slice(0, 3).map(t => `${t.ticker} $${fmtMoney(t.live_price)} (≤ $${fmtMoney(t.threshold)})`).join(', '));
+        }
+        if (isCeil.length) {
+          parts.push(`${isCeil.length} above ceiling: ` +
+            isCeil.slice(0, 3).map(t => `${t.ticker} $${fmtMoney(t.live_price)} (≥ $${fmtMoney(t.threshold)})`).join(', '));
+        }
+        const body = parts.join(' · ').slice(0, 380);
+        const title = triggers.length === 1
+          ? `${triggers[0].ticker} — ${triggers[0].alert_type === 'floor' ? 'buy zone' : 'above ceiling'}`
+          : `${triggers.length} price alerts triggered`;
+        push = await sendPushBroadcast({
+          title,
+          body,
+          url: '/performance.html',
+          tag: 'price-alerts',
+          data: { kind: 'price_alert', count: triggers.length },
+        });
+      } catch (e) {
+        push = { ok: false, error: String(e).slice(0, 200) };
+      }
     }
 
     res.status(200).json({
@@ -176,6 +205,7 @@ module.exports = async (req, res) => {
       triggered: triggers.length,
       triggers: triggers.map(t => ({ ticker: t.ticker, type: t.alert_type, threshold: t.threshold, live: t.live_price })),
       email,
+      push,
     });
   } catch (e) {
     res.status(500).json({ error: e.message });

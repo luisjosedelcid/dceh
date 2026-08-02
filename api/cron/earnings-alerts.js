@@ -11,6 +11,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 const { sbSelect, sbInsert } = require('../_supabase.js');
+const { sendPushBroadcast } = require('../_push');
 
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
@@ -153,12 +154,41 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Push notification (best-effort). Sends even if email failed — they are
+    // independent channels and the fresh events are still worth surfacing.
+    let push = null;
+    try {
+      const todayIso = isoDate(new Date());
+      const todayEvents = fresh.filter(e => e.date === todayIso);
+      const preview = (todayEvents.length ? todayEvents : fresh)
+        .slice(0, 4)
+        .map(e => {
+          const timing = e.timing === 'BMO' ? 'pre-market' : e.timing === 'AMC' ? 'after close' : '';
+          return timing ? `${e.ticker} (${timing})` : e.ticker;
+        })
+        .join(', ');
+      const title = todayEvents.length
+        ? (todayEvents.length === 1 ? `Earnings today: ${todayEvents[0].ticker}` : `${todayEvents.length} earnings today`)
+        : `${fresh.length} earnings in next 48h`;
+      const body = preview + (fresh.length > 4 ?  '… and more' : '');
+      push = await sendPushBroadcast({
+        title,
+        body: body.slice(0, 380),
+        url: '/calendar.html',
+        tag: 'earnings-alerts',
+        data: { kind: 'earnings_alert', count: fresh.length, today: todayEvents.length },
+      });
+    } catch (e) {
+      push = { ok: false, error: String(e).slice(0, 200) };
+    }
+
     res.status(200).json({
       ok: true,
       found: events.length,
       fresh: fresh.length,
       sent: email && email.ok ? fresh.length : 0,
       email,
+      push,
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
