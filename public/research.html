@@ -126,6 +126,12 @@
   .slot-btn.uploading{background:var(--gold-dim);color:var(--gold);pointer-events:none}
   .slot input[type=file]{display:none}
 
+  /* Generate Dashboard button */
+  .gen-btn{background:var(--navy);color:var(--white);border:none;font-family:inherit;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;padding:10px 18px;cursor:pointer;transition:background .15s}
+  .gen-btn:hover:not(:disabled){background:#0d1428}
+  .gen-btn:disabled{background:var(--gray-mid);cursor:not-allowed;opacity:.6}
+  .gen-btn.busy{background:var(--gold);color:var(--white);cursor:progress;pointer-events:none}
+
   /* Card badge for uploaded assets count */
   .card-assets{display:inline-flex;align-items:center;gap:4px;color:var(--gold);font-weight:500}
   .card-assets.pending{color:var(--gray-mid)}
@@ -604,6 +610,10 @@ function renderModal() {
       <div class="deliverables" id="deliverables-list">
         <div style="font-size:11px;color:var(--gray-mid)">Loading…</div>
       </div>
+      <div id="generate-dashboard-wrap" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--rule)">
+        <button id="generate-dashboard-btn" class="gen-btn" disabled onclick="generateDashboard()">Generate Dashboard</button>
+        <div id="generate-dashboard-status" style="font-size:11px;color:var(--gray-mid);margin-top:6px"></div>
+      </div>
     </div>
 
     <div class="modal-section">
@@ -866,6 +876,62 @@ function renderDeliverables(cardId) {
       </div>
     `;
   }).join('');
+
+  updateGenerateButton(cardId);
+}
+
+function updateGenerateButton(cardId) {
+  const btn = document.getElementById('generate-dashboard-btn');
+  const status = document.getElementById('generate-dashboard-status');
+  if (!btn) return;
+  const items = deliverablesByCard[cardId] || [];
+  const kinds = new Set(items.map(it => it.kind));
+  const hasExcel = kinds.has('excel');
+  const hasBrief = kinds.has('company_brief_pdf');
+  const hasDash  = kinds.has('dashboard_html');
+  const ready = hasExcel && hasBrief;
+  btn.disabled = !ready;
+  btn.textContent = hasDash ? 'Regenerate Dashboard' : 'Generate Dashboard';
+  if (status) {
+    if (!ready) {
+      const missing = [];
+      if (!hasExcel) missing.push('Excel');
+      if (!hasBrief) missing.push('Company Brief');
+      status.textContent = `Upload ${missing.join(' + ')} to enable generation.`;
+    } else {
+      status.textContent = hasDash
+        ? 'Ready to regenerate — will replace current Dashboard HTML.'
+        : 'Ready — will build Dashboard HTML from Excel model.';
+    }
+  }
+}
+
+async function generateDashboard() {
+  if (!openCardId) return;
+  const btn = document.getElementById('generate-dashboard-btn');
+  const status = document.getElementById('generate-dashboard-status');
+  if (!btn || !status) return;
+  const prior = btn.textContent;
+  btn.classList.add('busy');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  status.textContent = 'Reading Excel, extracting KPIs, rendering HTML…';
+  try {
+    const token = localStorage.getItem('dce_admin_token');
+    const r = await fetch(`/api/admin/pipeline-card-generate-dashboard?card_id=${encodeURIComponent(openCardId)}`, {
+      method: 'POST',
+      headers: { 'x-admin-token': token || '' },
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+    status.textContent = `✓ Generated (${j.kpi_count || 0} KPIs extracted). Refreshing…`;
+    await loadDeliverables(openCardId);
+  } catch (e) {
+    status.textContent = `✗ Failed: ${e.message || e}`;
+    btn.textContent = prior;
+  } finally {
+    btn.classList.remove('busy');
+  }
 }
 
 function pickSlotFile(kind) {
