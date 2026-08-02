@@ -859,8 +859,11 @@ function renderDeliverables(cardId) {
     const meta = it
       ? `<div class="slot-meta" title="${esc(it.filename)}">${esc(it.filename)} · ${fmtBytes(it.size_bytes)}</div>`
       : `<div class="slot-meta empty">— not uploaded —</div>`;
+    const publishedBtn = (it && slot.kind === 'dashboard_html')
+      ? `<button class="slot-btn" onclick="openPublishedDashboard()">View Published</button>`
+      : '';
     const actions = it
-      ? `<a class="slot-btn" href="${esc(it.signed_url || '#')}" target="_blank" rel="noopener">Open</a>
+      ? `${publishedBtn}<a class="slot-btn" href="${esc(it.signed_url || '#')}" target="_blank" rel="noopener">Open</a>
          <button class="slot-btn" onclick="pickSlotFile('${slot.kind}')">Replace</button>
          <button class="slot-btn danger" onclick="deleteSlot(${it.id})">Remove</button>`
       : `<button class="slot-btn" onclick="pickSlotFile('${slot.kind}')">Upload</button>`;
@@ -904,6 +907,15 @@ function updateGenerateButton(cardId) {
         : 'Ready — will build Dashboard HTML from Excel model.';
     }
   }
+}
+
+function openPublishedDashboard() {
+  if (!openCardId) return;
+  const c = pipeline.find(x => x.id === openCardId);
+  if (!c || !c.ticker) { alert('No ticker on this card'); return; }
+  const token = localStorage.getItem('dce_admin_token') || '';
+  const url = `/api/dashboard-view?ticker=${encodeURIComponent(c.ticker)}&token=${encodeURIComponent(token)}`;
+  window.open(url, '_blank', 'noopener');
 }
 
 async function generateDashboard() {
