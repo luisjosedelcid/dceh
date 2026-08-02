@@ -4,6 +4,7 @@
 
 const { requireRole } = require('../_require-role');
 const { sbSelect, sbUpdate } = require('../_supabase');
+const { removeDataroomMirror } = require('../_pipeline_dataroom_mirror');
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -70,7 +71,13 @@ module.exports = async (req, res) => {
       return;
     }
     try {
+      // Fetch mirror_id before soft-delete so we can clean up dataroom
+      const rows = await sbSelect('pipeline_card_assets', `select=mirror_id&id=eq.${id}&limit=1`);
+      const mirrorId = rows && rows[0] && rows[0].mirror_id;
       await sbUpdate('pipeline_card_assets', `id=eq.${id}`, { active: false });
+      if (mirrorId) {
+        try { await removeDataroomMirror(mirrorId); } catch (e) { console.warn('mirror cleanup failed:', e.message); }
+      }
       res.status(200).json({ ok: true });
     } catch (e) {
       res.status(500).json({ error: 'Delete failed', detail: String(e).slice(0, 200) });

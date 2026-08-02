@@ -24,6 +24,7 @@
 
 const { requireRole } = require('../_require-role');
 const { sbSelect, sbInsert, sbUpdate } = require('../_supabase');
+const { mirrorPipelineToDataroom, removeDataroomMirror } = require('../_pipeline_dataroom_mirror');
 
 const MAX_BYTES = 25 * 1024 * 1024; // 25 MB (Vercel serverless hard cap)
 
@@ -153,11 +154,21 @@ module.exports = async (req, res) => {
 
   // ── Deactivate any previous active row for (card_id, kind) ─────
   try {
+    // Look up prior actives so we can remove their dataroom mirrors after deactivating
+    const prior = await sbSelect(
+      'pipeline_card_assets',
+      `select=id,mirror_id&card_id=eq.${cardId}&kind=eq.${kind}&active=eq.true`
+    );
     await sbUpdate(
       'pipeline_card_assets',
       `card_id=eq.${cardId}&kind=eq.${kind}&active=eq.true`,
       { active: false }
     );
+    for (const p of (prior || [])) {
+      if (p.mirror_id) {
+        try { await removeDataroomMirror(p.mirror_id); } catch (e) { console.warn('mirror cleanup failed:', e.message); }
+      }
+    }
   } catch (e) {
     // Non-fatal; the unique partial index would surface a conflict on insert if any
     console.error('Failed to deactivate prior assets:', e.message);
@@ -181,6 +192,13 @@ module.exports = async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: 'Metadata insert failed', detail: String(e).slice(0, 200) });
     return;
+  }
+
+  // Mirror to Data Room (best-effort; don't fail the upload if this trips)
+  try {
+    await mirrorPipelineToDataroom(item);
+  } catch (e) {
+    console.warn('Data Room mirror failed:', e.message);
   }
 
   res.status(200).json({ ok: true, item });
