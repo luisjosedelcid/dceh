@@ -9,7 +9,7 @@
  *
  * Bump SW_VERSION whenever the app shell needs a fresh install.
  */
-const SW_VERSION = 'dce-v5';
+const SW_VERSION = 'dce-v6';
 const SHELL_CACHE = `dce-shell-${SW_VERSION}`;
 const RUNTIME_CACHE = `dce-runtime-${SW_VERSION}`;
 const API_CACHE     = `dce-api-${SW_VERSION}`;
@@ -164,3 +164,47 @@ async function swrApi(req) {
     status: 503, headers: { 'Content-Type': 'application/json', 'x-dce-cache': 'offline' }
   });
 }
+
+// ─── Web Push ───────────────────────────────────────────────────────────
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try { payload = event.data ? event.data.json() : {}; } catch (e) {
+    payload = { title: 'DCE Holdings', body: event.data ? event.data.text() : '' };
+  }
+  const title = payload.title || 'DCE Holdings';
+  const options = {
+    body: payload.body || '',
+    icon: payload.icon || '/icons/icon-192.png',
+    badge: payload.badge || '/icons/icon-96.png',
+    tag: payload.tag || 'dce-notification',
+    data: { url: payload.url || '/', ...(payload.data || {}) },
+    // iOS Web Push requires user-visible=true; leave defaults for max compatibility.
+    // vibrate not supported on iOS but harmless elsewhere.
+    vibrate: [80, 40, 80],
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil((async () => {
+    const absolute = new URL(targetUrl, self.location.origin).href;
+    const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    // Focus an existing window if we already have one open.
+    for (const client of all) {
+      try {
+        const clientUrl = new URL(client.url);
+        if (clientUrl.origin === self.location.origin) {
+          await client.focus();
+          if (client.url !== absolute && 'navigate' in client) {
+            try { await client.navigate(absolute); } catch (e) { /* ignored */ }
+          }
+          return;
+        }
+      } catch (e) { /* ignored */ }
+    }
+    // Otherwise open a fresh window.
+    if (self.clients.openWindow) await self.clients.openWindow(absolute);
+  })());
+});

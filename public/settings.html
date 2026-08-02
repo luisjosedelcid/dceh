@@ -154,8 +154,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=6">
-<script defer src="/pwa-shell.js?v=6"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=7">
+<script defer src="/pwa-shell.js?v=7"></script>
 <!--PWA:END-->
 </head>
 <body data-dce-auth="manual">
@@ -346,6 +346,17 @@
             <button class="btn" type="submit">Update password</button>
           </div>
         </form>
+
+        <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:24px 0 10px">Push notifications</h4>
+        <div style="font-size:12px;max-width:520px">
+          <p id="push-status-line" style="margin:0 0 12px;color:var(--gray-mid)">Checking…</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button class="btn" type="button" id="btn-push-enable" style="display:none">Enable notifications on this device</button>
+            <button class="btn ghost" type="button" id="btn-push-disable" style="display:none">Disable on this device</button>
+            <button class="btn ghost" type="button" id="btn-push-test" style="display:none;font-size:11px">Send test</button>
+          </div>
+          <p id="push-hint" style="margin:10px 0 0;font-size:11px;color:var(--gray-mid);font-style:italic"></p>
+        </div>
       </div>
     </div>
   </div><!-- /tab-panel account -->
@@ -1469,6 +1480,157 @@ loadAudit({ reset: true });
   if (!h) return;
   const btn = document.querySelector(`.tab[data-tab="${h}"]`);
   if (btn) btn.click();
+})();
+
+// ─── Push notifications ────────────────────────────────────────────────────────────────────────────────────
+(function pushInit() {
+  const statusEl = document.getElementById('push-status-line');
+  const hintEl = document.getElementById('push-hint');
+  const btnEnable = document.getElementById('btn-push-enable');
+  const btnDisable = document.getElementById('btn-push-disable');
+  const btnTest = document.getElementById('btn-push-test');
+  if (!statusEl) return;
+
+  function urlBase64ToUint8Array(base64) {
+    const padding = '='.repeat((4 - base64.length % 4) % 4);
+    const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(b64);
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const supports = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+
+  function setUI(state, msg, hint) {
+    statusEl.textContent = msg || '';
+    hintEl.textContent = hint || '';
+    btnEnable.style.display = (state === 'can-enable') ? '' : 'none';
+    btnDisable.style.display = (state === 'enabled') ? '' : 'none';
+    btnTest.style.display = (state === 'enabled') ? '' : 'none';
+  }
+
+  async function currentSub() {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) return null;
+    return reg.pushManager.getSubscription();
+  }
+
+  async function refresh() {
+    if (!supports) {
+      setUI('unsupported', 'Push notifications not supported on this browser.', isIOS && !isStandalone ? 'On iPhone, add the app to your Home Screen and open it from there — Safari alone does not support push.' : '');
+      return;
+    }
+    if (isIOS && !isStandalone) {
+      setUI('unsupported', 'Not available in Safari.', 'On iPhone push works only when the app is opened from the Home Screen.');
+      return;
+    }
+    const perm = Notification.permission;
+    if (perm === 'denied') {
+      setUI('denied', 'Notifications are blocked in system settings.', 'Enable them in iPhone Settings → Notifications → DCE Holdings, or your browser site settings.');
+      return;
+    }
+    const sub = await currentSub();
+    if (sub) {
+      setUI('enabled', 'Notifications are enabled on this device.', '');
+    } else {
+      setUI('can-enable', perm === 'granted' ? 'Ready — enable to start receiving notifications.' : 'Not enabled yet.', '');
+    }
+  }
+
+  async function enable() {
+    try {
+      btnEnable.disabled = true;
+      statusEl.textContent = 'Requesting permission…';
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') {
+        await refresh();
+        return;
+      }
+      const reg = await navigator.serviceWorker.ready;
+      // Get server public key
+      const pkRes = await fetch('/api/push/vapid-public-key');
+      if (!pkRes.ok) throw new Error('Cannot fetch VAPID public key');
+      const { publicKey } = await pkRes.json();
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+      const token = localStorage.getItem('dce_admin_token') || '';
+      const r = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+        body: JSON.stringify({
+          endpoint: sub.endpoint,
+          keys: sub.toJSON().keys,
+          user_agent: navigator.userAgent,
+          device_hint: isIOS ? 'ios' : (/Android/i.test(navigator.userAgent) ? 'android' : 'desktop'),
+        }),
+      });
+      if (!r.ok) {
+        const t = await r.text();
+        throw new Error('subscribe failed: ' + r.status + ' ' + t.slice(0, 120));
+      }
+      await refresh();
+    } catch (e) {
+      statusEl.textContent = 'Failed: ' + (e.message || e);
+    } finally {
+      btnEnable.disabled = false;
+    }
+  }
+
+  async function disable() {
+    try {
+      btnDisable.disabled = true;
+      const sub = await currentSub();
+      if (sub) {
+        const token = localStorage.getItem('dce_admin_token') || '';
+        await fetch('/api/push/unsubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        }).catch(() => {});
+        try { await sub.unsubscribe(); } catch (e) { /* ignored */ }
+      }
+      await refresh();
+    } finally {
+      btnDisable.disabled = false;
+    }
+  }
+
+  async function sendTest() {
+    try {
+      btnTest.disabled = true;
+      statusEl.textContent = 'Sending test…';
+      const token = localStorage.getItem('dce_admin_token') || '';
+      const r = await fetch('/api/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+        body: JSON.stringify({
+          title: 'DCE Holdings',
+          body: 'Test notification — push is working.',
+          url: '/settings.html#account',
+          tag: 'test-' + Date.now(),
+        }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        statusEl.textContent = 'Test failed: ' + (j.error || r.status);
+      } else {
+        statusEl.textContent = 'Test sent (delivered: ' + (j.sent || 0) + ').';
+      }
+    } finally {
+      btnTest.disabled = false;
+    }
+  }
+
+  btnEnable.addEventListener('click', enable);
+  btnDisable.addEventListener('click', disable);
+  btnTest.addEventListener('click', sendTest);
+
+  refresh();
 })();
 </script>
 <script src="/search.js" defer></script>
