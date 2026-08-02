@@ -77,6 +77,11 @@
 
   function logout() {
     _clear();
+    // Also drop the auth-gate flag so pwa-shell bounces to /lock.html
+    try {
+      sessionStorage.removeItem('dce_auth_ok');
+      sessionStorage.removeItem('dce_auth');
+    } catch {}
     _emit();
     _refreshButton();
   }
@@ -294,12 +299,10 @@
     btn.className = 'dce-admin-btn';
     btn.addEventListener('click', () => {
       if (isAdmin()) {
-        if (confirm('Sign out and return to login?')) {
+        if (confirm('Sign out and return to lock screen?')) {
           logout();
-          // Also clear the legacy gate flag so user is fully logged out
-          try { sessionStorage.removeItem('dce_auth'); } catch {}
-          // Send them back to the landing/gate page
-          window.location.href = '/';
+          // Send them to the lock screen (Face ID / PIN entry)
+          window.location.href = '/lock.html';
         }
       } else {
         _showModal();

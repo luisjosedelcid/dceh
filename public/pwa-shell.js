@@ -143,6 +143,7 @@
       <div class="dce-sheet-grid">
         ${SECONDARY.map(s => `<a class="dce-sheet-item" href="${s.href}">${s.label}</a>`).join('')}
       </div>
+      <button class="dce-sheet-signout" type="button" data-signout="1" style="display:block;width:calc(100% - 32px);margin:16px auto 0;padding:14px;border:1px solid rgba(184,139,71,0.4);border-radius:10px;background:transparent;color:#B88B47;font-family:Archivo,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer">Sign out</button>
       <button class="dce-sheet-close" type="button" aria-label="Close menu">Close</button>
     `;
     document.body.appendChild(overlay);
@@ -158,6 +159,20 @@
     const close = () => closeMenuSheet();
     overlay.addEventListener('click', close);
     sheet.querySelector('.dce-sheet-close').addEventListener('click', close);
+    const signoutBtn = sheet.querySelector('[data-signout]');
+    if (signoutBtn) {
+      signoutBtn.addEventListener('click', () => {
+        if (!confirm('Sign out and return to lock screen?')) return;
+        try {
+          localStorage.removeItem('dce_admin_token');
+          localStorage.removeItem('dce_admin_token_exp');
+          localStorage.removeItem('dce_admin_user');
+          sessionStorage.removeItem('dce_auth_ok');
+          sessionStorage.removeItem('dce_auth');
+        } catch {}
+        window.location.href = '/lock.html';
+      });
+    }
     document.addEventListener('keydown', escClose);
 
     function escClose(e) {
