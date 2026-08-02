@@ -919,20 +919,27 @@ const STAGE_TO_FUNNEL = {
   approved: 'research',
 };
 
+// Cached kanban-stage map; refilled by syncFunnelStagesFromKanban()
+// so PUBLISHED_ROWS (loaded async) can pick up their stage too.
+var KANBAN_STAGE_BY_TICKER = {};
+
+function applyKanbanStage(row) {
+  const kanbanStage = KANBAN_STAGE_BY_TICKER[String(row.ticker).toUpperCase()];
+  if (!kanbanStage) return; // not in kanban yet, keep default
+  const mapped = STAGE_TO_FUNNEL[kanbanStage];
+  row.funnelStage = mapped || '__hidden__';
+}
+
 async function syncFunnelStagesFromKanban() {
   try {
     const r = await fetch('/api/pipeline-stages');
     if (!r.ok) return;
     const data = await r.json();
     const byTicker = {};
-    (data.items || []).forEach(it => { byTicker[it.ticker] = it.stage; });
-    UNIVERSE.forEach(c => {
-      const kanbanStage = byTicker[c.ticker];
-      if (!kanbanStage) return; // not in kanban yet, keep hardcoded default
-      const mapped = STAGE_TO_FUNNEL[kanbanStage];
-      if (mapped) c.funnelStage = mapped;
-      else c.funnelStage = '__hidden__'; // pre-research stages: don't show in any tab
-    });
+    (data.items || []).forEach(it => { byTicker[String(it.ticker).toUpperCase()] = it.stage; });
+    KANBAN_STAGE_BY_TICKER = byTicker;
+    UNIVERSE.forEach(applyKanbanStage);
+    PUBLISHED_ROWS.forEach(applyKanbanStage);
   } catch (e) {
     console.warn('syncFunnelStagesFromKanban failed:', e);
   }
@@ -954,6 +961,9 @@ async function loadPublishedRows() {
     if (!r.ok) return;
     const j = await r.json();
     PUBLISHED_ROWS = Array.isArray(j.rows) ? j.rows : [];
+    // If kanban stages were already fetched, apply them to the new rows so
+    // published tickers don't get stuck in the default 'research' bucket.
+    PUBLISHED_ROWS.forEach(applyKanbanStage);
     // Also feed the 🌐 badge cache so renderDashboardCell + watchlist know
     // which tickers have a live dashboard.
     watchState.dashboardTickers = new Set(PUBLISHED_ROWS.map(r => String(r.ticker).toUpperCase()));
