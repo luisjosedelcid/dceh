@@ -641,8 +641,18 @@ function renderRow(c, vals) {
     <td>${moatHtml}</td>
     <td>${renderAlertCell(c.ticker, 'floor', vals.price, sym(c))}</td>
     <td>${renderAlertCell(c.ticker, 'ceiling', vals.price, sym(c))}</td>
-    <td><a class="dash-link" href="${c.link}">Dashboard →</a></td>
+    <td>${renderDashboardCell(c)}</td>
   </tr>`;
+}
+
+function renderDashboardCell(c) {
+  const hasGenerated = watchState.dashboardTickers && watchState.dashboardTickers.has(String(c.ticker).toUpperCase());
+  if (hasGenerated) {
+    const token = localStorage.getItem('dce_admin_token') || '';
+    const url = `/api/dashboard-view?ticker=${encodeURIComponent(c.ticker)}&token=${encodeURIComponent(token)}`;
+    return `<a class="dash-link gold" href="${url}" target="_blank" rel="noopener" title="Auto-generated dashboard">🌐 Dashboard →</a>`;
+  }
+  return c.link ? `<a class="dash-link" href="${c.link}">Dashboard →</a>` : '<span style="color:var(--gray-mid);font-size:11px">—</span>';
 }
 
 // ═══ PRICE ALERTS ═══
@@ -921,6 +931,17 @@ const LIVE_PRICES = {};
 renderTable();
 loadAlerts().then(() => renderTable());
 syncFunnelStagesFromKanban().then(() => renderTable());
+loadDashboardTickers().then(() => renderTable());
+
+async function loadDashboardTickers() {
+  try {
+    const token = localStorage.getItem('dce_admin_token') || '';
+    const r = await fetch('/api/dashboard-tickers', { headers: { 'x-admin-token': token } });
+    if (!r.ok) return;
+    const j = await r.json();
+    watchState.dashboardTickers = new Set((j.tickers || []).map(t => String(t).toUpperCase()));
+  } catch (e) { /* silent */ }
+}
 
 // ═══ LIVE PRICE FETCH (Finnhub) ═══
 // Finnhub quotes go through /api/finnhub-quote (server-side, key in env var)
