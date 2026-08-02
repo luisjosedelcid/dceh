@@ -107,6 +107,28 @@
   .modal-section{padding:18px 24px;border-bottom:1px solid var(--rule)}
   .modal-section:last-child{border-bottom:none}
   .modal-section h4{font-size:10px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+
+  /* Deliverables slots */
+  .deliverables{display:flex;flex-direction:column;gap:8px}
+  .slot{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--rule);background:var(--cream);transition:border-color .15s}
+  .slot:hover{border-color:var(--gold-rule)}
+  .slot-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center}
+  .slot-body{flex:1;min-width:0}
+  .slot-label{font-size:11px;font-weight:600;color:var(--ink);letter-spacing:0.02em}
+  .slot-meta{font-size:10px;color:var(--gray-txt);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .slot-meta.empty{color:var(--gray-mid);font-style:italic}
+  .slot-actions{display:flex;gap:6px;flex-shrink:0}
+  .slot-btn{background:var(--white);border:1px solid var(--gold-rule);color:var(--gold);font-family:inherit;font-size:9px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:6px 10px;cursor:pointer;transition:all .15s}
+  .slot-btn:hover{background:var(--gold);color:var(--white);border-color:var(--gold)}
+  .slot-btn.danger{color:var(--red);border-color:rgba(155,35,53,0.25)}
+  .slot-btn.danger:hover{background:var(--red);color:var(--white);border-color:var(--red)}
+  .slot-btn:disabled{opacity:.5;cursor:not-allowed}
+  .slot-btn.uploading{background:var(--gold-dim);color:var(--gold);pointer-events:none}
+  .slot input[type=file]{display:none}
+
+  /* Card badge for uploaded assets count */
+  .card-assets{display:inline-flex;align-items:center;gap:4px;color:var(--gold);font-weight:500}
+  .card-assets.pending{color:var(--gray-mid)}
   .note-edit{width:100%;padding:10px;border:1px solid var(--rule);font-family:inherit;font-size:12px;background:var(--cream);outline:none;resize:vertical;min-height:60px}
   .note-edit:focus{border-color:var(--gold);background:var(--white)}
   .save-note{margin-top:8px;padding:6px 12px;background:var(--navy);color:var(--white);border:none;font-family:inherit;font-size:10px;letter-spacing:0.15em;font-weight:500;text-transform:uppercase;cursor:pointer}
@@ -215,6 +237,7 @@ let pipeline = [];
 let commentsByCard = {};
 let dragId = null;
 let openCardId = null;
+let deliverablesByCard = {}; // populated by preloadAllDeliverables() + loadDeliverables()
 let prefill = null;       // { ticker, name, note } from query string
 let analysts = [];         // [{ id, name, initials, color, active, email }]
 function analystById(id) { return id ? analysts.find(a => a.id === id) : null; }
@@ -280,6 +303,8 @@ async function boot() {
   try {
     await loadPipeline();
     renderApp();
+    // Hydrate deliverables badges in background (non-blocking)
+    preloadAllDeliverables();
   } catch (e) {
     console.error(e);
     document.getElementById('main-content').innerHTML =
@@ -433,7 +458,10 @@ function cardHTML(c) {
       ${c.note ? `<div class="card-nt">${esc(c.note)}</div>` : ''}
       <div class="card-meta">
         <span>${created ? 'Added ' + created + movedShown : ''}</span>
-        ${cmtCount > 0 ? `<span class="comments-cnt">[${cmtCount}]</span>` : ''}
+        <span style="display:inline-flex;gap:6px;align-items:center">
+          ${assetsBadgeHTML(c.id)}
+          ${cmtCount > 0 ? `<span class="comments-cnt">[${cmtCount}]</span>` : ''}
+        </span>
       </div>
     </div>
   `;
@@ -533,6 +561,7 @@ function openModal(id) {
   openCardId = id;
   renderModal();
   document.getElementById('modal-bg').classList.add('show');
+  loadDeliverables(id);
 }
 function closeModal() {
   openCardId = null;
@@ -568,6 +597,13 @@ function renderModal() {
       <h4>Note</h4>
       <textarea class="note-edit" id="note-edit">${esc(c.note || '')}</textarea>
       <button class="save-note" id="save-note-btn" onclick="saveNote()">Save note</button>
+    </div>
+
+    <div class="modal-section" id="deliverables-section">
+      <h4>Deliverables</h4>
+      <div class="deliverables" id="deliverables-list">
+        <div style="font-size:11px;color:var(--gray-mid)">Loading…</div>
+      </div>
     </div>
 
     <div class="modal-section">
@@ -729,6 +765,153 @@ async function assignOwner(ownerId) {
     c.owner_id = prev;
     if (picker) picker.innerHTML = renderOwnerPicker(c);
     renderBoard();
+  }
+}
+
+// ============================================================
+// DELIVERABLES — upload/replace/delete files per card
+// ============================================================
+function assetsBadgeHTML(cardId) {
+  const items = deliverablesByCard[cardId] || [];
+  if (!items.length) {
+    // 5 empty dots
+    return `<span class="card-assets pending" title="No deliverables uploaded">○○○○○</span>`;
+  }
+  const have = new Set(items.map(it => it.kind));
+  const order = ['excel','company_brief_pdf','thesis_builder_pdf','thesis_breaker_pdf','dashboard_html'];
+  const dots = order.map(k => have.has(k) ? '●' : '○').join('');
+  const pending = order.filter(k => !have.has(k)).length;
+  const cls = pending === 0 ? 'card-assets' : (pending === 5 ? 'card-assets pending' : 'card-assets');
+  return `<span class="${cls}" title="${5-pending}/5 deliverables uploaded">${dots}</span>`;
+}
+
+async function preloadAllDeliverables() {
+  if (!pipeline || !pipeline.length) return;
+  try {
+    const token = localStorage.getItem('dce_admin_token');
+    // Batch: fetch active assets grouped by card via one call
+    const resp = await fetch('/api/admin/pipeline-card-assets-all', {
+      headers: { 'x-admin-token': token || '' }
+    });
+    if (resp.ok) {
+      const j = await resp.json();
+      const grouped = {};
+      (j.items || []).forEach(it => {
+        if (!grouped[it.card_id]) grouped[it.card_id] = [];
+        grouped[it.card_id].push(it);
+      });
+      deliverablesByCard = grouped;
+      renderPipeline();
+    }
+  } catch (_) { /* silent — endpoint may not exist yet; badges will populate on modal open */ }
+}
+
+const SLOT_CONFIG = [
+  { kind: 'excel',              label: 'Excel model',      icon: '📊', accept: '.xlsx,.xls' },
+  { kind: 'company_brief_pdf',  label: 'Company Brief',    icon: '📄', accept: '.pdf' },
+  { kind: 'thesis_builder_pdf', label: 'Thesis Builder',   icon: '📄', accept: '.pdf' },
+  { kind: 'thesis_breaker_pdf', label: 'Thesis Breaker',   icon: '📄', accept: '.pdf' },
+  { kind: 'dashboard_html',     label: 'Dashboard HTML',   icon: '🌐', accept: '.html,.htm' },
+];
+
+function fmtBytes(n) {
+  if (n == null) return '';
+  if (n < 1024) return n + ' B';
+  if (n < 1024*1024) return (n/1024).toFixed(1) + ' KB';
+  return (n/1024/1024).toFixed(1) + ' MB';
+}
+
+async function loadDeliverables(cardId) {
+  const listEl = document.getElementById('deliverables-list');
+  if (!listEl) return;
+  try {
+    const resp = await api(`/api/admin/pipeline-card-assets?card_id=${encodeURIComponent(cardId)}`);
+    const items = (resp && resp.items) || [];
+    deliverablesByCard[cardId] = items;
+    renderDeliverables(cardId);
+    // Update card badge in the pipeline board
+    renderPipeline();
+  } catch (e) {
+    listEl.innerHTML = `<div style="font-size:11px;color:var(--red)">Failed to load: ${esc(e.message || e)}</div>`;
+  }
+}
+
+function renderDeliverables(cardId) {
+  const listEl = document.getElementById('deliverables-list');
+  if (!listEl || openCardId !== cardId) return;
+  const items = deliverablesByCard[cardId] || [];
+  const byKind = {};
+  items.forEach(it => { byKind[it.kind] = it; });
+
+  listEl.innerHTML = SLOT_CONFIG.map(slot => {
+    const it = byKind[slot.kind];
+    const meta = it
+      ? `<div class="slot-meta" title="${esc(it.filename)}">${esc(it.filename)} · ${fmtBytes(it.size_bytes)}</div>`
+      : `<div class="slot-meta empty">— not uploaded —</div>`;
+    const actions = it
+      ? `<a class="slot-btn" href="${esc(it.signed_url || '#')}" target="_blank" rel="noopener">Open</a>
+         <button class="slot-btn" onclick="pickSlotFile('${slot.kind}')">Replace</button>
+         <button class="slot-btn danger" onclick="deleteSlot(${it.id})">Remove</button>`
+      : `<button class="slot-btn" onclick="pickSlotFile('${slot.kind}')">Upload</button>`;
+    return `
+      <div class="slot" data-kind="${slot.kind}">
+        <div class="slot-icon">${slot.icon}</div>
+        <div class="slot-body">
+          <div class="slot-label">${slot.label}</div>
+          ${meta}
+        </div>
+        <div class="slot-actions">${actions}</div>
+        <input type="file" id="slot-input-${slot.kind}" accept="${slot.accept}" onchange="uploadSlotFile('${slot.kind}', this.files[0]); this.value='';">
+      </div>
+    `;
+  }).join('');
+}
+
+function pickSlotFile(kind) {
+  const inp = document.getElementById(`slot-input-${kind}`);
+  if (inp) inp.click();
+}
+
+async function uploadSlotFile(kind, file) {
+  if (!file || !openCardId) return;
+  if (file.size > 25 * 1024 * 1024) {
+    alert('File too large (max 25 MB)');
+    return;
+  }
+  const slotEl = document.querySelector(`.slot[data-kind="${kind}"] .slot-actions`);
+  const priorHTML = slotEl ? slotEl.innerHTML : '';
+  if (slotEl) slotEl.innerHTML = `<button class="slot-btn uploading">Uploading…</button>`;
+
+  const url = `/api/admin/pipeline-card-upload?card_id=${encodeURIComponent(openCardId)}&kind=${encodeURIComponent(kind)}&filename=${encodeURIComponent(file.name)}`;
+  try {
+    const token = localStorage.getItem('dce_admin_token');
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'x-admin-token': token || '', 'Content-Type': 'application/octet-stream' },
+      body: file,
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+    // Refresh list
+    await loadDeliverables(openCardId);
+  } catch (e) {
+    if (slotEl) slotEl.innerHTML = priorHTML;
+    alert('Upload failed: ' + (e.message || e));
+  }
+}
+
+async function deleteSlot(id) {
+  if (!confirm('Remove this file?')) return;
+  try {
+    const token = localStorage.getItem('dce_admin_token');
+    const r = await fetch(`/api/admin/pipeline-card-assets?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-token': token || '' },
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    await loadDeliverables(openCardId);
+  } catch (e) {
+    alert('Delete failed: ' + (e.message || e));
   }
 }
 
