@@ -12,6 +12,37 @@
 (function () {
   'use strict';
 
+  // ── Face ID / PIN gate (runs before anything else) ──
+  // Redirects to /lock.html unless the current tab has been unlocked
+  // (sessionStorage 'dce_auth_ok'=1) or an emergency admin_token query
+  // param is present.
+  (function authGate(){
+    const path = location.pathname;
+    // Whitelist pages that must be reachable without unlock
+    const PUBLIC = ['/lock.html', '/enroll.html', '/admin-login.html'];
+    if (PUBLIC.includes(path)) return;
+
+    // Emergency bypass via URL: ?admin_token=<hex>
+    const params = new URLSearchParams(location.search);
+    const emergencyToken = params.get('admin_token');
+    if (emergencyToken) {
+      localStorage.setItem('dce_admin_token', emergencyToken);
+      sessionStorage.setItem('dce_auth_ok', '1');
+      // Strip the token from the URL for hygiene
+      params.delete('admin_token');
+      const qs = params.toString();
+      history.replaceState({}, '', path + (qs ? '?' + qs : ''));
+      return;
+    }
+
+    // Already unlocked in this browser session
+    if (sessionStorage.getItem('dce_auth_ok') === '1') return;
+
+    // Otherwise: redirect to lock screen, remembering where the user was heading
+    const ret = encodeURIComponent(path + location.search + location.hash);
+    location.replace('/lock.html?return=' + ret);
+  })();
+
   // ── Ensure viewport-fit=cover on existing meta viewport (for iOS safe-area) ──
   (function ensureViewportFit(){
     const m = document.querySelector('meta[name="viewport"]');

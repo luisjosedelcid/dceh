@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>DCE Holdings</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  :root{
+    --navy:#1B2642; --gold:#B88B47; --cream:#F5F1E8;
+    --border:rgba(245,241,232,0.2); --red:#e07385; --gray:rgba(245,241,232,0.65);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%; margin:0}
+  body{
+    font-family:Calibri,-apple-system,sans-serif;
+    background:var(--navy); color:var(--cream);
+    display:flex; align-items:center; justify-content:center;
+    padding:32px 24px; padding-top:max(32px,env(safe-area-inset-top));
+    padding-bottom:max(32px,env(safe-area-inset-bottom));
+  }
+  .card{max-width:380px; width:100%; text-align:center}
+  .brand{
+    font-family:Georgia,serif; font-size:28px; letter-spacing:-0.01em;
+    color:var(--gold); margin:0 0 4px;
+  }
+  .tagline{font-size:12.5px; color:var(--gray); letter-spacing:0.05em; text-transform:uppercase; margin:0 0 40px}
+  .btn{
+    display:block; width:100%; padding:16px; border:none; border-radius:12px;
+    background:var(--gold); color:var(--navy); font-size:16px; font-weight:700;
+    letter-spacing:0.05em; text-transform:uppercase; cursor:pointer;
+    margin-bottom:12px; font-family:inherit;
+  }
+  .btn.ghost{background:transparent; color:var(--cream); border:1px solid var(--border); font-weight:500}
+  .btn:disabled{opacity:0.4; cursor:not-allowed}
+  .status{font-size:13px; color:var(--gray); min-height:20px; margin-top:16px}
+  .status.err{color:var(--red)}
+  .pin-panel{display:none; margin-top:20px}
+  .pin-panel.on{display:block}
+  .pin-input{
+    width:100%; padding:16px; border:1px solid var(--border); border-radius:12px;
+    background:transparent; color:var(--cream); font-size:22px; text-align:center;
+    letter-spacing:0.5em; font-family:inherit;
+    -webkit-appearance:none;
+  }
+  .pin-input:focus{outline:none; border-color:var(--gold)}
+  input:-webkit-autofill{-webkit-box-shadow:0 0 0 1000px var(--navy) inset; -webkit-text-fill-color:var(--cream)}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1 class="brand">DCE Holdings</h1>
+  <p class="tagline">Family office · Investment platform</p>
+
+  <button class="btn" id="btn-faceid">Unlock with Face ID</button>
+  <button class="btn ghost" id="btn-showpin">Use PIN instead</button>
+
+  <div class="pin-panel" id="pin-panel">
+    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" class="pin-input" id="pin" placeholder="••••••" autocomplete="off">
+    <button class="btn" id="btn-pin-submit" style="margin-top:12px">Unlock</button>
+  </div>
+
+  <div class="status" id="status"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const setStatus = (t, err) => { $('status').className = 'status' + (err?' err':''); $('status').textContent = t || ''; };
+const params = new URLSearchParams(location.search);
+const returnTo = params.get('return') || '/';
+
+// b64url helpers
+function b64urlToBuf(s){ s = s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4)s+='='; const b=atob(s); const buf=new Uint8Array(b.length); for(let i=0;i<b.length;i++)buf[i]=b.charCodeAt(i); return buf.buffer; }
+function bufToB64url(buf){ const b = new Uint8Array(buf); let s=''; for(const c of b) s+=String.fromCharCode(c); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+
+function convertRequestOptions(o){
+  o.challenge = b64urlToBuf(o.challenge);
+  if (Array.isArray(o.allowCredentials)) o.allowCredentials.forEach(c => c.id = b64urlToBuf(c.id));
+  return o;
+}
+function serializeAssertion(cred){
+  return {
+    id: cred.id,
+    rawId: bufToB64url(cred.rawId),
+    type: cred.type,
+    response: {
+      authenticatorData: bufToB64url(cred.response.authenticatorData),
+      clientDataJSON: bufToB64url(cred.response.clientDataJSON),
+      signature: bufToB64url(cred.response.signature),
+      userHandle: cred.response.userHandle ? bufToB64url(cred.response.userHandle) : null,
+    },
+    clientExtensionResults: cred.getClientExtensionResults ? cred.getClientExtensionResults() : {},
+  };
+}
+
+function saveSession(j){
+  localStorage.setItem('dce_admin_token', j.token);
+  localStorage.setItem('dce_admin_email', j.email);
+  if (j.displayName) localStorage.setItem('dce_admin_display_name', j.displayName);
+  if (j.role) localStorage.setItem('dce_admin_role', j.role);
+  // Mark this browser session as unlocked (cleared when tab closes)
+  sessionStorage.setItem('dce_auth_ok', '1');
+  location.href = returnTo;
+}
+
+async function tryFaceID(){
+  setStatus('Requesting Face ID...');
+  try {
+    const email = localStorage.getItem('dce_admin_email') || '';
+    const r1 = await fetch('/api/auth/passkey-auth-begin', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(email ? {email} : {})
+    });
+    if (!r1.ok) throw new Error((await r1.json()).error || 'begin failed');
+    const options = convertRequestOptions(await r1.json());
+    const cred = await navigator.credentials.get({publicKey: options});
+    if (!cred) throw new Error('Cancelled');
+    const r2 = await fetch('/api/auth/passkey-auth-finish', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({response: serializeAssertion(cred)})
+    });
+    if (!r2.ok) throw new Error((await r2.json()).error || 'verify failed');
+    const j = await r2.json();
+    saveSession(j);
+  } catch (e) {
+    setStatus('Face ID failed: ' + (e.message || e), true);
+  }
+}
+
+$('btn-faceid').addEventListener('click', tryFaceID);
+
+$('btn-showpin').addEventListener('click', () => {
+  $('pin-panel').classList.toggle('on');
+  if ($('pin-panel').classList.contains('on')) $('pin').focus();
+});
+
+$('btn-pin-submit').addEventListener('click', async () => {
+  const email = localStorage.getItem('dce_admin_email') || '';
+  const pin = $('pin').value;
+  if (!email){ setStatus('No email in this device. Enroll first at /enroll.html', true); return; }
+  if (!/^\d{6}$/.test(pin)){ setStatus('PIN must be 6 digits', true); return; }
+  setStatus('Verifying...');
+  try {
+    const r = await fetch('/api/auth/pin-verify', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, pin})
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || 'verify failed');
+    saveSession(j);
+  } catch (e) {
+    setStatus(e.message || String(e), true);
+    $('pin').value = '';
+  }
+});
+
+// Auto-trigger Face ID on load if supported (better UX)
+window.addEventListener('load', () => {
+  if (window.PublicKeyCredential) {
+    // Small delay so the user sees the branded screen briefly
+    setTimeout(tryFaceID, 400);
+  } else {
+    $('btn-faceid').disabled = true;
+    setStatus('Face ID not supported on this device — use PIN', true);
+    $('pin-panel').classList.add('on');
+  }
+});
+</script>
+</body>
+</html>

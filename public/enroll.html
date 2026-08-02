@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DCE — Enroll Face ID</title>
+<style>
+  :root{
+    --navy:#1B2642; --gold:#B88B47; --cream:#F5F1E8;
+    --gray:#8b8778; --border:rgba(27,38,66,0.12);
+    --red:#a4243b; --green:#3d7c4a;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:Calibri,-apple-system,sans-serif;
+    background:var(--cream); color:var(--navy);
+    min-height:100vh; padding:24px 20px; padding-top:max(24px,env(safe-area-inset-top));
+  }
+  .wrap{max-width:480px; margin:0 auto}
+  h1{font-size:24px; margin:0 0 4px; letter-spacing:-0.02em}
+  .sub{color:var(--gray); font-size:13px; margin:0 0 24px}
+  .step{
+    background:#fff; border:1px solid var(--border); border-radius:14px;
+    padding:20px; margin-bottom:16px;
+  }
+  .step h2{font-size:15px; margin:0 0 8px; letter-spacing:0.02em; text-transform:uppercase; color:var(--gold)}
+  .step p{font-size:13.5px; color:var(--navy); margin:0 0 14px; line-height:1.5}
+  .btn{
+    display:block; width:100%; padding:14px; border:none; border-radius:10px;
+    background:var(--navy); color:#fff; font-size:15px; font-weight:600;
+    letter-spacing:0.03em; cursor:pointer; margin-top:8px;
+  }
+  .btn:disabled{opacity:0.4; cursor:not-allowed}
+  .btn.gold{background:var(--gold)}
+  .btn.ghost{background:transparent; color:var(--navy); border:1px solid var(--border)}
+  input[type="password"], input[type="email"]{
+    width:100%; padding:12px 14px; border:1px solid var(--border); border-radius:10px;
+    font-size:15px; font-family:inherit; margin-top:6px;
+    -webkit-appearance:none;
+  }
+  .pin-input{letter-spacing:0.5em; text-align:center; font-size:20px}
+  .status{font-size:12.5px; margin-top:10px; min-height:16px}
+  .ok{color:var(--green)}
+  .err{color:var(--red)}
+  .done{opacity:0.5; pointer-events:none}
+  .done h2::after{content:' ✓'; color:var(--green)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Enroll device</h1>
+  <p class="sub">Set up Face ID and a 6-digit PIN backup. One-time setup per device.</p>
+
+  <div class="step" id="step-auth">
+    <h2>1. Verify identity</h2>
+    <p>Confirm you're logged in with your current admin token.</p>
+    <input type="email" id="email" placeholder="your@dceholdings.com" autocomplete="email">
+    <button class="btn ghost" id="btn-check">Check session</button>
+    <div class="status" id="status-auth"></div>
+  </div>
+
+  <div class="step" id="step-faceid" style="opacity:0.4; pointer-events:none">
+    <h2>2. Register Face ID</h2>
+    <p>Your iPhone will prompt for Face ID. This creates a passkey stored on the device (never leaves it).</p>
+    <button class="btn gold" id="btn-faceid" disabled>Register Face ID</button>
+    <div class="status" id="status-faceid"></div>
+  </div>
+
+  <div class="step" id="step-pin" style="opacity:0.4; pointer-events:none">
+    <h2>3. Set backup PIN</h2>
+    <p>6-digit PIN in case Face ID fails or the sensor breaks.</p>
+    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="pin1" class="pin-input" placeholder="••••••">
+    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" id="pin2" class="pin-input" placeholder="Confirm" style="margin-top:8px">
+    <button class="btn" id="btn-pin" disabled>Save PIN</button>
+    <div class="status" id="status-pin"></div>
+  </div>
+
+  <div class="step" id="step-done" style="display:none">
+    <h2>All set</h2>
+    <p>Face ID and PIN are ready. Next time you open the app, you'll be prompted to unlock.</p>
+    <a href="/" class="btn">Go to app</a>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const setStatus = (id, text, cls) => { const el = $(id); el.className = 'status ' + (cls || ''); el.textContent = text || ''; };
+
+// b64url helpers for WebAuthn payloads
+function b64urlToBuf(s){ s = s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4)s+='='; const b=atob(s); const buf=new Uint8Array(b.length); for(let i=0;i<b.length;i++)buf[i]=b.charCodeAt(i); return buf.buffer; }
+function bufToB64url(buf){ const b = new Uint8Array(buf); let s=''; for(const c of b) s+=String.fromCharCode(c); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+
+function convertCreationOptions(o){
+  o.challenge = b64urlToBuf(o.challenge);
+  o.user.id = b64urlToBuf(o.user.id);
+  if (Array.isArray(o.excludeCredentials)) o.excludeCredentials.forEach(c => c.id = b64urlToBuf(c.id));
+  return o;
+}
+function serializeAttestation(cred){
+  return {
+    id: cred.id,
+    rawId: bufToB64url(cred.rawId),
+    type: cred.type,
+    response: {
+      attestationObject: bufToB64url(cred.response.attestationObject),
+      clientDataJSON: bufToB64url(cred.response.clientDataJSON),
+      transports: cred.response.getTransports ? cred.response.getTransports() : undefined,
+    },
+    clientExtensionResults: cred.getClientExtensionResults ? cred.getClientExtensionResults() : {},
+  };
+}
+
+let currentEmail = null;
+const savedEmail = localStorage.getItem('dce_admin_email') || '';
+if (savedEmail) $('email').value = savedEmail;
+
+$('btn-check').addEventListener('click', async () => {
+  const email = $('email').value.trim().toLowerCase();
+  if (!email){ setStatus('status-auth','Enter your email','err'); return; }
+  const token = localStorage.getItem('dce_admin_token');
+  if (!token){ setStatus('status-auth','No admin token in this browser. Log in first at /admin-login.html','err'); return; }
+  // Ping status endpoint
+  try {
+    const r = await fetch(`/api/auth/status?email=${encodeURIComponent(email)}`);
+    const j = await r.json();
+    if (!j.exists){ setStatus('status-auth','User not found or inactive','err'); return; }
+    currentEmail = email;
+    localStorage.setItem('dce_admin_email', email);
+    setStatus('status-auth','Ready to enroll' + (j.hasPasskey ? ' (existing passkey found — adding another device)' : ''), 'ok');
+    $('step-faceid').style.opacity = '1';
+    $('step-faceid').style.pointerEvents = 'auto';
+    $('btn-faceid').disabled = false;
+    if (j.hasPin) setStatus('status-pin','A PIN is already set — you can replace it here.', '');
+  } catch (e) {
+    setStatus('status-auth', 'Check failed: ' + e.message, 'err');
+  }
+});
+
+$('btn-faceid').addEventListener('click', async () => {
+  if (!currentEmail) return;
+  const token = localStorage.getItem('dce_admin_token');
+  const btn = $('btn-faceid');
+  btn.disabled = true;
+  setStatus('status-faceid','Requesting Face ID...','');
+  try {
+    // 1. Get options
+    const r1 = await fetch('/api/auth/passkey-register-begin', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-token':token || ''},
+      body: JSON.stringify({email: currentEmail})
+    });
+    if (!r1.ok) throw new Error((await r1.json()).error || 'begin failed');
+    const options = convertCreationOptions(await r1.json());
+
+    // 2. Create credential (browser triggers Face ID)
+    const cred = await navigator.credentials.create({publicKey: options});
+    if (!cred) throw new Error('User cancelled');
+
+    // 3. Finish
+    const deviceName = /iPhone/i.test(navigator.userAgent) ? 'iPhone' : /iPad/i.test(navigator.userAgent) ? 'iPad' : /Mac/i.test(navigator.userAgent) ? 'Mac' : 'Browser';
+    const r2 = await fetch('/api/auth/passkey-register-finish', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-token':token || ''},
+      body: JSON.stringify({email: currentEmail, deviceName, response: serializeAttestation(cred)})
+    });
+    if (!r2.ok) throw new Error((await r2.json()).error || 'finish failed');
+
+    setStatus('status-faceid','Face ID registered','ok');
+    $('step-faceid').classList.add('done');
+    $('step-pin').style.opacity = '1';
+    $('step-pin').style.pointerEvents = 'auto';
+    $('btn-pin').disabled = false;
+    $('pin1').focus();
+  } catch (e) {
+    setStatus('status-faceid', 'Failed: ' + (e.message || e), 'err');
+    btn.disabled = false;
+  }
+});
+
+$('btn-pin').addEventListener('click', async () => {
+  const pin1 = $('pin1').value, pin2 = $('pin2').value;
+  if (!/^\d{6}$/.test(pin1)) { setStatus('status-pin','PIN must be 6 digits','err'); return; }
+  if (pin1 !== pin2) { setStatus('status-pin','PINs do not match','err'); return; }
+  const token = localStorage.getItem('dce_admin_token');
+  const btn = $('btn-pin');
+  btn.disabled = true;
+  setStatus('status-pin','Saving...','');
+  try {
+    const r = await fetch('/api/auth/pin-set', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-token':token || ''},
+      body: JSON.stringify({pin: pin1})
+    });
+    if (!r.ok) throw new Error((await r.json()).error || 'save failed');
+    setStatus('status-pin','PIN saved','ok');
+    $('step-pin').classList.add('done');
+    $('step-done').style.display = 'block';
+    window.scrollTo({top: document.body.scrollHeight, behavior:'smooth'});
+  } catch (e) {
+    setStatus('status-pin', 'Failed: ' + (e.message || e), 'err');
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
