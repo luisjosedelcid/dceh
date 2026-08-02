@@ -1,13 +1,13 @@
 /**
  * DCE Holdings — PWA shell enhancements
  *
- * Only active on mobile screens (≤720px). Provides:
+ * Only active on mobile screens (≤820px — iPhone + iPad Mini portrait). Provides:
  *  - Bottom tab bar (iOS-native feel): Home · Find · Universe · Journal · Menu
  *  - "Menu" opens a bottom sheet with the rest of the app sections
  *  - Hides the desktop top nav on mobile
  *  - Locks overscroll bounce (E)
  *
- * Runs on every page. Safe on desktop (no-op above 720px).
+ * Runs on every page. Safe on desktop (no-op above 820px).
  */
 (function () {
   'use strict';
@@ -54,7 +54,7 @@
   };
 
   // ── Guard: only run on mobile ─────────────────────────────────
-  function isMobile() { return window.matchMedia('(max-width: 720px)').matches; }
+  function isMobile() { return window.matchMedia('(max-width: 820px)').matches; }
 
   // ── Determine active tab from pathname ────────────────────────
   function activeTab() {
