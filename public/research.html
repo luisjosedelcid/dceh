@@ -801,7 +801,7 @@ async function preloadAllDeliverables() {
         grouped[it.card_id].push(it);
       });
       deliverablesByCard = grouped;
-      renderPipeline();
+      renderBoard();
     }
   } catch (_) { /* silent — endpoint may not exist yet; badges will populate on modal open */ }
 }
@@ -830,7 +830,7 @@ async function loadDeliverables(cardId) {
     deliverablesByCard[cardId] = items;
     renderDeliverables(cardId);
     // Update card badge in the pipeline board
-    renderPipeline();
+    renderBoard();
   } catch (e) {
     listEl.innerHTML = `<div style="font-size:11px;color:var(--red)">Failed to load: ${esc(e.message || e)}</div>`;
   }
