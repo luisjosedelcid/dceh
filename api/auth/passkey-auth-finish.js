@@ -9,6 +9,7 @@ const {
   verifyAuthenticationResponse,
   getRpId,
   getExpectedOrigin,
+  fromB64Url,
 } = require('../_webauthn');
 const { signToken } = require('../_admin-auth');
 const { sbSelect, sbUpdate, sbDelete } = require('../_supabase');
@@ -81,7 +82,8 @@ module.exports = async (req, res) => {
       expectedRPID: getRpId(req),
       credential: {
         id: stored.credential_id,
-        publicKey: stored.public_key,
+        // Library requires Uint8Array here, not a base64url string.
+        publicKey: new Uint8Array(fromB64Url(stored.public_key)),
         counter: Number(stored.counter || 0),
         transports: stored.transports || undefined,
       },
