@@ -54,6 +54,35 @@ async function copyToDataroomBucket(pipelinePath) {
   return destPath;
 }
 
+/**
+ * Get or create a subfolder under 06 Research for the given ticker.
+ * Mimics the naming used for hardcoded tickers (e.g. "MSFT - Microsoft").
+ */
+async function ensureTickerSubfolder(ticker, companyName) {
+  const upper = String(ticker || '').toUpperCase();
+  if (!upper) return PIPELINE_FOLDER_ID;
+  const found = await sbSelect(
+    'dataroom_folders',
+    `select=id&parent_id=eq.${PIPELINE_FOLDER_ID}&slug=eq.${encodeURIComponent(upper)}&limit=1`
+  );
+  if (found && found.length) return found[0].id;
+  // Determine next order_index
+  const siblings = await sbSelect(
+    'dataroom_folders',
+    `select=order_index&parent_id=eq.${PIPELINE_FOLDER_ID}&order=order_index.desc&limit=1`
+  );
+  const nextOrder = (siblings && siblings[0] ? (siblings[0].order_index || 0) : 0) + 1;
+  const displayName = companyName ? `${upper} - ${companyName}` : upper;
+  const inserted = await sbInsert('dataroom_folders', {
+    parent_id: PIPELINE_FOLDER_ID,
+    name: displayName,
+    slug: upper,
+    order_index: nextOrder,
+  });
+  const row = Array.isArray(inserted) ? inserted[0] : inserted;
+  return row && row.id ? row.id : PIPELINE_FOLDER_ID;
+}
+
 const KIND_LABEL = {
   excel:               'Columbia Model',
   company_brief_pdf:   'Company Brief',
@@ -85,6 +114,23 @@ async function mirrorPipelineToDataroom(pipelineRow) {
   const label = KIND_LABEL[pipelineRow.kind] || pipelineRow.kind || 'File';
   const displayName = `${ticker} — ${label}`;
 
+  // Look up company name from pipeline_cards for nicer folder title
+  let companyName = null;
+  try {
+    if (pipelineRow.card_id) {
+      const cardRows = await sbSelect('pipeline_cards', `select=name&id=eq.${pipelineRow.card_id}&limit=1`);
+      companyName = (cardRows && cardRows[0] && cardRows[0].name) || null;
+    }
+  } catch (e) { /* silent */ }
+
+  // Get-or-create ticker subfolder under 06 Research
+  let targetFolderId = PIPELINE_FOLDER_ID;
+  try {
+    targetFolderId = await ensureTickerSubfolder(ticker, companyName);
+  } catch (e) {
+    console.warn('ensureTickerSubfolder failed, falling back to 06 Research root:', e.message);
+  }
+
   // Physically copy the object into the dataroom bucket so the standard
   // Data Room signed-URL flow (bucket=dataroom) resolves it without changes.
   let dataroomPath;
@@ -99,7 +145,7 @@ async function mirrorPipelineToDataroom(pipelineRow) {
   const publicUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/dataroom/${dataroomPath.split('/').map(encodeURIComponent).join('/')}`;
 
   await sbInsert('dataroom_files', {
-    folder_id: PIPELINE_FOLDER_ID,
+    folder_id: targetFolderId,
     name: displayName,
     filename: pipelineRow.filename || `${ticker}_${pipelineRow.kind}`,
     storage_path: dataroomPath,
