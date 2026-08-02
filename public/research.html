@@ -112,7 +112,7 @@
   .deliverables{display:flex;flex-direction:column;gap:8px}
   .slot{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--rule);background:var(--cream);transition:border-color .15s}
   .slot:hover{border-color:var(--gold-rule)}
-  .slot-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center}
+  .slot-icon{font-size:9px;font-weight:600;letter-spacing:0.08em;flex-shrink:0;min-width:34px;padding:3px 6px;text-align:center;background:var(--cream);border:1px solid var(--gold-rule);color:var(--navy);border-radius:2px}
   .slot-body{flex:1;min-width:0}
   .slot-label{font-size:11px;font-weight:600;color:var(--ink);letter-spacing:0.02em}
   .slot-meta{font-size:10px;color:var(--gray-txt);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -817,12 +817,12 @@ async function preloadAllDeliverables() {
 }
 
 const SLOT_CONFIG = [
-  { kind: 'excel',              label: 'Excel model',      icon: '📊', accept: '.xlsx,.xls' },
-  { kind: 'company_brief_pdf',  label: 'Company Brief',    icon: '📄', accept: '.pdf' },
-  { kind: 'thesis_builder_pdf', label: 'Thesis Builder',   icon: '📄', accept: '.pdf' },
-  { kind: 'thesis_breaker_pdf', label: 'Thesis Breaker',   icon: '📄', accept: '.pdf' },
-  { kind: 'munger_digital_pdf', label: 'Munger Digital',   icon: '📄', accept: '.pdf' },
-  { kind: 'dashboard_json',     label: 'Dashboard JSON',   icon: '🌐', accept: '.json' },
+  { kind: 'excel',              label: 'Excel model',      icon: 'XLSX',  accept: '.xlsx,.xls' },
+  { kind: 'company_brief_pdf',  label: 'Company Brief',    icon: 'PDF',   accept: '.pdf' },
+  { kind: 'thesis_builder_pdf', label: 'Thesis Builder',   icon: 'PDF',   accept: '.pdf' },
+  { kind: 'thesis_breaker_pdf', label: 'Thesis Breaker',   icon: 'PDF',   accept: '.pdf' },
+  { kind: 'munger_digital_pdf', label: 'Munger Digital',   icon: 'PDF',   accept: '.pdf' },
+  { kind: 'dashboard_json',     label: 'Dashboard JSON',   icon: 'JSON',  accept: '.json' },
 ];
 
 function fmtBytes(n) {
