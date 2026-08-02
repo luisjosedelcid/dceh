@@ -283,7 +283,7 @@ input, textarea, [contenteditable="true"] {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-@media (min-width: 721px) {
+@media (min-width: 821px) {
   #dce-update-banner { bottom: 24px; }
 }
 
@@ -346,11 +346,11 @@ input, textarea, [contenteditable="true"] {
   opacity: 1;
   transform: translate(-50%, 0);
 }
-@media (min-width: 721px) {
+@media (min-width: 821px) {
   #dce-toast { bottom: 32px; }
 }
 
-/* Desktop — ensure no leaks */
-@media (min-width: 721px) {
+/* Desktop — ensure no leaks (≥821px, above iPad Mini portrait) */
+@media (min-width: 821px) {
   #dce-tabbar, #dce-sheet, #dce-sheet-overlay, #dce-share-fab, #dce-ptr { display: none !important; }
 }
