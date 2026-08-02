@@ -658,9 +658,8 @@ function renderRow(c, vals) {
 function renderDashboardCell(c) {
   const hasGenerated = watchState.dashboardTickers && watchState.dashboardTickers.has(String(c.ticker).toUpperCase());
   if (hasGenerated) {
-    const token = localStorage.getItem('dce_admin_token') || '';
-    const url = `/api/dashboard-view?ticker=${encodeURIComponent(c.ticker)}&token=${encodeURIComponent(token)}`;
-    return `<a class="dash-link gold" href="${url}" target="_blank" rel="noopener" title="Auto-generated dashboard">🌐 Dashboard →</a>`;
+    const url = `/company.html?ticker=${encodeURIComponent(c.ticker)}`;
+    return `<a class="dash-link gold" href="${url}" target="_blank" rel="noopener" title="Published dashboard">🌐 Dashboard →</a>`;
   }
   return c.link ? `<a class="dash-link" href="${c.link}">Dashboard →</a>` : '<span style="color:var(--gray-mid);font-size:11px">—</span>';
 }
@@ -962,9 +961,8 @@ function renderAdhocDashboards() {
   const adhoc = [...(watchState.dashboardTickers || [])].filter(t => !known.has(t));
   if (!adhoc.length) { container.style.display = 'none'; return; }
   container.style.display = 'block';
-  const token = localStorage.getItem('dce_admin_token') || '';
   list.innerHTML = adhoc.map(t => {
-    const url = `/api/dashboard-view?ticker=${encodeURIComponent(t)}&token=${encodeURIComponent(token)}`;
+    const url = `/company.html?ticker=${encodeURIComponent(t)}`;
     return `<a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--cream);border:1px solid var(--gold-rule);color:var(--navy);font-size:12px;font-weight:600;text-decoration:none;letter-spacing:0.02em;transition:all .15s" onmouseover="this.style.background='var(--navy)';this.style.color='var(--white)'" onmouseout="this.style.background='var(--cream)';this.style.color='var(--navy)'">🌐 ${t}</a>`;
   }).join('');
 }
@@ -1094,7 +1092,7 @@ function renderWatchCard(it) {
     <div class="watch-card${triggered ? ' triggered' : ''}">
       <div class="wc-head">
         <div>
-          <div class="wc-tkr">${escHtml(it.ticker)}${u ? `<span style="font-size:11px;font-weight:300;color:var(--gray-mid);margin-left:8px;">${escHtml(u.name)}</span>` : ''}${watchState.dashboardTickers.has(String(it.ticker).toUpperCase()) ? `<a class="wc-dash" href="/api/dashboard-view?ticker=${encodeURIComponent(it.ticker)}&token=${encodeURIComponent(localStorage.getItem('dce_admin_token')||'')}" target="_blank" rel="noopener" title="Open dashboard">🌐</a>` : ''}</div>
+          <div class="wc-tkr">${escHtml(it.ticker)}${u ? `<span style="font-size:11px;font-weight:300;color:var(--gray-mid);margin-left:8px;">${escHtml(u.name)}</span>` : ''}${watchState.dashboardTickers.has(String(it.ticker).toUpperCase()) ? `<a class="wc-dash" href="/company.html?ticker=${encodeURIComponent(it.ticker)}" target="_blank" rel="noopener" title="Open dashboard">🌐</a>` : ''}</div>
         </div>
         <div class="wc-status ${triggered ? 'triggered' : 'active'}">${triggered ? 'Buy Zone' : (inZone ? 'In Zone *' : 'Active')}</div>
       </div>
