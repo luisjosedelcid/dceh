@@ -89,7 +89,8 @@ const KIND_LABEL = {
   thesis_builder_pdf:  'Thesis Builder',
   thesis_breaker_pdf:  'Thesis Breaker',
   munger_digital_pdf:  'Munger Digital',
-  dashboard_html:      'Dashboard',
+  dashboard_html:      'Dashboard (legacy HTML)',
+  dashboard_json:      'Dashboard JSON',
 };
 
 /**

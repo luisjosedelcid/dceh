@@ -79,12 +79,13 @@ module.exports = async (req, res) => {
       return;
     }
 
-    // 4. Determine fiscal_period + period_end_date
+    // 4. Determine fiscal_period + period_end_date. period_end_date is
+    // NOT NULL in the DB so we always need a fallback — use today.
     const fiscalPeriod = String(payload.fiscalYear || 'LTM').slice(0, 40);
     let periodEndDate = null;
     if (payload.valuationDate) {
-      // Try to parse "05-May-2026" or "2026-05-05"
       const s = String(payload.valuationDate);
+      // ISO first: "2026-05-05" or "2026-05-05T..."
       const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
       if (iso) periodEndDate = `${iso[1]}-${iso[2]}-${iso[3]}`;
       else {
@@ -94,9 +95,17 @@ module.exports = async (req, res) => {
           const months = { Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12' };
           const mm = months[m[2].slice(0,1).toUpperCase() + m[2].slice(1,3).toLowerCase()];
           if (mm) periodEndDate = `${m[3]}-${mm}-${m[1].padStart(2,'0')}`;
+        } else {
+          // Last chance: let JS Date parse it (handles "May 5, 2026", "5/5/2026", etc.)
+          const d = new Date(s);
+          if (!Number.isNaN(d.getTime())) {
+            periodEndDate = d.toISOString().slice(0, 10);
+          }
         }
       }
     }
+    // Ultimate fallback so the NOT NULL constraint never bites the analyst.
+    if (!periodEndDate) periodEndDate = new Date().toISOString().slice(0, 10);
 
     // 5. Demote prior versions (only one lives per user request)
     try {
