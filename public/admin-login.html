@@ -19,10 +19,16 @@
   }
   .card{max-width:380px; width:100%}
   .brand{
-    font-family:Georgia,serif; font-size:28px; letter-spacing:-0.01em;
-    color:var(--gold); margin:0 0 4px; text-align:center;
+    font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
+    font-size:26px; font-weight:300; letter-spacing:0.02em;
+    color:var(--gold); margin:0 0 10px; text-align:center;
   }
-  .tagline{font-size:12.5px; color:var(--gray); letter-spacing:0.05em; text-transform:uppercase; margin:0 0 40px; text-align:center}
+  .brand strong{color:#fff; font-weight:700}
+  .tagline{
+    font-size:10px; color:rgba(255,255,255,0.45);
+    letter-spacing:0.2em; text-transform:uppercase;
+    line-height:1.8; margin:0 0 40px; text-align:center;
+  }
   label{display:block; font-size:12px; letter-spacing:0.05em; text-transform:uppercase; color:var(--gray); margin:16px 0 6px}
   input{
     width:100%; padding:14px 16px; border:1px solid var(--border); border-radius:12px;
@@ -46,8 +52,8 @@
 </head>
 <body>
 <div class="card">
-  <h1 class="brand">DCE Holdings</h1>
-  <p class="tagline">Family office · Investment platform</p>
+  <h1 class="brand"><strong>DCE</strong> Holdings</h1>
+  <p class="tagline">Investment Office<br>Columbia Model — Quality Growth</p>
 
   <form id="form" autocomplete="on">
     <label>Email</label>
