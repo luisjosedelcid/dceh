@@ -10,7 +10,8 @@
 //   - company_brief_pdf    → .pdf
 //   - thesis_builder_pdf   → .pdf
 //   - thesis_breaker_pdf   → .pdf
-//   - dashboard_html       → .html / .htm
+//   - dashboard_html       → .html / .htm (legacy)
+//   - dashboard_json       → .json
 //
 // Behavior:
 //   1. Auth: role must be admin or analyst.
@@ -35,6 +36,7 @@ const SLOT_EXTENSIONS = {
   thesis_breaker_pdf: /\.pdf$/i,
   munger_digital_pdf: /\.pdf$/i,
   dashboard_html: /\.(html|htm)$/i,
+  dashboard_json: /\.json$/i,
 };
 
 const SLOT_MIMES = {
@@ -44,6 +46,7 @@ const SLOT_MIMES = {
   thesis_breaker_pdf: 'application/pdf',
   munger_digital_pdf: 'application/pdf',
   dashboard_html: 'text/html',
+  dashboard_json: 'application/json',
 };
 
 function sanitizeFilename(name) {
