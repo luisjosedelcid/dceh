@@ -616,16 +616,6 @@ function calcCompany(c, price) {
 }
 
 function renderRow(c, vals) {
-  if (c._virtual) {
-    return `<tr>
-      <td>
-        <div class="ticker">${c.ticker}</div>
-        <div class="ticker-sub" style="color:var(--gray-mid);font-style:italic">Dashboard published · no valuation model yet</div>
-      </td>
-      <td colspan="10" style="color:var(--gray-mid);font-size:11px">— add EPV model to enable full metrics —</td>
-      <td>${renderDashboardCell(c)}</td>
-    </tr>`;
-  }
   const irrPct = (vals.eqReturn * 100).toFixed(1);
   const mosPct = (vals.mos * 100).toFixed(1);
   const irrClass = vals.eqReturn >= c.hurdle ? 'green' : 'red';
@@ -950,25 +940,6 @@ async function loadDashboardTickers() {
     if (!r.ok) return;
     const j = await r.json();
     watchState.dashboardTickers = new Set((j.tickers || []).map(t => String(t).toUpperCase()));
-    // Add virtual UNIVERSE rows for tickers with a dashboard that aren't
-    // in the hardcoded list (e.g. test tickers like MSFT2 created ad-hoc
-    // in the kanban). These show only the ticker + Dashboard link.
-    const known = new Set(UNIVERSE.map(c => String(c.ticker).toUpperCase()));
-    const kanbanStages = await fetch('/api/pipeline-stages').then(r => r.ok ? r.json() : { items: [] }).catch(() => ({ items: [] }));
-    const stageByTicker = {};
-    (kanbanStages.items || []).forEach(it => { stageByTicker[String(it.ticker).toUpperCase()] = it.stage; });
-    for (const tkr of watchState.dashboardTickers) {
-      if (known.has(tkr)) continue;
-      const kanbanStage = stageByTicker[tkr];
-      const funnel = STAGE_TO_FUNNEL[kanbanStage] || 'research';
-      UNIVERSE.push({
-        ticker: tkr, name: tkr, sector: 'Ad-hoc dashboard',
-        link: null, currency: '$', shares: 0, debt: 0, cash: 0,
-        defaultPrice: 0, nopatNorm: 0, wacc: 0.09, excessCash: 0, bridgeAdj: 0,
-        distYield: 0, reinvGrowth: 0, organicGrowth: 0, exitMult: 15, horizon: 5,
-        hurdle: 0.10, badge: '', funnelStage: funnel, _virtual: true,
-      });
-    }
   } catch (e) { /* silent */ }
 }
 
