@@ -1401,7 +1401,7 @@ function renderDocTiles() {
   const docs = window.D.documents;
   const tiles = [
     { label: 'Company Brief', desc: 'Columbia framework base case — descriptive-quantitative document with EPV, RV, IRR and reconciled narrative. Audited via Phase 4 Audit Gate; feeds Thesis Builder, Thesis Breaker and Munger Digital.', url: docs.companyBriefUrl || docs.valuationReportUrl, accent: 'var(--gold)' },
-    { label: 'Columbia Model', desc: 'Complete Columbia model — 14 Excel sheets with Reproduction Value, EPV, ROIC, scaled IRR, scenarios and audit trail. Auditable formulas.', url: docs.columbiaModelUrl || docs.valuationReportUrl, accent: 'var(--navy)', download: true, cta: 'Download Excel ↓' },
+    { label: 'Columbia Model', desc: 'Complete Columbia model — 14 Excel sheets with Reproduction Value, EPV, ROIC, scaled IRR, scenarios and audit trail. Auditable formulas.', url: docs.columbiaModelUrl || docs.valuationReportUrl, accent: 'var(--navy)', download: true, cta: 'Download Excel' },
     { label: 'Thesis Breaker', desc: 'Stress test of the investment thesis — quantitative challenges to the bull case. Adversarial scenario analysis (Bear Analyst input, Week 2).', url: docs.thesisBreakerUrl, accent: 'var(--red)' },
     { label: 'Thesis Builder', desc: 'Quantitative defense of the investment thesis — Columbia (Greenwald) compounding mechanics that confirm the bull case (Bull Analyst input, Week 2).', url: docs.thesisBuilderUrl, accent: 'var(--green)' },
     { label: 'Munger Digital', desc: 'Behavioral and narrative investment evaluation inspired by Charlie Munger — mental models, incentives, and latticework.', url: docs.mungerDigitalUrl, accent: '#6b4fa0' },
@@ -1413,7 +1413,7 @@ function renderDocTiles() {
       <div class="dt-title">${t.label}</div>
       <div class="dt-desc">${t.desc}</div>
       ${t.url
-        ? `<a href="${t.url}" ${t.download ? 'download' : 'target="_blank"'} style="background:${t.accent}">${t.cta || 'Open Document ↗'}</a>`
+        ? `<a href="${t.url}" ${t.download ? 'download' : 'target="_blank"'} style="background:${t.accent}">${t.cta || 'Open Document'}</a>`
         : `<span class="coming-soon">Coming Soon</span>`}
     </div>
   `).join('');
