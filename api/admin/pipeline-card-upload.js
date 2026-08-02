@@ -32,6 +32,7 @@ const SLOT_EXTENSIONS = {
   company_brief_pdf: /\.pdf$/i,
   thesis_builder_pdf: /\.pdf$/i,
   thesis_breaker_pdf: /\.pdf$/i,
+  munger_digital_pdf: /\.pdf$/i,
   dashboard_html: /\.(html|htm)$/i,
 };
 
@@ -40,6 +41,7 @@ const SLOT_MIMES = {
   company_brief_pdf: 'application/pdf',
   thesis_builder_pdf: 'application/pdf',
   thesis_breaker_pdf: 'application/pdf',
+  munger_digital_pdf: 'application/pdf',
   dashboard_html: 'text/html',
 };
 

@@ -774,15 +774,15 @@ async function assignOwner(ownerId) {
 function assetsBadgeHTML(cardId) {
   const items = deliverablesByCard[cardId] || [];
   if (!items.length) {
-    // 5 empty dots
-    return `<span class="card-assets pending" title="No deliverables uploaded">○○○○○</span>`;
+    return `<span class="card-assets pending" title="No deliverables uploaded">○○○○○○</span>`;
   }
   const have = new Set(items.map(it => it.kind));
-  const order = ['excel','company_brief_pdf','thesis_builder_pdf','thesis_breaker_pdf','dashboard_html'];
+  const order = ['excel','company_brief_pdf','thesis_builder_pdf','thesis_breaker_pdf','munger_digital_pdf','dashboard_html'];
   const dots = order.map(k => have.has(k) ? '●' : '○').join('');
+  const total = order.length;
   const pending = order.filter(k => !have.has(k)).length;
-  const cls = pending === 0 ? 'card-assets' : (pending === 5 ? 'card-assets pending' : 'card-assets');
-  return `<span class="${cls}" title="${5-pending}/5 deliverables uploaded">${dots}</span>`;
+  const cls = pending === 0 ? 'card-assets' : (pending === total ? 'card-assets pending' : 'card-assets');
+  return `<span class="${cls}" title="${total-pending}/${total} deliverables uploaded">${dots}</span>`;
 }
 
 async function preloadAllDeliverables() {
@@ -811,6 +811,7 @@ const SLOT_CONFIG = [
   { kind: 'company_brief_pdf',  label: 'Company Brief',    icon: '📄', accept: '.pdf' },
   { kind: 'thesis_builder_pdf', label: 'Thesis Builder',   icon: '📄', accept: '.pdf' },
   { kind: 'thesis_breaker_pdf', label: 'Thesis Breaker',   icon: '📄', accept: '.pdf' },
+  { kind: 'munger_digital_pdf', label: 'Munger Digital',   icon: '📄', accept: '.pdf' },
   { kind: 'dashboard_html',     label: 'Dashboard HTML',   icon: '🌐', accept: '.html,.htm' },
 ];
 
