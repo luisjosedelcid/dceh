@@ -1865,10 +1865,35 @@ function openNewEntry(opts) {
 }
 window.openNewEntry = openNewEntry;
 
+// Returns the URL to bounce back to after a successful submit, or empty
+// string if the user opened the modal directly on /journal.html.
+function _returnToAfterSubmit() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const ret = (params.get('return') || '').toLowerCase();
+    if (ret === 'research') return '/research.html';
+    return '';
+  } catch (e) { return ''; }
+}
+
 function closeNewEntry() {
   const modal = document.getElementById('new-entry-modal');
   if (modal) modal.classList.remove('open');
   document.body.style.overflow = '';
+  // If we were invoked from another surface via deeplink AND the user
+  // cancels instead of submitting, bounce back so they don't get
+  // stranded on an empty /journal.html. The stage was never changed
+  // (only journal-create fires the pipeline-stage sync), so the card is
+  // still in its pre-drag column when research.html reloads.
+  const returnTo = _returnToAfterSubmit();
+  if (returnTo) {
+    // Preserve _cameFromDeeplink flag so only the first close bounces —
+    // subsequent opens on this page (unlikely, but safe) don't loop.
+    if (!window._journalDeeplinkHandled) {
+      window._journalDeeplinkHandled = true;
+      window.location.href = returnTo;
+    }
+  }
 }
 window.closeNewEntry = closeNewEntry;
 
@@ -2365,9 +2390,18 @@ async function submitNewEntry(ev) {
     }
     msg.style.color = 'var(--green)';
     msg.textContent = 'Entry saved ✓ Reloading…';
+    // If we arrived from another surface (e.g. research.html dropping a
+    // card onto a terminal stage), bounce back there so the user sees the
+    // card land in its new column. Journal-create already sync-ed the
+    // stage server-side via api/_pipeline-stage.js.
+    const returnTo = _returnToAfterSubmit();
     setTimeout(() => {
-      closeNewEntry();
-      loadJournal();
+      if (returnTo) {
+        window.location.href = returnTo;
+      } else {
+        closeNewEntry();
+        loadJournal();
+      }
     }, 700);
   } catch (e) {
     msg.style.color = 'var(--red)';

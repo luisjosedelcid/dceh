@@ -519,9 +519,37 @@ async function deleteCard(id) {
   }
 }
 
+// Terminal stages require a Decision Journal entry — the stage change is
+// driven by journal-create, never by the kanban PATCH directly. See
+// api/_pipeline-stage.js (onBuyDecision / onPassDecision / onFollowDecision).
+const TERMINAL_STAGE_TO_JOURNAL = {
+  invested: 'BUY',
+  passed:   'PASS',
+  followed: 'FOLLOW',
+};
+
 async function moveCard(id, newStage) {
   const c = pipeline.find(x => x.id === id);
   if (!c || c.stage === newStage) return;
+
+  // Hard gate: moving into a terminal stage opens the Decision Journal in
+  // the matching mode. The stage transition happens server-side only when
+  // the journal entry is successfully created. If the user cancels, the
+  // card stays where it was.
+  const journalType = TERMINAL_STAGE_TO_JOURNAL[newStage];
+  if (journalType) {
+    const params = new URLSearchParams({
+      action: 'new',
+      ticker: c.ticker,
+      type: journalType,
+      return: 'research',
+    });
+    // Full navigation (not popup) — the kanban re-loads pipeline on
+    // return, so the card will be in its new terminal column iff the
+    // journal entry was actually created.
+    window.location.href = `/journal.html?${params.toString()}`;
+    return;
+  }
 
   const moved_at = new Date().toISOString();
   try {
