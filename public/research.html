@@ -545,6 +545,15 @@ const ASSET_GATES = {
       company_brief_pdf: 'Company Brief (PDF)',
     },
   },
+  review: {
+    fromStages: ['analysis'],
+    requiredKinds: ['thesis_builder_pdf', 'thesis_breaker_pdf'],
+    label: 'Adversarial',
+    kindLabels: {
+      thesis_builder_pdf: 'Thesis Builder (PDF)',
+      thesis_breaker_pdf: 'Thesis Breaker (PDF)',
+    },
+  },
 };
 
 async function _fetchActiveAssetKinds(cardId) {

@@ -155,22 +155,39 @@ module.exports = async (req, res) => {
         } catch {}
 
         // Backend asset gate (mirrors research.html ASSET_GATES). Prevents a
-        // direct curl / API bypass of the UI validation. Only Backlog → Deep
-        // Dive is gated; other transitions pass through.
-        if (prevCard && prevCard.stage === 'backlog' && patch.stage === 'analysis') {
+        // direct curl / API bypass of the UI validation.
+        //
+        // Each key = target stage; value.from lists source stages that
+        // trigger the check; value.required lists kinds that must be
+        // active in pipeline_card_assets. Keep this in sync with the
+        // ASSET_GATES object in public/research.html.
+        const ASSET_GATES = {
+          analysis: {
+            from: ['backlog'],
+            required: ['dashboard_json', 'company_brief_pdf'],
+            label: 'Deep Dive',
+          },
+          review: {
+            from: ['analysis'],
+            required: ['thesis_builder_pdf', 'thesis_breaker_pdf'],
+            label: 'Adversarial',
+          },
+        };
+
+        const gate = ASSET_GATES[patch.stage];
+        if (prevCard && gate && gate.from.includes(prevCard.stage)) {
           try {
-            const REQUIRED_KINDS = ['dashboard_json', 'company_brief_pdf'];
             const assets = await sbSelect(
               'pipeline_card_assets',
               `select=kind&card_id=eq.${id}&active=eq.true`
             );
             const haveKinds = new Set((assets || []).map(a => a.kind));
-            const missing = REQUIRED_KINDS.filter(k => !haveKinds.has(k));
+            const missing = gate.required.filter(k => !haveKinds.has(k));
             if (missing.length) {
               res.status(409).json({
                 error: 'assets_required',
-                message: `Cannot advance to Deep Dive without required artifacts.`,
-                required: REQUIRED_KINDS,
+                message: `Cannot advance to ${gate.label} without required artifacts.`,
+                required: gate.required,
                 missing,
                 from_stage: prevCard.stage,
                 to_stage: patch.stage,
