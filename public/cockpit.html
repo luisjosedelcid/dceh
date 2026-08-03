@@ -121,8 +121,10 @@
   .deliv .info .sub{color:var(--gray);font-size:10px;margin-top:1px}
 
   /* Watchlist alert */
-  .alert-row{padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;font-size:12px}
+  .alert-row{padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;font-size:12px;transition:background .15s ease,opacity .3s ease}
   .alert-row:last-child{border-bottom:none}
+  .alert-row:hover{background:#fafaf7}
+  .alert-row.dismissing{opacity:0;transform:translateX(20px);transition:opacity .3s ease,transform .3s ease}
   .alert-row .pulse{width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0}
   .alert-row .pulse.red{background:var(--red)}
   .alert-row .pulse.green{background:var(--green)}
@@ -130,6 +132,9 @@
   .alert-row .body{flex:1;min-width:0}
   .alert-row .body .title{font-weight:500;color:var(--black);line-height:1.35}
   .alert-row .body .meta{color:var(--gray);font-size:10px;margin-top:2px}
+  .alert-row .dismiss-btn{background:transparent;border:1px solid var(--line);color:var(--gray);font-size:14px;line-height:1;width:24px;height:24px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:all .15s ease;flex-shrink:0}
+  .alert-row .dismiss-btn:hover{border-color:var(--navy);color:var(--navy);background:#fff}
+  .alert-row .dismiss-btn:active{transform:scale(0.9)}
 
   .footer-note{margin-top:32px;padding-top:18px;border-top:1px solid var(--line);text-align:center;font-size:10px;color:var(--gray);letter-spacing:.10em;text-transform:uppercase;font-weight:500}
   .footer-note span{color:var(--gold)}
@@ -558,7 +563,12 @@ function renderWatchlist(items) {
       badge = `<span class="badge amber">${w.days_until_review != null ? w.days_until_review + 'd' : 'Soon'}</span>`;
     }
     if (w.catalyst) meta += ` · ${escapeHtml(w.catalyst).slice(0, 40)}`;
-    return `<div class="alert-row">
+    // w.id is 'watch_42' or 'price_17' — split for the dismiss endpoint.
+    const [src, numId] = String(w.id || '').split('_');
+    const dismissAttrs = (src && numId)
+      ? `data-src="${escapeHtml(src)}" data-id="${escapeHtml(numId)}"`
+      : '';
+    return `<div class="alert-row" ${dismissAttrs}>
       <span class="${pulse}"></span>
       <span class="tk">${escapeHtml(w.ticker || '—')}</span>
       <div class="body">
@@ -566,8 +576,58 @@ function renderWatchlist(items) {
         <div class="meta">${meta}</div>
       </div>
       ${badge}
+      <button class="dismiss-btn" title="Mark as seen" onclick="dismissAlert(event)">×</button>
     </div>`;
   }).join('');
+}
+
+// Dismiss a Price & watch alert row — marks it acknowledged server-side so it
+// disappears from the cockpit until the underlying alert fires again.
+async function dismissAlert(ev) {
+  ev.stopPropagation();
+  const btn = ev.currentTarget;
+  const row = btn.closest('.alert-row');
+  if (!row) return;
+  const source = row.getAttribute('data-src');
+  const id = row.getAttribute('data-id');
+  if (!source || !id) return;
+  btn.disabled = true;
+  row.classList.add('dismissing');
+  try {
+    const t = (function(){ try { return localStorage.getItem('dce_admin_token') || ''; } catch { return ''; } })();
+    const r = await fetch('/api/cockpit/dismiss-alert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': t },
+      body: JSON.stringify({ source, id: Number(id) }),
+    });
+    if (!r.ok) {
+      row.classList.remove('dismissing');
+      btn.disabled = false;
+      const j = await r.json().catch(() => ({}));
+      alert('Could not dismiss: ' + (j.error || r.status));
+      return;
+    }
+    // Remove row after CSS transition + refresh KPI counter.
+    setTimeout(() => {
+      row.remove();
+      const remaining = document.querySelectorAll('#watch-body .alert-row').length;
+      const cnt = document.getElementById('cnt-watch');
+      const kpi = document.getElementById('kpi-watch');
+      if (cnt) cnt.textContent = `${remaining} active`;
+      if (kpi) {
+        kpi.textContent = String(remaining);
+        kpi.className = remaining > 0 ? 'val amber' : 'val green';
+      }
+      if (!remaining) {
+        const body = document.getElementById('watch-body');
+        if (body) body.innerHTML = '<div class="empty">No watchlist alerts active.</div>';
+      }
+    }, 300);
+  } catch (e) {
+    row.classList.remove('dismissing');
+    btn.disabled = false;
+    alert('Network error: ' + e.message);
+  }
 }
 
 function renderTeamMeetings(payload) {

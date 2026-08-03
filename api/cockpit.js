@@ -287,7 +287,7 @@ async function getWatchlistAlerts() {
   try {
     rows = await sbSelect(
       'watchlist',
-      `select=id,ticker,target_price,anchor_type,mos_required_pct,catalyst,deadline_review,status,triggered_at,triggered_price,triggered_mos_pct&order=triggered_at.desc.nullslast&limit=200`
+      `select=id,ticker,target_price,anchor_type,mos_required_pct,catalyst,deadline_review,status,triggered_at,triggered_price,triggered_mos_pct,cockpit_ack_at&order=triggered_at.desc.nullslast&limit=200`
     );
   } catch (e) {
     console.error('getWatchlistAlerts (watchlist) failed:', e.message);
@@ -299,6 +299,13 @@ async function getWatchlistAlerts() {
                       && daysUntil(r.deadline_review) <= 14;
     const reviewOverdue = r.deadline_review && r.deadline_review < today
                          && r.status !== 'closed';
+    // Skip if CIO already dismissed this alert from the cockpit UNLESS the
+    // watchlist has fired again after the ack (triggered_at newer than ack).
+    if (r.cockpit_ack_at) {
+      const ackedAt = new Date(r.cockpit_ack_at).getTime();
+      const firedAt = r.triggered_at ? new Date(r.triggered_at).getTime() : 0;
+      if (firedAt <= ackedAt) continue;
+    }
     if (isTriggered || reviewSoon || reviewOverdue) {
       out.push({
         id: `watch_${r.id}`,
@@ -322,7 +329,7 @@ async function getWatchlistAlerts() {
   try {
     priceRows = await sbSelect(
       'price_alerts',
-      `select=id,ticker,alert_type,threshold,scope,active,triggered_at,triggered_price&order=triggered_at.desc.nullslast&limit=200`
+      `select=id,ticker,alert_type,threshold,scope,active,triggered_at,triggered_price,cockpit_ack_at&order=triggered_at.desc.nullslast&limit=200`
     );
   } catch (e) {
     console.error('getWatchlistAlerts (price_alerts) failed:', e.message);
@@ -332,6 +339,12 @@ async function getWatchlistAlerts() {
     if (r.active || !r.triggered_at) continue;
     const daysSinceFire = daysSince(r.triggered_at);
     if (daysSinceFire != null && daysSinceFire > 14) continue;
+    // Skip if CIO already dismissed this alert UNLESS it fired again after ack.
+    if (r.cockpit_ack_at) {
+      const ackedAt = new Date(r.cockpit_ack_at).getTime();
+      const firedAt = new Date(r.triggered_at).getTime();
+      if (firedAt <= ackedAt) continue;
+    }
     out.push({
       id: `price_${r.id}`,
       ticker: r.ticker,
