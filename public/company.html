@@ -982,12 +982,22 @@
 <div id="tab-irr" class="tab-content">
 
   <!-- 1) HERO — 3 KPI cards -->
-  <div class="slbl">Implied IRR — Total Shareholder Return</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:8px;flex-wrap:wrap">
+    <div class="slbl" style="margin:0">Implied IRR — Total Shareholder Return</div>
+    <div style="display:flex;align-items:center;gap:10px;font-family:Archivo,sans-serif">
+      <span style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-mid)">Price basis</span>
+      <div id="irr-price-toggle" role="tablist" style="display:inline-flex;border:1px solid var(--gold-rule);border-radius:4px;overflow:hidden;font-size:11px;font-weight:600;letter-spacing:0.06em">
+        <button type="button" data-mode="report" onclick="setIrrPriceMode('report')" style="padding:6px 12px;background:var(--navy);color:#fff;border:none;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;letter-spacing:0.06em">Report</button>
+        <button type="button" data-mode="live" onclick="setIrrPriceMode('live')" style="padding:6px 12px;background:transparent;color:var(--navy);border:none;border-left:1px solid var(--gold-rule);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;letter-spacing:0.06em">Live</button>
+      </div>
+      <span id="irr-price-toggle-info" style="font-size:10.5px;color:var(--gray-mid)">—</span>
+    </div>
+  </div>
   <div class="g3" style="margin-bottom:18px">
     <div class="card accent">
       <div class="clbl">Total Equity Return</div>
       <div class="cval green" id="irr-total">—</div>
-      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px">Recalculado en tiempo real</div>
+      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px" id="irr-total-sub">Recalculated in real time</div>
     </div>
     <div class="card accent">
       <div class="clbl">Margin of Safety</div>

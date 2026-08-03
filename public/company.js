@@ -9,8 +9,9 @@
 /* ── globals ─────────────────────────────────────────────── */
 let D = null;          // loaded JSON data object
 let charts = {};       // Chart instances keyed by canvas id
-let currentPrice = 0;  // editable market price
+let currentPrice = 0;  // editable market price (live from Finnhub, falls back to snapshot)
 let reviewDate = '';
+let irrPriceMode = 'report'; // 'report' (snapshot from Columbia model) | 'live' (Finnhub quote)
 
 /* ── helpers ─────────────────────────────────────────────── */
 function sym()   { return D.currencySymbol || '$'; }
@@ -244,6 +245,7 @@ function refreshPriceDependents() {
   // re-render summary/IRR elements that depend on price
   const el = document.querySelector('#tab-irr');
   if (el && el.classList.contains('active')) renderIrr();
+  else updateIrrToggleUI(); // keep info label current even if tab inactive
   const elSummary = document.querySelector('#tab-summary');
   if (elSummary && elSummary.classList.contains('active')) renderSummary();
 }
@@ -1881,6 +1883,7 @@ function renderIrr() {
     if (noteEl) noteEl.textContent = sl.note;
   });
 
+  updateIrrToggleUI();
   updateIRRCalc();
 }
 
@@ -1913,11 +1916,30 @@ function updateIRRCalc() {
 
   // ===== Core inputs =====
   const nopat = irr.nopat || epv.nopatBase || 0;
-  const ev    = irr.ev   || ov.ev || 0;
-  const mcap  = ov.marketCap || (ev - (ov.debt||0) - (ov.leases||0) + (ov.cash||0));
   const debt  = ov.debt || 0;
   const leases = ov.leases || 0;
   const cash = ov.cash || 0;
+  // Price selection: 'report' uses snapshot mcap; 'live' recomputes mcap from live price
+  const snapPrice   = Number(ov.stockPrice) || 0;
+  const livePriceOk = typeof currentPrice === 'number' && currentPrice > 0;
+  const useLive     = (irrPriceMode === 'live') && livePriceOk;
+  const pxUsed      = useLive ? currentPrice : snapPrice;
+  const snapMcap    = ov.marketCap || 0;
+  // If live mode and shares available, recompute mcap by scaling snapshot price ratio
+  let mcap;
+  if (useLive) {
+    if (ov.shares != null && ov.shares > 0) {
+      mcap = ov.shares * currentPrice;
+    } else if (snapMcap > 0 && snapPrice > 0) {
+      mcap = snapMcap * (currentPrice / snapPrice);
+    } else {
+      mcap = snapMcap;
+    }
+  } else {
+    mcap = snapMcap || ((irr.ev || ov.ev || 0) - debt - leases + cash);
+  }
+  // EV re-derived from selected mcap; keeps debt/leases/cash constant
+  const ev  = mcap + debt + leases - cash;
   const actualMult = nopat > 0 ? ev / nopat : 0;
 
   // ===== Auto-derive financial inputs from cfRows =====
