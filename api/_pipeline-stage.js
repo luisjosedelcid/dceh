@@ -1,9 +1,18 @@
 // Auto-transition pipeline_cards stage based on trade/decision events.
 //
-// Lifecycle stages (consolidated 2026-05-11 — dropped approved + rejected;
-// renamed 'closed' -> 'followed' to reflect that exited positions stay in the
-// followed universe, distinct from 'passed' which means "don't re-evaluate"):
-//   backlog -> analysis -> review -> decision -> {invested|passed}
+// DB stage keys → kanban display labels (Operations Manual v4.4):
+//   backlog   -> Backlog          (Idea Feed, leads awaiting curation)
+//   analysis  -> Deep Dive        (audited base case in progress)
+//   review    -> Adversarial      (Thesis Breaker & probability worksheet)
+//   decision  -> Committee Review (awaiting decision; CIO-led while AUM < 10M)
+//   invested  -> Invested         (position open)
+//   followed  -> Followed         (Followed universe, exited or FOLLOW decision)
+//   passed    -> Passed           (discarded post-research)
+//
+// The DB keys are unchanged from 2026-05-11 to avoid a migration; only the
+// display labels were renamed to match the Operations Manual v4.4 taxonomy.
+// Lifecycle (typical forward path):
+//   backlog -> analysis -> review -> decision -> {invested|passed|followed}
 //   invested -> followed (on SELL)
 //
 // Auto-transitions (idempotent, only fire when in eligible source state):

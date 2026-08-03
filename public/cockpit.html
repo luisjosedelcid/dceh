@@ -78,7 +78,8 @@
   .stage{font-size:9px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;color:var(--gray)}
   .stage.backlog{color:var(--gray)}
   .stage.analysis{color:var(--navy)}
-  .stage.review,.stage.decision{color:var(--gold)}
+  .stage.review{color:#8a5a1f}
+  .stage.decision{color:var(--gold)}
 
   /* Calendar mini list */
   .cal-row{padding:8px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;font-size:12px}
@@ -338,8 +339,9 @@ function stageClass(stage) {
   if (!stage) return '';
   const s = String(stage).toLowerCase();
   if (s === 'backlog') return 'backlog';
-  if (s === 'analysis') return 'analysis';
-  if (s === 'review' || s === 'decision') return 'decision';
+  if (s === 'analysis') return 'analysis';   // Deep Dive
+  if (s === 'review') return 'review';       // Adversarial
+  if (s === 'decision') return 'decision';   // Committee Review
   return '';
 }
 // Stage taxonomy aligned to Operations Manual v4.4 (Backlog → Deep Dive →
