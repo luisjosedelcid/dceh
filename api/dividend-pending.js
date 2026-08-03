@@ -3,7 +3,8 @@
 //
 // Pending = sum over all future dividend_schedule entries (declared + forecast)
 //           where payment_date > today AND payment_date <= year_end,
-//           multiplied by current net shares held per ticker (from trades).
+//           multiplied by current net shares held per ticker (from portfolio
+//           `transactions`, not the decision-journal `trades` table).
 //           Excludes entries whose ex_date has already passed but pay_date is still future
 //           ONLY IF the position was sold before ex_date (we still owe them the payment).
 //
@@ -34,21 +35,21 @@ function yearEndStr() {
   return `${y}-12-31`;
 }
 
-// Compute net shares per ticker from trades up to a given date.
-// Assumes only BUY/SELL trade_types affect the share count.
+// Compute net shares per ticker from portfolio transactions up to a given date.
+// BUY adds qty; SELL subtracts (qty is stored positive; side carries direction).
 async function getNetSharesByTicker(asOf) {
-  const trades = await sbSelect(
-    'trades',
-    `select=ticker,trade_type,shares,trade_date&trade_date=lte.${encodeURIComponent(asOf)}`
+  const txs = await sbSelect(
+    'transactions',
+    `select=ticker,side,qty,trade_date&trade_date=lte.${encodeURIComponent(asOf)}&order=trade_date.asc&limit=20000`
   );
   const map = {};
-  for (const t of trades) {
+  for (const t of txs) {
     if (!t.ticker) continue;
-    const sh = parseFloat(t.shares || 0);
-    if (!isFinite(sh)) continue;
+    const qty = parseFloat(t.qty || 0);
+    if (!isFinite(qty) || qty === 0) continue;
     const key = String(t.ticker).toUpperCase();
-    const sign = (String(t.trade_type || '').toUpperCase() === 'SELL') ? -1 : 1;
-    map[key] = (map[key] || 0) + sign * sh;
+    const sign = (String(t.side || '').toUpperCase() === 'SELL') ? -1 : 1;
+    map[key] = (map[key] || 0) + sign * Math.abs(qty);
   }
   return map;
 }

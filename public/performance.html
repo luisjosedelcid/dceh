@@ -1898,7 +1898,10 @@ document.getElementById('btn-perf-report').addEventListener('click', async () =>
   status.textContent = `Building PDF as of ${asOf}…`;
   status.style.color = 'var(--gray-mid)';
   try {
-    const r = await fetch(`/api/generate-daily-report?as_of=${encodeURIComponent(asOf)}`, { method: 'GET' });
+    const r = await fetch(`/api/generate-daily-report?as_of=${encodeURIComponent(asOf)}`, {
+      method: 'GET',
+      headers: { 'x-admin-token': adminToken() },
+    });
     if (!r.ok) {
       const err = await r.json().catch(() => ({}));
       throw new Error(err.error || `HTTP ${r.status}`);
@@ -2258,11 +2261,17 @@ document.getElementById('btn-cr-reload').addEventListener('click', ()=>{ refresh
 let TD_DATA = null;
 async function loadTimeDeposits(){
   try{
-    const tok = localStorage.getItem('dce_admin_token') || '';
+    const tok = adminToken() || localStorage.getItem('dce_admin_token') || '';
     const r = await fetch('/api/time-deposits', { headers: tok ? {'x-admin-token':tok} : {}, cache:'no-store' });
-    if(!r.ok){ TD_DATA = null; return; }
+    if(!r.ok){
+      const err = await r.json().catch(() => ({}));
+      TD_DATA = { ok: false, error: err.error || ('HTTP ' + r.status), deposits: [], kpis: {} };
+      return;
+    }
     TD_DATA = await r.json();
-  }catch(e){ TD_DATA = null; }
+  }catch(e){
+    TD_DATA = { ok: false, error: String(e && e.message || e), deposits: [], kpis: {} };
+  }
 }
 
 // === Fixed Income tab (public) ===
@@ -2277,6 +2286,10 @@ async function loadFixedIncome(){
   content.classList.add('hide');
   try{
     if(!TD_DATA){ await loadTimeDeposits(); }
+    if(TD_DATA && TD_DATA.ok === false){
+      loading.textContent = 'Failed to load: '+(TD_DATA.error || 'Unauthorized');
+      return;
+    }
     renderFixedIncome();
     loading.classList.add('hide');
     content.classList.remove('hide');
@@ -2342,6 +2355,7 @@ function renderFixedIncome(){
       +'<th class="r">Progress</th>'
       +'<th class="r">Days rem.</th>'
       +'<th>Status</th>'
+      +'<th></th>'
       +'</tr></thead>';
     let body = '<tbody>';
     for(const td of deps){
@@ -2350,6 +2364,13 @@ function renderFixedIncome(){
       const net = gross * (1-tax);
       const pct = Number(td.pct_elapsed||0);
       const barW = Math.max(2, Math.min(100, pct*100)).toFixed(1);
+      const statusHtml = td.is_matured
+        ? '<span style="color:var(--gray-mid)">matured</span>'
+        : '<span style="color:var(--green);font-weight:600">active</span>';
+      // Redeem once payout is booked in brokerage/cash — drops CD from MV totals.
+      const redeemBtn = td.is_matured
+        ? '<button type="button" class="btn ghost btn-fi-redeem" data-id="'+td.id+'" style="font-size:10px;padding:2px 8px">Redeem</button>'
+        : '';
       body += '<tr>'
         +'<td><strong>'+(td.name||'')+'</strong></td>'
         +'<td>'+(td.bank||'—')+'</td>'
@@ -2363,7 +2384,8 @@ function renderFixedIncome(){
         +'<td class="r">'+fiFmtUsd2(td.mv)+'</td>'
         +'<td class="r"><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end"><div style="width:60px;height:6px;background:var(--rule);position:relative;border-radius:3px;overflow:hidden"><div style="position:absolute;left:0;top:0;height:100%;width:'+barW+'%;background:var(--gold)"></div></div><span style="font-size:10px;color:var(--gray-mid)">'+(pct*100).toFixed(1)+'%</span></div></td>'
         +'<td class="r">'+td.days_remaining+'</td>'
-        +'<td>'+(td.is_matured ? '<span style="color:var(--gray-mid)">matured</span>' : '<span style="color:var(--green);font-weight:600">active</span>')+'</td>'
+        +'<td>'+statusHtml+'</td>'
+        +'<td>'+redeemBtn+'</td>'
         +'</tr>';
     }
     body += '</tbody>';
@@ -2375,9 +2397,31 @@ function renderFixedIncome(){
       +'<td class="r">'+fiFmtPct(wYield,3)+'</td>'
       +'<td class="r pos" style="font-weight:700">'+fiFmtUsd2(totalAccruedNet)+'</td>'
       +'<td class="r">'+fiFmtUsd2(totalMv)+'</td>'
-      +'<td></td><td></td><td></td>'
+      +'<td></td><td></td><td></td><td></td>'
       +'</tr></tfoot>';
     tbl.innerHTML = head + body;
+    tbl.querySelectorAll('.btn-fi-redeem').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        if (!id) return;
+        if (!confirm('Mark this CD as redeemed? It will drop out of Fixed Income MV (use after the payout is booked in Schwab/cash).')) return;
+        btn.disabled = true;
+        try {
+          const r = await fetch('/api/time-deposits', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken() },
+            body: JSON.stringify({ action: 'redeem', id }),
+          });
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok || j.ok === false) throw new Error(j.error || ('HTTP ' + r.status));
+          TD_DATA = null;
+          await loadFixedIncome();
+        } catch (e) {
+          alert('Redeem failed: ' + (e && e.message || e));
+          btn.disabled = false;
+        }
+      });
+    });
   }
 
   // Maturity ladder — aggregates by month/quarter

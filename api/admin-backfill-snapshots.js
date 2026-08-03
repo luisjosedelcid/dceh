@@ -19,25 +19,23 @@ module.exports = async (req, res) => {
       return;
     }
 
-    // Build snapshot rows
-    const peakSoFar = { v: 0 };
-    const rows = series.map(d => {
-      // Recompute drawdown vs running peak (already in d.drawdown)
-      return {
-        snapshot_date: d.date,
-        nav_usd: d.nav,
-        invested_usd: null,        // could track separately if needed; nullable
-        cash_usd: d.cash,
-        twr_daily: d.twr_daily,
-        twr_cumulative: d.twr_cum,
-        benchmark_iwqu: d.iwqu_norm,
-        drawdown_pct: d.drawdown,
-        holdings_json: null,       // only fill final day's holdings — see below
-      };
-    });
-    // Attach holdings JSON to last row
+    // Align with schema (performance_schema.sql) and cron/portfolio-snapshot.js:
+    //   invested_usd = net contributions (NOT NULL)
+    //   benchmark_urth (not benchmark_iwqu)
+    //   holdings_json = [] by default; full holdings only on last row
+    const rows = series.map(d => ({
+      snapshot_date: d.date,
+      nav_usd: d.nav,
+      invested_usd: d.invested ?? (result.kpis && result.kpis.invested_usd) ?? 0,
+      cash_usd: d.cash,
+      twr_daily: d.twr_daily,
+      twr_cumulative: d.twr_cum,
+      benchmark_urth: d.iwqu_norm,
+      drawdown_pct: d.drawdown,
+      holdings_json: [],
+    }));
     if (rows.length > 0) {
-      rows[rows.length - 1].holdings_json = result.holdings;
+      rows[rows.length - 1].holdings_json = result.holdings || [];
     }
 
     // Batch upsert in chunks of 500

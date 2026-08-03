@@ -1,25 +1,49 @@
 // GET  /api/time-deposits            → list all deposits + valued snapshot as of today
 // GET  /api/time-deposits?as_of=YYYY → snapshot at a specific date
-// POST /api/time-deposits            → create a new deposit (admin token required)
+// POST /api/time-deposits            → create a new deposit (admin only)
+// POST /api/time-deposits { action:'redeem', id } → mark redeemed (admin only)
 //
-// Auth: mirrors /api/performance behaviour (admin token).
+// Auth: mirrors /api/performance (HMAC admin token via requireRole).
 
-const { loadAndValueTimeDeposits } = require('./_time-deposits');
+const { loadAndValueTimeDeposits, redeemTimeDeposit } = require('./_time-deposits');
 const { sbInsert } = require('./_supabase');
+const { requireRole } = require('./_require-role');
 
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
-
-function isAdmin(req) {
-  if (!ADMIN_TOKEN) return true; // dev / no-auth mode
-  const t = req.headers['x-admin-token'] || '';
-  return t === ADMIN_TOKEN;
+function parseBody(req) {
+  // Vercel usually parses JSON into req.body already. Prefer that, then fall
+  // back to reading the raw stream (local / mocked servers).
+  return new Promise((resolve, reject) => {
+    if (req.body != null) {
+      if (typeof req.body === 'string') {
+        try { resolve(req.body ? JSON.parse(req.body) : {}); }
+        catch (e) { reject(e); }
+        return;
+      }
+      if (typeof req.body === 'object') { resolve(req.body); return; }
+    }
+    let raw = '';
+    req.on('data', chunk => (raw += chunk));
+    req.on('end', () => {
+      try { resolve(raw ? JSON.parse(raw) : {}); }
+      catch (e) { reject(e); }
+    });
+    req.on('error', reject);
+  });
 }
 
 async function handler(req, res) {
   try {
+    // GET: any authenticated user (same bar as /api/performance).
+    // POST: admin only — creates / redeems portfolio capital rows.
+    const allowed = req.method === 'GET' ? ['any'] : ['admin'];
+    const auth = await requireRole(req, allowed);
+    if (!auth.ok) {
+      res.setHeader('content-type', 'application/json');
+      res.status(auth.status).end(JSON.stringify({ ok: false, error: auth.error }));
+      return;
+    }
+
     if (req.method === 'GET') {
-      // GET is public read-only (mirrors Real Estate / Crypto tabs which read static JSON).
-      // POST still requires admin token below.
       const url = new URL(req.url, 'http://x');
       const asOf = url.searchParams.get('as_of') || undefined;
       const result = await loadAndValueTimeDeposits(asOf);
@@ -30,17 +54,24 @@ async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      if (!isAdmin(req)) {
-        res.status(401).end(JSON.stringify({ ok: false, error: 'Unauthorized' }));
+      const body = await parseBody(req);
+
+      // Redeem path — mark deposit as redeemed so it drops out of MV totals
+      // (use after the maturity payout is booked in Schwab/cash).
+      if (body.action === 'redeem') {
+        if (!body.id) {
+          res.status(400).end(JSON.stringify({ ok: false, error: 'Missing field: id' }));
+          return;
+        }
+        try {
+          const out = await redeemTimeDeposit(body.id);
+          res.setHeader('content-type', 'application/json');
+          res.status(200).end(JSON.stringify(out));
+        } catch (e) {
+          res.status(e.status || 500).end(JSON.stringify({ ok: false, error: String(e.message || e) }));
+        }
         return;
       }
-      // Parse body
-      const body = await new Promise((resolve, reject) => {
-        let raw = '';
-        req.on('data', chunk => (raw += chunk));
-        req.on('end', () => { try { resolve(raw ? JSON.parse(raw) : {}); } catch (e) { reject(e); } });
-        req.on('error', reject);
-      });
 
       // Validate required fields
       const required = ['name', 'principal', 'start_date', 'maturity_date', 'annual_rate'];

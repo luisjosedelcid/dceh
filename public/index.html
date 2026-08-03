@@ -1180,7 +1180,7 @@ window.addEventListener('DOMContentLoaded', () => {
       try {
         const a = window.dceAuth;
         if (a && typeof a.token === 'function') return a.token() || '';
-        return localStorage.getItem('dce-admin-token') || '';
+        return localStorage.getItem('dce_admin_token') || '';
       } catch (_) { return ''; }
     }
 
@@ -1203,7 +1203,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
       // Cash-equivalents / treasury ETFs are excluded from the Portfolio Companies
       // grid: this grid is for equities and crypto only.
-      const CASH_EQUIVALENTS = new Set(['SGOV','BIL','SHV','SHY','VGSH','VBIL','TBIL','USFR','GBIL','XHLF','CLTL','MINT']);
+      // Keep in sync with api/_perf-calc.js CASH_EQUIVALENT_TICKERS.
+      const CASH_EQUIVALENTS = new Set(['SGOV','BIL','GBIL','CLIP','SHV','SHY','VGSH','VBIL','TBIL','USFR','XHLF','CLTL','MINT']);
 
       let holdings = [];
       try {
@@ -1214,13 +1215,10 @@ window.addEventListener('DOMContentLoaded', () => {
           ? j.holdings.filter(h => {
               if (Number(h.qty) <= 0) return false;
               const tk = String(h.ticker || '').toUpperCase();
-              // Exclude cash-equivalent ETFs by ticker allowlist
-              if (CASH_EQUIVALENTS.has(tk)) return false;
-              // Exclude non-equity asset classes (T-bill CUSIPs, cash equivalents, fixed income).
-              // Research grid is for equities only.
               const ac = String(h.asset_class || 'equity').toLowerCase();
-              if (ac === 'fixed_income' || ac === 'cash_equivalent' || ac === 'cash') return false;
-              // Belt-and-suspenders: US Treasury CUSIPs look like 912xxxxxxx (9 chars, starts with 912).
+              // Research grid is equities only (API classifier + local allowlist/CUSIP guards).
+              if (ac !== 'equity') return false;
+              if (CASH_EQUIVALENTS.has(tk)) return false;
               if (/^912[0-9A-Z]{6}$/.test(tk)) return false;
               return true;
             })

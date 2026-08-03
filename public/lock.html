@@ -126,10 +126,18 @@ function serializeAssertion(cred){
 }
 
 function saveSession(j){
+  // Must mirror dceAuth.login / admin-login.html: token alone is not enough —
+  // dceAuth.isAdmin() requires dce_admin_token_exp, and role checks need dce_admin_user.
   localStorage.setItem('dce_admin_token', j.token);
-  localStorage.setItem('dce_admin_email', j.email);
-  if (j.displayName) localStorage.setItem('dce_admin_display_name', j.displayName);
-  if (j.role) localStorage.setItem('dce_admin_role', j.role);
+  if (j.expiresAt != null) localStorage.setItem('dce_admin_token_exp', String(j.expiresAt));
+  const email = j.email || (j.user && j.user.email) || '';
+  const displayName = j.displayName || (j.user && j.user.displayName) || '';
+  const role = j.role || (j.user && j.user.role) || 'admin';
+  if (email) localStorage.setItem('dce_admin_email', email);
+  if (displayName) localStorage.setItem('dce_admin_display_name', displayName);
+  if (role) localStorage.setItem('dce_admin_role', role);
+  const user = j.user || { email, displayName: displayName || null, role };
+  if (user && user.email) localStorage.setItem('dce_admin_user', JSON.stringify(user));
   // Mark this browser session as unlocked (cleared when tab closes)
   sessionStorage.setItem('dce_auth_ok', '1');
   location.href = returnTo;
