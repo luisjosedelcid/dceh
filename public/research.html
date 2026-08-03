@@ -538,9 +538,10 @@ const ASSET_GATES = {
   // key = target stage; value = { fromStages, requiredKinds, label }
   analysis: {
     fromStages: ['backlog'],
-    requiredKinds: ['dashboard_json', 'company_brief_pdf'],
+    requiredKinds: ['excel', 'dashboard_json', 'company_brief_pdf'],
     label: 'Deep Dive',
     kindLabels: {
+      excel: 'Columbia model (Excel)',
       dashboard_json: 'Columbia dashboard (JSON)',
       company_brief_pdf: 'Company Brief (PDF)',
     },

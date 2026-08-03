@@ -164,7 +164,7 @@ module.exports = async (req, res) => {
         const ASSET_GATES = {
           analysis: {
             from: ['backlog'],
-            required: ['dashboard_json', 'company_brief_pdf'],
+            required: ['excel', 'dashboard_json', 'company_brief_pdf'],
             label: 'Deep Dive',
           },
           review: {
