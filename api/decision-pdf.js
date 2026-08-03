@@ -168,10 +168,14 @@ module.exports = async (req, res) => {
     if (!isPass && r.framework_version === 'v3.2') {
       doc.font('Helvetica-Bold').fontSize(9);
       const label = 'FRAMEWORK v3.2';
-      const w = doc.widthOfString(label) + 20;
+      const textW = doc.widthOfString(label);
+      // Add generous horizontal padding so PDFKit doesn't wrap on sub-pixel
+      // overflow, and avoid passing `width` in text() which forces re-flow.
+      const padX = 12;
+      const w = Math.ceil(textW) + padX * 2;
       doc.roundedRect(M, y, w, 20, 3).fill(GOLD);
       doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(9)
-         .text(label, M + 10, y + 5, { lineBreak: false, width: w - 20 });
+         .text(label, M + padX, y + 5.5, { lineBreak: false });
       y += 28;
     }
 
@@ -297,13 +301,30 @@ module.exports = async (req, res) => {
            .text('THESIS PILLARS', M, y);
         y += 14;
         r.thesis_pillars.forEach((p, i) => {
-          const pillarText = typeof p === 'string' ? p : (p.description || p.name || JSON.stringify(p));
           y = ensureSpace(doc, y, 40);
+          // Support several shapes: string, {title, evidence}, {name, description}.
+          const title = typeof p === 'string' ? '' : (p.title || p.name || '');
+          const body = typeof p === 'string'
+            ? p
+            : (p.evidence || p.description || '');
           doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(10)
              .text(`${i + 1}.`, M, y, { lineBreak: false });
-          doc.fillColor(NEAR_BLACK).font('Helvetica').fontSize(10)
-             .text(String(pillarText), M + 20, y, { width: CW - 20 });
-          y = doc.y + 8;
+          if (title) {
+            doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(10)
+               .text(String(title), M + 20, y, { width: CW - 20 });
+            y = doc.y + 2;
+            if (body) {
+              doc.fillColor(NEAR_BLACK).font('Helvetica').fontSize(10)
+                 .text(String(body), M + 20, y, { width: CW - 20 });
+              y = doc.y + 8;
+            } else {
+              y += 6;
+            }
+          } else {
+            doc.fillColor(NEAR_BLACK).font('Helvetica').fontSize(10)
+               .text(String(body || JSON.stringify(p)), M + 20, y, { width: CW - 20 });
+            y = doc.y + 8;
+          }
         });
         y += 4;
       }
@@ -356,10 +377,12 @@ module.exports = async (req, res) => {
       y = drawQA(doc, y, M, CW, 'PRE-MORTEM (WHAT WOULD CHANGE MY MIND)', r.pre_mortem);
     }
 
-    // Reviews section — 3m / 6m / 12m. Skipped for PASS: a declined
-    // opportunity does not open a position, so recurring reviews do not
-    // apply (the ticker stays on the watchlist for scan-based tracking).
-    if (!isPass) {
+    // Reviews section — 3m / 6m / 12m. Only for BUY/ADD/TRIM/SELL where
+    // a position exists (or existed) that needs post-decision follow-up.
+    // Skipped for PASS (never opened) and FOLLOW (watchlist plan handles
+    // its own re-visit cadence).
+    const showReviews = ['BUY', 'ADD', 'TRIM', 'SELL'].includes(r.decision_type);
+    if (showReviews) {
     y = ensureSpace(doc, y, 80);
     doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)
        .text('SCHEDULED REVIEWS', M, y);
