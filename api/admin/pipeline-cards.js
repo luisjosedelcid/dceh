@@ -153,6 +153,36 @@ module.exports = async (req, res) => {
           const prev = await sbSelect('pipeline_cards', `select=stage,ticker,name&id=eq.${id}&limit=1`);
           prevCard = Array.isArray(prev) && prev[0] ? prev[0] : null;
         } catch {}
+
+        // Backend asset gate (mirrors research.html ASSET_GATES). Prevents a
+        // direct curl / API bypass of the UI validation. Only Backlog → Deep
+        // Dive is gated; other transitions pass through.
+        if (prevCard && prevCard.stage === 'backlog' && patch.stage === 'analysis') {
+          try {
+            const REQUIRED_KINDS = ['dashboard_json', 'company_brief_pdf'];
+            const assets = await sbSelect(
+              'pipeline_card_assets',
+              `select=kind&card_id=eq.${id}&active=eq.true`
+            );
+            const haveKinds = new Set((assets || []).map(a => a.kind));
+            const missing = REQUIRED_KINDS.filter(k => !haveKinds.has(k));
+            if (missing.length) {
+              res.status(409).json({
+                error: 'assets_required',
+                message: `Cannot advance to Deep Dive without required artifacts.`,
+                required: REQUIRED_KINDS,
+                missing,
+                from_stage: prevCard.stage,
+                to_stage: patch.stage,
+              });
+              return;
+            }
+          } catch (e) {
+            console.error('[pipeline-cards] asset-gate check failed', e);
+            res.status(500).json({ error: 'asset_gate_check_failed', detail: e.message });
+            return;
+          }
+        }
       }
 
       const result = await sbUpdate('pipeline_cards', `id=eq.${id}`, patch);

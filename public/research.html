@@ -528,9 +528,58 @@ const TERMINAL_STAGE_TO_JOURNAL = {
   followed: 'FOLLOW',
 };
 
+// Forward transitions that require specific research artifacts to be
+// attached to the card before the move is allowed. Only Backlog → Deep
+// Dive is gated for now; other transitions are free (and terminals have
+// their own Decision Journal gate above).
+//
+// Assets are checked against pipeline_card_assets (active=true).
+const ASSET_GATES = {
+  // key = target stage; value = { fromStages, requiredKinds, label }
+  analysis: {
+    fromStages: ['backlog'],
+    requiredKinds: ['dashboard_json', 'company_brief_pdf'],
+    label: 'Deep Dive',
+    kindLabels: {
+      dashboard_json: 'Columbia dashboard (JSON)',
+      company_brief_pdf: 'Company Brief (PDF)',
+    },
+  },
+};
+
+async function _fetchActiveAssetKinds(cardId) {
+  try {
+    const resp = await api(`/api/admin/pipeline-card-assets?card_id=${encodeURIComponent(cardId)}`);
+    const items = Array.isArray(resp) ? resp : (resp.items || []);
+    return new Set(items.filter(it => it.active !== false).map(it => it.kind));
+  } catch (e) {
+    console.warn('[moveCard] failed to fetch assets', e);
+    return null; // signal: don't block on transient network error
+  }
+}
+
 async function moveCard(id, newStage) {
   const c = pipeline.find(x => x.id === id);
   if (!c || c.stage === newStage) return;
+
+  // Asset gate (forward-only): if target stage requires artifacts, check
+  // they exist before allowing the move.
+  const gate = ASSET_GATES[newStage];
+  if (gate && gate.fromStages.includes(c.stage)) {
+    const kinds = await _fetchActiveAssetKinds(id);
+    if (kinds) { // null = network error, let it through rather than false-block
+      const missing = gate.requiredKinds.filter(k => !kinds.has(k));
+      if (missing.length) {
+        const list = missing.map(k => `\u2022 ${gate.kindLabels[k] || k}`).join('\n');
+        alert(
+          `Cannot move ${c.ticker} to ${gate.label} yet.\n\n` +
+          `Missing required artifacts:\n${list}\n\n` +
+          `Upload them from the card detail (click the card) before advancing.`
+        );
+        return;
+      }
+    }
+  }
 
   // Hard gate: moving into a terminal stage opens the Decision Journal in
   // the matching mode. The stage transition happens server-side only when
@@ -562,7 +611,27 @@ async function moveCard(id, newStage) {
     c.moved_at = data.moved_at || moved_at;
     renderBoard();
   } catch (e) {
-    alert('Error: ' + e.message);
+    // Backend asset-gate returns 409 with structured payload — surface
+    // the human message instead of the generic code.
+    if (e.payload && e.payload.error === 'assets_required') {
+      const missing = (e.payload.missing || []).map(k => {
+        return ({
+          dashboard_json: 'Columbia dashboard (JSON)',
+          company_brief_pdf: 'Company Brief (PDF)',
+          thesis_builder_pdf: 'Thesis Builder (PDF)',
+          thesis_breaker_pdf: 'Thesis Breaker (PDF)',
+          munger_digital_pdf: 'Munger Digital (PDF)',
+          excel: 'Columbia model (Excel)',
+        })[k] || k;
+      });
+      alert(
+        `${e.payload.message}\n\n` +
+        `Missing:\n\u2022 ${missing.join('\n\u2022 ')}\n\n` +
+        `Upload from the card detail before advancing.`
+      );
+    } else {
+      alert('Error: ' + e.message);
+    }
     // Revert visual state by reloading
     await loadPipeline(); renderBoard();
   }
