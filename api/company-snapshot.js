@@ -84,7 +84,7 @@ async function findExistingSnapshot(ticker) {
   const prefix = `Company_Snapshot_${t}_`;
   const rows = await sbSelect(
     'dataroom_files',
-    `select=id,name,filename,storage_path,created_at&folder_id=eq.${folderId}&filename=ilike.${encodeURIComponent(prefix)}*&order=created_at.desc&limit=1`
+    `select=id,name,filename,storage_path,uploaded_at&folder_id=eq.${folderId}&filename=ilike.${encodeURIComponent(prefix)}*&order=uploaded_at.desc&limit=1`
   );
   if (!rows || rows.length === 0) return null;
   return rows[0];
@@ -138,7 +138,7 @@ module.exports = async (req, res) => {
         file_id: existing.id,
         name: existing.name,
         url: publicUrl(existing.storage_path),
-        created_at: existing.created_at,
+        created_at: existing.uploaded_at,
       }));
     }
 
