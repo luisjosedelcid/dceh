@@ -417,21 +417,29 @@
 // MODE SWITCHING
 // ═══════════════════════════════════════════════════════════════════
 function showMode(mode, btn) {
-  document.querySelectorAll('.mode-pane').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.mode-tab').forEach(el => el.classList.remove('active'));
-  document.getElementById('mode-' + mode).classList.add('active');
-  btn.classList.add('active');
-  // Auto-load Superinvestors data on first activation
-  if (mode === 'superinvestors' && !window._supLoaded) {
-    loadSuperinvestors();
-  }
-  if (mode === 'ideafeed' && !window._ifLoaded) {
-    loadIdeaFeed();
-    window._ifLoaded = true;
-  }
-  if (mode === 'screener' && !window._scrLoaded) {
-    initScreener();
-    window._scrLoaded = true;
+  try {
+    document.querySelectorAll('.mode-pane').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.mode-tab').forEach(el => el.classList.remove('active'));
+    const pane = document.getElementById('mode-' + mode);
+    if (pane) pane.classList.add('active');
+    // Resolve the button robustly — the caller may pass the click event's target,
+    // but keyboard/programmatic calls may not.
+    const tab = btn || document.querySelector(`.mode-tab[data-mode="${mode}"]`);
+    if (tab) tab.classList.add('active');
+    // Auto-load Superinvestors data on first activation
+    if (mode === 'superinvestors' && !window._supLoaded) {
+      loadSuperinvestors();
+    }
+    if (mode === 'ideafeed' && !window._ifLoaded) {
+      window._ifLoaded = true;
+      loadIdeaFeed();
+    }
+    if (mode === 'screener' && !window._scrLoaded) {
+      initScreener();
+      window._scrLoaded = true;
+    }
+  } catch (e) {
+    console.error('[showMode] failed for mode=' + mode + ':', e);
   }
 }
 
