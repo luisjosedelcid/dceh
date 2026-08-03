@@ -470,11 +470,11 @@
           <textarea id="ne-thesis" required minlength="10" maxlength="8000" placeholder="Why this decision? What's the core argument? (min 10 chars)"></textarea>
           <div class="help">For BUY: investment thesis. For PASS: why declined. For SELL: exit reason.</div>
         </div>
-        <div class="form-row">
+        <div class="form-row" id="ne-row-catalysts">
           <label>Catalysts <span style="color:var(--gray-mid);font-weight:400;text-transform:none;letter-spacing:0">(optional, comma-separated)</span></label>
           <input type="text" id="ne-catalysts" placeholder="Earnings beat, segment turnaround, capital return...">
         </div>
-        <div class="form-row">
+        <div class="form-row" id="ne-row-premortem">
           <label>Pre-mortem <span style="color:var(--gray-mid);font-weight:400;text-transform:none;letter-spacing:0">(optional, quick draft)</span></label>
           <textarea id="ne-premortem" maxlength="8000" placeholder="What could go wrong? Use the pre-mortem skill later for full failure-modes registration."></textarea>
         </div>
@@ -1744,9 +1744,17 @@ function applyEntryTypeFraming() {
   const emptyEl = document.getElementById('ne-empty-state');
   const footerEl = document.getElementById('ne-footer');
   const footerEmptyEl = document.getElementById('ne-footer-empty');
+  const catalystsRow = document.getElementById('ne-row-catalysts');
+  const premortemRow = document.getElementById('ne-row-premortem');
   if (!sel || !titleEl) return;
   const t = (sel.value || '').toUpperCase();
   const hasType = (t === 'BUY' || t === 'PASS' || t === 'FOLLOW');
+  // PASS is thesis-only + notes — catalysts and pre-mortem are BUY/thesis
+  // constructs that don't apply to a declined opportunity. Hide their
+  // form rows so the modal matches the persisted PDF/UI surfaces.
+  const isPassType = (t === 'PASS');
+  if (catalystsRow) catalystsRow.style.display = isPassType ? 'none' : '';
+  if (premortemRow) premortemRow.style.display = isPassType ? 'none' : '';
   // Show/hide the rest of the form depending on whether a type is selected
   if (restEl) restEl.style.display = hasType ? '' : 'none';
   if (emptyEl) emptyEl.style.display = hasType ? 'none' : '';
@@ -2129,10 +2137,14 @@ async function submitNewEntry(ev) {
     thesis,
   };
   if (priceRaw !== '') payload.price_at_decision = Number(priceRaw);
-  if (catalystsRaw) {
+  // Catalysts + pre-mortem are BUY/thesis constructs. If the user picked
+  // PASS we drop whatever might still be sitting in the DOM inputs so
+  // the saved record matches what the modal shows.
+  const _isPass = decision_type === 'PASS';
+  if (!_isPass && catalystsRaw) {
     payload.catalysts = catalystsRaw.split(',').map(s => s.trim()).filter(Boolean);
   }
-  if (pre_mortem) payload.pre_mortem = pre_mortem;
+  if (!_isPass && pre_mortem) payload.pre_mortem = pre_mortem;
   if (notes) payload.notes = notes;
   const analystId = document.getElementById('ne-analyst').value;
   if (analystId) payload.analyst_id = analystId;
