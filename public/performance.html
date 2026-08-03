@@ -248,8 +248,8 @@
 
   <!-- ====== TAB NAV ====== -->
   <nav class="tabs" role="tablist">
-    <button class="tab-btn active" data-tab="tab-consolidado" role="tab" type="button">Consolidado</button>
-    <button class="tab-btn" data-tab="tab-dashboard" role="tab" type="button">Dashboard</button>
+    <button class="tab-btn active" data-tab="tab-consolidado" role="tab" type="button">Consolidated</button>
+    <button class="tab-btn" data-tab="tab-dashboard" role="tab" type="button">Public Markets</button>
     <button class="tab-btn" data-tab="tab-realestate" role="tab" type="button">Real Estate</button>
     <button class="tab-btn" data-tab="tab-fixedincome" role="tab" type="button">Fixed Income</button>
     <button class="tab-btn" data-tab="tab-crypto" role="tab" type="button">Crypto</button>
@@ -276,7 +276,7 @@
 
         <!-- Allocation por sleeve -->
         <div style="margin-top:24px">
-          <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin-bottom:10px">Allocation por sleeve</h3>
+          <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin-bottom:10px">Allocation by sleeve</h3>
           <div style="overflow-x:auto;border:1px solid var(--rule)">
             <table class="tbl" id="cons-tbl-alloc">
               <thead>
@@ -320,7 +320,7 @@
 
         <!-- Top holdings consolidados -->
         <div style="margin-top:24px">
-          <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin-bottom:10px">Top holdings consolidados</h3>
+          <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin-bottom:10px">Top consolidated holdings</h3>
           <div style="overflow-x:auto;border:1px solid var(--rule)">
             <table class="tbl" id="cons-tbl-top">
               <thead>
@@ -328,7 +328,7 @@
                   <th>Sleeve</th>
                   <th>Holding</th>
                   <th class="right">Market value (USD)</th>
-                  <th class="right">% NAV total</th>
+                  <th class="right">% Total NAV</th>
                 </tr>
               </thead>
               <tbody id="cons-tbl-top-tbody"></tbody>
@@ -1541,7 +1541,7 @@ function renderIpsBands(j) {
                     : (b.min * 100).toFixed(0) + '–' + (b.max * 100).toFixed(0) + '%';
     const inBand = reading >= b.min && reading <= b.max;
     const badgeCls = inBand ? 'ok' : 'out';
-    const badgeTxt = inBand ? 'En banda' : 'FUERA';
+    const badgeTxt = inBand ? 'In band' : 'OUT';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${escHtml(b.label)}</td>
@@ -2556,7 +2556,7 @@ function renderConsolidado(eqK, eqHoldings){
     // P&L total del sleeve Crypto = realized histórico (ya cristalizado vía retiros) + unrealized (NAV vs cost basis del XRP actual).
     crPnlTotal = crPnlRealized + crPnlUnr;
     const latestTs = (CR_PRICE && Object.values(CR_PRICE).length) ? Math.max(...Object.values(CR_PRICE).map(x=>x.ts.getTime())) : null;
-    crLast = latestTs ? new Date(latestTs).toLocaleDateString('es-ES') : (CR_DATA.as_of_static_data||'—');
+    crLast = latestTs ? new Date(latestTs).toLocaleDateString('en-US') : (CR_DATA.as_of_static_data||'—');
     // TWR cumulativo proxy: realized histórico tratado como withdrawal del sleeve (per decisión CIO).
     // TWR_cum = (NAV_actual + realized_cristalizado_neto + withdrawals_no_atribuibles_a_realized) / capital_neto_aportado − 1
     if(crCap > 0) crTwr = (crNav + crPnlRealized) / crCap - 1;
@@ -2588,7 +2588,7 @@ function renderConsolidado(eqK, eqHoldings){
 
   // ---- KPI render ----
   document.getElementById('cons-kpi-nav').textContent = consFmtUsd0(totNav);
-  document.getElementById('cons-kpi-nav-sub').textContent = sleeveCount+' sleeves activos';
+  document.getElementById('cons-kpi-nav-sub').textContent = sleeveCount+(sleeveCount===1?' sleeve active':' sleeves active');
   document.getElementById('cons-kpi-cap').textContent = consFmtUsd0(totCap);
   const pnlEl = document.getElementById('cons-kpi-pnl');
   pnlEl.textContent = (totPnlUnr>=0?'+':'')+consFmtUsd0(totPnlUnr);
@@ -2660,7 +2660,7 @@ function renderConsolidado(eqK, eqHoldings){
     let pnlLabel = (s.pnl>=0?'+':'')+consFmtUsd0(s.pnl);
     if(s.realized && s.realized !== 0){
       const unr = s.pnl - s.realized;
-      pnlTooltip = ' title="Realized hist: '+(s.realized>=0?'+':'')+consFmtUsd0(s.realized)+' · Unrealized: '+(unr>=0?'+':'')+consFmtUsd0(unr)+'"';
+      pnlTooltip = ' title="Realized (historical): '+(s.realized>=0?'+':'')+consFmtUsd0(s.realized)+' · Unrealized: '+(unr>=0?'+':'')+consFmtUsd0(unr)+'"';
     }
     html += '<tr>'
       +'<td><span style="display:inline-block;width:10px;height:10px;background:'+s.color+';margin-right:8px;border-radius:2px;vertical-align:middle"></span><strong>'+s.label+'</strong></td>'
@@ -2759,7 +2759,7 @@ function renderConsolidado(eqK, eqHoldings){
   const topN = all.slice(0,15);
   const topBody = document.getElementById('cons-tbl-top-tbody');
   if(topN.length===0){
-    topBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray-mid);font-style:italic;padding:14px">Holdings no disponibles (admin login requerido para Equity)</td></tr>';
+    topBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray-mid);font-style:italic;padding:14px">Holdings unavailable (admin login required for Equity)</td></tr>';
   } else {
     let topHtml = '';
     for(const h of topN){
