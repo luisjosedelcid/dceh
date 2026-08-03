@@ -91,18 +91,24 @@ async function findExistingSnapshot(ticker) {
 }
 
 function publicUrl(storagePath) {
-  return `${process.env.SUPABASE_URL}/storage/v1/object/public/dataroom/${storagePath.split('/').map(encodeURIComponent).join('/')}`;
+  // Match the pattern used by _decision-dataroom-mirror.js exactly:
+  // raw path, no per-segment encoding (Supabase Storage accepts this
+  // as long as the segments are already safe: UUID/timestamp__name.pdf).
+  return `${process.env.SUPABASE_URL}/storage/v1/object/public/dataroom/${storagePath}`;
 }
 
 async function uploadToStorage(buffer, storagePath) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/dataroom/${storagePath.split('/').map(encodeURIComponent).join('/')}`, {
+  if (!SUPABASE_URL || !KEY) {
+    throw new Error('Supabase credentials not configured');
+  }
+  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/dataroom/${storagePath}`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${KEY}`,
-      'x-upsert': 'true',
       'Content-Type': 'application/pdf',
+      'x-upsert': 'false',
     },
     body: buffer,
   });
