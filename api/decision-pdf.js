@@ -76,7 +76,8 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const rows = await sbSelect('decision_journal', `select=*&id=eq.${id}&limit=1`);
+    // Embed analyst catalog fields so we can render Name (initials) on the PDF.
+    const rows = await sbSelect('decision_journal', `select=*,analyst:analysts(id,name,initials,color)&id=eq.${id}&limit=1`);
     if (rows.length === 0) {
       res.setHeader('content-type', 'application/json');
       res.status(404).end(JSON.stringify({ ok: false, error: 'entry not found' }));
@@ -137,11 +138,16 @@ module.exports = async (req, res) => {
        .text(`${r.ticker}  ·  ${r.decision_type}`, M, y);
     y += 32;
 
-    // Meta grid (3 cells)
+    // Meta grid. The title already shows ticker + type in large font, so
+    // TYPE is redundant here — swap it for ANALYST (the person who did
+    // the research) which is more valuable at a glance.
+    const analystLabel = r.analyst
+      ? `${r.analyst.name || ''}${r.analyst.initials ? ` (${r.analyst.initials})` : ''}`.trim()
+      : '—';
     const metaCells = [
-      { k: 'DATE',  v: fmtDate(r.decision_date) },
-      { k: 'PRICE', v: fmtPrice(r.price_at_decision) },
-      { k: 'TYPE',  v: r.decision_type || '—' },
+      { k: 'DATE',    v: fmtDate(r.decision_date) },
+      { k: 'PRICE',   v: fmtPrice(r.price_at_decision) },
+      { k: 'ANALYST', v: analystLabel },
     ];
     const cellW = (CW - 8) / 3;
     metaCells.forEach((c, i) => {

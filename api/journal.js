@@ -20,7 +20,9 @@ module.exports = async (req, res) => {
     const type = (req.query.type || '').toString().toUpperCase().trim();
     const year = parseInt(req.query.year || '', 10);
 
-    let q = `select=*&active=eq.true&order=decision_date.desc,id.desc&limit=500`;
+    // Embed analyst (name/initials/color) so the UI can render owner chips
+    // without a second round-trip. PostgREST embed via FK.
+    let q = `select=*,analyst:analysts(id,name,initials,color)&active=eq.true&order=decision_date.desc,id.desc&limit=500`;
     if (ticker) q += `&ticker=eq.${encodeURIComponent(ticker)}`;
     if (['BUY', 'SELL', 'PASS', 'HOLD', 'TRIM', 'ADD'].includes(type)) {
       q += `&decision_type=eq.${type}`;
@@ -33,7 +35,7 @@ module.exports = async (req, res) => {
 
     // Stats from full set (not filtered)
     const allRows = (ticker || type || year)
-      ? await sbSelect('decision_journal', 'select=decision_type,review_3m_date,review_6m_date,review_12m_date,review_3m_done_at,review_6m_done_at,review_12m_done_at&active=eq.true&limit=2000')
+      ? await sbSelect('decision_journal', 'select=decision_type,review_3m_date,review_6m_date,review_12m_date,review_3m_done_at,review_6m_done_at,review_12m_done_at,analyst_id&active=eq.true&limit=2000')
       : items;
 
     const stats = {

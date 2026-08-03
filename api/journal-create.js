@@ -100,6 +100,18 @@ module.exports = async (req, res) => {
     const pre_mortem = body.pre_mortem ? String(body.pre_mortem).trim().slice(0, 8000) : null;
     const notes = body.notes ? String(body.notes).trim() : '';
 
+    // Analyst who did the research — optional but strongly encouraged.
+    // Accepts a UUID that must exist in `analysts` (validated at FK level;
+    // an invalid UUID would surface as a Supabase error, which is caught
+    // below and returned to the client verbatim).
+    let analyst_id = null;
+    if (body.analyst_id) {
+      const raw = String(body.analyst_id).trim();
+      if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(raw)) {
+        analyst_id = raw;
+      }
+    }
+
     // ---- v3.2 fields (only meaningful for BUY/ADD, but accepted for any type) -----
     // All optional. Plain text helpers + JSONB structures coming from the
     // Munger Digital v3.2 package (decision_inputs.json) or filled manually.
@@ -191,6 +203,7 @@ module.exports = async (req, res) => {
       review_3m_date: review_3m,
       review_6m_date: review_6m,
       review_12m_date: review_12m,
+      analyst_id,
       created_by: auth.user.email,
       active: true,
       ...v32,
