@@ -513,6 +513,75 @@
     <div id="manual-alert"></div>
   </div>
 
+  <!-- ====== TIME DEPOSIT PANEL ====== -->
+  <div class="panel" id="panel-time-deposit">
+    <h2>Add time deposit</h2>
+    <div class="sub" style="margin-bottom:16px">Bank CDs / depósitos a plazo. Interest accrues linearly (mark-to-accrual) day by day and appears in the Fixed Income sleeve.</div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;align-items:end">
+      <div>
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Name</div>
+        <input id="td-name" type="text" placeholder="CD Promerica GT 2026" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+      </div>
+      <div>
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Bank</div>
+        <input id="td-bank" type="text" placeholder="Promerica Guatemala" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+      </div>
+      <div>
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Principal (USD)</div>
+        <input id="td-principal" type="number" step="0.01" placeholder="1000000" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+      </div>
+      <div>
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Start date</div>
+        <input id="td-start" type="date" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+      </div>
+      <div>
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Maturity date</div>
+        <input id="td-maturity" type="date" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+      </div>
+      <div>
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Annual rate (%)</div>
+        <input id="td-rate" type="number" step="0.001" placeholder="7.25" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+      </div>
+      <div>
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Tax on interest (%)</div>
+        <input id="td-tax" type="number" step="0.01" placeholder="10" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+      </div>
+      <div>
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Day count</div>
+        <select id="td-daycount" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+          <option value="actual_365">Actual/365</option>
+          <option value="actual_360">Actual/360</option>
+          <option value="30_360">30/360</option>
+        </select>
+      </div>
+      <div>
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Payment freq.</div>
+        <select id="td-payfreq" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+          <option value="bullet">Bullet (at maturity)</option>
+          <option value="monthly">Monthly</option>
+          <option value="quarterly">Quarterly</option>
+          <option value="semiannual">Semiannual</option>
+          <option value="annual">Annual</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px">
+      <div>
+        <div class="muted" style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Notes</div>
+        <input id="td-notes" type="text" placeholder="Optional context" style="width:100%;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:13px">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn gold" id="btn-add-td" type="button">Add time deposit</button>
+    </div>
+    <div id="td-alert"></div>
+
+    <div id="td-list" style="margin-top:22px"></div>
+  </div>
+
   <!-- ====== PRICES PANEL ====== -->
   <div class="panel" id="panel-prices">
     <h2>Prices &amp; benchmark</h2>
@@ -773,6 +842,87 @@ function syncManualForm(){
 }
 mKind.addEventListener('change',syncManualForm);
 syncManualForm();
+
+// ── Time deposits (bank CDs) ────────────────
+async function loadTimeDepositsAdmin(){
+  const wrap = document.getElementById('td-list');
+  if(!wrap) return;
+  wrap.className='nodata';wrap.textContent='Loading time deposits…';
+  try{
+    const r=await fetch('/api/time-deposits',{headers:{'x-admin-token':adminToken()},cache:'no-store'});
+    const j=await r.json();
+    if(!r.ok){ wrap.textContent='Error: '+(j.error||r.status); return; }
+    const deps=(j.deposits||[]);
+    if(!deps.length){ wrap.className='nodata'; wrap.textContent='No time deposits yet.'; return; }
+    const fmt0 = n => '$'+Number(n||0).toLocaleString('en-US',{maximumFractionDigits:0});
+    const fmt2 = n => '$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const fmtPct = n => (Number(n||0)*100).toFixed(3)+'%';
+    let html = '<h2 style="font-size:11px;margin-top:0;border:0;padding-bottom:6px">Active time deposits ('+deps.length+')</h2>';
+    html += '<div style="overflow-x:auto;border:1px solid var(--rule)"><table class="tbl"><thead><tr>';
+    html += '<th>Name</th><th>Bank</th><th class="r">Principal</th><th>Start</th><th>Maturity</th><th class="r">Rate</th><th class="r">Tax</th><th class="r">Accrued (net)</th><th class="r">MV</th><th class="r">Days rem.</th><th>Status</th>';
+    html += '</tr></thead><tbody>';
+    for(const td of deps){
+      html += '<tr>'
+        +'<td><strong>'+(td.name||'')+'</strong></td>'
+        +'<td>'+(td.bank||'—')+'</td>'
+        +'<td class="r">'+fmt0(td.principal)+'</td>'
+        +'<td>'+td.start_date+'</td>'
+        +'<td>'+td.maturity_date+'</td>'
+        +'<td class="r">'+(td.annual_rate*100).toFixed(3)+'%</td>'
+        +'<td class="r">'+(td.tax_rate*100).toFixed(1)+'%</td>'
+        +'<td class="r pos" style="font-weight:600">'+fmt2(td.accrued_net)+'</td>'
+        +'<td class="r">'+fmt2(td.mv)+'</td>'
+        +'<td class="r">'+td.days_remaining+'</td>'
+        +'<td>'+(td.is_matured ? '<span style="color:var(--gray-mid)">matured</span>' : '<span style="color:var(--green)">active</span>')+'</td>'
+        +'</tr>';
+    }
+    html += '</tbody></table></div>';
+    // Totals
+    const k=j.kpis||{};
+    html += '<div style="margin-top:10px;font-size:12px"><strong>Totals</strong> — Principal: '+fmt0(k.total_principal)+' · MV: '+fmt2(k.total_mv)+' · Accrued net: <span style="color:var(--green);font-weight:600">'+fmt2(k.total_accrued_net)+'</span> (gross '+fmt2(k.total_accrued_gross)+' − tax '+fmt2(k.total_accrued_tax)+')</div>';
+    wrap.className='';
+    wrap.innerHTML = html;
+  }catch(e){
+    wrap.textContent='Network error: '+e.message;
+  }
+}
+
+document.getElementById('btn-add-td').addEventListener('click', async ()=>{
+  const name=(document.getElementById('td-name').value||'').trim();
+  const bank=(document.getElementById('td-bank').value||'').trim();
+  const principal=parseFloat(document.getElementById('td-principal').value||'0');
+  const start=document.getElementById('td-start').value;
+  const maturity=document.getElementById('td-maturity').value;
+  const ratePct=parseFloat(document.getElementById('td-rate').value||'0');
+  const taxPct=parseFloat(document.getElementById('td-tax').value||'0');
+  const daycount=document.getElementById('td-daycount').value;
+  const payfreq=document.getElementById('td-payfreq').value;
+  const notes=(document.getElementById('td-notes').value||'').trim();
+  if(!name||!principal||!start||!maturity||!ratePct){
+    setAlert('td-alert','err','Name, principal, start date, maturity and rate are required.'); return;
+  }
+  if(start>=maturity){ setAlert('td-alert','err','Maturity must be after start.'); return; }
+  setAlert('td-alert','warn','Saving…');
+  try{
+    const r=await fetch('/api/time-deposits',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-token':adminToken()},
+      body:JSON.stringify({
+        name, bank: bank||null, principal, start_date:start, maturity_date:maturity,
+        annual_rate: ratePct/100, tax_rate: taxPct/100,
+        day_count_convention:daycount, payment_frequency:payfreq,
+        notes: notes||null,
+      }),
+    });
+    const j=await r.json();
+    if(!r.ok){ setAlert('td-alert','err',j.error||'Failed'); return; }
+    setAlert('td-alert','ok','Time deposit added.');
+    ['td-name','td-bank','td-principal','td-start','td-maturity','td-rate','td-tax','td-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    loadTimeDepositsAdmin();
+  }catch(e){
+    setAlert('td-alert','err','Network error: '+e.message);
+  }
+});
 
 document.getElementById('btn-add-manual').addEventListener('click',async()=>{
   const kind=mKind.value;
@@ -2047,6 +2197,17 @@ function renderCrypto(){
 
 document.getElementById('btn-cr-reload').addEventListener('click', ()=>{ refreshCryptoPrice(); });
 
+// === Time Deposits (bank CDs) ===
+let TD_DATA = null;
+async function loadTimeDeposits(){
+  try{
+    const tok = localStorage.getItem('dce_admin_token') || '';
+    const r = await fetch('/api/time-deposits', { headers: tok ? {'x-admin-token':tok} : {}, cache:'no-store' });
+    if(!r.ok){ TD_DATA = null; return; }
+    TD_DATA = await r.json();
+  }catch(e){ TD_DATA = null; }
+}
+
 // === Consolidado module ===
 let CONS_LOADED = false;
 function consFmtUsd0(n){ if(n==null||isNaN(n)) return '—'; const v=Number(n); const s=Math.abs(v).toLocaleString('en-US',{maximumFractionDigits:0}); return (v<0?'-$':'$')+s; }
@@ -2083,6 +2244,8 @@ async function loadConsolidado(){
     // 3) Crypto (precio live)
     if(!CR_DATA){ try{ await loadCrypto(); }catch(e){} }
     else if(!CR_PRICE){ try{ await refreshCryptoPrice(); }catch(e){} }
+    // 4) Time Deposits (bank CDs)
+    try{ await loadTimeDeposits(); }catch(e){}
 
     renderConsolidado(eqK, eqHoldings);
     document.getElementById('cons-loading').classList.add('hide');
@@ -2120,8 +2283,24 @@ function renderConsolidado(eqK, eqHoldings){
   // Regla SEC/GAAP: SGOV (money market ETF) + cash uninvested → Cash & Equivalents
   //                 T-bill CUSIPs individuales → Fixed Income
   const eqEquityNav = eqMvEquity;
-  const fixedIncomeNav = eqMvFixedIncome;
+  const eqFixedIncomeNav = eqMvFixedIncome;
   const cashNav = eqCashUsd + eqMvCashEquiv;
+
+  // ---- Sleeve Fixed Income (motor externo: Time Deposits/CDs) ----
+  // Los depósitos a plazo tienen su propio cost basis (principal) y P&L (accrued net).
+  // NO comparten motor con Equity — son capital independiente.
+  let tdPrincipal=0, tdMv=0, tdAccruedNet=0, tdCount=0, tdList=[];
+  if(TD_DATA && TD_DATA.ok && Array.isArray(TD_DATA.deposits)){
+    for(const td of TD_DATA.deposits){
+      tdPrincipal += Number(td.principal||0);
+      tdMv        += Number(td.mv||0);
+      tdAccruedNet += Number(td.accrued_net||0);
+      tdCount++;
+      tdList.push(td);
+    }
+  }
+  // Fixed Income sleeve = T-bills del motor Equity + Time Deposits
+  const fixedIncomeNav = eqFixedIncomeNav + tdMv;
 
   // ---- Sleeve Real Estate ----
   let reNav=0, reCap=0, reLast='—', reTwr=null;
@@ -2171,22 +2350,26 @@ function renderConsolidado(eqK, eqHoldings){
 
   // ---- Totales ----
   // Crypto contribuye con P&L total (realized + unrealized) porque el realized ya salió vía retiros y no está en NAV.
-  const totNav = eqNav + reNav + crNav;
-  const totCap = eqCap + reCap + crCap;
-  const totPnlUnr = eqPnlUnr + rePnlUnr + crPnlTotal;
+  // Time Deposits: principal es capital adicional; accrued_net es P&L no realizado (mark-to-accrual).
+  const totNav = eqNav + reNav + crNav + tdMv;
+  const totCap = eqCap + reCap + crCap + tdPrincipal;
+  const totPnlUnr = eqPnlUnr + rePnlUnr + crPnlTotal + tdAccruedNet;
   const totMoic = totCap>0 ? totNav/totCap : null;
   const totRoi = totCap>0 ? totPnlUnr/totCap : null;
   // Sleeve count: cada sub-sleeve del motor Equity solo cuenta si tiene NAV > 0
   const sleeveCount = (eqK && eqEquityNav > 0 ? 1 : 0)
-                    + (eqK && fixedIncomeNav > 0 ? 1 : 0)
+                    + (fixedIncomeNav > 0 ? 1 : 0)
                     + (eqK && cashNav > 0 ? 1 : 0)
                     + (RE_DATA?1:0) + (CR_DATA?1:0);
 
   // TWR consolidado = weighted average por NAV de los TWR de cada sleeve
+  // Time deposits: return-since-inception simple (accrued_net / principal)
+  const tdConsolTwr = tdPrincipal > 0 ? tdAccruedNet / tdPrincipal : null;
   let twrNumer = 0, twrWeights = 0;
   if(eqTwr != null && eqNav > 0){ twrNumer += eqTwr * eqNav; twrWeights += eqNav; }
   if(reTwr != null && reNav > 0){ twrNumer += reTwr * reNav; twrWeights += reNav; }
   if(crTwr != null && crNav > 0){ twrNumer += crTwr * crNav; twrWeights += crNav; }
+  if(tdConsolTwr != null && tdMv > 0){ twrNumer += tdConsolTwr * tdMv; twrWeights += tdMv; }
   const totTwr = twrWeights > 0 ? twrNumer/twrWeights : null;
 
   // ---- KPI render ----
@@ -2208,24 +2391,41 @@ function renderConsolidado(eqK, eqHoldings){
   if(eqTwr!=null) twrSubParts.push('Eq '+consFmtPct(eqTwr));
   if(reTwr!=null) twrSubParts.push('RE '+consFmtPct(reTwr));
   if(crTwr!=null) twrSubParts.push('Cr '+consFmtPct(crTwr));
+  if(tdConsolTwr!=null) twrSubParts.push('CD '+consFmtPct(tdConsolTwr));
   document.getElementById('cons-kpi-twr-sub').textContent = twrSubParts.join(' · ') || 'weighted avg by NAV';
 
   // ---- Allocation table ----
-  // Split cosmético: Equity, Fixed Income y Cash & Equivalents comparten el motor Equity.
-  // Capital y P&L se atribuyen proporcionalmente al MV de cada sub-sleeve.
-  const eqMvTotal = eqEquityNav + fixedIncomeNav + cashNav;
+  // Split cosmético para las 3 sub-sleeves del motor Equity (Equity/T-bills/Cash uninvested):
+  // capital y P&L se atribuyen proporcionalmente al MV de cada sub-sleeve.
+  // Time Deposits (bank CDs) tienen cost basis y P&L propios — se suman al sleeve Fixed Income.
+  const eqMvTotal = eqEquityNav + eqFixedIncomeNav + cashNav;
   const eqEquityShare = eqMvTotal > 0 ? eqEquityNav / eqMvTotal : 0;
-  const fixedIncomeShare = eqMvTotal > 0 ? fixedIncomeNav / eqMvTotal : 0;
+  const eqFixedIncomeShare = eqMvTotal > 0 ? eqFixedIncomeNav / eqMvTotal : 0;
   const cashShare = eqMvTotal > 0 ? cashNav / eqMvTotal : 0;
   const eqEquityCap = eqCap * eqEquityShare;
-  const fixedIncomeCap = eqCap * fixedIncomeShare;
+  const eqFixedIncomeCap = eqCap * eqFixedIncomeShare;
   const cashCap = eqCap * cashShare;
   const eqEquityPnl = eqPnlUnr * eqEquityShare;
-  const fixedIncomePnl = eqPnlUnr * fixedIncomeShare;
+  const eqFixedIncomePnl = eqPnlUnr * eqFixedIncomeShare;
   const cashPnl = eqPnlUnr * cashShare;
+  // Fixed Income final = T-bills (Equity motor) + Time Deposits (motor CD)
+  const fixedIncomeCap = eqFixedIncomeCap + tdPrincipal;
+  const fixedIncomePnl = eqFixedIncomePnl + tdAccruedNet;
+  // TWR combinado del sleeve Fixed Income: weighted-avg de TWR Equity (para T-bills) y TWR CD.
+  // TWR CD = accrued_net / principal (return-since-inception simple; el motor bullet no tiene marks intermedios).
+  const tdTwr = tdPrincipal > 0 ? tdAccruedNet / tdPrincipal : null;
+  let fiTwr = null;
+  if(fixedIncomeNav > 0){
+    let fiNumer = 0, fiDenom = 0;
+    if(eqTwr != null && eqFixedIncomeNav > 0){ fiNumer += eqTwr * eqFixedIncomeNav; fiDenom += eqFixedIncomeNav; }
+    if(tdTwr != null && tdMv > 0){ fiNumer += tdTwr * tdMv; fiDenom += tdMv; }
+    fiTwr = fiDenom > 0 ? fiNumer/fiDenom : null;
+  }
+  // Last update del sleeve Fixed Income: el más reciente entre eqLast y today (CDs son mark-to-accrual continuo)
+  const fiLast = (TD_DATA && TD_DATA.as_of) ? TD_DATA.as_of : eqLast;
   const sleeves = [
     {key:'equity', label:'Equity', nav:eqEquityNav, cap:eqEquityCap, pnl:eqEquityPnl, twr:eqTwr, last:eqLast, present: !!eqK && eqEquityNav > 0, color:'#1B2642'},
-    {key:'fixed_income', label:'Fixed Income', nav:fixedIncomeNav, cap:fixedIncomeCap, pnl:fixedIncomePnl, twr:eqTwr, last:eqLast, present: !!eqK && fixedIncomeNav > 0, color:'#4E6480'},
+    {key:'fixed_income', label:'Fixed Income', nav:fixedIncomeNav, cap:fixedIncomeCap, pnl:fixedIncomePnl, twr:fiTwr, last:fiLast, present: fixedIncomeNav > 0, color:'#4E6480'},
     {key:'cash', label:'Cash & Equivalents', nav:cashNav, cap:cashCap, pnl:cashPnl, twr:eqTwr, last:eqLast, present: !!eqK && cashNav > 0, color:'#8FA1B8'},
     {key:'realestate', label:'Real Estate', nav:reNav, cap:reCap, pnl:rePnlUnr, twr:reTwr, last:reLast, present: !!RE_DATA, color:'#B88B47'},
     {key:'crypto', label:'Crypto', nav:crNav, cap:crCap, pnl:crPnlTotal, twr:crTwr, last:crLast, present: !!CR_DATA, color:'#5B6B8C', realized:crPnlRealized},
@@ -2286,7 +2486,7 @@ function renderConsolidado(eqK, eqHoldings){
     {label:'Public equities', min:0.50, max:0.80, actual: totNav>0 ? eqMvEquity/totNav : 0},
     {label:'Private equity', min:0.00, max:0.20, actual: 0},
     {label:'Real estate', min:0.00, max:0.20, actual: totNav>0 ? reNav/totNav : 0},
-    {label:'Fixed income', min:0.05, max:0.15, actual: totNav>0 ? eqMvFixedIncome/totNav : 0},
+    {label:'Fixed income', min:0.05, max:0.15, actual: totNav>0 ? fixedIncomeNav/totNav : 0},
     {label:'Cash & equivalents', min:0.15, max:0.25, actual: totNav>0 ? (eqCashUsd+eqMvCashEquiv)/totNav : 0},
     {label:'Alternatives (incl. Crypto)', min:0.00, max:0.15, actual: totNav>0 ? crNav/totNav : 0},
   ];
@@ -2338,6 +2538,9 @@ function renderConsolidado(eqK, eqHoldings){
   }
   for(const p of reEnriched){ if(p.navUsd>0) all.push({sleeve:'Real Estate', name:p.name, mv:p.navUsd, color:'#B88B47'}); }
   for(const p of crEnriched){ if(p.marketUsd>0) all.push({sleeve:'Crypto', name:p.name, mv:p.marketUsd, color:'#5B6B8C'}); }
+  for(const td of tdList){
+    if(td.mv>0) all.push({sleeve:'Fixed Income', name:(td.bank ? td.bank+' — CD' : td.name), mv:td.mv, color:'#4E6480'});
+  }
   all.sort((a,b)=>b.mv-a.mv);
   const topN = all.slice(0,15);
   const topBody = document.getElementById('cons-tbl-top-tbody');
@@ -2388,6 +2591,7 @@ function applyAdminGate(){
     loadExisting();
     loadPricesSummary();
     loadSchwabStatementAlert();
+    if(typeof loadTimeDepositsAdmin === 'function') loadTimeDepositsAdmin();
     // Restore preferred tab (default: Consolidado)
     let preferred = 'tab-consolidado';
     try{ const v = localStorage.getItem(TAB_STORAGE_KEY); if(VALID_TABS.has(v)) preferred = v; }catch(e){}
@@ -2430,6 +2634,7 @@ window.dceRefresh = async function(){
   if(tabId === 'tab-data' && typeof loadExisting === 'function'){
     tasks.push(loadExisting());
     if(typeof loadPricesSummary === 'function') tasks.push(loadPricesSummary());
+    if(typeof loadTimeDepositsAdmin === 'function') tasks.push(loadTimeDepositsAdmin());
   }
   if(typeof loadAlerts === 'function') tasks.push(loadAlerts());
   return Promise.all(tasks.filter(Boolean));
