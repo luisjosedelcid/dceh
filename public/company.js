@@ -1908,6 +1908,7 @@ function resetIRRAssumptions() {
 }
 
 function updateIRRCalc() {
+  try {
   const s    = irrState;
   const irr  = D.irr || {};
   const ov   = D.overview || {};
@@ -1919,14 +1920,14 @@ function updateIRRCalc() {
   const debt  = ov.debt || 0;
   const leases = ov.leases || 0;
   const cash = ov.cash || 0;
-  // Price selection: 'report' uses snapshot mcap; 'live' recomputes mcap from live price
+  // Price selection: 'report' uses snapshot mcap; 'live' recomputes mcap from live price.
+  // Snapshot ev (irr.ev) is preserved as the base — we only adjust when user opts into live.
   const snapPrice   = Number(ov.stockPrice) || 0;
   const livePriceOk = typeof currentPrice === 'number' && currentPrice > 0;
   const useLive     = (irrPriceMode === 'live') && livePriceOk;
-  const pxUsed      = useLive ? currentPrice : snapPrice;
   const snapMcap    = ov.marketCap || 0;
-  // If live mode and shares available, recompute mcap by scaling snapshot price ratio
-  let mcap;
+  const snapEv      = irr.ev || ov.ev || (snapMcap + debt + leases - cash);
+  let mcap, ev;
   if (useLive) {
     if (ov.shares != null && ov.shares > 0) {
       mcap = ov.shares * currentPrice;
@@ -1935,11 +1936,12 @@ function updateIRRCalc() {
     } else {
       mcap = snapMcap;
     }
+    ev = mcap + debt + leases - cash;
   } else {
-    mcap = snapMcap || ((irr.ev || ov.ev || 0) - debt - leases + cash);
+    // Report mode: preserve original snapshot ev and derive mcap from it (mirrors prior behavior)
+    ev   = snapEv;
+    mcap = snapMcap || (snapEv - debt - leases + cash);
   }
-  // EV re-derived from selected mcap; keeps debt/leases/cash constant
-  const ev  = mcap + debt + leases - cash;
   const actualMult = nopat > 0 ? ev / nopat : 0;
 
   // ===== Auto-derive financial inputs from cfRows =====
@@ -2103,6 +2105,9 @@ function updateIRRCalc() {
     note = 'Warning: NOPAT does not cover current Reinvestment + Distribution. Either the buyback assumption is not sustainable, or the company is leveraging to distribute.';
   }
   setEl('irr-cs-note', note);
+  } catch (e) {
+    console.error('[updateIRRCalc] failed:', e);
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
