@@ -73,8 +73,9 @@ async function uploadPdfToDataroom({ folderId, filename, displayName, buffer, de
       method: 'POST',
       headers: {
         Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+        apikey: SUPABASE_SERVICE_KEY,
         'Content-Type': mime,
-        'x-upsert': 'false',
+        'x-upsert': 'true',
       },
       body: buffer,
     }
