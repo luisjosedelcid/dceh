@@ -151,14 +151,73 @@ async function mirrorDecisionToDataroom({ entryId, adminToken, actor, decisionTy
       folderId, filename, displayName, buffer, detail, actor,
     });
     if (!upload.ok) return { ok: false, error: upload.error, url: upload.url };
-    return { ok: true, folder: subName, file: upload.item };
+
+    // ─── Dual mirror for SELL decisions ────────────────────────
+    // A SELL closes the position, so also archive a copy in
+    // 02 Portfolio ▸ Closed. Best-effort: don't fail the primary
+    // mirror if the secondary upload fails.
+    let closedCopy = null;
+    if (String(decisionType).toUpperCase() === 'SELL') {
+      try {
+        const closedFolderId = await getPortfolioClosedFolderId();
+        if (closedFolderId) {
+          const closedDetail = `Auto-archived SELL decision (entry #${entryId}) — dual mirror to 02 Portfolio▸Closed`;
+          const closedUpload = await uploadPdfToDataroom({
+            folderId: closedFolderId,
+            filename,
+            displayName,
+            buffer,
+            detail: closedDetail,
+            actor,
+          });
+          if (closedUpload.ok) {
+            closedCopy = { folder: 'Closed', file: closedUpload.item };
+          } else {
+            closedCopy = { folder: 'Closed', error: closedUpload.error };
+          }
+        } else {
+          closedCopy = { folder: 'Closed', error: 'Closed folder not found' };
+        }
+      } catch (e) {
+        closedCopy = { folder: 'Closed', error: String(e.message || e).slice(0, 200) };
+      }
+    }
+
+    return { ok: true, folder: subName, file: upload.item, closed_copy: closedCopy };
   } catch (e) {
     return { ok: false, error: String(e.message || e) };
   }
+}
+
+// getPortfolioClosedFolderId()
+// ---------------------------------------------------------------------------
+// Locates the '02 Portfolio ▸ Closed' folder id. Cached across invocations
+// within the same lambda instance. Uses ILIKE matching for resilience to
+// naming variations (e.g. '02 Portfolio' vs 'Portfolio').
+let CACHED_CLOSED_FOLDER_ID = null;
+async function getPortfolioClosedFolderId() {
+  if (CACHED_CLOSED_FOLDER_ID) return CACHED_CLOSED_FOLDER_ID;
+  const { sbSelect } = require('./_supabase');
+  // Find Portfolio root (parent_id IS NULL, name contains 'Portfolio')
+  const roots = await sbSelect(
+    'dataroom_folders',
+    `select=id,name&parent_id=is.null&name=ilike.%25Portfolio%25&limit=5`
+  );
+  if (!roots || roots.length === 0) return null;
+  const rootId = roots[0].id;
+  // Find Closed subfolder under Portfolio
+  const closed = await sbSelect(
+    'dataroom_folders',
+    `select=id,name&parent_id=eq.${rootId}&name=eq.Closed&limit=1`
+  );
+  if (!closed || closed.length === 0) return null;
+  CACHED_CLOSED_FOLDER_ID = closed[0].id;
+  return CACHED_CLOSED_FOLDER_ID;
 }
 
 module.exports = {
   mirrorDecisionToDataroom,
   subfolderForDecision,
   loadDecisionJournalFolders,
+  getPortfolioClosedFolderId,
 };
