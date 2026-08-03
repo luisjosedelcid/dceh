@@ -43,34 +43,34 @@ function requireAuth(req, res) {
 
 async function ensureCompanySnapshotsFolder() {
   if (CACHED_FOLDER_ID) return CACHED_FOLDER_ID;
-  // Look up by canonical path
-  const rows = await sbSelect(
-    'dataroom_folders',
-    `select=id,name,parent_id&name=eq.Company%20Snapshots&limit=5`
-  );
-  // Confirm one has parent = Research folder
+  // The Research root folder is named "06 Research" in DCE's Data Room
+  // taxonomy. Match by ILIKE '%Research%' at the root level (parent_id
+  // is null) to be resilient to numbering changes.
   const research = await sbSelect(
     'dataroom_folders',
-    `select=id&name=eq.Research&limit=5`
+    `select=id,name&parent_id=is.null&name=ilike.%25Research%25&limit=5`
   );
-  const researchIds = new Set((research || []).map(r => r.id));
-  const match = (rows || []).find(r => researchIds.has(r.parent_id));
-  if (match) {
-    CACHED_FOLDER_ID = match.id;
+  if (!research || research.length === 0) {
+    throw new Error('Cannot locate Research root folder in dataroom_folders');
+  }
+  const researchId = research[0].id;
+  // Look for existing Company Snapshots subfolder under Research
+  const existing = await sbSelect(
+    'dataroom_folders',
+    `select=id,name,parent_id&parent_id=eq.${researchId}&name=eq.Company%20Snapshots&limit=1`
+  );
+  if (existing && existing.length > 0) {
+    CACHED_FOLDER_ID = existing[0].id;
     return CACHED_FOLDER_ID;
   }
-  // Create it under Research (pick the first Research folder)
-  if (research && research.length > 0) {
-    const parentId = research[0].id;
-    const ins = await sbInsert('dataroom_folders', {
-      name: 'Company Snapshots',
-      parent_id: parentId,
-    });
-    const row = Array.isArray(ins) ? ins[0] : ins;
-    CACHED_FOLDER_ID = row.id;
-    return CACHED_FOLDER_ID;
-  }
-  throw new Error('Cannot locate or create Company Snapshots folder (no Research folder found)');
+  // Create it
+  const ins = await sbInsert('dataroom_folders', {
+    name: 'Company Snapshots',
+    parent_id: researchId,
+  });
+  const row = Array.isArray(ins) ? ins[0] : ins;
+  CACHED_FOLDER_ID = row.id;
+  return CACHED_FOLDER_ID;
 }
 
 async function findExistingSnapshot(ticker) {
