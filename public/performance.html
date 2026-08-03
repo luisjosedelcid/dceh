@@ -754,7 +754,7 @@ document.getElementById('btn-commit').addEventListener('click',async()=>{
       body:parsedPayload.csv,
     });
     const j=await r.json();
-    if(!r.ok){ setAlert('alert-slot','err','Commit failed: '+(j.error||r.status)); document.getElementById('btn-commit').disabled=false; return; }
+    if(!r.ok){ setAlert('alert-slot','err','Commit failed: '+(j.error||r.status)+(j.detail?' — '+j.detail:'')); document.getElementById('btn-commit').disabled=false; return; }
     setAlert('alert-slot','ok',`Committed ${j.summary.txInserted||j.summary.transactions} transactions and ${j.summary.cfInserted||j.summary.cashflows} cashflows.`);
     loadExisting();
   }catch(e){
