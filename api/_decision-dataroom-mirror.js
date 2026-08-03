@@ -42,7 +42,8 @@ async function loadDecisionJournalFolders() {
 
 function subfolderForDecision(decisionType) {
   const t = String(decisionType || '').toUpperCase();
-  if (t === 'BUY' || t === 'ADD' || t === 'SELL' || t === 'TRIM' || t === 'HOLD') return 'Invested';
+  // SELL is handled separately (Portfolio▸Closed only, no Journal mirror).
+  if (t === 'BUY' || t === 'ADD' || t === 'TRIM' || t === 'HOLD') return 'Invested';
   if (t === 'FOLLOW') return 'Followed';
   if (t === 'PASS') return 'Passed';
   return null;
@@ -111,12 +112,24 @@ async function uploadPdfToDataroom({ folderId, filename, displayName, buffer, de
 // Decision Journal subfolder based on the decision type.
 async function mirrorDecisionToDataroom({ entryId, adminToken, actor, decisionType, ticker, decisionDate }) {
   try {
-    const subName = subfolderForDecision(decisionType);
-    if (!subName) return { ok: false, error: `No subfolder for decision_type=${decisionType}` };
+    const t = String(decisionType || '').toUpperCase();
+    const isSell = t === 'SELL';
 
-    const folders = await loadDecisionJournalFolders();
-    const folderId = folders.bySubName[subName];
-    if (!folderId) return { ok: false, error: `Subfolder '${subName}' not found under Decision Journal` };
+    // For SELL: target is 02 Portfolio▸Closed (single mirror, no Journal).
+    // For everything else: standard Decision Journal subfolder.
+    let folderId;
+    let subName;
+    if (isSell) {
+      folderId = await getPortfolioClosedFolderId();
+      if (!folderId) return { ok: false, error: `Portfolio▸Closed folder not found` };
+      subName = 'Closed';
+    } else {
+      subName = subfolderForDecision(decisionType);
+      if (!subName) return { ok: false, error: `No subfolder for decision_type=${decisionType}` };
+      const folders = await loadDecisionJournalFolders();
+      folderId = folders.bySubName[subName];
+      if (!folderId) return { ok: false, error: `Subfolder '${subName}' not found under Decision Journal` };
+    }
 
     // Build the absolute base URL. On Vercel serverless, VERCEL_URL is the
     // deployment hostname without protocol. Locally, DCE_APP_ORIGIN can be
@@ -143,47 +156,18 @@ async function mirrorDecisionToDataroom({ entryId, adminToken, actor, decisionTy
 
     const dateCompact = String(decisionDate || '').replace(/-/g, '');
     // filename = storage-safe, machine-readable; displayName = what the UI shows
-    const filename = `Decision_${ticker}_${String(decisionType).toUpperCase()}_${dateCompact}.pdf`;
-    const displayName = `${ticker} — ${String(decisionType).toUpperCase()} — ${decisionDate}.pdf`;
-    const detail = `Auto-archived decision PDF (entry #${entryId})`;
+    const filename = `Decision_${ticker}_${t}_${dateCompact}.pdf`;
+    const displayName = `${ticker} — ${t} — ${decisionDate}.pdf`;
+    const detail = isSell
+      ? `Auto-archived SELL decision PDF (entry #${entryId}) — 02 Portfolio▸Closed`
+      : `Auto-archived decision PDF (entry #${entryId})`;
 
     const upload = await uploadPdfToDataroom({
       folderId, filename, displayName, buffer, detail, actor,
     });
     if (!upload.ok) return { ok: false, error: upload.error, url: upload.url };
 
-    // ─── Dual mirror for SELL decisions ────────────────────────
-    // A SELL closes the position, so also archive a copy in
-    // 02 Portfolio ▸ Closed. Best-effort: don't fail the primary
-    // mirror if the secondary upload fails.
-    let closedCopy = null;
-    if (String(decisionType).toUpperCase() === 'SELL') {
-      try {
-        const closedFolderId = await getPortfolioClosedFolderId();
-        if (closedFolderId) {
-          const closedDetail = `Auto-archived SELL decision (entry #${entryId}) — dual mirror to 02 Portfolio▸Closed`;
-          const closedUpload = await uploadPdfToDataroom({
-            folderId: closedFolderId,
-            filename,
-            displayName,
-            buffer,
-            detail: closedDetail,
-            actor,
-          });
-          if (closedUpload.ok) {
-            closedCopy = { folder: 'Closed', file: closedUpload.item };
-          } else {
-            closedCopy = { folder: 'Closed', error: closedUpload.error };
-          }
-        } else {
-          closedCopy = { folder: 'Closed', error: 'Closed folder not found' };
-        }
-      } catch (e) {
-        closedCopy = { folder: 'Closed', error: String(e.message || e).slice(0, 200) };
-      }
-    }
-
-    return { ok: true, folder: subName, file: upload.item, closed_copy: closedCopy };
+    return { ok: true, folder: subName, file: upload.item };
   } catch (e) {
     return { ok: false, error: String(e.message || e) };
   }
