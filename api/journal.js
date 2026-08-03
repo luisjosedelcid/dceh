@@ -47,9 +47,12 @@ module.exports = async (req, res) => {
       follow: allRows.filter(r => r.decision_type === 'FOLLOW').length,
     };
 
-    // Pending reviews (review date in past + not yet done)
+    // Pending reviews (review date in past + not yet done).
+    // PASS decisions don't open a position, so they don't accrue reviews —
+    // even if legacy rows have stale review dates, we ignore them here.
     const today = new Date().toISOString().slice(0, 10);
     const pending = allRows.filter(r => {
+      if (r.decision_type === 'PASS') return false;
       const d3 = r.review_3m_date && r.review_3m_date <= today && !r.review_3m_done_at;
       const d6 = r.review_6m_date && r.review_6m_date <= today && !r.review_6m_done_at;
       const d12 = r.review_12m_date && r.review_12m_date <= today && !r.review_12m_done_at;

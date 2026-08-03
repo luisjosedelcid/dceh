@@ -83,6 +83,20 @@ module.exports = async (req, res) => {
       return;
     }
     const r = rows[0];
+    // PASS decisions do not open a position, so they carry no reviews,
+    // executions, catalysts, pre-mortem, pillars or expected-return matrix.
+    // A PASS PDF is: thesis (why declined) + notes.
+    const isPass = String(r.decision_type || '').toUpperCase() === 'PASS';
+    // The modal appends notes onto the thesis as "\n\n— Notes —\n...";
+    // split them back out so the PDF can render them under their own label.
+    let thesisMain = r.thesis || '';
+    let notesTail = '';
+    const notesSep = '\n\n— Notes —\n';
+    const sepIdx = thesisMain.indexOf(notesSep);
+    if (sepIdx >= 0) {
+      notesTail = thesisMain.slice(sepIdx + notesSep.length).trim();
+      thesisMain = thesisMain.slice(0, sepIdx).trim();
+    }
 
     // Build PDF
     const doc = new PDFDocument({
@@ -159,13 +173,20 @@ module.exports = async (req, res) => {
       y += 22;
     }
 
-    // Thesis
-    y = drawQA(doc, y, M, CW, r.decision_type === 'PASS' ? 'THESIS (WHY DECLINED)'
+    // Thesis — note we use thesisMain (notes stripped) so the PASS layout
+    // gets its own Notes block below.
+    y = drawQA(doc, y, M, CW, isPass ? 'THESIS (WHY DECLINED)'
                               : r.decision_type === 'SELL' ? 'EXIT THESIS (WHY NOW)'
-                              : 'INVESTMENT THESIS', r.thesis);
+                              : 'INVESTMENT THESIS', thesisMain);
 
-    // v3.2 blocks (if applicable) — surface the highlights
-    if (r.framework_version === 'v3.2') {
+    // Notes (surfaces for every type when present, but this is the ONLY
+    // extra content PASS gets — no reviews, executions, catalysts, pre-mortem).
+    if (notesTail) {
+      y = drawQA(doc, y, M, CW, 'NOTES', notesTail);
+    }
+
+    // v3.2 blocks (if applicable) — surface the highlights. Skipped for PASS.
+    if (!isPass && r.framework_version === 'v3.2') {
       // Executive summary
       if (r.executive_summary) {
         y = drawQA(doc, y, M, CW, 'EXECUTIVE SUMMARY', r.executive_summary);
@@ -219,9 +240,9 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Catalysts (legacy pre-v3.2)
+    // Catalysts (legacy pre-v3.2) — skipped for PASS (no thesis to catalyze).
     const cats = Array.isArray(r.catalysts) ? r.catalysts.filter(Boolean) : [];
-    if (r.framework_version !== 'v3.2' && cats.length) {
+    if (!isPass && r.framework_version !== 'v3.2' && cats.length) {
       y = ensureSpace(doc, y, 40);
       doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)
          .text('CATALYSTS', M, y);
@@ -235,12 +256,15 @@ module.exports = async (req, res) => {
       y += 6;
     }
 
-    // Pre-mortem (legacy pre-v3.2)
-    if (r.framework_version !== 'v3.2' && r.pre_mortem) {
+    // Pre-mortem (legacy pre-v3.2) — skipped for PASS.
+    if (!isPass && r.framework_version !== 'v3.2' && r.pre_mortem) {
       y = drawQA(doc, y, M, CW, 'PRE-MORTEM (WHAT WOULD CHANGE MY MIND)', r.pre_mortem);
     }
 
-    // Reviews section — 3m / 6m / 12m
+    // Reviews section — 3m / 6m / 12m. Skipped for PASS: a declined
+    // opportunity does not open a position, so recurring reviews do not
+    // apply (the ticker stays on the watchlist for scan-based tracking).
+    if (!isPass) {
     y = ensureSpace(doc, y, 80);
     doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)
        .text('SCHEDULED REVIEWS', M, y);
@@ -277,9 +301,10 @@ module.exports = async (req, res) => {
       }
     });
     y += 6;
+    } // /!isPass reviews
 
-    // Lesson learned (if any)
-    if (r.lesson_learned) {
+    // Lesson learned (if any) — relevant for closed positions, not PASS.
+    if (!isPass && r.lesson_learned) {
       y = drawQA(doc, y, M, CW, 'LESSON LEARNED', r.lesson_learned);
     }
 

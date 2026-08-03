@@ -701,6 +701,9 @@ function setTypeFilter(type, chip) {
 }
 
 function nextReview(it) {
+  // PASS decisions have no position and therefore no scheduled reviews.
+  // Show a neutral em dash instead of 'All done' — nothing to be done.
+  if (it && it.decision_type === 'PASS') return { label: '—', cls: '' };
   const t = todayStr();
   const reviews = [
     { lbl: '3m', date: it.review_3m_date, done: !!it.review_3m_done_at },
@@ -1044,6 +1047,9 @@ function renderDecisionDetail(id) {
     return;
   }
   const cats = (r.catalysts || []).filter(Boolean);
+  // PASS entries have no position, so we skip reviews/executions/catalysts/
+  // pre-mortem in the UI. Only thesis + notes matter.
+  const isPass = String(r.decision_type || '').toUpperCase() === 'PASS';
   const reviewBlock = (lbl, key) => {
     const date = r['review_' + key + '_date'];
     const oc = r['review_' + key + '_outcome'];
@@ -1070,22 +1076,22 @@ function renderDecisionDetail(id) {
       <div class="field-val">${escapeHtml(r.thesis || '')}</div>
     </div>
     ${r.framework_version === 'v3.2' ? renderV32Block(r) : ''}
-    ${(r.framework_version !== 'v3.2' && cats.length) ? `<div class="field"><div class="field-lbl">Catalysts</div><div class="pill-list">${cats.map(c => `<span>${escapeHtml(c)}</span>`).join('')}</div></div>` : ''}
-    ${(r.framework_version !== 'v3.2' && r.pre_mortem) ? `<div class="field"><div class="field-lbl">Pre-mortem (what would change my mind)</div><div class="field-val">${escapeHtml(r.pre_mortem)}</div></div>` : ''}
-    <div class="field"><div class="field-lbl">Reviews</div>
+    ${(!isPass && r.framework_version !== 'v3.2' && cats.length) ? `<div class="field"><div class="field-lbl">Catalysts</div><div class="pill-list">${cats.map(c => `<span>${escapeHtml(c)}</span>`).join('')}</div></div>` : ''}
+    ${(!isPass && r.framework_version !== 'v3.2' && r.pre_mortem) ? `<div class="field"><div class="field-lbl">Pre-mortem (what would change my mind)</div><div class="field-val">${escapeHtml(r.pre_mortem)}</div></div>` : ''}
+    ${!isPass ? `<div class="field"><div class="field-lbl">Reviews</div>
       ${reviewBlock('3-month', '3m')}
       ${reviewBlock('6-month', '6m')}
       ${reviewBlock('12-month', '12m')}
-    </div>
-    ${r.lesson_learned ? `<div class="field"><div class="field-lbl">Lesson learned</div><div class="field-val">${escapeHtml(r.lesson_learned)}</div></div>` : ''}
-    <div class="exec-section" id="exec-section-${id}">
+    </div>` : ''}
+    ${(!isPass && r.lesson_learned) ? `<div class="field"><div class="field-lbl">Lesson learned</div><div class="field-val">${escapeHtml(r.lesson_learned)}</div></div>` : ''}
+    ${!isPass ? `<div class="exec-section" id="exec-section-${id}">
       <div class="exec-head">
         <h3>Executions</h3>
         ${adminAvailable() ? `<button class="btn-ghost sm" onclick="toggleExecForm(${id})" id="exec-toggle-${id}">+ Log execution</button>` : ''}
       </div>
       <div id="exec-list-${id}" class="exec-empty">Loading…</div>
       ${adminAvailable() ? renderExecForm(id, r) : ''}
-    </div>
+    </div>` : ''}
   `;
   // Async load trades for this decision
   loadTradesForDecision(id);
