@@ -31,6 +31,7 @@ const { sbInsert } = require('./_supabase');
 const { requireRole } = require('./_require-role');
 const pipelineStage = require('./_pipeline-stage');
 const { archivePremortemForTicker } = require('./_premortem-archive');
+const { mirrorDecisionToDataroom } = require('./_decision-dataroom-mirror');
 
 // Manual decision entries are restricted to BUY, PASS and FOLLOW — the three
 // outcomes that originate from a fresh research package (Columbia + Memo +
@@ -318,7 +319,31 @@ module.exports = async (req, res) => {
       stageSync = { ok: false, error: eSync.message };
     }
 
-    res.status(200).json({ ok: true, item, stageSync, archive });
+    // ---- Data Room archive --------------------------------------------
+    // Replicate the on-demand /api/decision-pdf output into the Data Room
+    // under Decision Journal ▸ <subfolder>. Best-effort: never break the
+    // insert on failure. See api/_decision-dataroom-mirror.js.
+    let dataroom = null;
+    try {
+      const adminToken = String(req.headers['x-admin-token'] || '').trim();
+      if (adminToken && item && item.id) {
+        dataroom = await mirrorDecisionToDataroom({
+          entryId: item.id,
+          adminToken,
+          actor: auth.user.email,
+          decisionType: decision_type,
+          ticker,
+          decisionDate: item.decision_date,
+        });
+      } else {
+        dataroom = { ok: false, error: 'Missing admin token or entry id' };
+      }
+    } catch (eDR) {
+      console.error('[journal-create] dataroom mirror failed:', eDR.message);
+      dataroom = { ok: false, error: eDR.message };
+    }
+
+    res.status(200).json({ ok: true, item, stageSync, archive, dataroom });
   } catch (e) {
     console.error('[journal-create] error:', e);
     res.status(500).json({ error: e.message || 'Internal error' });
