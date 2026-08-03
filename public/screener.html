@@ -161,9 +161,9 @@
   <div class="mode-tabs">
     <button class="mode-tab" data-mode="screener" onclick="showMode('screener',this)">Screener</button>
     <button class="mode-tab" data-mode="sectors" onclick="showMode('sectors',this)">Sector Tracker</button>
-    <button class="mode-tab active" data-mode="ideafeed" onclick="showMode('ideafeed',this)">Idea Feed <span class="count" id="ideafeed-count">—</span></button>
+    <button class="mode-tab" data-mode="ideafeed" onclick="showMode('ideafeed',this)">Idea Feed <span class="count" id="ideafeed-count">—</span></button>
     <button class="mode-tab" data-mode="superinvestors" onclick="showMode('superinvestors',this)">Superinvestors <span class="count">10</span></button>
-    <button class="mode-tab" data-mode="shortlist" onclick="showMode('shortlist',this)">Shortlist <span class="count" id="shortlist-count">—</span></button>
+    <button class="mode-tab active" data-mode="shortlist" onclick="showMode('shortlist',this)">Shortlist <span class="count" id="shortlist-count">—</span></button>
   </div>
 
   <!-- ════════════════════════════════════════════════════════════ -->
@@ -301,7 +301,7 @@
   <!-- ════════════════════════════════════════════════════════════ -->
   <!-- MODE 2: SHORTLIST                                             -->
   <!-- ════════════════════════════════════════════════════════════ -->
-  <div class="mode-pane" id="mode-shortlist">
+  <div class="mode-pane active" id="mode-shortlist">
     <div class="meta">Names on the radar — quick view, no Columbia model required. Synced live to Supabase (table <code style="font-family:Menlo,monospace;font-size:11px">radar</code>) + Finnhub quotes.</div>
 
     <!-- ADD ROW (admin only) -->
@@ -373,7 +373,7 @@
   <!-- ════════════════════════════════════════════════════════════ -->
   <!-- MODE 4: IDEA FEED                                             -->
   <!-- ════════════════════════════════════════════════════════════ -->
-  <div class="mode-pane active" id="mode-ideafeed">
+  <div class="mode-pane" id="mode-ideafeed">
     <div class="meta">
       Stock ideas surfaced from blogs, Substacks &amp; podcasts. Refreshed every 6h via cron.
       Source: <code style="font-family:Menlo,monospace;font-size:11px">/api/idea-feed</code> ·
@@ -1273,9 +1273,8 @@ window.deleteFromRadar = deleteFromRadar;
 })();
 
 loadShortlist();
-// Auto-load Idea Feed (default tab on page load)
-if (typeof loadIdeaFeed === 'function') { loadIdeaFeed(); window._ifLoaded = true; }
-else { document.addEventListener('DOMContentLoaded', () => { loadIdeaFeed(); window._ifLoaded = true; }); }
+// Shortlist is now the default tab — don't auto-load Idea Feed on page open.
+// It will lazy-load on first click via showMode('ideafeed', ...).
 
 // ═══════════════════════════════════════════════════════════════════
 // SUPERINVESTORS — DCE Quality-Value Panel (10 funds)
