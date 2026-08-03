@@ -1088,8 +1088,8 @@ async function loadSchwabStatementAlert(){
     const j = await r.json();
     if(!j.needs_import){ slot.innerHTML = ''; return; }
 
-    const MONTH_NAMES = ['enero','febrero','marzo','abril','mayo','junio',
-                          'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const MONTH_NAMES = ['January','February','March','April','May','June',
+                          'July','August','September','October','November','December'];
     let missingLabel = j.missing_month || '';
     if(/^\d{4}-\d{2}$/.test(missingLabel)){
       const [y,m] = missingLabel.split('-').map(n=>parseInt(n,10));
@@ -1097,22 +1097,22 @@ async function loadSchwabStatementAlert(){
     }
     const behind = j.months_behind || 1;
     const behindTxt = behind === 1
-      ? '1 statement pendiente'
-      : `${behind} statements pendientes`;
+      ? '1 statement pending'
+      : `${behind} statements pending`;
     const lastTxt = j.last_import && j.last_import.ts
-      ? ` · Último import: ${new Date(j.last_import.ts).toLocaleDateString('es-ES', {year:'numeric',month:'short',day:'numeric'})}`
-      : ' · Sin imports registrados';
+      ? ` · Last import: ${new Date(j.last_import.ts).toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'})}`
+      : ' · No imports on record';
 
     slot.innerHTML = `
       <div class="alert warn" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px"
            id="schwab-alert-banner" role="button" tabindex="0"
-           title="Ir a Data &amp; audit para cargar el CSV">
+           title="Go to Data &amp; audit to upload the CSV">
         <div>
-          <strong>Falta cargar el statement de Schwab de ${missingLabel}.</strong>
+          <strong>Schwab statement for ${missingLabel} is missing.</strong>
           <span style="opacity:0.75;font-size:11px;margin-left:6px">${behindTxt}${lastTxt}</span>
         </div>
         <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;color:var(--gold)">
-          Cargar &rarr;
+          Upload &rarr;
         </div>
       </div>`;
 
