@@ -1898,7 +1898,10 @@ document.getElementById('btn-perf-report').addEventListener('click', async () =>
   status.textContent = `Building PDF as of ${asOf}…`;
   status.style.color = 'var(--gray-mid)';
   try {
-    const r = await fetch(`/api/generate-daily-report?as_of=${encodeURIComponent(asOf)}`, { method: 'GET' });
+    const r = await fetch(`/api/generate-daily-report?as_of=${encodeURIComponent(asOf)}`, {
+      method: 'GET',
+      headers: { 'x-admin-token': adminToken() },
+    });
     if (!r.ok) {
       const err = await r.json().catch(() => ({}));
       throw new Error(err.error || `HTTP ${r.status}`);
@@ -2258,11 +2261,17 @@ document.getElementById('btn-cr-reload').addEventListener('click', ()=>{ refresh
 let TD_DATA = null;
 async function loadTimeDeposits(){
   try{
-    const tok = localStorage.getItem('dce_admin_token') || '';
+    const tok = adminToken() || localStorage.getItem('dce_admin_token') || '';
     const r = await fetch('/api/time-deposits', { headers: tok ? {'x-admin-token':tok} : {}, cache:'no-store' });
-    if(!r.ok){ TD_DATA = null; return; }
+    if(!r.ok){
+      const err = await r.json().catch(() => ({}));
+      TD_DATA = { ok: false, error: err.error || ('HTTP ' + r.status), deposits: [], kpis: {} };
+      return;
+    }
     TD_DATA = await r.json();
-  }catch(e){ TD_DATA = null; }
+  }catch(e){
+    TD_DATA = { ok: false, error: String(e && e.message || e), deposits: [], kpis: {} };
+  }
 }
 
 // === Fixed Income tab (public) ===
@@ -2277,6 +2286,10 @@ async function loadFixedIncome(){
   content.classList.add('hide');
   try{
     if(!TD_DATA){ await loadTimeDeposits(); }
+    if(TD_DATA && TD_DATA.ok === false){
+      loading.textContent = 'Failed to load: '+(TD_DATA.error || 'Unauthorized');
+      return;
+    }
     renderFixedIncome();
     loading.classList.add('hide');
     content.classList.remove('hide');

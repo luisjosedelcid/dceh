@@ -48,12 +48,16 @@ async function ensureCompanySnapshotsFolder() {
   // is null) to be resilient to numbering changes.
   const research = await sbSelect(
     'dataroom_folders',
-    `select=id,name&parent_id=is.null&name=ilike.%25Research%25&limit=5`
+    `select=id,name&parent_id=is.null&name=ilike.%25Research%25&order=name.asc&limit=5`
   );
   if (!research || research.length === 0) {
     throw new Error('Cannot locate Research root folder in dataroom_folders');
   }
-  const researchId = research[0].id;
+  // Prefer the canonical "06 Research" / name ending in Research over an arbitrary match.
+  const preferred = research.find(r => /^06\s+Research$/i.test(r.name || ''))
+    || research.find(r => /Research$/i.test(r.name || ''))
+    || research[0];
+  const researchId = preferred.id;
   // Look for existing Company Snapshots subfolder under Research
   const existing = await sbSelect(
     'dataroom_folders',
@@ -80,14 +84,16 @@ async function ensureCompanySnapshotsFolder() {
 async function findExistingSnapshot(ticker) {
   const t = String(ticker).toUpperCase();
   const folderId = await ensureCompanySnapshotsFolder();
-  // Newest first, matching by filename prefix
+  // PostgREST ilike treats "_" as a single-char wildcard, so a short ticker
+  // like "F" would match "Company_Snapshot_FICO_…". Fetch recent rows for the
+  // folder and match the exact filename prefix in JS.
   const prefix = `Company_Snapshot_${t}_`;
   const rows = await sbSelect(
     'dataroom_files',
-    `select=id,name,filename,storage_path,uploaded_at&folder_id=eq.${folderId}&filename=ilike.${encodeURIComponent(prefix)}*&order=uploaded_at.desc&limit=1`
+    `select=id,name,filename,storage_path,uploaded_at&folder_id=eq.${folderId}&order=uploaded_at.desc&limit=100`
   );
   if (!rows || rows.length === 0) return null;
-  return rows[0];
+  return rows.find(r => String(r.filename || r.name || '').startsWith(prefix)) || null;
 }
 
 function publicUrl(storagePath) {

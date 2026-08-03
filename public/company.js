@@ -9,7 +9,8 @@
 /* ── globals ─────────────────────────────────────────────── */
 let D = null;          // loaded JSON data object
 let charts = {};       // Chart instances keyed by canvas id
-let currentPrice = 0;  // editable market price (live from Finnhub, falls back to snapshot)
+let currentPrice = 0;  // market price (snapshot until Finnhub succeeds, then live)
+let liveQuoteOk = false; // true only after a successful Finnhub quote
 let reviewDate = '';
 let irrPriceMode = 'report'; // 'report' (snapshot from Columbia model) | 'live' (Finnhub quote)
 
@@ -89,6 +90,7 @@ async function initDashboard() {
   }
 
   currentPrice = D.overview.stockPrice;
+  liveQuoteOk = false;
   reviewDate = D.valuationDate;
 
   buildMeta();
@@ -206,6 +208,7 @@ async function refreshLivePrice() {
     const px = Number(q && q.c);
     if (!isFinite(px) || px <= 0) throw new Error('bad price');
     currentPrice = px;
+    liveQuoteOk = true;
     renderHeaderPrice();
     updateHeaderKPIs();
     refreshPriceDependents();
@@ -217,7 +220,8 @@ async function refreshLivePrice() {
         : '· live';
     }
   } catch (e) {
-    if (status) status.textContent = '· snapshot';
+    // Keep a previously confirmed live quote; only fall back to snapshot label if none yet.
+    if (status) status.textContent = liveQuoteOk ? '· live (stale)' : '· snapshot';
   }
 }
 
@@ -232,9 +236,13 @@ function updateHeaderKPIs() {
   setEl('hdr-epv-ps', `${sym()}${fmtDec(epvPs, epvPs >= 100 ? 0 : 2)}`);
   setEl('hdr-mos',   `<span style="color:${mosColor}">${mosSign}${Pct(mos)}</span>`);
   // price/EPV ratio
-  const ratio = currentPrice / epvPs;
-  const ratioColor = ratio <= 1 ? 'var(--green)' : ratio <= 1.5 ? 'var(--gold)' : 'var(--red)';
-  setEl('hdr-price-epv', `<span style="color:${ratioColor}">${fmtDec(ratio,2)}×</span>`);
+  if (epvPs != null && epvPs > 0 && currentPrice > 0) {
+    const ratio = currentPrice / epvPs;
+    const ratioColor = ratio <= 1 ? 'var(--green)' : ratio <= 1.5 ? 'var(--gold)' : 'var(--red)';
+    setEl('hdr-price-epv', `<span style="color:${ratioColor}">${fmtDec(ratio,2)}×</span>`);
+  } else {
+    setEl('hdr-price-epv', '—');
+  }
 }
 
 // onPriceInput removed 2026-08-01 — header market price is now read-only
@@ -242,12 +250,20 @@ function updateHeaderKPIs() {
 // the JSON stays as the fallback until the live fetch resolves.
 
 function refreshPriceDependents() {
-  // re-render summary/IRR elements that depend on price
+  // Update price-dependent calcs without re-initing IRR sliders (renderIrr resets assumptions).
+  updateIrrToggleUI();
   const el = document.querySelector('#tab-irr');
-  if (el && el.classList.contains('active')) renderIrr();
-  else updateIrrToggleUI(); // keep info label current even if tab inactive
+  if (el && el.classList.contains('active')) updateIRRCalc();
   const elSummary = document.querySelector('#tab-summary');
   if (elSummary && elSummary.classList.contains('active')) renderSummary();
+  const elOverview = document.querySelector('#tab-overview');
+  if (elOverview && elOverview.classList.contains('active') && typeof renderOverview === 'function') {
+    try { renderOverview(); } catch (_) { /* non-blocking */ }
+  }
+  const elEpv = document.querySelector('#tab-epv');
+  if (elEpv && elEpv.classList.contains('active') && typeof updateEPVCalc === 'function') {
+    try { updateEPVCalc(); } catch (_) { /* non-blocking */ }
+  }
 }
 
 /* ── nav ─────────────────────────────────────────────────── */
@@ -1861,10 +1877,12 @@ function renderIrr() {
   irrState = { ...irr };
   irrBase  = { ...irr };
 
-  // Slider bounds (consistent with Excel sensitivity ranges)
+  // Slider bounds (consistent with Excel sensitivity ranges).
+  // ROIC max must fit model base (e.g. BKNG selectedRoic 91.5) or the thumb clamps silently.
   const buyMax = Math.max(2000, Math.round((irr.buybacks || 500) * 3 / 100) * 100);
+  const roicMax = Math.max(60, Math.ceil(Number(irr.selectedRoic) || 60));
   const sliders = [
-    { id:'sl-irr-roic',     field:'selectedRoic',  val:irr.selectedRoic,  min:5,    max:60,  step:0.5, fmt:v=>`${fmtDec(v,1)}%`, note:'Capital efficiency on new investments (3yr avg pre-tax ROIC)' },
+    { id:'sl-irr-roic',     field:'selectedRoic',  val:irr.selectedRoic,  min:5,    max:roicMax, step:0.5, fmt:v=>`${fmtDec(v,1)}%`, note:'Capital efficiency on new investments (3yr avg pre-tax ROIC)' },
     { id:'sl-irr-organic',  field:'organicGrowth', val:irr.organicGrowth, min:0,    max:15,  step:0.5, fmt:v=>`${fmtDec(v,1)}%`, note:'Same-store / pricing growth without new capital' },
     { id:'sl-irr-exit',     field:'exitMultiple',  val:irr.exitMultiple,  min:8,    max:35,  step:1,   fmt:v=>`${v}×`,            note:'Exit EV/NOPAT multiple at end of horizon' },
     { id:'sl-irr-buybacks', field:'buybacks',      val:irr.buybacks || 0, min:0,    max:buyMax, step:50, fmt:v=>`${sym()}${fmt(v)}M`, note:'Annual sustainable buybacks (USD millions)' },
@@ -1909,7 +1927,7 @@ function resetIRRAssumptions() {
 
 function setIrrPriceMode(mode) {
   if (mode !== 'report' && mode !== 'live') return;
-  if (mode === 'live' && !(typeof currentPrice === 'number' && currentPrice > 0)) {
+  if (mode === 'live' && !liveQuoteOk) {
     const info = document.getElementById('irr-price-toggle-info');
     if (info) info.textContent = 'Live price unavailable';
     return;
@@ -1933,7 +1951,8 @@ function updateIrrToggleUI() {
     if (info) {
       const ov = (D && D.overview) || {};
       const snap = Number(ov.stockPrice) || 0;
-      const live = (typeof currentPrice === 'number' && currentPrice > 0) ? currentPrice : null;
+      // Only treat Finnhub-confirmed quotes as "live" (currentPrice starts as snapshot).
+      const live = (liveQuoteOk && typeof currentPrice === 'number' && currentPrice > 0) ? currentPrice : null;
       const S = (typeof sym === 'function') ? sym() : '$';
       const fp = (v) => `${S}${(typeof fmtDec === 'function') ? fmtDec(v, v >= 100 ? 0 : 2) : v.toFixed(2)}`;
       if (irrPriceMode === 'live' && live != null) {
@@ -1969,7 +1988,7 @@ function updateIRRCalc() {
   // Price selection: 'report' uses snapshot mcap; 'live' recomputes mcap from live price.
   // Snapshot ev (irr.ev) is preserved as the base — we only adjust when user opts into live.
   const snapPrice   = Number(ov.stockPrice) || 0;
-  const livePriceOk = typeof currentPrice === 'number' && currentPrice > 0;
+  const livePriceOk = liveQuoteOk && typeof currentPrice === 'number' && currentPrice > 0;
   const useLive     = (irrPriceMode === 'live') && livePriceOk;
   const snapMcap    = ov.marketCap || 0;
   const snapEv      = irr.ev || ov.ev || (snapMcap + debt + leases - cash);
@@ -2456,8 +2475,24 @@ function computeImpliedIrr() {
   const fin = D.financials || {};
   const epv = D.epv || {};
   const nopat = irr.nopat || epv.nopatBase || 0;
-  const ev    = irr.ev   || ov.ev || 0;
-  const mcap  = ov.marketCap || 0;
+  // Honor IRR price-basis toggle (same selection as updateIRRCalc).
+  const debt = ov.debt || 0;
+  const leases = ov.leases || 0;
+  const cash = ov.cash || 0;
+  const snapPrice = Number(ov.stockPrice) || 0;
+  const snapMcap = ov.marketCap || 0;
+  const snapEv = irr.ev || ov.ev || (snapMcap + debt + leases - cash);
+  const useLive = (irrPriceMode === 'live') && liveQuoteOk && typeof currentPrice === 'number' && currentPrice > 0;
+  let mcap, ev;
+  if (useLive) {
+    if (ov.shares != null && ov.shares > 0) mcap = ov.shares * currentPrice;
+    else if (snapMcap > 0 && snapPrice > 0) mcap = snapMcap * (currentPrice / snapPrice);
+    else mcap = snapMcap;
+    ev = mcap + debt + leases - cash;
+  } else {
+    ev = snapEv;
+    mcap = snapMcap || (snapEv - debt - leases + cash);
+  }
   const findRow = (rows, names) => {
     if (!Array.isArray(rows)) return null;
     for (const r of rows) {
@@ -3195,12 +3230,14 @@ async function refreshJournalButton() {
       const narrative = String(ts.narrative || '').trim();
       const ov = (D && D.overview) || {};
       const epv = (D && D.epv) || {};
-      const moS = ts.marginOfSafety;
-      const irr = ts.impliedIrr;
+      // thesisSummary / D.irr store percentage points already (e.g. 19.7 = 19.7%), not decimals.
+      const moS = Number(ts.marginOfSafety);
+      const irr = Number(ts.impliedIrr);
+      const hurdle = Number(D.irr && D.irr.hurdle);
       const peRatio = ts.priceEpvRatio;
       const stamp = [];
-      if (Number.isFinite(moS))     stamp.push(`MoS ${moS>=0?'+':''}${(moS*100).toFixed(1)}%`);
-      if (Number.isFinite(irr))     stamp.push(`IRR ${(irr*100).toFixed(1)}% (hurdle ${(D.irr.hurdle*100).toFixed(1)}%)`);
+      if (Number.isFinite(moS))     stamp.push(`MoS ${moS>=0?'+':''}${moS.toFixed(1)}%`);
+      if (Number.isFinite(irr))     stamp.push(`IRR ${irr.toFixed(1)}% (hurdle ${(Number.isFinite(hurdle) ? hurdle : 12).toFixed(1)}%)`);
       if (Number.isFinite(peRatio)) stamp.push(`Price/EPV ${peRatio.toFixed(2)}x`);
       const header = stamp.length ? `[Columbia snapshot @ ${D.valuationDate || 'today'}] ${stamp.join(' · ')}` : '';
       const body = [header, narrative].filter(Boolean).join('\n\n');

@@ -1180,7 +1180,7 @@ window.addEventListener('DOMContentLoaded', () => {
       try {
         const a = window.dceAuth;
         if (a && typeof a.token === 'function') return a.token() || '';
-        return localStorage.getItem('dce-admin-token') || '';
+        return localStorage.getItem('dce_admin_token') || '';
       } catch (_) { return ''; }
     }
 

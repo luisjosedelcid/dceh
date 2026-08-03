@@ -89,12 +89,27 @@ async function fetchSnapshotData(ticker) {
   // Fiscal-year labels (last 5)
   const fyLabels = income.map(r => `FY${String(r.fiscal_year).slice(-2)}`);
 
-  // Series aligned to `income` order
+  // Series aligned to `income` years (join by fiscal_year — lengths/order can diverge)
+  const profitByFy = Object.fromEntries(
+    (profit || []).map(r => [String(r.fiscal_year), r])
+  );
   const revenue_b = income.map(r => (r.is_sales_revenue_turnover != null ? r.is_sales_revenue_turnover / 1e9 : null));
-  const ebit_margin_pct = profit.map(r => (r.oper_margin != null ? r.oper_margin : null));
-  const ni_margin_pct   = profit.map(r => (r.profit_margin != null ? r.profit_margin : null));
-  const roe_pct         = profit.map(r => (r.return_com_eqy != null ? r.return_com_eqy : null));
-  const roa_pct         = profit.map(r => (r.return_on_asset != null ? r.return_on_asset : null));
+  const ebit_margin_pct = income.map(r => {
+    const p = profitByFy[String(r.fiscal_year)];
+    return p && p.oper_margin != null ? p.oper_margin : null;
+  });
+  const ni_margin_pct = income.map(r => {
+    const p = profitByFy[String(r.fiscal_year)];
+    return p && p.profit_margin != null ? p.profit_margin : null;
+  });
+  const roe_pct = income.map(r => {
+    const p = profitByFy[String(r.fiscal_year)];
+    return p && p.return_com_eqy != null ? p.return_com_eqy : null;
+  });
+  const roa_pct = income.map(r => {
+    const p = profitByFy[String(r.fiscal_year)];
+    return p && p.return_on_asset != null ? p.return_on_asset : null;
+  });
   const eps_diluted     = income.map(r => (r.diluted_eps != null ? r.diluted_eps : (r.eps != null ? r.eps : null)));
 
   // FCF/NI = free_cash_flow / net_income, joined by fiscal_year

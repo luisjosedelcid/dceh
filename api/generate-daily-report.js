@@ -20,6 +20,7 @@ const PDFDocument = require('pdfkit');
 const { loadAndCompute } = require('./_perf-load');
 const { computePendingDividends } = require('./dividend-pending');
 const { finnhubQuote } = require('./_prices');
+const { requireRole } = require('./_require-role');
 
 // Apply Finnhub live quotes on top of snapshot holdings (mirrors public/performance.html liveOverlay).
 // Mutates kpis + holdings in place and returns true if any update was applied.
@@ -277,6 +278,13 @@ function drawIpsBands(doc, x, y, w, h, kpis) {
 
 module.exports = async (req, res) => {
   try {
+    // Portfolio PDF — require any authenticated user (same bar as /api/performance).
+    const auth = await requireRole(req, ['any']);
+    if (!auth.ok) {
+      res.status(auth.status).json({ error: auth.error });
+      return;
+    }
+
     // Parse optional ?as_of=YYYY-MM-DD to generate the snapshot for a past date.
     // Default: today (loadAndCompute clamps to the latest available data).
     let requestedAsOf = null;
