@@ -228,14 +228,19 @@
 // ============================================================
 // CONFIG
 // ============================================================
+// Stage taxonomy aligned to Operations Manual v4.4 (section 3.0):
+// Backlog → Deep Dive → Adversarial → Committee Review → Invested / Followed / Passed.
+// DB stage keys (backlog/analysis/review/decision/…) stay unchanged;
+// only display labels are updated so historical rows and stage automations
+// keep working without a migration.
 const COLUMNS = [
-  { id: 'backlog',  title: 'Backlog',          desc: 'On the radar' },
-  { id: 'analysis', title: 'Analysis',         desc: 'Active research' },
-  { id: 'review',   title: 'CIO Review',        desc: 'CIO reviews model & thesis' },
-  { id: 'decision', title: 'Committee Review',  desc: 'Awaiting Investment Committee decision' },
+  { id: 'backlog',  title: 'Backlog',          desc: 'Idea Feed — leads awaiting curation' },
+  { id: 'analysis', title: 'Deep Dive',        desc: 'Audited base case in progress' },
+  { id: 'review',   title: 'Adversarial',      desc: 'Thesis Breaker & probability worksheet' },
+  { id: 'decision', title: 'Committee Review', desc: 'Awaiting decision (CIO-led while AUM < USD 10M)' },
   { id: 'invested', title: 'Invested',         desc: 'Position open',           terminal: true, cls: 'terminal-invested', auto: true },
-  { id: 'followed', title: 'Followed',         desc: 'Exited — stays in universe', terminal: true, cls: 'terminal-followed', auto: true },
-  { id: 'passed',   title: 'Passed',           desc: 'Did not invest',          terminal: true, cls: 'terminal-passed',   auto: true },
+  { id: 'followed', title: 'Followed',         desc: 'Followed universe',       terminal: true, cls: 'terminal-followed', auto: true },
+  { id: 'passed',   title: 'Passed',           desc: 'Discarded post-research', terminal: true, cls: 'terminal-passed',   auto: true },
 ];
 
 let currentUser = null;   // { username, name }

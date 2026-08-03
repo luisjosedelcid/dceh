@@ -342,9 +342,22 @@ function stageClass(stage) {
   if (s === 'review' || s === 'decision') return 'decision';
   return '';
 }
+// Stage taxonomy aligned to Operations Manual v4.4 (Backlog → Deep Dive →
+// Adversarial → Committee Review → Invested/Followed/Passed). DB keys are
+// unchanged; only labels update.
+const STAGE_LABELS = {
+  backlog: 'Backlog',
+  analysis: 'Deep Dive',
+  review: 'Adversarial',
+  decision: 'Committee Review',
+  invested: 'Invested',
+  followed: 'Followed',
+  passed: 'Passed',
+};
 function stageLabel(stage) {
   if (!stage) return '—';
-  return stage.charAt(0).toUpperCase() + stage.slice(1).toLowerCase();
+  const key = String(stage).toLowerCase();
+  return STAGE_LABELS[key] || (stage.charAt(0).toUpperCase() + stage.slice(1).toLowerCase());
 }
 
 // ── renderers ────────────────────────────────────────────────────────

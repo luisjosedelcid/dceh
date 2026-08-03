@@ -368,11 +368,17 @@ async function sendStageChangeAlert({ ticker, name, oldStage, newStage, actor, n
     return { skipped: true, reason: 'RESEND_API_KEY or ALERT_EMAIL_TO not set' };
   }
 
+  // Aligned to Operations Manual v4.4: Backlog → Deep Dive → Adversarial →
+  // Committee Review → Invested / Followed / Passed. DB keys unchanged.
   const STAGE_LABELS = {
     backlog: 'Backlog',
-    analysis: 'Analysis',
-    review: 'Review',
-    decision: 'Decision Pending',
+    analysis: 'Deep Dive',
+    review: 'Adversarial',
+    decision: 'Committee Review',
+    invested: 'Invested',
+    followed: 'Followed',
+    passed: 'Passed',
+    // Legacy fallbacks (pre-v4.4 records may still reference these):
     approved: 'Approved',
     rejected: 'Rejected',
   };
