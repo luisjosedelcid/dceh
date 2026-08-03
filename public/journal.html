@@ -479,6 +479,42 @@
           <textarea id="ne-premortem" maxlength="8000" placeholder="What could go wrong? Use the pre-mortem skill later for full failure-modes registration."></textarea>
         </div>
 
+        <!-- =================== PASS reason fields =================== -->
+        <div id="ne-pass-sections" style="display:none">
+          <div class="v32-section">
+            <div class="v32-section-title">Why we passed</div>
+            <div class="help" style="margin:-4px 0 12px 0">Categorize the pass so it's queryable later. Price passes are the pipeline for future BUYs; structural passes are one-way doors.</div>
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>Reason category<span class="req">*</span></label>
+                <select id="ne-pass-reason">
+                  <option value="">— Select —</option>
+                  <option value="price">Price · good business, wrong price</option>
+                  <option value="quality">Quality · business doesn't clear the bar</option>
+                  <option value="circle_of_competence">Circle of competence · don't understand it enough</option>
+                  <option value="better_idea">Better idea · something else in pipeline is better</option>
+                  <option value="structural">Structural · regulation, terminal risk, industry</option>
+                  <option value="timing_macro">Timing / macro · yes, but not now</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Studied depth<span class="req">*</span></label>
+                <select id="ne-pass-depth">
+                  <option value="">— Select —</option>
+                  <option value="screener">Screener · filtered out early, no deep read</option>
+                  <option value="quick_review" selected>Quick review · read 10-K/tesis, no full model</option>
+                  <option value="deep_dive">Deep dive · modeled, valued, still passed</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>Would reconsider if... <span style="color:var(--gray-mid);font-weight:400;text-transform:none;letter-spacing:0">(optional — leave empty for definitive pass)</span></label>
+              <textarea id="ne-pass-reconsider" maxlength="2000" placeholder="What would have to change? e.g. 'If P/E drops below 15x', 'If they replace the CEO', 'Never — terminal risk.'"></textarea>
+              <div class="help">If you write a condition here that could realistically happen, consider registering as FOLLOW instead.</div>
+            </div>
+          </div>
+        </div>
+
         <!-- =================== FOLLOW watchlist fields =================== -->
         <div id="ne-follow-sections" style="display:none">
           <div class="v32-section">
@@ -750,8 +786,20 @@ function setTypeFilter(type, chip) {
 
 function nextReview(it) {
   // PASS decisions have no position and therefore no scheduled reviews.
-  // Show a neutral em dash instead of 'All done' — nothing to be done.
-  if (it && it.decision_type === 'PASS') return { label: '—', cls: '' };
+  // We repurpose the column to show the reason category so passes are
+  // instantly recognizable in the table (price/quality/structural/etc).
+  if (it && it.decision_type === 'PASS') {
+    if (it.pass_reason_category) {
+      const lbl = {
+        price: 'price', quality: 'quality',
+        circle_of_competence: 'CoC',
+        better_idea: 'better idea', structural: 'structural',
+        timing_macro: 'timing',
+      }[it.pass_reason_category] || it.pass_reason_category;
+      return { label: lbl, cls: '' };
+    }
+    return { label: '—', cls: '' };
+  }
   // FOLLOW entries use follow_watch_until as their next-review date. When
   // set, the column mirrors the BUY behavior (due if past, otherwise
   // date shown). Falls through to the review_3m/6m/12m logic if unset.
@@ -1113,6 +1161,24 @@ function renderDecisionDetail(id) {
   // Watchlist plan colors match the priority pill scheme (green/amber/gray).
   const _prioColor = { high: '#c4441c', med: '#B88B47', low: '#7c7f8a' };
   const _prioLabel = { high: 'High priority', med: 'Medium priority', low: 'Low priority' };
+  // PASS reason labels + colors. Structural/quality are one-way doors
+  // (red-ish); price/timing/better-idea can flip (amber); circle of
+  // competence is neutral (gray).
+  const _passReasonLabel = {
+    price: 'Price', quality: 'Quality',
+    circle_of_competence: 'Circle of competence',
+    better_idea: 'Better idea', structural: 'Structural',
+    timing_macro: 'Timing / macro',
+  };
+  const _passReasonColor = {
+    price: '#B88B47', quality: '#c4441c',
+    circle_of_competence: '#7c7f8a',
+    better_idea: '#B88B47', structural: '#c4441c',
+    timing_macro: '#B88B47',
+  };
+  const _passDepthLabel = {
+    screener: 'Screener', quick_review: 'Quick review', deep_dive: 'Deep dive',
+  };
   // journal-create appends notes onto thesis with '— Notes —' separator.
   // Split them back out so the UI renders Notes under its own label.
   const _notesSep = '\n\n— Notes —\n';
@@ -1150,6 +1216,16 @@ function renderDecisionDetail(id) {
       <div class="field-val">${escapeHtml(_thesisMain)}</div>
     </div>
     ${_notesTail ? `<div class="field"><div class="field-lbl">Notes</div><div class="field-val">${escapeHtml(_notesTail)}</div></div>` : ''}
+    ${isPass && (r.pass_reason_category || r.pass_studied_depth || r.pass_reconsider_if) ? `
+      <div class="field">
+        <div class="field-lbl">Why we passed</div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px">
+          ${r.pass_reason_category ? `<div style="background:var(--cream);border-radius:6px;padding:8px 10px"><div style="font-size:9px;color:var(--gold);font-weight:700;letter-spacing:.08em">REASON</div><div style="display:flex;align-items:center;gap:6px;margin-top:3px;font-weight:700;color:${_passReasonColor[r.pass_reason_category] || 'var(--navy)'};font-size:12px"><span style="width:8px;height:8px;border-radius:50%;background:${_passReasonColor[r.pass_reason_category] || 'var(--navy)'}"></span>${_passReasonLabel[r.pass_reason_category] || escapeHtml(r.pass_reason_category)}</div></div>` : ''}
+          ${r.pass_studied_depth ? `<div style="background:var(--cream);border-radius:6px;padding:8px 10px"><div style="font-size:9px;color:var(--gold);font-weight:700;letter-spacing:.08em">STUDIED DEPTH</div><div style="font-weight:700;color:var(--navy);font-size:12px;margin-top:3px">${_passDepthLabel[r.pass_studied_depth] || escapeHtml(r.pass_studied_depth)}</div></div>` : ''}
+        </div>
+        ${r.pass_reconsider_if ? `<div><div style="font-size:10px;color:var(--gray-mid);font-weight:600;letter-spacing:.04em;margin-bottom:3px">WOULD RECONSIDER IF</div><div style="font-size:13px;color:var(--navy);white-space:pre-wrap">${escapeHtml(r.pass_reconsider_if)}</div></div>` : `<div style="font-size:11px;color:var(--gray-mid);font-style:italic">No reconsideration trigger — definitive pass.</div>`}
+      </div>
+    ` : ''}
     ${isFollow && (r.follow_trigger || r.follow_target_price != null || r.follow_watch_until || r.follow_blocker || r.follow_priority) ? `
       <div class="field">
         <div class="field-lbl">Watchlist plan</div>
@@ -1815,6 +1891,7 @@ function applyEntryTypeFraming() {
   const catalystsRow = document.getElementById('ne-row-catalysts');
   const premortemRow = document.getElementById('ne-row-premortem');
   const followSectionsEl = document.getElementById('ne-follow-sections');
+  const passSectionsEl = document.getElementById('ne-pass-sections');
   if (!sel || !titleEl) return;
   const t = (sel.value || '').toUpperCase();
   const hasType = (t === 'BUY' || t === 'PASS' || t === 'FOLLOW');
@@ -1826,6 +1903,8 @@ function applyEntryTypeFraming() {
   if (premortemRow) premortemRow.style.display = isPassType ? 'none' : '';
   // FOLLOW-only: watchlist plan (trigger, target price, watch-until, blocker, priority).
   if (followSectionsEl) followSectionsEl.style.display = (t === 'FOLLOW') ? '' : 'none';
+  // PASS-only: reason category + reconsideration trigger + studied depth.
+  if (passSectionsEl) passSectionsEl.style.display = (t === 'PASS') ? '' : 'none';
   // Show/hide the rest of the form depending on whether a type is selected
   if (restEl) restEl.style.display = hasType ? '' : 'none';
   if (emptyEl) emptyEl.style.display = hasType ? 'none' : '';
@@ -1857,7 +1936,9 @@ function applyEntryTypeFraming() {
     if (submitEl) submitEl.textContent = 'Save Pass Entry';
     if (refEl) refEl.style.display = 'none';
     if (v32El) v32El.style.display = 'none';
-    if (boxEl) boxEl.classList.remove('modal-wide');
+    // PASS modal now has its own reason-section with a two-column grid;
+    // use the wide modal so it doesn't crush on desktop.
+    if (boxEl) boxEl.classList.add('modal-wide');
     const banner = document.getElementById('ne-import-banner');
     if (banner) banner.classList.remove('open');
   } else {
@@ -2203,6 +2284,20 @@ async function submitNewEntry(ev) {
     return;
   }
 
+  // PASS-only fields: read + validate the two required ones (reason
+  // category, studied depth). Reconsider-if is optional (empty = never).
+  const _isPassType = decision_type === 'PASS';
+  const passReason = _isPassType ? document.getElementById('ne-pass-reason').value : '';
+  const passDepth = _isPassType ? document.getElementById('ne-pass-depth').value : '';
+  const passReconsider = _isPassType ? document.getElementById('ne-pass-reconsider').value.trim() : '';
+  if (_isPassType) {
+    if (!passReason || !passDepth) {
+      msg.style.color = 'var(--red)';
+      msg.textContent = 'Pass entries require Reason category and Studied depth.';
+      return;
+    }
+  }
+
   // FOLLOW-only fields: read + validate the three required ones (trigger,
   // watch_until, priority). Target price and blocker stay optional.
   const _isFollow = decision_type === 'FOLLOW';
@@ -2243,6 +2338,11 @@ async function submitNewEntry(ev) {
     payload.follow_priority = followPriority;
     if (followTargetRaw !== '') payload.follow_target_price = Number(followTargetRaw);
     if (followBlocker) payload.follow_blocker = followBlocker;
+  }
+  if (_isPassType) {
+    payload.pass_reason_category = passReason;
+    payload.pass_studied_depth = passDepth;
+    if (passReconsider) payload.pass_reconsider_if = passReconsider;
   }
 
   // v3.2 fields (only meaningful for BUY, but harmless for other types)

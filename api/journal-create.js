@@ -112,6 +112,34 @@ module.exports = async (req, res) => {
       }
     }
 
+    // ---- PASS reason fields (only accepted when decision_type === 'PASS') -----
+    // Category + reconsideration trigger + how deep the study went. Category
+    // and depth are enums, reconsideration is free text (empty means 'never').
+    let pass_reason_category = null;
+    let pass_reconsider_if = null;
+    let pass_studied_depth = null;
+    if (decision_type === 'PASS') {
+      const CAT = ['price', 'quality', 'circle_of_competence', 'better_idea', 'structural', 'timing_macro'];
+      const DEPTH = ['screener', 'quick_review', 'deep_dive'];
+      if (body.pass_reason_category) {
+        const c = String(body.pass_reason_category).trim().toLowerCase();
+        if (!CAT.includes(c)) {
+          return res.status(400).json({ error: `pass_reason_category must be one of: ${CAT.join('|')}` });
+        }
+        pass_reason_category = c;
+      }
+      if (body.pass_reconsider_if) {
+        pass_reconsider_if = String(body.pass_reconsider_if).trim().slice(0, 2000) || null;
+      }
+      if (body.pass_studied_depth) {
+        const d = String(body.pass_studied_depth).trim().toLowerCase();
+        if (!DEPTH.includes(d)) {
+          return res.status(400).json({ error: `pass_studied_depth must be one of: ${DEPTH.join('|')}` });
+        }
+        pass_studied_depth = d;
+      }
+    }
+
     // ---- FOLLOW watchlist fields (only accepted when decision_type === 'FOLLOW') -----
     // These describe how the follow should be managed: what event triggers a
     // move to action, at what price it becomes a BUY, until when it stays on
@@ -248,6 +276,9 @@ module.exports = async (req, res) => {
       follow_watch_until,
       follow_blocker,
       follow_priority,
+      pass_reason_category,
+      pass_reconsider_if,
+      pass_studied_depth,
       created_by: auth.user.email,
       active: true,
       ...v32,

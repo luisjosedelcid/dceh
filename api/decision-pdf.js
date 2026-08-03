@@ -197,6 +197,48 @@ module.exports = async (req, res) => {
       y = drawQA(doc, y, M, CW, 'NOTES', notesTail);
     }
 
+    // PASS-only reason block: 2-cell metrics grid (reason, depth) +
+    // reconsideration trigger. Only rendered when at least one field
+    // is populated so legacy passes without the fields don't get an
+    // empty scaffold.
+    const passHasData = isPass && (
+      r.pass_reason_category || r.pass_studied_depth || r.pass_reconsider_if
+    );
+    if (passHasData) {
+      y = ensureSpace(doc, y, 90);
+      doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)
+         .text('WHY WE PASSED', M, y);
+      y += 14;
+      const _reasonLabel = {
+        price: 'PRICE', quality: 'QUALITY',
+        circle_of_competence: 'CIRCLE OF COMPETENCE',
+        better_idea: 'BETTER IDEA', structural: 'STRUCTURAL',
+        timing_macro: 'TIMING / MACRO',
+      };
+      const _depthLabel = { screener: 'SCREENER', quick_review: 'QUICK REVIEW', deep_dive: 'DEEP DIVE' };
+      const passCells = [
+        { k: 'REASON',         v: r.pass_reason_category ? (_reasonLabel[r.pass_reason_category] || r.pass_reason_category.toUpperCase()) : '—' },
+        { k: 'STUDIED DEPTH',  v: r.pass_studied_depth ? (_depthLabel[r.pass_studied_depth] || r.pass_studied_depth.toUpperCase()) : '—' },
+      ];
+      const passW = (CW - 4) / 2;
+      passCells.forEach((c, i) => {
+        const x = M + i * (passW + 4);
+        doc.rect(x, y, passW, 42).fill(CREAM);
+        doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(7)
+           .text(c.k, x + 8, y + 7);
+        doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(11)
+           .text(c.v, x + 8, y + 20, { width: passW - 16, ellipsis: true, lineBreak: false });
+      });
+      y += 52;
+      if (r.pass_reconsider_if) {
+        y = drawQA(doc, y, M, CW, 'WOULD RECONSIDER IF', r.pass_reconsider_if);
+      } else if (r.pass_reason_category) {
+        // Explicit 'no trigger' — useful on paper to distinguish 'never'
+        // from 'analyst forgot to fill it in'.
+        y = drawQA(doc, y, M, CW, 'WOULD RECONSIDER IF', 'Never — definitive pass, no reconsideration trigger.');
+      }
+    }
+
     // FOLLOW-only watchlist plan: 3-cell metrics grid (priority, target,
     // watch until) + trigger + optional blocker. Only rendered when at
     // least one field is populated so legacy follows without the fields
