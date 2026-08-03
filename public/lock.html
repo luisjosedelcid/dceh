@@ -82,6 +82,20 @@
 </div>
 
 <script>
+// On Mac and other non-iOS devices, we don't gate the app with Face ID/PIN.
+// If someone (or a stale cache) lands here on desktop, bounce home.
+(function skipOnDesktop(){
+  const ua = navigator.userAgent || '';
+  const isIPhone = /iPhone|iPod/.test(ua);
+  const isIPad =
+    /iPad/.test(ua) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!isIPhone && !isIPad) {
+    const q = new URLSearchParams(location.search);
+    location.replace(q.get('return') || '/');
+  }
+})();
+
 const $ = id => document.getElementById(id);
 const setStatus = (t, err) => { $('status').className = 'status' + (err?' err':''); $('status').textContent = t || ''; };
 const params = new URLSearchParams(location.search);
