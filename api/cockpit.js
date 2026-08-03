@@ -36,17 +36,17 @@ function plusDaysISO(n) {
 
 // ── 1. Pipeline in flight ─────────────────────────────────────────────
 async function getPipeline() {
-  // Cockpit surfaces the stages that need CIO attention right now, aligned
-  // to Operations Manual v4.4:
-  //   review   = Adversarial — Thesis Breaker & probability worksheet.
-  //              The Deep Dive is closed and the CIO must run the
-  //              adversarial pass before decision.
+  // Cockpit surfaces all active research the CIO should see, aligned to
+  // Operations Manual v4.4:
+  //   analysis = Deep Dive        — audited base case in progress. Included
+  //              so the CIO sees which tickers the analyst is working on.
+  //   review   = Adversarial      — Thesis Breaker & probability worksheet.
+  //              CIO must run the adversarial pass before decision.
   //   decision = Committee Review — waiting for the formal decision
   //              (CIO-led while AUM < USD 10M).
-  // Earlier stages (backlog, analysis = Deep Dive) are work-in-progress for
-  // the analyst and belong on /research (kanban), not the cockpit. Terminal
-  // stages (invested, followed, passed) are also excluded here.
-  const ACTIVE_STAGES = ['review', 'decision'];
+  // Backlog (Idea Feed, not yet started) lives on /research only.
+  // Terminal stages (invested, followed, passed) are excluded here.
+  const ACTIVE_STAGES = ['analysis', 'review', 'decision'];
   const stagesFilter = `(${ACTIVE_STAGES.map(s => `"${s}"`).join(',')})`;
   let rows = [];
   try {
