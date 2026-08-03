@@ -501,9 +501,8 @@
                 <label>Studied depth<span class="req">*</span></label>
                 <select id="ne-pass-depth">
                   <option value="">— Select —</option>
-                  <option value="screener">Screener · filtered out early, no deep read</option>
-                  <option value="quick_review" selected>Quick review · read 10-K/tesis, no full model</option>
-                  <option value="deep_dive">Deep dive · modeled, valued, still passed</option>
+                  <option value="deep_dive" selected>Deep dive · modeled, valued, still passed</option>
+                  <option value="adversarial">Adversarial review · stress-tested thesis, still passed</option>
                 </select>
               </div>
             </div>
@@ -1177,7 +1176,7 @@ function renderDecisionDetail(id) {
     timing_macro: '#B88B47',
   };
   const _passDepthLabel = {
-    screener: 'Screener', quick_review: 'Quick review', deep_dive: 'Deep dive',
+    deep_dive: 'Deep dive', adversarial: 'Adversarial review',
   };
   // journal-create appends notes onto thesis with '— Notes —' separator.
   // Split them back out so the UI renders Notes under its own label.

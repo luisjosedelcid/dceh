@@ -120,7 +120,7 @@ module.exports = async (req, res) => {
     let pass_studied_depth = null;
     if (decision_type === 'PASS') {
       const CAT = ['price', 'quality', 'circle_of_competence', 'better_idea', 'structural', 'timing_macro'];
-      const DEPTH = ['screener', 'quick_review', 'deep_dive'];
+      const DEPTH = ['deep_dive', 'adversarial'];
       if (body.pass_reason_category) {
         const c = String(body.pass_reason_category).trim().toLowerCase();
         if (!CAT.includes(c)) {

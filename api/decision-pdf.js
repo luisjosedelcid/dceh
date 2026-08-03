@@ -219,7 +219,7 @@ module.exports = async (req, res) => {
         better_idea: 'BETTER IDEA', structural: 'STRUCTURAL',
         timing_macro: 'TIMING / MACRO',
       };
-      const _depthLabel = { screener: 'SCREENER', quick_review: 'QUICK REVIEW', deep_dive: 'DEEP DIVE' };
+      const _depthLabel = { deep_dive: 'DEEP DIVE', adversarial: 'ADVERSARIAL REVIEW' };
       const passCells = [
         { k: 'REASON',         v: r.pass_reason_category ? (_reasonLabel[r.pass_reason_category] || r.pass_reason_category.toUpperCase()) : '—' },
         { k: 'STUDIED DEPTH',  v: r.pass_studied_depth ? (_depthLabel[r.pass_studied_depth] || r.pass_studied_depth.toUpperCase()) : '—' },
