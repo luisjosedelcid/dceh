@@ -1211,7 +1211,19 @@ window.addEventListener('DOMContentLoaded', () => {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         const j = await r.json();
         holdings = (j && j.holdings)
-          ? j.holdings.filter(h => Number(h.qty) > 0 && !CASH_EQUIVALENTS.has(String(h.ticker).toUpperCase()))
+          ? j.holdings.filter(h => {
+              if (Number(h.qty) <= 0) return false;
+              const tk = String(h.ticker || '').toUpperCase();
+              // Exclude cash-equivalent ETFs by ticker allowlist
+              if (CASH_EQUIVALENTS.has(tk)) return false;
+              // Exclude non-equity asset classes (T-bill CUSIPs, cash equivalents, fixed income).
+              // Research grid is for equities only.
+              const ac = String(h.asset_class || 'equity').toLowerCase();
+              if (ac === 'fixed_income' || ac === 'cash_equivalent' || ac === 'cash') return false;
+              // Belt-and-suspenders: US Treasury CUSIPs look like 912xxxxxxx (9 chars, starts with 912).
+              if (/^912[0-9A-Z]{6}$/.test(tk)) return false;
+              return true;
+            })
           : [];
       } catch (e) {
         console.warn('Portfolio holdings load failed:', e);
