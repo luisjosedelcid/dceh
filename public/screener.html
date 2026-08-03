@@ -325,10 +325,11 @@
           <th>Mkt Cap</th>
           <th style="text-align:left">Thesis</th>
           <th>Added</th>
+          <th>Snapshot</th>
           <th></th>
         </tr></thead>
         <tbody id="shortlist-body">
-          <tr><td colspan="9" style="text-align:center;color:var(--gray-mid);font-style:italic;padding:24px">Loading…</td></tr>
+          <tr><td colspan="10" style="text-align:center;color:var(--gray-mid);font-style:italic;padding:24px">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -1068,7 +1069,7 @@ async function loadShortlist() {
       const msg = _wlAuthToken()
         ? 'No names on the radar yet. Use the form above to add one.'
         : 'No names on the radar yet. Log in to add.';
-      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--gray-mid);font-style:italic;padding:24px">${msg}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--gray-mid);font-style:italic;padding:24px">${msg}</td></tr>`;
       return;
     }
 
@@ -1101,6 +1102,9 @@ async function loadShortlist() {
         }
       }
 
+      const snapCellId = `snap-${escapeHtmlW(it.ticker)}`;
+      const snapButton = `<button id="${snapCellId}" onclick="handleSnapshot(this,'${escapeHtmlW(it.ticker)}')" data-state="unknown" style="font-size:9px;font-weight:700;color:var(--gray-mid);background:none;letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--rule);padding:5px 10px;cursor:pointer;font-family:inherit">Loading…</button>`;
+
       return `<tr>
         <td class="ticker-cell" style="text-align:left">${_sectorTickerLink(it.ticker)}</td>
         <td style="text-align:left">${escapeHtmlW(company)}</td>
@@ -1110,12 +1114,92 @@ async function loadShortlist() {
         <td>${mktCap}</td>
         <td style="text-align:left;color:var(--gray-mid);font-size:11px;max-width:240px">${escapeHtmlW(it.thesis || '')}</td>
         <td style="color:var(--gray-mid);font-size:11px">${escapeHtmlW(it.added || '')}</td>
+        <td style="text-align:center">${snapButton}</td>
         <td style="white-space:nowrap;display:flex;gap:4px">${actions.join('')}</td>
       </tr>`;
     }).join('');
+
+    // Populate snapshot buttons: GET each ticker to determine GENERATE vs OPEN
+    refreshAllSnapshotButtons(items || []);
   } catch (e) {
     console.error('Shortlist load error:', e);
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);padding:24px">Error loading shortlist</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--red);padding:24px">Error loading shortlist</td></tr>`;
+  }
+}
+
+// ─── Company Snapshot integration ────────────────────────────────────────
+async function refreshAllSnapshotButtons(items) {
+  const tk = _wlAuthToken();
+  if (!tk) return;
+  await Promise.all((items || []).map(it => refreshSnapshotButton(it.ticker, tk)));
+}
+
+async function refreshSnapshotButton(ticker, tk) {
+  const btn = document.getElementById(`snap-${ticker}`);
+  if (!btn) return;
+  try {
+    const r = await fetch(`/api/company-snapshot?ticker=${encodeURIComponent(ticker)}`, {
+      headers: { 'x-admin-token': tk },
+    });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error || 'error');
+    if (data.exists && data.url) {
+      btn.dataset.state = 'exists';
+      btn.dataset.url = data.url;
+      btn.textContent = 'OPEN →';
+      btn.style.color = 'var(--navy)';
+      btn.style.borderColor = 'var(--navy)';
+    } else {
+      btn.dataset.state = 'missing';
+      btn.textContent = 'GENERATE';
+      btn.style.color = 'var(--gold)';
+      btn.style.borderColor = 'var(--gold)';
+    }
+  } catch (e) {
+    btn.dataset.state = 'error';
+    btn.textContent = 'RETRY';
+    btn.style.color = 'var(--red)';
+    btn.style.borderColor = 'var(--red)';
+  }
+}
+
+async function handleSnapshot(btn, ticker) {
+  const tk = _wlAuthToken();
+  if (!tk) { alert('Log in first.'); return; }
+  const state = btn.dataset.state;
+  if (state === 'exists' && btn.dataset.url) {
+    window.open(btn.dataset.url, '_blank', 'noopener');
+    return;
+  }
+  // Generate
+  const orig = { text: btn.textContent, color: btn.style.color, border: btn.style.borderColor };
+  btn.disabled = true;
+  btn.textContent = 'BUILDING…';
+  btn.style.color = 'var(--gray-mid)';
+  btn.style.borderColor = 'var(--gray-mid)';
+  try {
+    const r = await fetch('/api/company-snapshot', {
+      method: 'POST',
+      headers: { 'x-admin-token': tk, 'content-type': 'application/json' },
+      body: JSON.stringify({ ticker }),
+    });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error || 'error');
+    btn.dataset.state = 'exists';
+    btn.dataset.url = data.url;
+    btn.textContent = 'OPEN →';
+    btn.style.color = 'var(--navy)';
+    btn.style.borderColor = 'var(--navy)';
+    // Auto-open the freshly generated snapshot in a new tab
+    window.open(data.url, '_blank', 'noopener');
+  } catch (e) {
+    console.error('snapshot error', e);
+    alert(`Snapshot failed: ${e.message}`);
+    btn.textContent = orig.text;
+    btn.style.color = orig.color;
+    btn.style.borderColor = orig.border;
+  } finally {
+    btn.disabled = false;
   }
 }
 

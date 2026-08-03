@@ -17,13 +17,23 @@
 const BASE = 'https://api.roic.ai';
 
 function key() {
-  const k = process.env.ROIC_API_KEY;
+  // ROIC_API_KEY normally holds the api key in Vercel production.
+  // When running locally through the custom-cred HTTPS proxy, the proxy
+  // rewrites the ?apikey param on every request to api.roic.ai, so any
+  // non-empty placeholder here still results in a valid request.
+  const k = process.env.ROIC_API_KEY || process.env.CUSTOM_CRED_API_ROIC_AI_TOKEN;
   if (!k) throw new Error('ROIC_API_KEY not configured');
   return k;
 }
 
 async function roicGet(path, params = {}) {
-  const qp = new URLSearchParams({ ...params, apikey: key() });
+  const k = key();
+  // Placeholder means we're behind the custom-cred proxy — DON'T include
+  // apikey in the query, the proxy will inject the real one.
+  const isPlaceholder = k === 'PROXY_INJECTED';
+  const qpObj = { ...params };
+  if (!isPlaceholder) qpObj.apikey = k;
+  const qp = new URLSearchParams(qpObj);
   const url = `${BASE}${path.startsWith('/') ? path : '/' + path}?${qp.toString()}`;
   const r = await fetch(url);
   const text = await r.text();
