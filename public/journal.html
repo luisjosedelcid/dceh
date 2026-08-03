@@ -478,6 +478,47 @@
           <label>Pre-mortem <span style="color:var(--gray-mid);font-weight:400;text-transform:none;letter-spacing:0">(optional, quick draft)</span></label>
           <textarea id="ne-premortem" maxlength="8000" placeholder="What could go wrong? Use the pre-mortem skill later for full failure-modes registration."></textarea>
         </div>
+
+        <!-- =================== FOLLOW watchlist fields =================== -->
+        <div id="ne-follow-sections" style="display:none">
+          <div class="v32-section">
+            <div class="v32-section-title">Watchlist plan</div>
+            <div class="help" style="margin:-4px 0 12px 0">A FOLLOW is a ticker you studied but didn't buy. Define what moves it to action so it doesn't drift into a zombie watchlist.</div>
+            <div class="form-row">
+              <label>Trigger to revisit<span class="req">*</span></label>
+              <textarea id="ne-follow-trigger" maxlength="2000" placeholder="What event moves this to BUY or DROP? e.g. 'If P/E drops below 20x', 'If they announce buyback >5% of float', 'Post Q3 2026 earnings'."></textarea>
+              <div class="help">The single most important field. Without this, a FOLLOW is just a note.</div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>Target entry price <span style="color:var(--gray-mid);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+                <input type="number" id="ne-follow-target" step="0.01" min="0" placeholder="e.g. 3800.00">
+                <div class="help">Price at which you'd consider a BUY today.</div>
+              </div>
+              <div class="form-row">
+                <label>Watch until<span class="req">*</span></label>
+                <input type="date" id="ne-follow-until">
+                <div class="help">Auto-flagged for re-review after this date.</div>
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>What's missing (blocker) <span style="color:var(--gray-mid);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+                <input type="text" id="ne-follow-blocker" maxlength="2000" placeholder="Price, management, tesis incompleta, macro timing, mejor idea en pipeline...">
+              </div>
+              <div class="form-row">
+                <label>Priority<span class="req">*</span></label>
+                <select id="ne-follow-priority">
+                  <option value="">— Select —</option>
+                  <option value="high">High · conviction close to trigger</option>
+                  <option value="med">Medium · worth monitoring</option>
+                  <option value="low">Low · curiosity only</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="form-row">
           <label>Notes <span style="color:var(--gray-mid);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
           <textarea id="ne-notes" placeholder="Committee context, dissenting views, related decisions…"></textarea>
@@ -711,6 +752,17 @@ function nextReview(it) {
   // PASS decisions have no position and therefore no scheduled reviews.
   // Show a neutral em dash instead of 'All done' — nothing to be done.
   if (it && it.decision_type === 'PASS') return { label: '—', cls: '' };
+  // FOLLOW entries use follow_watch_until as their next-review date. When
+  // set, the column mirrors the BUY behavior (due if past, otherwise
+  // date shown). Falls through to the review_3m/6m/12m logic if unset.
+  if (it && it.decision_type === 'FOLLOW' && it.follow_watch_until) {
+    const t0 = todayStr();
+    const due = it.follow_watch_until <= t0;
+    return {
+      label: 'watch · ' + fmtDate(it.follow_watch_until),
+      cls: due ? 'due' : '',
+    };
+  }
   const t = todayStr();
   const reviews = [
     { lbl: '3m', date: it.review_3m_date, done: !!it.review_3m_done_at },
@@ -1057,6 +1109,10 @@ function renderDecisionDetail(id) {
   // PASS entries have no position, so we skip reviews/executions/catalysts/
   // pre-mortem in the UI. Only thesis + notes matter.
   const isPass = String(r.decision_type || '').toUpperCase() === 'PASS';
+  const isFollow = String(r.decision_type || '').toUpperCase() === 'FOLLOW';
+  // Watchlist plan colors match the priority pill scheme (green/amber/gray).
+  const _prioColor = { high: '#c4441c', med: '#B88B47', low: '#7c7f8a' };
+  const _prioLabel = { high: 'High priority', med: 'Medium priority', low: 'Low priority' };
   // journal-create appends notes onto thesis with '— Notes —' separator.
   // Split them back out so the UI renders Notes under its own label.
   const _notesSep = '\n\n— Notes —\n';
@@ -1094,6 +1150,18 @@ function renderDecisionDetail(id) {
       <div class="field-val">${escapeHtml(_thesisMain)}</div>
     </div>
     ${_notesTail ? `<div class="field"><div class="field-lbl">Notes</div><div class="field-val">${escapeHtml(_notesTail)}</div></div>` : ''}
+    ${isFollow && (r.follow_trigger || r.follow_target_price != null || r.follow_watch_until || r.follow_blocker || r.follow_priority) ? `
+      <div class="field">
+        <div class="field-lbl">Watchlist plan</div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px">
+          ${r.follow_priority ? `<div style="background:var(--cream);border-radius:6px;padding:8px 10px"><div style="font-size:9px;color:var(--gold);font-weight:700;letter-spacing:.08em">PRIORITY</div><div style="display:flex;align-items:center;gap:6px;margin-top:3px;font-weight:700;color:${_prioColor[r.follow_priority] || 'var(--navy)'};font-size:12px"><span style="width:8px;height:8px;border-radius:50%;background:${_prioColor[r.follow_priority] || 'var(--navy)'}"></span>${_prioLabel[r.follow_priority] || escapeHtml(r.follow_priority)}</div></div>` : ''}
+          ${r.follow_target_price != null ? `<div style="background:var(--cream);border-radius:6px;padding:8px 10px"><div style="font-size:9px;color:var(--gold);font-weight:700;letter-spacing:.08em">TARGET ENTRY</div><div style="font-weight:700;color:var(--navy);font-size:12px;margin-top:3px">${fmtPrice(r.follow_target_price)}</div></div>` : ''}
+          ${r.follow_watch_until ? `<div style="background:var(--cream);border-radius:6px;padding:8px 10px"><div style="font-size:9px;color:var(--gold);font-weight:700;letter-spacing:.08em">WATCH UNTIL</div><div style="font-weight:700;color:${r.follow_watch_until <= todayStr() ? '#c4441c' : 'var(--navy)'};font-size:12px;margin-top:3px">${fmtDate(r.follow_watch_until)}${r.follow_watch_until <= todayStr() ? ' · due' : ''}</div></div>` : ''}
+        </div>
+        ${r.follow_trigger ? `<div style="margin-bottom:8px"><div style="font-size:10px;color:var(--gray-mid);font-weight:600;letter-spacing:.04em;margin-bottom:3px">TRIGGER TO REVISIT</div><div style="font-size:13px;color:var(--navy);white-space:pre-wrap">${escapeHtml(r.follow_trigger)}</div></div>` : ''}
+        ${r.follow_blocker ? `<div><div style="font-size:10px;color:var(--gray-mid);font-weight:600;letter-spacing:.04em;margin-bottom:3px">WHAT'S MISSING (BLOCKER)</div><div style="font-size:13px;color:var(--navy)">${escapeHtml(r.follow_blocker)}</div></div>` : ''}
+      </div>
+    ` : ''}
     ${(!isPass && r.framework_version === 'v3.2') ? renderV32Block(r) : ''}
     ${(!isPass && r.framework_version !== 'v3.2' && cats.length) ? `<div class="field"><div class="field-lbl">Catalysts</div><div class="pill-list">${cats.map(c => `<span>${escapeHtml(c)}</span>`).join('')}</div></div>` : ''}
     ${(!isPass && r.framework_version !== 'v3.2' && r.pre_mortem) ? `<div class="field"><div class="field-lbl">Pre-mortem (what would change my mind)</div><div class="field-val">${escapeHtml(r.pre_mortem)}</div></div>` : ''}
@@ -1746,6 +1814,7 @@ function applyEntryTypeFraming() {
   const footerEmptyEl = document.getElementById('ne-footer-empty');
   const catalystsRow = document.getElementById('ne-row-catalysts');
   const premortemRow = document.getElementById('ne-row-premortem');
+  const followSectionsEl = document.getElementById('ne-follow-sections');
   if (!sel || !titleEl) return;
   const t = (sel.value || '').toUpperCase();
   const hasType = (t === 'BUY' || t === 'PASS' || t === 'FOLLOW');
@@ -1755,6 +1824,8 @@ function applyEntryTypeFraming() {
   const isPassType = (t === 'PASS');
   if (catalystsRow) catalystsRow.style.display = isPassType ? 'none' : '';
   if (premortemRow) premortemRow.style.display = isPassType ? 'none' : '';
+  // FOLLOW-only: watchlist plan (trigger, target price, watch-until, blocker, priority).
+  if (followSectionsEl) followSectionsEl.style.display = (t === 'FOLLOW') ? '' : 'none';
   // Show/hide the rest of the form depending on whether a type is selected
   if (restEl) restEl.style.display = hasType ? '' : 'none';
   if (emptyEl) emptyEl.style.display = hasType ? 'none' : '';
@@ -1775,7 +1846,9 @@ function applyEntryTypeFraming() {
     if (submitEl) submitEl.textContent = 'Save Follow Entry';
     if (refEl) refEl.style.display = 'none';
     if (v32El) v32El.style.display = 'none';
-    if (boxEl) boxEl.classList.remove('modal-wide');
+    // Follow modal has an extra watchlist-plan section; give it the wider
+    // modal so the two-column grids don't crush on desktop.
+    if (boxEl) boxEl.classList.add('modal-wide');
     const banner = document.getElementById('ne-import-banner');
     if (banner) banner.classList.remove('open');
   } else if (t === 'PASS') {
@@ -2130,6 +2203,22 @@ async function submitNewEntry(ev) {
     return;
   }
 
+  // FOLLOW-only fields: read + validate the three required ones (trigger,
+  // watch_until, priority). Target price and blocker stay optional.
+  const _isFollow = decision_type === 'FOLLOW';
+  const followTrigger = _isFollow ? document.getElementById('ne-follow-trigger').value.trim() : '';
+  const followTargetRaw = _isFollow ? document.getElementById('ne-follow-target').value.trim() : '';
+  const followUntil = _isFollow ? document.getElementById('ne-follow-until').value : '';
+  const followBlocker = _isFollow ? document.getElementById('ne-follow-blocker').value.trim() : '';
+  const followPriority = _isFollow ? document.getElementById('ne-follow-priority').value : '';
+  if (_isFollow) {
+    if (!followTrigger || !followUntil || !followPriority) {
+      msg.style.color = 'var(--red)';
+      msg.textContent = 'Follow entries require Trigger, Watch until, and Priority.';
+      return;
+    }
+  }
+
   const payload = {
     ticker,
     decision_type,
@@ -2148,6 +2237,13 @@ async function submitNewEntry(ev) {
   if (notes) payload.notes = notes;
   const analystId = document.getElementById('ne-analyst').value;
   if (analystId) payload.analyst_id = analystId;
+  if (_isFollow) {
+    payload.follow_trigger = followTrigger;
+    payload.follow_watch_until = followUntil;
+    payload.follow_priority = followPriority;
+    if (followTargetRaw !== '') payload.follow_target_price = Number(followTargetRaw);
+    if (followBlocker) payload.follow_blocker = followBlocker;
+  }
 
   // v3.2 fields (only meaningful for BUY, but harmless for other types)
   if (decision_type === 'BUY') {

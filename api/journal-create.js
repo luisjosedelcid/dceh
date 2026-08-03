@@ -112,6 +112,45 @@ module.exports = async (req, res) => {
       }
     }
 
+    // ---- FOLLOW watchlist fields (only accepted when decision_type === 'FOLLOW') -----
+    // These describe how the follow should be managed: what event triggers a
+    // move to action, at what price it becomes a BUY, until when it stays on
+    // the watchlist, why it isn't a BUY today, and its relative priority.
+    let follow_trigger = null;
+    let follow_target_price = null;
+    let follow_watch_until = null;
+    let follow_blocker = null;
+    let follow_priority = null;
+    if (decision_type === 'FOLLOW') {
+      if (body.follow_trigger) {
+        follow_trigger = String(body.follow_trigger).trim().slice(0, 2000) || null;
+      }
+      if (body.follow_target_price !== undefined && body.follow_target_price !== null && body.follow_target_price !== '') {
+        const n = Number(body.follow_target_price);
+        if (!Number.isFinite(n) || n < 0) {
+          return res.status(400).json({ error: 'follow_target_price must be a non-negative number' });
+        }
+        follow_target_price = n;
+      }
+      if (body.follow_watch_until) {
+        const raw = String(body.follow_watch_until).trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+          return res.status(400).json({ error: 'follow_watch_until must be YYYY-MM-DD' });
+        }
+        follow_watch_until = raw;
+      }
+      if (body.follow_blocker) {
+        follow_blocker = String(body.follow_blocker).trim().slice(0, 2000) || null;
+      }
+      if (body.follow_priority) {
+        const p = String(body.follow_priority).trim().toLowerCase();
+        if (!['high', 'med', 'low'].includes(p)) {
+          return res.status(400).json({ error: 'follow_priority must be high|med|low' });
+        }
+        follow_priority = p;
+      }
+    }
+
     // ---- v3.2 fields (only meaningful for BUY/ADD, but accepted for any type) -----
     // All optional. Plain text helpers + JSONB structures coming from the
     // Munger Digital v3.2 package (decision_inputs.json) or filled manually.
@@ -204,6 +243,11 @@ module.exports = async (req, res) => {
       review_6m_date: review_6m,
       review_12m_date: review_12m,
       analyst_id,
+      follow_trigger,
+      follow_target_price,
+      follow_watch_until,
+      follow_blocker,
+      follow_priority,
       created_by: auth.user.email,
       active: true,
       ...v32,

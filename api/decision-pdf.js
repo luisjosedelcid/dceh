@@ -197,6 +197,47 @@ module.exports = async (req, res) => {
       y = drawQA(doc, y, M, CW, 'NOTES', notesTail);
     }
 
+    // FOLLOW-only watchlist plan: 3-cell metrics grid (priority, target,
+    // watch until) + trigger + optional blocker. Only rendered when at
+    // least one field is populated so legacy follows without the fields
+    // don't get an empty box.
+    const isFollow = String(r.decision_type || '').toUpperCase() === 'FOLLOW';
+    const followHasData = isFollow && (
+      r.follow_trigger || r.follow_target_price != null ||
+      r.follow_watch_until || r.follow_blocker || r.follow_priority
+    );
+    if (followHasData) {
+      y = ensureSpace(doc, y, 90);
+      doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(8)
+         .text('WATCHLIST PLAN', M, y);
+      y += 14;
+      // 3-cell chip grid (same style as top meta-grid)
+      const _prioLabel = { high: 'HIGH PRIORITY', med: 'MEDIUM PRIORITY', low: 'LOW PRIORITY' };
+      const chipCells = [
+        { k: 'PRIORITY',     v: r.follow_priority ? (_prioLabel[r.follow_priority] || r.follow_priority.toUpperCase()) : '—' },
+        { k: 'TARGET ENTRY', v: r.follow_target_price != null ? fmtPrice(r.follow_target_price) : '—' },
+        { k: 'WATCH UNTIL',  v: r.follow_watch_until ? fmtDate(r.follow_watch_until) : '—' },
+      ];
+      const chipW = (CW - 8) / 3;
+      chipCells.forEach((c, i) => {
+        const x = M + i * (chipW + 4);
+        doc.rect(x, y, chipW, 42).fill(CREAM);
+        doc.fillColor(GOLD).font('Helvetica-Bold').fontSize(7)
+           .text(c.k, x + 8, y + 7);
+        doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(11)
+           .text(c.v, x + 8, y + 20, { width: chipW - 16, ellipsis: true, lineBreak: false });
+      });
+      y += 52;
+      // Trigger (required, but guard anyway)
+      if (r.follow_trigger) {
+        y = drawQA(doc, y, M, CW, 'TRIGGER TO REVISIT', r.follow_trigger);
+      }
+      // Blocker (optional)
+      if (r.follow_blocker) {
+        y = drawQA(doc, y, M, CW, "WHAT'S MISSING (BLOCKER)", r.follow_blocker);
+      }
+    }
+
     // v3.2 blocks (if applicable) — surface the highlights. Skipped for PASS.
     if (!isPass && r.framework_version === 'v3.2') {
       // Executive summary
