@@ -1555,72 +1555,17 @@ async function undoDecisionEntry(id) {
 }
 window.undoDecisionEntry = undoDecisionEntry;
 
+// Opens a server-generated branded PDF (DCE NAVY/GOLD) in a new tab. Behaves
+// like the other dashboard PDFs (Company Brief, Thesis Builder, Munger
+// Digital) — no print dialog, no client-side layout tricks.
+//
+// Auth is carried on the query string as _tok because <a target=_blank>
+// can't forward an x-admin-token header.
 function printDecisionEntry(id) {
-  const tr = document.querySelector(`tr.row-decision[data-id="${id}"]`);
-  if (!tr) return;
-  // The expanded detail row is the very next sibling (added by toggleDecisionRow).
-  const detailRow = tr.nextElementSibling;
-  const detailContent = document.getElementById('decision-detail-' + id);
-  if (!detailRow || !detailContent) {
-    alert('Expand the entry first, then export.');
-    return;
-  }
-
-  const r = state.items.find(x => x.id === id);
-  const ticker = r ? r.ticker : '';
-  const type = r ? r.decision_type : '';
-  const date = r ? fmtDate(r.decision_date) : '';
-  const isBuy = String(type).toUpperCase() === 'BUY';
-  // BUY entries are framed as Investment Memos per Operations Manual §1.5 / §3.3 / §4.6
-  const docLabel = isBuy ? 'Investment Memo' : `${type} Decision`;
-  const trailLabel = isBuy ? 'Investment Memo · per Ops Manual §1.5' : 'Decision Journal';
-
-  // Build a print-only host with header + a clone of the detail content.
-  const main = document.querySelector('main');
-  if (!main) return;
-  const host = document.createElement('section');
-  host.className = 'print-host';
-  host.innerHTML = `
-    <div class="print-header">
-      <div class="ph-title">${escapeHtml(ticker)} — ${escapeHtml(docLabel)}</div>
-      <div class="ph-meta">DCE Holdings · ${escapeHtml(trailLabel)} · Entry #${id} · ${escapeHtml(date)}</div>
-    </div>
-  `;
-  // Clone detail content, drop the action bar and exec section to keep PDF clean.
-  const clone = detailContent.cloneNode(true);
-  clone.querySelectorAll('.entry-actions, .exec-section').forEach(n => n.remove());
-  host.appendChild(clone);
-  host.insertAdjacentHTML('beforeend', `
-    <div class="print-footer">
-      Generated ${new Date().toISOString().slice(0, 10)} · dceholdings.app/journal · For internal use only — not investment advice
-    </div>
-  `);
-
-  main.appendChild(host);
-  document.body.classList.add('printing-entry');
-
-  const cleanup = () => {
-    document.body.classList.remove('printing-entry');
-    if (host.parentNode) host.parentNode.removeChild(host);
-    window.removeEventListener('afterprint', cleanup);
-  };
-  window.addEventListener('afterprint', cleanup);
-
-  // Suggest filename via document.title (some browsers use this for the
-  // default "Save as PDF" filename). Restore it after.
-  const prevTitle = document.title;
-  const dateCompact = (r && r.decision_date ? r.decision_date : '').replace(/-/g, '');
-  document.title = isBuy
-    ? `DCE_Investment_Memo_${ticker}_${dateCompact}`
-    : `DCE_Decision_${ticker}_${type}_${dateCompact}`;
-  setTimeout(() => {
-    try { window.print(); }
-    finally {
-      document.title = prevTitle;
-      // Safety: if afterprint never fires (some browsers), force cleanup soon.
-      setTimeout(() => { if (document.body.classList.contains('printing-entry')) cleanup(); }, 1500);
-    }
-  }, 50);
+  const tk = tokenAdmin();
+  if (!tk) { alert('Sign in as admin to export.'); return; }
+  const url = '/api/decision-pdf?id=' + encodeURIComponent(id) + '&_tok=' + encodeURIComponent(tk);
+  window.open(url, '_blank');
 }
 window.printDecisionEntry = printDecisionEntry;
 
