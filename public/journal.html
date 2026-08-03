@@ -1050,6 +1050,16 @@ function renderDecisionDetail(id) {
   // PASS entries have no position, so we skip reviews/executions/catalysts/
   // pre-mortem in the UI. Only thesis + notes matter.
   const isPass = String(r.decision_type || '').toUpperCase() === 'PASS';
+  // journal-create appends notes onto thesis with '— Notes —' separator.
+  // Split them back out so the UI renders Notes under its own label.
+  const _notesSep = '\n\n— Notes —\n';
+  let _thesisMain = r.thesis || '';
+  let _notesTail = '';
+  const _sepIdx = _thesisMain.indexOf(_notesSep);
+  if (_sepIdx >= 0) {
+    _notesTail = _thesisMain.slice(_sepIdx + _notesSep.length).trim();
+    _thesisMain = _thesisMain.slice(0, _sepIdx).trim();
+  }
   const reviewBlock = (lbl, key) => {
     const date = r['review_' + key + '_date'];
     const oc = r['review_' + key + '_outcome'];
@@ -1072,9 +1082,10 @@ function renderDecisionDetail(id) {
       ${r.linked_holding ? `<div><div class="k">Linked</div><div class="v" style="font-size:12px">${escapeHtml(r.linked_holding)}</div></div>` : ''}
     </div>
     <div class="field">
-      <div class="field-lbl">Thesis ${r.framework_version === 'v3.2' ? '<span class="v32-banner">v3.2</span>' : ''}</div>
-      <div class="field-val">${escapeHtml(r.thesis || '')}</div>
+      <div class="field-lbl">${isPass ? 'Thesis (why declined)' : 'Thesis'} ${r.framework_version === 'v3.2' ? '<span class="v32-banner">v3.2</span>' : ''}</div>
+      <div class="field-val">${escapeHtml(_thesisMain)}</div>
     </div>
+    ${_notesTail ? `<div class="field"><div class="field-lbl">Notes</div><div class="field-val">${escapeHtml(_notesTail)}</div></div>` : ''}
     ${r.framework_version === 'v3.2' ? renderV32Block(r) : ''}
     ${(!isPass && r.framework_version !== 'v3.2' && cats.length) ? `<div class="field"><div class="field-lbl">Catalysts</div><div class="pill-list">${cats.map(c => `<span>${escapeHtml(c)}</span>`).join('')}</div></div>` : ''}
     ${(!isPass && r.framework_version !== 'v3.2' && r.pre_mortem) ? `<div class="field"><div class="field-lbl">Pre-mortem (what would change my mind)</div><div class="field-val">${escapeHtml(r.pre_mortem)}</div></div>` : ''}
