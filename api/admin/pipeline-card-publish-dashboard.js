@@ -7,7 +7,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 const { requireRole } = require('../_require-role');
-const { sbSelect, sbInsert, sbUpdate } = require('../_supabase');
+const { sbSelect, sbInsert, sbUpsert, sbUpdate } = require('../_supabase');
 
 const REQUIRED_FIELDS = ['ticker', 'name', 'valuationDate', 'fiscalYear'];
 
@@ -116,21 +116,28 @@ module.exports = async (req, res) => {
       );
     } catch (e) { console.warn('Demote prior failed (non-fatal):', e.message); }
 
-    // 6. Insert new row
+    // 6. Upsert row. Only one version lives per (ticker, fiscal_period)
+    // per the unique index company_dashboards_ticker_period_uniq, so we
+    // upsert on that key. Publishing the same period again overwrites
+    // the JSON payload and re-asserts is_latest=true.
     let inserted;
     try {
-      const result = await sbInsert('company_dashboards', {
-        ticker: cardTicker,
-        fiscal_period: fiscalPeriod,
-        period_end_date: periodEndDate,
-        dashboard_json: payload,
-        excel_url: null,
-        is_latest: true,
-        notes: `Published from research card by ${actor} on ${new Date().toISOString().slice(0,10)}.`,
-      });
+      const result = await sbUpsert(
+        'company_dashboards',
+        [{
+          ticker: cardTicker,
+          fiscal_period: fiscalPeriod,
+          period_end_date: periodEndDate,
+          dashboard_json: payload,
+          excel_url: null,
+          is_latest: true,
+          notes: `Published from research card by ${actor} on ${new Date().toISOString().slice(0,10)}.`,
+        }],
+        'ticker,fiscal_period'
+      );
       inserted = Array.isArray(result) ? result[0] : result;
     } catch (e) {
-      res.status(500).json({ error: 'Insert into company_dashboards failed', detail: String(e).slice(0, 200) });
+      res.status(500).json({ error: 'Upsert into company_dashboards failed', detail: String(e).slice(0, 200) });
       return;
     }
 
