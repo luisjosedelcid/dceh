@@ -243,6 +243,9 @@
     </div>
   </div>
 
+  <!-- Schwab statement pending alert (rendered by loadSchwabStatementAlert) -->
+  <div id="schwab-alert-slot" style="margin-bottom:14px"></div>
+
   <!-- ====== TAB NAV ====== -->
   <nav class="tabs" role="tablist">
     <button class="tab-btn active" data-tab="tab-consolidado" role="tab" type="button">Consolidado</button>
@@ -1068,6 +1071,65 @@ document.getElementById('btn-admin').addEventListener('click',()=>{
     const a=auth(); if(a && a.openLoginModal) a.openLoginModal();
   }
 });
+
+// ── Schwab monthly statement alert ──────────────────
+// Shows a persistent warning banner on the Performance page if the
+// current month is past its first day and no import_schwab audit
+// entry exists with ts >= day 1 of this month. Click the banner to
+// jump to the Data & audit tab where the CSV import lives.
+async function loadSchwabStatementAlert(){
+  const slot = document.getElementById('schwab-alert-slot');
+  if(!slot) return;
+  try{
+    const r = await fetch('/api/schwab-statement-status', {
+      headers: { 'x-admin-token': adminToken() },
+    });
+    if(!r.ok){ slot.innerHTML = ''; return; }
+    const j = await r.json();
+    if(!j.needs_import){ slot.innerHTML = ''; return; }
+
+    const MONTH_NAMES = ['enero','febrero','marzo','abril','mayo','junio',
+                          'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    let missingLabel = j.missing_month || '';
+    if(/^\d{4}-\d{2}$/.test(missingLabel)){
+      const [y,m] = missingLabel.split('-').map(n=>parseInt(n,10));
+      missingLabel = `${MONTH_NAMES[m-1]} ${y}`;
+    }
+    const behind = j.months_behind || 1;
+    const behindTxt = behind === 1
+      ? '1 statement pendiente'
+      : `${behind} statements pendientes`;
+    const lastTxt = j.last_import && j.last_import.ts
+      ? ` · Último import: ${new Date(j.last_import.ts).toLocaleDateString('es-ES', {year:'numeric',month:'short',day:'numeric'})}`
+      : ' · Sin imports registrados';
+
+    slot.innerHTML = `
+      <div class="alert warn" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px"
+           id="schwab-alert-banner" role="button" tabindex="0"
+           title="Ir a Data &amp; audit para cargar el CSV">
+        <div>
+          <strong>Falta cargar el statement de Schwab de ${missingLabel}.</strong>
+          <span style="opacity:0.75;font-size:11px;margin-left:6px">${behindTxt}${lastTxt}</span>
+        </div>
+        <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;color:var(--gold)">
+          Cargar &rarr;
+        </div>
+      </div>`;
+
+    const banner = document.getElementById('schwab-alert-banner');
+    const goToImport = () => {
+      if(typeof switchTab === 'function') switchTab('tab-data');
+      const panel = document.getElementById('panel-import');
+      if(panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
+    };
+    banner.addEventListener('click', goToImport);
+    banner.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); goToImport(); }
+    });
+  }catch(e){
+    slot.innerHTML = '';
+  }
+}
 
 // ── Prices panel ─────────────────────────────────
 async function loadPricesSummary(){
@@ -2281,6 +2343,7 @@ function applyAdminGate(){
   if(ok){
     loadExisting();
     loadPricesSummary();
+    loadSchwabStatementAlert();
     // Restore preferred tab (default: Consolidado)
     let preferred = 'tab-consolidado';
     try{ const v = localStorage.getItem(TAB_STORAGE_KEY); if(VALID_TABS.has(v)) preferred = v; }catch(e){}
