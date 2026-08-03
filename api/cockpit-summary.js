@@ -10,6 +10,7 @@
 const { sbSelect } = require('./_supabase');
 const { requireRole } = require('./_require-role');
 const { loadAndCompute } = require('./_perf-load');
+const { classifyAssetClass } = require('./_perf-calc');
 
 // ── Discipline gate thresholds (sourced from discipline_rules table) ──────
 // Defaults used as fallback if DB read fails or row is missing.
@@ -114,17 +115,23 @@ module.exports = async (req, res) => {
     const iwquYtd = (iwquAnchor && iwquLast) ? (iwquLast / iwquAnchor) - 1 : null;
     const vsIwquYtd = (ytdPct != null && iwquYtd != null) ? ytdPct - iwquYtd : null;
 
-    // Cash %: holdings entries where ticker is SGOV or 91282CBT7 (T-bill) treated as cash
-    const CASH_TICKERS = new Set(['SGOV', '91282CBT7']);
+    // Cash %: uninvested cash + cash-equivalent ETFs (SGOV/BIL/…).
+    // T-bill CUSIPs stay Fixed Income (maturity risk) — not counted as cash.
     const totalNav = k ? Number(k.nav || 0) : 0;
     const cashFromHoldings = holdings
-      .filter(h => CASH_TICKERS.has(h.ticker))
+      .filter(h => (h.asset_class || classifyAssetClass(h.ticker)) === 'cash_equivalent')
       .reduce((s, h) => s + (Number(h.market_value) || 0), 0);
-    const cashUsd = (k && k.cash_usd != null) ? Number(k.cash_usd) + cashFromHoldings : cashFromHoldings;
+    const cashUsd = (k && k.cash_usd != null)
+      ? Number(k.cash_usd) + Number(k.mv_cash_equivalent_usd != null ? k.mv_cash_equivalent_usd : cashFromHoldings)
+      : cashFromHoldings;
     const cashPct = totalNav > 0 ? cashUsd / totalNav : 0;
 
     // ── 2) Positions enrichment (anchor + last review + days_since_review) ─
-    const equityHoldings = holdings.filter(h => !CASH_TICKERS.has(h.ticker));
+    // Review / concentration gates apply to equities only (not cash EQ or FI).
+    const equityHoldings = holdings.filter(h => {
+      const ac = h.asset_class || classifyAssetClass(h.ticker);
+      return ac === 'equity';
+    });
     const tickers = equityHoldings.map(h => h.ticker);
     const [anchors, allEntries] = await Promise.all([
       getAnchorsByTicker(tickers),

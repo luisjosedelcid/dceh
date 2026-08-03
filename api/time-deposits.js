@@ -1,10 +1,11 @@
 // GET  /api/time-deposits            → list all deposits + valued snapshot as of today
 // GET  /api/time-deposits?as_of=YYYY → snapshot at a specific date
 // POST /api/time-deposits            → create a new deposit (admin only)
+// POST /api/time-deposits { action:'redeem', id } → mark redeemed (admin only)
 //
 // Auth: mirrors /api/performance (HMAC admin token via requireRole).
 
-const { loadAndValueTimeDeposits } = require('./_time-deposits');
+const { loadAndValueTimeDeposits, redeemTimeDeposit } = require('./_time-deposits');
 const { sbInsert } = require('./_supabase');
 const { requireRole } = require('./_require-role');
 
@@ -33,7 +34,7 @@ function parseBody(req) {
 async function handler(req, res) {
   try {
     // GET: any authenticated user (same bar as /api/performance).
-    // POST: admin only — creates portfolio capital rows.
+    // POST: admin only — creates / redeems portfolio capital rows.
     const allowed = req.method === 'GET' ? ['any'] : ['admin'];
     const auth = await requireRole(req, allowed);
     if (!auth.ok) {
@@ -54,6 +55,23 @@ async function handler(req, res) {
 
     if (req.method === 'POST') {
       const body = await parseBody(req);
+
+      // Redeem path — mark deposit as redeemed so it drops out of MV totals
+      // (use after the maturity payout is booked in Schwab/cash).
+      if (body.action === 'redeem') {
+        if (!body.id) {
+          res.status(400).end(JSON.stringify({ ok: false, error: 'Missing field: id' }));
+          return;
+        }
+        try {
+          const out = await redeemTimeDeposit(body.id);
+          res.setHeader('content-type', 'application/json');
+          res.status(200).end(JSON.stringify(out));
+        } catch (e) {
+          res.status(e.status || 500).end(JSON.stringify({ ok: false, error: String(e.message || e) }));
+        }
+        return;
+      }
 
       // Validate required fields
       const required = ['name', 'principal', 'start_date', 'maturity_date', 'annual_rate'];

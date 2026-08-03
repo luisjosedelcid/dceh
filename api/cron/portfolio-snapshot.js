@@ -20,18 +20,20 @@ module.exports = async (req, res) => {
       return;
     }
 
+    // Schema: invested_usd = net contributions to date (NOT market value).
+    // holdings_json is a JSON array; only attach full holdings on the last date.
     const rows = series.map(d => ({
       snapshot_date: d.date,
       nav_usd: d.nav,
-      invested_usd: d.market_value ?? 0,
+      invested_usd: d.invested ?? 0,
       cash_usd: d.cash,
       twr_daily: d.twr_daily,
       twr_cumulative: d.twr_cum,
       benchmark_urth: d.iwqu_norm,
       drawdown_pct: d.drawdown,
-      holdings_json: {},
+      holdings_json: [],
     }));
-    rows[rows.length - 1].holdings_json = result.holdings || {};
+    rows[rows.length - 1].holdings_json = result.holdings || [];
 
     let written = 0;
     for (let i = 0; i < rows.length; i += 500) {

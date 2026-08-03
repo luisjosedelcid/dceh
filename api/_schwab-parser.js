@@ -35,7 +35,9 @@ const ACTION_MAP = {
   'Reinvest Dividend':     { kind: 'cf', cf_type: 'DIVIDEND' },
   'Bond Interest':         { kind: 'cf', cf_type: 'INTEREST' },
   'Credit Interest':       { kind: 'cf', cf_type: 'INTEREST' }, // cash sweep
-  'Margin Interest':       { kind: 'cf', cf_type: 'INTEREST' },
+  // Margin Interest is a financing cost (Schwab amount is negative). Map to FEE
+  // so it never gets treated as income even if a consumer ignores signs.
+  'Margin Interest':       { kind: 'cf', cf_type: 'FEE' },
 
   // ── Taxes & Fees ──
   'NRA Tax':               { kind: 'cf', cf_type: 'TAX' },     // withholding
@@ -48,7 +50,8 @@ const ACTION_MAP = {
   'Wire Received':         { kind: 'cf', cf_type: 'CONTRIBUTION' },
   'Wire Sent':             { kind: 'cf', cf_type: 'WITHDRAWAL' },
   'Journaled Shares':      { kind: 'skip' }, // share movements between accts
-  'MoneyLink Transfer':    { kind: 'cf', cf_type: 'CONTRIBUTION' }, // ACH in
+  // MoneyLink ACH can be inbound (+) or outbound (−) — resolved by sign at parse time.
+  'MoneyLink Transfer':    { kind: 'cf', cf_type: 'CONTRIBUTION', by_sign: true },
 };
 
 // ── Parsing helpers ───────────────────────────────────────────────────
@@ -213,8 +216,13 @@ function parseSchwabCsv(csvText) {
         notes:         row.desc,
       });
     } else if (mapping.kind === 'cf') {
+      let cfType = mapping.cf_type;
+      // MoneyLink (and similar) — inbound contribution vs outbound withdrawal by sign.
+      if (mapping.by_sign) {
+        cfType = amount >= 0 ? 'CONTRIBUTION' : 'WITHDRAWAL';
+      }
       cashflows.push({
-        cf_type:       mapping.cf_type,
+        cf_type:       cfType,
         ticker:        row.symbol,         // null for account-level cashflows
         amount_native: amount,              // signed: -$84.38 (tax) or $364.40 (div)
         currency:      'USD',

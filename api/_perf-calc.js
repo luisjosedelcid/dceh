@@ -170,22 +170,41 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
       const cf = sortedCf[cfIdx];
       if (cf.occurred_at === date) {
         const fx = Number(cf.fx_to_usd) || 1;
+        // Honor signed amount_native. Manual entries store CONTRIBUTION/DIVIDEND/
+        // INTEREST positive and WITHDRAWAL/FEE/TAX negative; Schwab CSV is signed
+        // the same way. Math.abs + type-direction inverted Margin Interest (neg
+        // INTEREST) and outbound MoneyLink (neg CONTRIBUTION).
         const amt = Number(cf.amount_native) * fx;
+        if (!Number.isFinite(amt) || amt === 0) { cfIdx++; continue; }
         switch (cf.cf_type) {
           case 'CONTRIBUTION':
-            cash += Math.abs(amt); totalContributions += Math.abs(amt); externalFlowToday += Math.abs(amt); break;
-          case 'WITHDRAWAL':
-            cash -= Math.abs(amt); totalWithdrawals += Math.abs(amt); externalFlowToday -= Math.abs(amt); break;
+          case 'WITHDRAWAL': {
+            // Direction from sign (covers mis-tagged MoneyLink / wires).
+            if (amt >= 0) {
+              cash += amt; totalContributions += amt; externalFlowToday += amt;
+            } else {
+              const w = -amt;
+              cash -= w; totalWithdrawals += w; externalFlowToday -= w;
+            }
+            break;
+          }
           case 'DIVIDEND':
-            cash += Math.abs(amt); totalDividends += Math.abs(amt); break;
+            cash += amt; totalDividends += Math.abs(amt); break;
           case 'INTEREST':
-            cash += Math.abs(amt); totalInterest += Math.abs(amt); break;
+            // Credit interest (+); margin interest (−) reduces cash.
+            cash += amt;
+            if (amt >= 0) totalInterest += amt;
+            else totalFeesCash += -amt;
+            break;
           case 'FEE':
-            cash -= Math.abs(amt); totalFeesCash += Math.abs(amt); break;
           case 'TAX':
-            cash -= Math.abs(amt); totalTaxes += Math.abs(amt); break;
+            cash += amt; // typically negative; refunds (rare +) add cash
+            if (cf.cf_type === 'FEE') totalFeesCash += Math.abs(amt);
+            else totalTaxes += Math.abs(amt);
+            break;
           default:
-            // unknown type — treat as no-op
+            // unknown type — apply signed cash impact conservatively
+            cash += amt;
             break;
         }
       }
@@ -270,6 +289,7 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
       nav: round2(nav),
       cash: round2(cash),
       market_value: round2(mv),
+      invested: round2(totalContributions - totalWithdrawals), // net contributions to date
       external_flow: round2(externalFlowToday),
       twr_daily: r,
       twr_cum: twrCum - 1,
@@ -294,21 +314,12 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
   }
 
   // Asset class classification (SEC/GAAP cash-equivalents rule).
-  // - cash_equivalent: ultra-short T-bill ETFs (money market funds, effective maturity <=90d)
+  // - cash_equivalent: ultra-short T-bill / money-market ETFs (effective maturity <=90d)
   //   -> aggregated into cash_usd bucket at KPI level
   // - fixed_income: individual T-bill CUSIPs, T-notes, corporate/agency/muni bonds
   // - equity: everything else (public equities, ADRs)
   // Cash (uninvested USD balance) is tracked separately via `cash_usd`.
-  function classifyAssetClass(ticker) {
-    if (!ticker) return 'equity';
-    const t = String(ticker).toUpperCase();
-    // Money market / ultra-short T-bill ETFs (Cash & Equivalents per SEC)
-    if (t === 'SGOV' || t === 'BIL' || t === 'GBIL' || t === 'CLIP') return 'cash_equivalent';
-    // Individual T-bill/T-note CUSIPs: 9 chars, all alphanumeric, starts with 912
-    // These have real maturity risk (>90d typical) -> Fixed Income
-    if (/^912[0-9A-Z]{6}$/.test(t)) return 'fixed_income';
-    return 'equity';
-  }
+  // (classifyAssetClass is module-level — see below.)
 
   const holdings = [];
   let totalMv = 0;
@@ -375,13 +386,17 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
   const maxDrawdown = daily.reduce((m, d) => Math.max(m, d.drawdown), 0);
   const iwquRet = (last.iwqu_norm != null) ? (last.iwqu_norm - 1) : null;
 
-  // IRR — XIRR-style on external cashflows + terminal NAV
+  // IRR — XIRR-style on external cashflows + terminal NAV.
+  // Convention: money into the portfolio is negative; money out is positive.
+  // amount_native is the opposite sign (contribution +, withdrawal −) → negate.
   const irrFlows = [];
   for (const cf of sortedCf) {
     const fx = Number(cf.fx_to_usd) || 1;
     const amt = Number(cf.amount_native) * fx;
-    if (cf.cf_type === 'CONTRIBUTION') irrFlows.push({ date: cf.occurred_at, amount: -Math.abs(amt) });
-    else if (cf.cf_type === 'WITHDRAWAL') irrFlows.push({ date: cf.occurred_at, amount: +Math.abs(amt) });
+    if (!Number.isFinite(amt) || amt === 0) continue;
+    if (cf.cf_type === 'CONTRIBUTION' || cf.cf_type === 'WITHDRAWAL') {
+      irrFlows.push({ date: cf.occurred_at, amount: -amt });
+    }
   }
   irrFlows.push({ date: lastDate, amount: last.nav });
   const irr = xirr(irrFlows);
@@ -479,4 +494,23 @@ function xirr(flows, guess = 0.1) {
 function round2(x) { return Math.round((Number(x) || 0) * 100) / 100; }
 function round4(x) { return Math.round((Number(x) || 0) * 10000) / 10000; }
 
-module.exports = { computeDaily, fifoWalk, xirr, buildPriceLookup };
+// Shared cash-equivalent ETF allowlist (keep in sync with Research grid filter).
+const CASH_EQUIVALENT_TICKERS = new Set([
+  'SGOV', 'BIL', 'GBIL', 'CLIP',
+  'SHV', 'SHY', 'VGSH', 'VBIL', 'TBIL', 'USFR',
+  'XHLF', 'CLTL', 'MINT',
+]);
+
+function classifyAssetClass(ticker) {
+  if (!ticker) return 'equity';
+  const t = String(ticker).toUpperCase();
+  if (CASH_EQUIVALENT_TICKERS.has(t)) return 'cash_equivalent';
+  // Individual T-bill/T-note CUSIPs: 9 chars, alphanumeric, starts with 912
+  if (/^912[0-9A-Z]{6}$/.test(t)) return 'fixed_income';
+  return 'equity';
+}
+
+module.exports = {
+  computeDaily, fifoWalk, xirr, buildPriceLookup,
+  classifyAssetClass, CASH_EQUIVALENT_TICKERS,
+};
