@@ -235,9 +235,16 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
     for (const [ticker, tickerLots] of lots) {
       const totalQty = tickerLots.reduce((s, l) => s + l.qty, 0);
       if (totalQty <= 1e-9) continue;
-      const px = priceOn(ticker, date);
-      if (px == null) continue; // before first price — skip valuation
       const cost = tickerLots.reduce((s, l) => s + l.qty * l.cost_per, 0);
+      let px = priceOn(ticker, date);
+      if (px == null) {
+        // Fallback: for instruments without a market price on this date
+        // (T-bill CUSIPs, private assets, freshly opened positions before
+        // the price backfill catches up), value at average cost. This is
+        // the correct treatment for hold-to-maturity Treasuries and any
+        // asset without a quotable market — no phantom ‘$0’ hole in NAV.
+        px = totalQty > 0 ? cost / totalQty : 0;
+      }
       mv += totalQty * px;
       unrealizedPnl += (totalQty * px - cost);
     }
@@ -293,14 +300,21 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
     if (totalQty <= 1e-9) continue;
     const cost = tickerLots.reduce((s, l) => s + l.qty * l.cost_per, 0);
     const avgCost = cost / totalQty;
-    const px = priceOn(ticker, lastDate);
-    const mv = px != null ? totalQty * px : null;
-    if (mv != null) totalMv += mv;
+    let px = priceOn(ticker, lastDate);
+    let pxSource = 'market';
+    if (px == null) {
+      // Same fallback as the daily MV loop: value at average cost when no
+      // market price is available (T-bill CUSIPs, private assets, etc.).
+      px = avgCost;
+      pxSource = 'cost';
+    }
+    const mv = totalQty * px;
+    totalMv += mv;
 
     // Per-position annualized IRR: (mv/cost)^(365/days) - 1
     const fbd = firstBuyByTicker.get(ticker);
     let irrAnn = null, daysHeld = null;
-    if (fbd && mv != null && cost > 0) {
+    if (fbd && cost > 0) {
       const ms = new Date(lastDate) - new Date(fbd);
       daysHeld = Math.max(1, Math.floor(ms / 86400000));
       const years = daysHeld / 365;
@@ -312,9 +326,10 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
       qty: totalQty,
       avg_cost: round4(avgCost),
       cost_basis: round2(cost),
-      last_price: px != null ? round4(px) : null,
-      market_value: mv != null ? round2(mv) : null,
-      unrealized_pnl: (mv != null) ? round2(mv - cost) : null,
+      last_price: round4(px),
+      last_price_source: pxSource,
+      market_value: round2(mv),
+      unrealized_pnl: round2(mv - cost),
       first_buy_date: fbd || null,
       days_held: daysHeld,
       irr_annualized: irrAnn,
