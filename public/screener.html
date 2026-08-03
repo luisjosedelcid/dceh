@@ -1893,6 +1893,7 @@ async function loadIdeaFeed() {
 
 // ─── Idea Feed: aggregate items by ticker and render shortlist-style table ───
 async function renderIdeaFeedTickers(items, status, cont) {
+  try {
   // 1. Aggregate. Items are sorted by published_at desc, so mentions[0] = latest.
   const map = new Map(); // ticker -> { ticker, mentions:[], sources:Set }
   for (const it of items) {
@@ -1990,6 +1991,11 @@ async function renderIdeaFeedTickers(items, status, cont) {
       tds[5].textContent = fmtMktCap(profile?.marketCapitalization);
     } catch (e) { /* ignore */ }
   }));
+  } catch (err) {
+    console.error('[renderIdeaFeedTickers] failed:', err);
+    status.textContent = 'Render error: ' + (err.message || err);
+    cont.innerHTML = '<div style="padding:16px;color:var(--red);font-family:Menlo,monospace;font-size:11px;white-space:pre-wrap">' + _ifEscape(String(err.stack || err.message || err)) + '</div>';
+  }
 }
 
 // Submit ticker filter on Enter
