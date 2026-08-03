@@ -1082,11 +1082,11 @@ function renderDecisionDetail(id) {
       ${r.linked_holding ? `<div><div class="k">Linked</div><div class="v" style="font-size:12px">${escapeHtml(r.linked_holding)}</div></div>` : ''}
     </div>
     <div class="field">
-      <div class="field-lbl">${isPass ? 'Thesis (why declined)' : 'Thesis'} ${r.framework_version === 'v3.2' ? '<span class="v32-banner">v3.2</span>' : ''}</div>
+      <div class="field-lbl">${isPass ? 'Thesis (why declined)' : 'Thesis'} ${(!isPass && r.framework_version === 'v3.2') ? '<span class="v32-banner">v3.2</span>' : ''}</div>
       <div class="field-val">${escapeHtml(_thesisMain)}</div>
     </div>
     ${_notesTail ? `<div class="field"><div class="field-lbl">Notes</div><div class="field-val">${escapeHtml(_notesTail)}</div></div>` : ''}
-    ${r.framework_version === 'v3.2' ? renderV32Block(r) : ''}
+    ${(!isPass && r.framework_version === 'v3.2') ? renderV32Block(r) : ''}
     ${(!isPass && r.framework_version !== 'v3.2' && cats.length) ? `<div class="field"><div class="field-lbl">Catalysts</div><div class="pill-list">${cats.map(c => `<span>${escapeHtml(c)}</span>`).join('')}</div></div>` : ''}
     ${(!isPass && r.framework_version !== 'v3.2' && r.pre_mortem) ? `<div class="field"><div class="field-lbl">Pre-mortem (what would change my mind)</div><div class="field-val">${escapeHtml(r.pre_mortem)}</div></div>` : ''}
     ${!isPass ? `<div class="field"><div class="field-lbl">Reviews</div>

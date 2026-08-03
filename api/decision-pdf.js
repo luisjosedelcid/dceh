@@ -98,10 +98,13 @@ module.exports = async (req, res) => {
       thesisMain = thesisMain.slice(0, sepIdx).trim();
     }
 
-    // Build PDF
+    // Build PDF. bufferPages=true is REQUIRED for the footer's
+    // switchToPage() loop below — without it, PDFKit's page tracking
+    // could spawn a phantom blank page when we jump between page indices.
     const doc = new PDFDocument({
       size: 'LETTER',
       margins: { top: 60, bottom: 60, left: 54, right: 54 },
+      bufferPages: true,
       info: {
         Title: `DCE Holdings — Decision ${r.ticker} ${r.decision_type} ${r.decision_date}`,
         Author: 'DCE Holdings Investment Office',
@@ -151,9 +154,12 @@ module.exports = async (req, res) => {
     });
     y += 60;
 
-    // Type badge (colored)
+    // Type badge (colored) — the FRAMEWORK v3.2 pill only makes sense
+    // for BUY/ADD entries that actually use the v3.2 investment package.
+    // PASS decisions carry framework_version from the source card but
+    // never surface any v3.2 content, so the badge is noise there.
     const tc = TYPE_COLORS[r.decision_type] || { fill: '#eef1f7', text: '#3a4460' };
-    if (r.framework_version === 'v3.2') {
+    if (!isPass && r.framework_version === 'v3.2') {
       doc.font('Helvetica-Bold').fontSize(9);
       const label = 'FRAMEWORK v3.2';
       const w = doc.widthOfString(label) + 20;
@@ -308,18 +314,31 @@ module.exports = async (req, res) => {
       y = drawQA(doc, y, M, CW, 'LESSON LEARNED', r.lesson_learned);
     }
 
-    // Footer on every page
+    // Footer on every page. Dimensions are calibrated so no text extends
+    // past doc.page.height. Two subtle PDFKit gotchas we work around:
+    //   1. text() with { width: CW, align: 'right' } sitting inside the
+    //      bottom margin band still runs an overflow check on the reserved
+    //      width and can spawn a blank page — even with lineBreak:false.
+    //      Fix: compute the right-aligned X ourselves via widthOfString()
+    //      and pass no `width` option so no overflow region is reserved.
+    //   2. The bottom margin defaults trigger auto-pagination if any y+h
+    //      lands past (page.height - marginBottom). We stay comfortably
+    //      above that with a 28px band + fY+10 text baseline.
     const range = doc.bufferedPageRange();
+    const leftStr = `CONFIDENTIAL  ·  DCE HOLDINGS  ·  Generated ${new Date().toISOString().slice(0, 10)}  ·  Entry #${r.id}`;
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(range.start + i);
-      const fY = doc.page.height - 40;
-      doc.rect(0, fY, W, 40).fill(CREAM);
+      const bandH = 28;
+      const fY = doc.page.height - bandH;
+      doc.rect(0, fY, W, bandH).fill(CREAM);
+      // Left: confidential + generated stamp on a single line.
       doc.fillColor(GRAY_MID).font('Helvetica').fontSize(7)
-         .text('CONFIDENTIAL  ·  DCE HOLDINGS  ·  INVESTMENT OFFICE', M, fY + 10, { lineBreak: false });
+         .text(leftStr, M, fY + 10, { lineBreak: false });
+      // Right: page counter with manually-computed X (no width option).
+      const rightStr = `Page ${i + 1} of ${range.count}`;
+      const rw = doc.widthOfString(rightStr);
       doc.fillColor(GRAY_MID).font('Helvetica').fontSize(7)
-         .text(`Page ${i + 1} of ${range.count}`, M, fY + 10, { width: CW, align: 'right', lineBreak: false });
-      doc.fillColor(GRAY_MID).font('Helvetica-Oblique').fontSize(7)
-         .text(`Generated ${new Date().toISOString().slice(0, 10)}  ·  Entry #${r.id}`, M, fY + 22, { width: CW, lineBreak: false, height: 10 });
+         .text(rightStr, W - M - rw, fY + 10, { lineBreak: false });
     }
 
     doc.end();
