@@ -23,11 +23,15 @@ async function loadAndCompute({ endDate } = {}) {
   ].sort()[0];
 
   const today = new Date();
-  // Use yesterday as end if before market close today (price might not be in DB yet).
-  // Caller can override with endDate. Default to last available IWQU.L date or today, whichever earlier.
-  const lastIwqu = iwquSeries.length ? iwquSeries[iwquSeries.length - 1].price_date : null;
+  // End = max(last tx date, last cf date) so the window covers all portfolio
+  // activity even when the benchmark series (IWQU.L) is stale. Days without an
+  // IWQU.L close simply get iwqu_norm=null on the series — they don't truncate
+  // the whole dashboard. Caller can still override via endDate.
   const todayStr = today.toISOString().slice(0, 10);
-  const computedEnd = endDate || (lastIwqu && lastIwqu < todayStr ? lastIwqu : todayStr);
+  const lastTx = tx.length ? tx[tx.length - 1].trade_date : null;
+  const lastCf = cf.length ? cf[cf.length - 1].occurred_at : null;
+  const lastActivity = [lastTx, lastCf, startDate].filter(Boolean).sort().slice(-1)[0];
+  const computedEnd = endDate || (lastActivity && lastActivity > todayStr ? lastActivity : todayStr);
 
   return computeDaily({
     transactions: tx,

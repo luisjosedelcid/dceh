@@ -377,7 +377,7 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
   };
 }
 
-// ── XIRR (Newton-Raphson) ────────────────────────────────────────────────────
+// ── XIRR (Newton-Raphson with bisection fallback) ────────────────────────────
 function xirr(flows, guess = 0.1) {
   if (flows.length < 2) return null;
   const t0 = parseYMD(flows[0].date);
@@ -387,7 +387,16 @@ function xirr(flows, guess = 0.1) {
   const hasNeg = amts.some(a => a < 0);
   if (!hasPos || !hasNeg) return null;
 
+  // NPV as a function of rate r
+  const npv = (r) => {
+    let f = 0;
+    for (let i = 0; i < amts.length; i++) f += amts[i] / Math.pow(1 + r, ts[i]);
+    return f;
+  };
+
+  // 1) Newton-Raphson from guess
   let r = guess;
+  let converged = false;
   for (let iter = 0; iter < 100; iter++) {
     let f = 0, df = 0;
     for (let i = 0; i < amts.length; i++) {
@@ -398,11 +407,28 @@ function xirr(flows, guess = 0.1) {
     if (Math.abs(df) < 1e-12) break;
     const newR = r - f / df;
     if (!isFinite(newR)) break;
-    if (Math.abs(newR - r) < 1e-7) return newR;
+    if (Math.abs(newR - r) < 1e-9) { r = newR; converged = true; break; }
     r = newR;
     if (r < -0.999) r = -0.999;
+    if (r > 100) r = 100; // hard cap while iterating; > 10,000% ann is nonsense
   }
-  return isFinite(r) ? r : null;
+
+  // Reject Newton result if it's outside a sane band (-99% to +1000% ann)
+  if (converged && isFinite(r) && r > -0.999 && r <= 10 && Math.abs(npv(r)) < 1e-2) {
+    return r;
+  }
+
+  // 2) Bisection fallback over [-0.99, 10] (i.e. -99% to +1000% ann)
+  let lo = -0.99, hi = 10;
+  let nLo = npv(lo), nHi = npv(hi);
+  if (nLo * nHi > 0) return null; // no sign change — no real root in this band
+  for (let iter = 0; iter < 200; iter++) {
+    const mid = (lo + hi) / 2;
+    const nMid = npv(mid);
+    if (Math.abs(nMid) < 1e-3 || (hi - lo) < 1e-8) return mid;
+    if (nLo * nMid < 0) { hi = mid; nHi = nMid; } else { lo = mid; nLo = nMid; }
+  }
+  return (lo + hi) / 2;
 }
 
 // ── Rounding helpers ─────────────────────────────────────────────────────────
