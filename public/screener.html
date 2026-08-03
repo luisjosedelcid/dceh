@@ -1860,7 +1860,7 @@ async function loadIdeaFeed() {
       const src = _ifSourcesIndex[it.source_id] || { name: 'Unknown', is_paid: false };
       const tickers = (it.tickers || []).map(t => {
         const tUp = String(t).toUpperCase();
-        const isCovered = COVERED.includes(tUp);
+        const isCovered = _SECTOR_COVERED.includes(tUp);
         const href = isCovered ? `/company.html?ticker=${encodeURIComponent(t)}` : `https://www.roic.ai/quote/${encodeURIComponent(t)}`;
         const extra = isCovered ? '' : ' target="_blank" rel="noopener noreferrer"';
         const arrow = isCovered ? '' : ' ↗';
@@ -1953,7 +1953,7 @@ async function renderIdeaFeedTickers(items, status, cont) {
                 : '<span style="color:var(--gray-mid);font-style:italic">Pending next refresh…</span>'}
             </td>
             <td style="white-space:nowrap">
-              ${(function(){ const tUp = String(r.ticker).toUpperCase(); const isCov = COVERED.includes(tUp); return isCov
+              ${(function(){ const tUp = String(r.ticker).toUpperCase(); const isCov = _SECTOR_COVERED.includes(tUp); return isCov
                 ? `<a href="/company.html?ticker=${encodeURIComponent(r.ticker)}" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px;margin-right:4px">Open →</a>`
                 : `<a href="https://www.roic.ai/quote/${encodeURIComponent(r.ticker)}" target="_blank" rel="noopener noreferrer" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px;margin-right:4px">Roic.ai ↗</a>`; })()}
               <button onclick="sendToShortlist(this)" data-tk="${_ifEscape(r.ticker)}" data-nm="${_ifEscape(r.thesisItem?.title || '')}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:5px 10px;cursor:pointer;font-family:inherit" title="Add to Shortlist (radar)">→ Shortlist</button>
