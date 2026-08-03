@@ -1907,6 +1907,52 @@ function resetIRRAssumptions() {
   renderIrr();
 }
 
+function setIrrPriceMode(mode) {
+  if (mode !== 'report' && mode !== 'live') return;
+  if (mode === 'live' && !(typeof currentPrice === 'number' && currentPrice > 0)) {
+    const info = document.getElementById('irr-price-toggle-info');
+    if (info) info.textContent = 'Live price unavailable';
+    return;
+  }
+  irrPriceMode = mode;
+  updateIrrToggleUI();
+  updateIRRCalc();
+}
+
+function updateIrrToggleUI() {
+  try {
+    const wrap = document.getElementById('irr-price-toggle');
+    if (wrap) {
+      wrap.querySelectorAll('button[data-mode]').forEach(btn => {
+        const active = btn.getAttribute('data-mode') === irrPriceMode;
+        btn.style.background = active ? 'var(--navy)' : 'transparent';
+        btn.style.color      = active ? '#fff' : 'var(--navy)';
+      });
+    }
+    const info = document.getElementById('irr-price-toggle-info');
+    if (info) {
+      const ov = (D && D.overview) || {};
+      const snap = Number(ov.stockPrice) || 0;
+      const live = (typeof currentPrice === 'number' && currentPrice > 0) ? currentPrice : null;
+      const S = (typeof sym === 'function') ? sym() : '$';
+      const fp = (v) => `${S}${(typeof fmtDec === 'function') ? fmtDec(v, v >= 100 ? 0 : 2) : v.toFixed(2)}`;
+      if (irrPriceMode === 'live' && live != null) {
+        const drift = snap > 0 ? ((live - snap) / snap) * 100 : null;
+        info.textContent = drift != null
+          ? `Using live ${fp(live)} (snap ${fp(snap)}, ${drift >= 0 ? '+' : ''}${drift.toFixed(1)}%)`
+          : `Using live ${fp(live)}`;
+      } else if (irrPriceMode === 'report') {
+        const liveTxt = live != null ? ` (live ${fp(live)})` : '';
+        info.textContent = snap > 0 ? `Using report ${fp(snap)}${liveTxt}` : 'Using report snapshot';
+      } else {
+        info.textContent = 'Live price unavailable';
+      }
+    }
+  } catch (e) {
+    console.error('[updateIrrToggleUI] failed:', e);
+  }
+}
+
 function updateIRRCalc() {
   try {
   const s    = irrState;
