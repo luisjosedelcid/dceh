@@ -63,10 +63,14 @@ async function ensureCompanySnapshotsFolder() {
     CACHED_FOLDER_ID = existing[0].id;
     return CACHED_FOLDER_ID;
   }
-  // Create it
+  // Create it — slug is NOT NULL in the schema
   const ins = await sbInsert('dataroom_folders', {
     name: 'Company Snapshots',
+    slug: 'company-snapshots',
     parent_id: researchId,
+    order_index: 100,
+    is_system: false,
+    created_by: 'system',
   });
   const row = Array.isArray(ins) ? ins[0] : ins;
   CACHED_FOLDER_ID = row.id;
