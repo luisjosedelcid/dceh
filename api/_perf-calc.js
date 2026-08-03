@@ -293,15 +293,19 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
     }
   }
 
-  // Asset class classification.
-  // - fixed_income: SGOV ETF, T-bill CUSIPs (9-char alphanumeric starting with '912')
+  // Asset class classification (SEC/GAAP cash-equivalents rule).
+  // - cash_equivalent: ultra-short T-bill ETFs (money market funds, effective maturity <=90d)
+  //   -> aggregated into cash_usd bucket at KPI level
+  // - fixed_income: individual T-bill CUSIPs, T-notes, corporate/agency/muni bonds
   // - equity: everything else (public equities, ADRs)
   // Cash (uninvested USD balance) is tracked separately via `cash_usd`.
   function classifyAssetClass(ticker) {
     if (!ticker) return 'equity';
     const t = String(ticker).toUpperCase();
-    if (t === 'SGOV') return 'fixed_income';
-    // T-bill CUSIPs: 9 chars, all alphanumeric, starts with 912 (US Treasury)
+    // Money market / ultra-short T-bill ETFs (Cash & Equivalents per SEC)
+    if (t === 'SGOV' || t === 'BIL' || t === 'GBIL' || t === 'CLIP') return 'cash_equivalent';
+    // Individual T-bill/T-note CUSIPs: 9 chars, all alphanumeric, starts with 912
+    // These have real maturity risk (>90d typical) -> Fixed Income
     if (/^912[0-9A-Z]{6}$/.test(t)) return 'fixed_income';
     return 'equity';
   }
@@ -310,6 +314,7 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
   let totalMv = 0;
   let mvEquity = 0;
   let mvFixedIncome = 0;
+  let mvCashEquivalent = 0;
   for (const [ticker, tickerLots] of lots) {
     const totalQty = tickerLots.reduce((s, l) => s + l.qty, 0);
     if (totalQty <= 1e-9) continue;
@@ -338,6 +343,7 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
 
     const assetClass = classifyAssetClass(ticker);
     if (assetClass === 'fixed_income') mvFixedIncome += mv;
+    else if (assetClass === 'cash_equivalent') mvCashEquivalent += mv;
     else mvEquity += mv;
 
     holdings.push({
@@ -392,6 +398,7 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
       market_value_usd: last.market_value,
       mv_equity_usd: round2(mvEquity),
       mv_fixed_income_usd: round2(mvFixedIncome),
+      mv_cash_equivalent_usd: round2(mvCashEquivalent),
       invested_usd: round2(navInvested),
       total_contributions: round2(totalContributions),
       total_withdrawals: round2(totalWithdrawals),

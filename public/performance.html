@@ -2103,7 +2103,7 @@ function renderConsolidado(eqK, eqHoldings){
   //   - Cash & FI   = MV de renta fija (SGOV, T-bills) + cash uninvested
   // KPIs consolidados usan el NAV total del sleeve Equity para no doble-contar.
   let eqNav=0, eqCap=0, eqPnlUnr=0, eqLast='—', eqTwr=null;
-  let eqMvEquity=0, eqMvFixedIncome=0, eqCashUsd=0;
+  let eqMvEquity=0, eqMvFixedIncome=0, eqMvCashEquiv=0, eqCashUsd=0;
   if(eqK){
     eqNav = Number(eqK.nav||0);
     eqCap = Number(eqK.invested_usd||0);
@@ -2111,14 +2111,17 @@ function renderConsolidado(eqK, eqHoldings){
     eqLast = eqK.last_date || '—';
     eqMvEquity = Number(eqK.mv_equity_usd||0);
     eqMvFixedIncome = Number(eqK.mv_fixed_income_usd||0);
+    eqMvCashEquiv = Number(eqK.mv_cash_equivalent_usd||0);
     eqCashUsd = Number(eqK.cash_usd||0);
     // TWR cumulativo del backend (encadenado real, estándar GIPS)
     if(eqK.twr_cum_pct != null) eqTwr = Number(eqK.twr_cum_pct);
   }
   // NAV de cada sub-sleeve (split cosmético: comparten motor Equity)
+  // Regla SEC/GAAP: SGOV (money market ETF) + cash uninvested → Cash & Equivalents
+  //                 T-bill CUSIPs individuales → Fixed Income
   const eqEquityNav = eqMvEquity;
   const fixedIncomeNav = eqMvFixedIncome;
-  const cashNav = eqCashUsd;
+  const cashNav = eqCashUsd + eqMvCashEquiv;
 
   // ---- Sleeve Real Estate ----
   let reNav=0, reCap=0, reLast='—', reTwr=null;
@@ -2284,7 +2287,7 @@ function renderConsolidado(eqK, eqHoldings){
     {label:'Private equity', min:0.00, max:0.20, actual: 0},
     {label:'Real estate', min:0.00, max:0.20, actual: totNav>0 ? reNav/totNav : 0},
     {label:'Fixed income', min:0.05, max:0.15, actual: totNav>0 ? eqMvFixedIncome/totNav : 0},
-    {label:'Cash & equivalents', min:0.15, max:0.25, actual: totNav>0 ? eqCashUsd/totNav : 0},
+    {label:'Cash & equivalents', min:0.15, max:0.25, actual: totNav>0 ? (eqCashUsd+eqMvCashEquiv)/totNav : 0},
     {label:'Alternatives (incl. Crypto)', min:0.00, max:0.15, actual: totNav>0 ? crNav/totNav : 0},
   ];
   const ipsTbody = document.getElementById('cons-ips-tbody');
@@ -2327,8 +2330,9 @@ function renderConsolidado(eqK, eqHoldings){
     if(mv>0){
       // Sleeve badge sigue la clasificación de asset class del backend
       const ac = h.asset_class || 'equity';
-      const sleeveLabel = ac === 'fixed_income' ? 'Fixed Income' : 'Equity';
-      const sleeveColor = ac === 'fixed_income' ? '#4E6480' : '#1B2642';
+      let sleeveLabel = 'Equity', sleeveColor = '#1B2642';
+      if(ac === 'fixed_income'){ sleeveLabel = 'Fixed Income'; sleeveColor = '#4E6480'; }
+      else if(ac === 'cash_equivalent'){ sleeveLabel = 'Cash & Equivalents'; sleeveColor = '#8FA1B8'; }
       all.push({sleeve:sleeveLabel, name, mv, color:sleeveColor});
     }
   }
