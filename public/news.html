@@ -178,6 +178,7 @@
 
   <!-- TICKER ROW -->
   <div class="ticker-row" id="ticker-row"></div>
+  <div style="font-size:10px;color:var(--gray-mid);letter-spacing:0.06em;margin:-14px 0 20px 4px">TIP · CMD/CTRL-CLICK TO MULTI-SELECT · SHIFT-CLICK FOR RANGE</div>
 
   <!-- TABS -->
   <div class="tabs">
@@ -256,8 +257,26 @@ function purgeOldHistory() {
   return removed;
 }
 let tickerList = [];
-let activeTicker = '';
+// Multi-select model: activeTickers is a Set of tickers currently selected in
+// the chip row. Legacy code that expected a single activeTicker still works
+// via the getter below — it returns the first selected ticker (or '').
+let activeTickers = new Set();
+function getActiveTicker() {
+  const it = activeTickers.values().next();
+  return it.done ? '' : it.value;
+}
+function setActiveTicker(t) {
+  activeTickers = new Set(t ? [t] : []);
+}
+Object.defineProperty(window, 'activeTicker', {
+  get: getActiveTicker,
+  set: setActiveTicker,
+  configurable: true,
+});
 let currentView = 'tracker';
+// freshNews may contain items from multiple tickers when multi-select is on.
+// Each item now carries a `ticker` field so markReported() can route them to
+// the right per-ticker history bucket.
 let freshNews = null;
 
 function authHeaders(extra) {
@@ -284,7 +303,8 @@ async function init() {
     if (!ledger.tickers[t]) ledger.tickers[t] = { events: [], lastReport: null };
   });
 
-  activeTicker = tickerList[0] || '';
+  // Default: first ticker selected. User can Cmd/Ctrl-click to add more.
+  if (tickerList[0]) activeTickers = new Set([tickerList[0]]);
   saveLedger();
   renderTickers();
   renderView();
@@ -312,18 +332,60 @@ function renderTickers() {
   const row = document.getElementById('ticker-row');
   let html = '';
   tickerList.forEach(t => {
-    const cls = t === activeTicker ? 'chip active' : 'chip';
-    html += `<div class="${cls}" onclick="selectTicker('${t}')">${t}<span class="x" onclick="event.stopPropagation();removeTicker('${t}')">×</span></div>`;
+    const cls = activeTickers.has(t) ? 'chip active' : 'chip';
+    // event is passed through so selectTicker() can inspect modifier keys
+    // (Cmd/Ctrl or Shift) to toggle multi-select.
+    html += `<div class="${cls}" onclick="selectTicker(event, '${t}')">${t}<span class="x" onclick="event.stopPropagation();removeTicker('${t}')">×</span></div>`;
   });
   html += `<button class="add-btn" onclick="openAddModal()">+ ADD</button>`;
+  // Show 'Clear selection' + count when 2+ tickers are selected — makes the
+  // multi-select state obvious.
+  if (activeTickers.size > 1) {
+    html += `<span style="margin-left:12px;font-size:11px;color:var(--gray-mid);letter-spacing:0.06em">${activeTickers.size} selected · <a href="#" onclick="event.preventDefault();clearSelection()" style="color:var(--navy);text-decoration:underline">clear</a></span>`;
+  }
   row.innerHTML = html;
 }
 
-function selectTicker(t) {
-  activeTicker = t;
+// Toggle multi-select behaviour:
+//   - plain click     → replace selection with just this ticker
+//   - Cmd/Ctrl+click  → toggle this ticker in/out of the selection
+//   - Shift+click     → add range from last selected to this one
+function selectTicker(ev, t) {
+  const meta = ev && (ev.metaKey || ev.ctrlKey);
+  const shift = ev && ev.shiftKey;
+  if (shift && activeTickers.size > 0) {
+    // Select range in tickerList order between last active anchor and t.
+    const last = Array.from(activeTickers).pop();
+    const a = tickerList.indexOf(last);
+    const b = tickerList.indexOf(t);
+    if (a >= 0 && b >= 0) {
+      const [lo, hi] = a <= b ? [a, b] : [b, a];
+      for (let i = lo; i <= hi; i++) activeTickers.add(tickerList[i]);
+    } else {
+      activeTickers.add(t);
+    }
+  } else if (meta) {
+    if (activeTickers.has(t)) {
+      if (activeTickers.size > 1) activeTickers.delete(t);
+      // Never leave zero selected — the scan needs at least one target.
+    } else {
+      activeTickers.add(t);
+    }
+  } else {
+    activeTickers = new Set([t]);
+  }
   freshNews = null;
   document.getElementById('fresh-results').innerHTML = '';
   document.getElementById('error-box').innerHTML = '';
+  document.getElementById('status').textContent = '';
+  renderTickers();
+  renderView();
+}
+
+function clearSelection() {
+  if (tickerList[0]) activeTickers = new Set([tickerList[0]]);
+  freshNews = null;
+  document.getElementById('fresh-results').innerHTML = '';
   document.getElementById('status').textContent = '';
   renderTickers();
   renderView();
@@ -348,7 +410,8 @@ async function addTicker(val, source) {
 
   if (!tickerList.includes(t)) tickerList.push(t);
   if (!ledger.tickers[t]) ledger.tickers[t] = { events: [], lastReport: null };
-  activeTicker = t;
+  // Adding a new ticker replaces the current selection with just it.
+  activeTickers = new Set([t]);
   saveLedger();
   freshNews = null;
   renderTickers();
@@ -371,7 +434,10 @@ async function removeTicker(t) {
 
   tickerList = tickerList.filter(x => x !== t);
   delete ledger.tickers[t];
-  if (activeTicker === t) activeTicker = tickerList[0] || '';
+  activeTickers.delete(t);
+  if (activeTickers.size === 0 && tickerList[0]) {
+    activeTickers = new Set([tickerList[0]]);
+  }
   saveLedger();
   freshNews = null;
   renderTickers();
@@ -396,48 +462,73 @@ function renderView() {
 // ═══ TRACKER VIEW ═══
 function renderTracker() {
   const el = document.getElementById('fresh-results');
+  const tickers = Array.from(activeTickers);
+  const label = tickers.length === 1 ? tickers[0] : `${tickers.length} tickers`;
   if (!freshNews) {
-    const cur = getTicker(activeTicker);
+    // Summary line — total ledger events + oldest last-report across selection.
+    const totals = tickers.reduce((acc, t) => {
+      const td = getTicker(t);
+      acc.events += td.events.length;
+      if (td.lastReport && (!acc.lastReport || td.lastReport < acc.lastReport)) acc.lastReport = td.lastReport;
+      return acc;
+    }, { events: 0, lastReport: null });
     el.innerHTML = `<div class="empty">
-      <p>Press scan to search for new events on <strong>${activeTicker}</strong>.</p>
-      <p style="font-size:11px;margin-top:6px">${cur.events.length} in ledger · Last report: ${cur.lastReport ? fmtDate(cur.lastReport) : 'Never'}</p>
+      <p>Press scan to search for new events on <strong>${escapeHtml(label)}</strong>.</p>
+      <p style="font-size:11px;margin-top:6px">${totals.events} in ledger · Oldest last report: ${totals.lastReport ? fmtDate(totals.lastReport) : 'Never'}</p>
     </div>`;
     return;
   }
   if (freshNews.length === 0) {
     el.innerHTML = `<div class="empty">
       <div class="empty-icon" style="color:var(--green)">✓</div>
-      <p>No new material events since last report.</p>
+      <p>No new material events since last report on ${escapeHtml(label)}.</p>
     </div>`;
     return;
   }
   let html = `<div class="res-head"><span class="res-title">${freshNews.length} New Event${freshNews.length>1?'s':''}</span><button class="mark-btn" onclick="markReported()">✓ Mark as Reported</button></div>`;
   freshNews
     .sort((a,b) => {const m={high:0,medium:1,low:2}; return (m[a.materiality]||1)-(m[b.materiality]||1);})
-    .forEach(item => { html += renderEventCard(item); });
+    .forEach(item => { html += renderEventCard(item, false, /*showTicker*/ tickers.length > 1); });
   el.innerHTML = html;
 }
 
 function renderHistory() {
   const el = document.getElementById('history-results');
-  const cur = getTicker(activeTicker);
-  if (cur.events.length === 0) {
-    el.innerHTML = `<div class="empty"><p>No events tracked yet for ${activeTicker}.</p></div>`;
+  const tickers = Array.from(activeTickers);
+  const label = tickers.length === 1 ? tickers[0] : `${tickers.length} tickers`;
+  // Combined event stream across all selected tickers, newest first.
+  const combined = [];
+  tickers.forEach(t => {
+    const td = getTicker(t);
+    td.events.forEach(ev => combined.push(Object.assign({}, ev, { ticker: ev.ticker || t })));
+  });
+  combined.sort((a, b) => {
+    const da = a.reportedOn || a.date || '';
+    const db = b.reportedOn || b.date || '';
+    return db.localeCompare(da);
+  });
+  if (combined.length === 0) {
+    el.innerHTML = `<div class="empty"><p>No events tracked yet for ${escapeHtml(label)}.</p></div>`;
     return;
   }
-  let html = `<div class="res-head"><span class="res-title">History — ${activeTicker}</span><span style="font-size:10px;color:var(--gray-mid);letter-spacing:0.06em;margin-right:auto;margin-left:12px">Auto-purged after ${HISTORY_MAX_DAYS} days</span><button class="clear-btn" onclick="clearHistory()">Clear</button></div>`;
-  cur.events.slice().reverse().forEach(item => {
-    html += renderEventCard(item, true);
+  let html = `<div class="res-head"><span class="res-title">History — ${escapeHtml(label)}</span><span style="font-size:10px;color:var(--gray-mid);letter-spacing:0.06em;margin-right:auto;margin-left:12px">Auto-purged after ${HISTORY_MAX_DAYS} days</span><button class="clear-btn" onclick="clearHistory()">Clear</button></div>`;
+  combined.forEach(item => {
+    html += renderEventCard(item, true, /*showTicker*/ tickers.length > 1);
   });
   el.innerHTML = html;
 }
 
-function renderEventCard(item, showReported) {
+function renderEventCard(item, showReported, showTicker) {
   const cat = CATEGORIES[item.category] || { label: item.category };
   const matCls = item.materiality === 'high' ? 'mat-high' : item.materiality === 'medium' ? 'mat-medium' : 'mat-low';
+  // When multiple tickers are selected we prefix each card with its own
+  // ticker chip so the CIO can see which company each event belongs to.
+  const tickerChip = showTicker && item.ticker
+    ? `<span style="display:inline-block;background:var(--navy);color:#fff;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:0.08em;margin-right:8px">${escapeHtml(item.ticker)}</span>`
+    : '';
   let html = `<div class="evt">
     <div class="evt-top">
-      <span><span class="evt-cat">${cat.label}</span></span>
+      <span>${tickerChip}<span class="evt-cat">${cat.label}</span></span>
       <span style="display:flex;align-items:center;gap:8px">
         <span class="mat ${matCls}">${item.materiality}</span>
         ${item.date ? `<span class="evt-date">${fmtDate(item.date)}</span>` : ''}
@@ -502,25 +593,9 @@ function extractJsonArray(text) {
 }
 
 // ═══ FETCH NEWS ═══
-async function fetchNews() {
-  const ticker = activeTicker;
-  if (!ticker) return;
-
-  // Enforce 180-day retention before we build the ALREADY REPORTED context.
-  const purged = purgeOldHistory();
-  if (purged > 0) { saveLedger(); }
-
-  const btn = document.getElementById('fetch-btn');
-  const statusEl = document.getElementById('status');
-  const errorEl = document.getElementById('error-box');
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Scanning...';
-  statusEl.textContent = 'Starting search...';
-  errorEl.innerHTML = '';
-  freshNews = null;
-  document.getElementById('fresh-results').innerHTML = '';
-
+// Scan a single ticker — returns an array of event objects, each tagged with
+// `ticker`, or throws on API/parse error.
+async function fetchNewsFor(ticker, statusEl) {
   const td = getTicker(ticker);
   const since = td.lastReport ? 'since ' + fmtDate(td.lastReport) : 'in the last 30 days';
   const prevCtx = td.events.length > 0
@@ -535,12 +610,11 @@ For sources, include 2-5 direct URLs (news articles, SEC filings, press releases
 
 If nothing new, respond with exactly: []`;
 
-  try {
     let convo = [{ role: 'user', content: prompt }];
     let round = 0;
     const allContent = []; // accumulate ALL content blocks across rounds
 
-    statusEl.textContent = 'Calling API with web search...';
+    statusEl.textContent = `Calling API for ${ticker}...`;
     let resp = await fetch(PROXY, {
       method: 'POST',
       headers: authHeaders({ 'Content-Type': 'application/json' }),
@@ -594,10 +668,10 @@ If nothing new, respond with exactly: []`;
 
     // Find the outermost JSON array with balanced-bracket parsing
     // (a naive non-greedy regex breaks now that events contain nested sources[] arrays).
-    freshNews = extractJsonArray(fullText);
-    if (freshNews === null) {
+    let parsed = extractJsonArray(fullText);
+    if (parsed === null) {
       if (fullText.trim() === '[]' || /\[\s*\]/.test(fullText)) {
-        freshNews = [];
+        parsed = [];
       } else {
         throw new Error('Could not parse response. Raw: ' + fullText.substring(0, 500));
       }
@@ -625,48 +699,99 @@ If nothing new, respond with exactly: []`;
     });
 
     // If any event is missing sources, seed it with the top harvested urls (best-effort)
-    if (harvested.length > 0 && Array.isArray(freshNews)) {
-      freshNews.forEach(ev => {
+    if (harvested.length > 0 && Array.isArray(parsed)) {
+      parsed.forEach(ev => {
         if (!Array.isArray(ev.sources) || ev.sources.length === 0) {
           ev.sources = harvested.slice(0, 4);
         }
       });
     }
 
-    statusEl.textContent = freshNews.length > 0
-      ? `Found ${freshNews.length} event${freshNews.length>1?'s':''} for ${ticker}`
-      : `No new events for ${ticker}`;
-    renderTracker();
+    // Tag every event with the ticker it belongs to so multi-ticker scans
+    // can be routed back to the correct history bucket in markReported().
+    (parsed || []).forEach(ev => { ev.ticker = ticker; });
+    return parsed || [];
+}
 
-  } catch(e) {
-    errorEl.innerHTML = `<div class="err-box">${e.message}</div>`;
-    statusEl.textContent = 'Error';
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = 'Scan for news';
+// Orchestrates scans across every currently-selected ticker in sequence.
+async function fetchNews() {
+  const tickers = Array.from(activeTickers);
+  if (tickers.length === 0) return;
+
+  // Enforce 180-day retention before we build the ALREADY REPORTED context.
+  const purged = purgeOldHistory();
+  if (purged > 0) { saveLedger(); }
+
+  const btn = document.getElementById('fetch-btn');
+  const statusEl = document.getElementById('status');
+  const errorEl = document.getElementById('error-box');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Scanning...';
+  statusEl.textContent = 'Starting search...';
+  errorEl.innerHTML = '';
+  freshNews = null;
+  document.getElementById('fresh-results').innerHTML = '';
+
+  const combined = [];
+  const errors = [];
+  for (let i = 0; i < tickers.length; i++) {
+    const t = tickers[i];
+    try {
+      statusEl.textContent = `Scanning ${t} (${i+1}/${tickers.length})...`;
+      const events = await fetchNewsFor(t, statusEl);
+      events.forEach(ev => combined.push(ev));
+    } catch (e) {
+      errors.push(`${t}: ${e.message || e}`);
+    }
   }
+
+  freshNews = combined;
+  if (errors.length > 0) {
+    errorEl.innerHTML = `<div class="err-box">${escapeHtml(errors.join(' — '))}</div>`;
+  }
+  statusEl.textContent = combined.length > 0
+    ? `Found ${combined.length} event${combined.length>1?'s':''} across ${tickers.length} ticker${tickers.length>1?'s':''}`
+    : `No new events across ${tickers.length} ticker${tickers.length>1?'s':''}`;
+  renderTracker();
+  btn.disabled = false;
+  btn.innerHTML = 'Scan for news';
 }
 
 // ═══ ACTIONS ═══
+// Route every fresh event into its own ticker's history bucket. When the
+// scan covered multiple tickers, this correctly splits the events — no
+// cross-contamination between companies.
 function markReported() {
   if (!freshNews || freshNews.length === 0) return;
-  const td = getTicker(activeTicker);
   const now = todayISO();
+  // Track which tickers actually had events reported so we can update
+  // their lastReport timestamps (a ticker with zero fresh events should
+  // NOT get its lastReport bumped — that would defeat the diff on next scan).
+  const bumped = new Set();
   freshNews.forEach(item => {
+    const t = item.ticker;
+    if (!t) return;
+    const td = getTicker(t);
     item.reportedOn = now;
     td.events.push(item);
+    ledger.tickers[t] = td;
+    bumped.add(t);
   });
-  td.lastReport = now;
-  ledger.tickers[activeTicker] = td;
+  bumped.forEach(t => { ledger.tickers[t].lastReport = now; });
   saveLedger();
   freshNews = null;
-  document.getElementById('status').textContent = 'Events marked as reported ✓';
+  document.getElementById('status').textContent = `Marked reported for ${bumped.size} ticker${bumped.size>1?'s':''} ✓`;
   renderTracker();
 }
 
 function clearHistory() {
-  if (!confirm('Clear all history for ' + activeTicker + '?')) return;
-  ledger.tickers[activeTicker] = { events: [], lastReport: null };
+  const tickers = Array.from(activeTickers);
+  const label = tickers.length === 1 ? tickers[0] : `${tickers.length} tickers`;
+  if (!confirm('Clear all history for ' + label + '?')) return;
+  tickers.forEach(t => {
+    ledger.tickers[t] = { events: [], lastReport: null };
+  });
   saveLedger();
   renderHistory();
 }
