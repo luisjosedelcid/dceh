@@ -88,16 +88,37 @@ module.exports = async (req, res) => {
   const txWithBatch = parsed.transactions.map(t => ({ ...t, batch_id: batchId }));
   const cfWithBatch = parsed.cashflows.map(c => ({ ...c, batch_id: batchId }));
 
+  // Deduplicate by (source, external_id) within this batch.
+  // Postgres rejects ON CONFLICT DO UPDATE when the same target row is affected
+  // twice in a single command (SQLSTATE 21000). Schwab occasionally emits two
+  // rows with identical (date, action, symbol, qty, price, amount) — e.g. two
+  // identical wire deposits on the same day, or duplicate BANK INTEREST lines.
+  // Keep the first occurrence and drop the rest; they upsert to the same row
+  // anyway.
+  const dedupe = (rows) => {
+    const seen = new Set();
+    const out = [];
+    for (const r of rows) {
+      const k = (r.source || '') + '|' + (r.external_id || '');
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(r);
+    }
+    return out;
+  };
+  const txDedup = dedupe(txWithBatch);
+  const cfDedup = dedupe(cfWithBatch);
+
   // Commit: upsert transactions then cashflows
   let txInserted = 0;
   let cfInserted = 0;
   try {
-    if (txWithBatch.length > 0) {
-      const out = await sbUpsert('transactions', txWithBatch, 'source,external_id');
+    if (txDedup.length > 0) {
+      const out = await sbUpsert('transactions', txDedup, 'source,external_id');
       txInserted = Array.isArray(out) ? out.length : 0;
     }
-    if (cfWithBatch.length > 0) {
-      const out = await sbUpsert('cashflows', cfWithBatch, 'source,external_id');
+    if (cfDedup.length > 0) {
+      const out = await sbUpsert('cashflows', cfDedup, 'source,external_id');
       cfInserted = Array.isArray(out) ? out.length : 0;
     }
   } catch (e) {
