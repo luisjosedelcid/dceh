@@ -107,8 +107,9 @@ async function uploadToStorage(buffer, storagePath) {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${KEY}`,
+      'apikey': KEY,
       'Content-Type': 'application/pdf',
-      'x-upsert': 'false',
+      'x-upsert': 'true',
     },
     body: buffer,
   });
