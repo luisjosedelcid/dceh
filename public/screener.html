@@ -1156,10 +1156,11 @@ async function refreshSnapshotButton(ticker, tk) {
       btn.style.borderColor = 'var(--gold)';
     }
   } catch (e) {
-    btn.dataset.state = 'error';
-    btn.textContent = 'RETRY';
-    btn.style.color = 'var(--red)';
-    btn.style.borderColor = 'var(--red)';
+    // If lookup fails, assume no snapshot yet and offer to generate.
+    btn.dataset.state = 'missing';
+    btn.textContent = 'GENERATE';
+    btn.style.color = 'var(--gold)';
+    btn.style.borderColor = 'var(--gold)';
   }
 }
 
