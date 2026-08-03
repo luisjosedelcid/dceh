@@ -259,7 +259,7 @@
   <section class="tab-pane active" id="tab-consolidado" role="tabpanel">
     <div class="panel">
       <h2>Consolidated — All asset classes</h2>
-      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:14px">Aggregated view of the Equity, Real Estate and Crypto sleeves, with IPS §3.1 allocation bands.</div>
+      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:14px">Aggregated view of the Equity, Cash &amp; Fixed Income, Real Estate and Crypto sleeves, with IPS §3.1 allocation bands.</div>
 
       <div id="cons-loading" class="nodata">Loading…</div>
 
@@ -2096,16 +2096,28 @@ async function loadConsolidado(){
 function renderConsolidado(eqK, eqHoldings){
   const today = new Date();
 
-  // ---- Sleeve Equity ----
+  // ---- Sleeve Equity + Cash & Fixed Income ----
+  // El motor de Equity computa TWR/IRR sobre toda la cuenta Schwab (acciones + T-bills + cash).
+  // Presentamos un split cosmético en la tabla Allocation:
+  //   - Equity      = MV de acciones públicas (mv_equity_usd)
+  //   - Cash & FI   = MV de renta fija (SGOV, T-bills) + cash uninvested
+  // KPIs consolidados usan el NAV total del sleeve Equity para no doble-contar.
   let eqNav=0, eqCap=0, eqPnlUnr=0, eqLast='—', eqTwr=null;
+  let eqMvEquity=0, eqMvFixedIncome=0, eqCashUsd=0;
   if(eqK){
     eqNav = Number(eqK.nav||0);
     eqCap = Number(eqK.invested_usd||0);
     eqPnlUnr = Number(eqK.unrealized_pnl||0);
     eqLast = eqK.last_date || '—';
+    eqMvEquity = Number(eqK.mv_equity_usd||0);
+    eqMvFixedIncome = Number(eqK.mv_fixed_income_usd||0);
+    eqCashUsd = Number(eqK.cash_usd||0);
     // TWR cumulativo del backend (encadenado real, estándar GIPS)
     if(eqK.twr_cum_pct != null) eqTwr = Number(eqK.twr_cum_pct);
   }
+  // NAV de cada sub-sleeve (split cosmético)
+  const eqEquityNav = eqMvEquity;
+  const cashFiNav = eqMvFixedIncome + eqCashUsd;
 
   // ---- Sleeve Real Estate ----
   let reNav=0, reCap=0, reLast='—', reTwr=null;
@@ -2160,7 +2172,8 @@ function renderConsolidado(eqK, eqHoldings){
   const totPnlUnr = eqPnlUnr + rePnlUnr + crPnlTotal;
   const totMoic = totCap>0 ? totNav/totCap : null;
   const totRoi = totCap>0 ? totPnlUnr/totCap : null;
-  const sleeveCount = (eqK?1:0) + (RE_DATA?1:0) + (CR_DATA?1:0);
+  // Sleeve count: contamos Cash&FI como sleeve separado solo si tiene NAV > 0
+  const sleeveCount = (eqK?1:0) + (eqK && cashFiNav > 0 ? 1 : 0) + (RE_DATA?1:0) + (CR_DATA?1:0);
 
   // TWR consolidado = weighted average por NAV de los TWR de cada sleeve
   let twrNumer = 0, twrWeights = 0;
@@ -2191,8 +2204,18 @@ function renderConsolidado(eqK, eqHoldings){
   document.getElementById('cons-kpi-twr-sub').textContent = twrSubParts.join(' · ') || 'weighted avg by NAV';
 
   // ---- Allocation table ----
+  // Split cosmético: Equity y Cash & FI comparten el mismo motor (sleeve Equity).
+  // Capital y P&L se atribuyen proporcionalmente al MV de cada sub-sleeve.
+  const eqMvTotal = eqEquityNav + cashFiNav;
+  const eqEquityShare = eqMvTotal > 0 ? eqEquityNav / eqMvTotal : 1;
+  const cashFiShare = eqMvTotal > 0 ? cashFiNav / eqMvTotal : 0;
+  const eqEquityCap = eqCap * eqEquityShare;
+  const cashFiCap = eqCap * cashFiShare;
+  const eqEquityPnl = eqPnlUnr * eqEquityShare;
+  const cashFiPnl = eqPnlUnr * cashFiShare;
   const sleeves = [
-    {key:'equity', label:'Equity', nav:eqNav, cap:eqCap, pnl:eqPnlUnr, twr:eqTwr, last:eqLast, present: !!eqK, color:'#1B2642'},
+    {key:'equity', label:'Equity', nav:eqEquityNav, cap:eqEquityCap, pnl:eqEquityPnl, twr:eqTwr, last:eqLast, present: !!eqK && eqEquityNav > 0, color:'#1B2642'},
+    {key:'cashfi', label:'Cash & Fixed Income', nav:cashFiNav, cap:cashFiCap, pnl:cashFiPnl, twr:eqTwr, last:eqLast, present: !!eqK && cashFiNav > 0, color:'#5F7A99'},
     {key:'realestate', label:'Real Estate', nav:reNav, cap:reCap, pnl:rePnlUnr, twr:reTwr, last:reLast, present: !!RE_DATA, color:'#B88B47'},
     {key:'crypto', label:'Crypto', nav:crNav, cap:crCap, pnl:crPnlTotal, twr:crTwr, last:crLast, present: !!CR_DATA, color:'#5B6B8C', realized:crPnlRealized},
   ];
@@ -2241,16 +2264,19 @@ function renderConsolidado(eqK, eqHoldings){
     +'</tr>';
 
   // ---- IPS §3.1 bands ----
-  // Mapping: Equities públicos = mv del sleeve Equity; Efectivo = cash_usd del sleeve Equity;
-  // Real estate = NAV sleeve RE; Alternativos = NAV sleeve Crypto; PE y Renta fija = 0 (no implementados).
-  const eqMv = eqK ? Number(eqK.market_value_usd||0) : 0;
-  const eqCash = eqK ? Number(eqK.cash_usd||0) : 0;
+  // Mapping (usando split de asset class del backend Equity):
+  //   Public equities  = mv_equity_usd (acciones públicas líquidas)
+  //   Fixed income     = mv_fixed_income_usd (SGOV + T-bills)
+  //   Cash & equiv.    = cash_usd (efectivo uninvested)
+  //   Real estate      = NAV sleeve RE
+  //   Alternatives     = NAV sleeve Crypto
+  //   Private equity   = 0 (no implementado)
   const bands = [
-    {label:'Public equities', min:0.50, max:0.80, actual: totNav>0 ? eqMv/totNav : 0},
+    {label:'Public equities', min:0.50, max:0.80, actual: totNav>0 ? eqMvEquity/totNav : 0},
     {label:'Private equity', min:0.00, max:0.20, actual: 0},
     {label:'Real estate', min:0.00, max:0.20, actual: totNav>0 ? reNav/totNav : 0},
-    {label:'Fixed income', min:0.05, max:0.15, actual: 0},
-    {label:'Cash & equivalents', min:0.15, max:0.25, actual: totNav>0 ? eqCash/totNav : 0},
+    {label:'Fixed income', min:0.05, max:0.15, actual: totNav>0 ? eqMvFixedIncome/totNav : 0},
+    {label:'Cash & equivalents', min:0.15, max:0.25, actual: totNav>0 ? eqCashUsd/totNav : 0},
     {label:'Alternatives (incl. Crypto)', min:0.00, max:0.15, actual: totNav>0 ? crNav/totNav : 0},
   ];
   const ipsTbody = document.getElementById('cons-ips-tbody');

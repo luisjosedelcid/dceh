@@ -293,8 +293,23 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
     }
   }
 
+  // Asset class classification.
+  // - fixed_income: SGOV ETF, T-bill CUSIPs (9-char alphanumeric starting with '912')
+  // - equity: everything else (public equities, ADRs)
+  // Cash (uninvested USD balance) is tracked separately via `cash_usd`.
+  function classifyAssetClass(ticker) {
+    if (!ticker) return 'equity';
+    const t = String(ticker).toUpperCase();
+    if (t === 'SGOV') return 'fixed_income';
+    // T-bill CUSIPs: 9 chars, all alphanumeric, starts with 912 (US Treasury)
+    if (/^912[0-9A-Z]{6}$/.test(t)) return 'fixed_income';
+    return 'equity';
+  }
+
   const holdings = [];
   let totalMv = 0;
+  let mvEquity = 0;
+  let mvFixedIncome = 0;
   for (const [ticker, tickerLots] of lots) {
     const totalQty = tickerLots.reduce((s, l) => s + l.qty, 0);
     if (totalQty <= 1e-9) continue;
@@ -321,6 +336,10 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
       if (years > 0) irrAnn = round4(Math.pow(mv / cost, 1 / years) - 1);
     }
 
+    const assetClass = classifyAssetClass(ticker);
+    if (assetClass === 'fixed_income') mvFixedIncome += mv;
+    else mvEquity += mv;
+
     holdings.push({
       ticker,
       qty: totalQty,
@@ -330,6 +349,7 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
       last_price_source: pxSource,
       market_value: round2(mv),
       unrealized_pnl: round2(mv - cost),
+      asset_class: assetClass,
       first_buy_date: fbd || null,
       days_held: daysHeld,
       irr_annualized: irrAnn,
@@ -370,6 +390,8 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
       nav: last.nav,
       cash_usd: last.cash,
       market_value_usd: last.market_value,
+      mv_equity_usd: round2(mvEquity),
+      mv_fixed_income_usd: round2(mvFixedIncome),
       invested_usd: round2(navInvested),
       total_contributions: round2(totalContributions),
       total_withdrawals: round2(totalWithdrawals),
