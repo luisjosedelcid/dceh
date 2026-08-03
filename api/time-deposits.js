@@ -18,10 +18,8 @@ function isAdmin(req) {
 async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      if (!isAdmin(req)) {
-        res.status(401).end(JSON.stringify({ ok: false, error: 'Unauthorized' }));
-        return;
-      }
+      // GET is public read-only (mirrors Real Estate / Crypto tabs which read static JSON).
+      // POST still requires admin token below.
       const url = new URL(req.url, 'http://x');
       const asOf = url.searchParams.get('as_of') || undefined;
       const result = await loadAndValueTimeDeposits(asOf);

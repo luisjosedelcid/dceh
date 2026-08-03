@@ -251,6 +251,7 @@
     <button class="tab-btn active" data-tab="tab-consolidado" role="tab" type="button">Consolidado</button>
     <button class="tab-btn" data-tab="tab-dashboard" role="tab" type="button">Dashboard</button>
     <button class="tab-btn" data-tab="tab-realestate" role="tab" type="button">Real Estate</button>
+    <button class="tab-btn" data-tab="tab-fixedincome" role="tab" type="button">Fixed Income</button>
     <button class="tab-btn" data-tab="tab-crypto" role="tab" type="button">Crypto</button>
     <button class="tab-btn" data-tab="tab-data" role="tab" type="button">Data &amp; audit <span class="tab-badge admin-only-badge">Admin</span></button>
   </nav>
@@ -690,6 +691,62 @@
     </div>
 
   </section><!-- /tab-crypto -->
+
+  <!-- ================== TAB: FIXED INCOME ================== -->
+  <section class="tab-pane" id="tab-fixedincome" role="tabpanel">
+
+    <div class="panel">
+      <h2>Fixed Income — Bank time deposits (CDs)</h2>
+      <div style="font-size:11px;color:var(--gray-mid);margin-bottom:14px">Bank certificates of deposit with linear accrual valuation. Interest accrues day by day (mark-to-accrual) net of applicable tax withholding; principal returns at maturity along with any unpaid interest.</div>
+
+      <div id="fi-loading" class="nodata">Loading…</div>
+      <div id="fi-content" class="hide">
+
+        <!-- KPI strip Fixed Income -->
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kpi-label">Total principal</div><div class="kpi-value" id="fi-kpi-principal">—</div><div class="kpi-sub" id="fi-kpi-count">—</div></div>
+          <div class="kpi"><div class="kpi-label">Market value (mark-to-accrual)</div><div class="kpi-value" id="fi-kpi-mv">—</div><div class="kpi-sub" id="fi-kpi-asof">—</div></div>
+          <div class="kpi"><div class="kpi-label">Accrued interest (net)</div><div class="kpi-value" id="fi-kpi-accrued">—</div><div class="kpi-sub" id="fi-kpi-accrued-sub">gross − tax</div></div>
+          <div class="kpi"><div class="kpi-label">Weighted yield (net p.a.)</div><div class="kpi-value" id="fi-kpi-yield">—</div><div class="kpi-sub">principal-weighted</div></div>
+          <div class="kpi"><div class="kpi-label">Terminal net interest</div><div class="kpi-value" id="fi-kpi-terminal">—</div><div class="kpi-sub" id="fi-kpi-terminal-sub">at final maturity</div></div>
+        </div>
+
+        <!-- Deposits table -->
+        <div style="margin-top:24px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;gap:12px">
+            <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:0">Deposits</h3>
+            <span id="fi-asof-badge" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.08em">—</span>
+          </div>
+          <div style="overflow-x:auto;border:1px solid var(--rule)">
+            <table class="tbl" id="fi-tbl-deposits"></table>
+          </div>
+        </div>
+
+        <!-- Maturity ladder -->
+        <div style="margin-top:24px">
+          <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:0 0 10px 0">Maturity ladder</h3>
+          <div style="overflow-x:auto;border:1px solid var(--rule)">
+            <table class="tbl" id="fi-tbl-ladder"></table>
+          </div>
+        </div>
+
+        <!-- Methodological basis -->
+        <div style="margin-top:18px;padding:14px 16px;background:var(--cream);border:1px solid var(--rule);font-size:11px;color:var(--gray-txt);line-height:1.6">
+          <div style="font-weight:600;color:var(--navy);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px">Methodological basis</div>
+          <div><strong>Linear accrual (mark-to-accrual)</strong> — accrued interest is recognized daily as principal × annual_rate × (1 − tax_rate) × days_elapsed / day_count_denominator. Even for bullet-payment deposits (interest paid at maturity), the P&amp;L is booked as it accrues, matching the economic reality reported in fund financials.</div>
+          <div style="margin-top:8px"><strong>Asset class</strong> — bank CDs are classified as Fixed Income (not Cash &amp; Equivalents) because early liquidation carries a material interest penalty. This diverges from money-market ETFs (SGOV, BIL) that are redeemable at par with negligible loss risk and belong in Cash &amp; Equivalents per SEC/GAAP.</div>
+          <div style="margin-top:8px"><strong>Yield</strong> — the weighted yield displayed is net of withholding tax; gross yield is available in the deposits table.</div>
+          <div style="margin-top:8px;font-style:italic;color:var(--gray-mid)">TWR reported at consolidated level uses accrued_net / principal as a return-since-inception proxy for the CD engine (bullet interest, no intermediate marks). Consistent with GIPS but conservative vs. IRR.</div>
+        </div>
+
+        <div class="actions" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <button class="btn ghost" id="btn-fi-reload" type="button">Reload</button>
+          <span id="fi-last-update" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.08em">—</span>
+        </div>
+      </div>
+    </div>
+
+  </section><!-- /tab-fixedincome -->
 
 </main>
 
@@ -2208,6 +2265,163 @@ async function loadTimeDeposits(){
   }catch(e){ TD_DATA = null; }
 }
 
+// === Fixed Income tab (public) ===
+function fiFmtUsd0(n){ if(n==null||isNaN(n)) return '—'; const v=Number(n); const s=Math.abs(v).toLocaleString('en-US',{maximumFractionDigits:0}); return (v<0?'-$':'$')+s; }
+function fiFmtUsd2(n){ if(n==null||isNaN(n)) return '—'; const v=Number(n); const s=Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); return (v<0?'-$':'$')+s; }
+function fiFmtPct(n,d){ if(n==null||isNaN(n)) return '—'; const dec=(d==null?3:d); return (n*100).toFixed(dec)+'%'; }
+
+async function loadFixedIncome(){
+  const loading = document.getElementById('fi-loading');
+  const content = document.getElementById('fi-content');
+  loading.classList.remove('hide');
+  content.classList.add('hide');
+  try{
+    if(!TD_DATA){ await loadTimeDeposits(); }
+    renderFixedIncome();
+    loading.classList.add('hide');
+    content.classList.remove('hide');
+  }catch(e){
+    loading.textContent = 'Failed to load: '+(e&&e.message||e);
+  }
+}
+
+function renderFixedIncome(){
+  const deps = (TD_DATA && TD_DATA.deposits) || [];
+  const kpis = (TD_DATA && TD_DATA.kpis) || {};
+  const asOf = (TD_DATA && TD_DATA.as_of) || new Date().toISOString().slice(0,10);
+
+  // KPIs
+  const totalPrincipal = Number(kpis.total_principal||0);
+  const totalMv = Number(kpis.total_mv||0);
+  const totalAccruedNet = Number(kpis.total_accrued_net||0);
+  const totalAccruedGross = Number(kpis.total_accrued_gross||0);
+  const totalAccruedTax = Number(kpis.total_accrued_tax||0);
+  // Weighted net yield = sum(principal * annual_rate * (1-tax)) / sum(principal)
+  let wYieldNumer = 0, wYieldDenom = 0;
+  let terminalNet = 0;
+  let maxMaturity = '—';
+  for(const td of deps){
+    const netYield = Number(td.annual_rate) * (1 - Number(td.tax_rate||0));
+    wYieldNumer += Number(td.principal) * netYield;
+    wYieldDenom += Number(td.principal);
+    terminalNet += Number(td.terminal_net||0);
+    if(td.maturity_date > maxMaturity) maxMaturity = td.maturity_date;
+  }
+  const wYield = wYieldDenom > 0 ? wYieldNumer / wYieldDenom : null;
+
+  document.getElementById('fi-kpi-principal').textContent = fiFmtUsd0(totalPrincipal);
+  document.getElementById('fi-kpi-count').textContent = deps.length + (deps.length===1 ? ' deposit' : ' deposits');
+  document.getElementById('fi-kpi-mv').textContent = fiFmtUsd0(totalMv);
+  document.getElementById('fi-kpi-asof').textContent = 'as of ' + asOf;
+  const accEl = document.getElementById('fi-kpi-accrued');
+  accEl.textContent = (totalAccruedNet>=0?'+':'')+fiFmtUsd0(totalAccruedNet);
+  accEl.style.color = totalAccruedNet>=0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('fi-kpi-accrued-sub').textContent = 'gross '+fiFmtUsd0(totalAccruedGross)+' − tax '+fiFmtUsd0(totalAccruedTax);
+  document.getElementById('fi-kpi-yield').textContent = fiFmtPct(wYield, 3);
+  document.getElementById('fi-kpi-terminal').textContent = fiFmtUsd0(terminalNet);
+  document.getElementById('fi-kpi-terminal-sub').textContent = deps.length > 0 ? ('through '+maxMaturity) : '—';
+
+  document.getElementById('fi-asof-badge').textContent = 'as of '+asOf;
+
+  // Deposits table
+  const tbl = document.getElementById('fi-tbl-deposits');
+  if(!deps.length){
+    tbl.innerHTML = '<thead><tr><th>Deposits</th></tr></thead><tbody><tr><td style="padding:20px;text-align:center;color:var(--gray-mid);font-style:italic">No time deposits yet. Add one from Data &amp; audit.</td></tr></tbody>';
+  } else {
+    let head = '<thead><tr>'
+      +'<th>Name</th>'
+      +'<th>Bank</th>'
+      +'<th class="r">Principal</th>'
+      +'<th>Start</th>'
+      +'<th>Maturity</th>'
+      +'<th class="r">Rate (gross)</th>'
+      +'<th class="r">Tax</th>'
+      +'<th class="r">Net yield</th>'
+      +'<th class="r">Accrued (net)</th>'
+      +'<th class="r">MV</th>'
+      +'<th class="r">Progress</th>'
+      +'<th class="r">Days rem.</th>'
+      +'<th>Status</th>'
+      +'</tr></thead>';
+    let body = '<tbody>';
+    for(const td of deps){
+      const gross = Number(td.annual_rate);
+      const tax = Number(td.tax_rate||0);
+      const net = gross * (1-tax);
+      const pct = Number(td.pct_elapsed||0);
+      const barW = Math.max(2, Math.min(100, pct*100)).toFixed(1);
+      body += '<tr>'
+        +'<td><strong>'+(td.name||'')+'</strong></td>'
+        +'<td>'+(td.bank||'—')+'</td>'
+        +'<td class="r">'+fiFmtUsd0(td.principal)+'</td>'
+        +'<td>'+td.start_date+'</td>'
+        +'<td>'+td.maturity_date+'</td>'
+        +'<td class="r">'+fiFmtPct(gross,3)+'</td>'
+        +'<td class="r">'+fiFmtPct(tax,1)+'</td>'
+        +'<td class="r" style="font-weight:600">'+fiFmtPct(net,3)+'</td>'
+        +'<td class="r pos" style="font-weight:600">'+fiFmtUsd2(td.accrued_net)+'</td>'
+        +'<td class="r">'+fiFmtUsd2(td.mv)+'</td>'
+        +'<td class="r"><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end"><div style="width:60px;height:6px;background:var(--rule);position:relative;border-radius:3px;overflow:hidden"><div style="position:absolute;left:0;top:0;height:100%;width:'+barW+'%;background:var(--gold)"></div></div><span style="font-size:10px;color:var(--gray-mid)">'+(pct*100).toFixed(1)+'%</span></div></td>'
+        +'<td class="r">'+td.days_remaining+'</td>'
+        +'<td>'+(td.is_matured ? '<span style="color:var(--gray-mid)">matured</span>' : '<span style="color:var(--green);font-weight:600">active</span>')+'</td>'
+        +'</tr>';
+    }
+    body += '</tbody>';
+    // TFOOT total row
+    body += '<tfoot><tr style="background:var(--cream);font-weight:700">'
+      +'<td>TOTAL</td><td></td>'
+      +'<td class="r">'+fiFmtUsd0(totalPrincipal)+'</td>'
+      +'<td></td><td></td><td></td><td></td>'
+      +'<td class="r">'+fiFmtPct(wYield,3)+'</td>'
+      +'<td class="r pos" style="font-weight:700">'+fiFmtUsd2(totalAccruedNet)+'</td>'
+      +'<td class="r">'+fiFmtUsd2(totalMv)+'</td>'
+      +'<td></td><td></td><td></td>'
+      +'</tr></tfoot>';
+    tbl.innerHTML = head + body;
+  }
+
+  // Maturity ladder — aggregates by month/quarter
+  const ladderTbl = document.getElementById('fi-tbl-ladder');
+  if(!deps.length){
+    ladderTbl.innerHTML = '<thead><tr><th>Maturity ladder</th></tr></thead><tbody><tr><td style="padding:20px;text-align:center;color:var(--gray-mid);font-style:italic">—</td></tr></tbody>';
+  } else {
+    // Sort by maturity
+    const sorted = [...deps].sort((a,b)=> a.maturity_date.localeCompare(b.maturity_date));
+    let lHead = '<thead><tr><th>Maturity</th><th>Deposit</th><th class="r">Principal</th><th class="r">Interest at maturity (net)</th><th class="r">Cash flow at maturity</th><th class="r">Days remaining</th></tr></thead>';
+    let lBody = '<tbody>';
+    let cumPrincipal = 0, cumInterest = 0;
+    for(const td of sorted){
+      const cf = Number(td.principal) + Number(td.terminal_net||0);
+      cumPrincipal += Number(td.principal);
+      cumInterest += Number(td.terminal_net||0);
+      lBody += '<tr>'
+        +'<td><strong>'+td.maturity_date+'</strong></td>'
+        +'<td>'+(td.bank||'—')+' — '+(td.name||'')+'</td>'
+        +'<td class="r">'+fiFmtUsd0(td.principal)+'</td>'
+        +'<td class="r pos">'+fiFmtUsd2(td.terminal_net)+'</td>'
+        +'<td class="r" style="font-weight:600">'+fiFmtUsd2(cf)+'</td>'
+        +'<td class="r">'+td.days_remaining+'</td>'
+        +'</tr>';
+    }
+    lBody += '</tbody>';
+    lBody += '<tfoot><tr style="background:var(--cream);font-weight:700">'
+      +'<td>TOTAL</td><td></td>'
+      +'<td class="r">'+fiFmtUsd0(cumPrincipal)+'</td>'
+      +'<td class="r pos">'+fiFmtUsd2(cumInterest)+'</td>'
+      +'<td class="r">'+fiFmtUsd2(cumPrincipal+cumInterest)+'</td>'
+      +'<td></td>'
+      +'</tr></tfoot>';
+    ladderTbl.innerHTML = lHead + lBody;
+  }
+
+  document.getElementById('fi-last-update').textContent = 'Last refresh: '+new Date().toLocaleString('es-ES');
+}
+
+document.getElementById('btn-fi-reload').addEventListener('click', async ()=>{
+  TD_DATA = null;
+  await loadFixedIncome();
+});
+
 // === Consolidado module ===
 let CONS_LOADED = false;
 function consFmtUsd0(n){ if(n==null||isNaN(n)) return '—'; const v=Number(n); const s=Math.abs(v).toLocaleString('en-US',{maximumFractionDigits:0}); return (v<0?'-$':'$')+s; }
@@ -2564,7 +2778,7 @@ function renderConsolidado(eqK, eqHoldings){
 document.getElementById('btn-cons-reload').addEventListener('click', loadConsolidado);
 
 const TAB_STORAGE_KEY = 'dce-perf-tab';
-const VALID_TABS = new Set(['tab-consolidado','tab-dashboard','tab-data','tab-realestate','tab-crypto']);
+const VALID_TABS = new Set(['tab-consolidado','tab-dashboard','tab-data','tab-realestate','tab-fixedincome','tab-crypto']);
 function switchTab(tabId){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabId));
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('active', p.id===tabId));
@@ -2572,6 +2786,7 @@ function switchTab(tabId){
   if(tabId==='tab-dashboard' && equityChart){ try{ equityChart.resize(); }catch(e){} }
   if(tabId==='tab-consolidado' && !CONS_LOADED){ loadConsolidado(); }
   if(tabId==='tab-realestate' && !RE_DATA){ loadRealEstate(); }
+  if(tabId==='tab-fixedincome' && !TD_DATA){ loadFixedIncome(); }
   if(tabId==='tab-crypto' && !CR_DATA){ loadCrypto(); }
 }
 document.querySelectorAll('.tab-btn').forEach(btn=>{
@@ -2630,6 +2845,7 @@ window.dceRefresh = async function(){
   const tasks = [typeof loadDashboard === 'function' ? loadDashboard() : null];
   if(tabId === 'tab-consolidado' && typeof loadConsolidado === 'function'){ CONS_LOADED = false; tasks.push(loadConsolidado()); }
   if(tabId === 'tab-realestate'  && typeof loadRealEstate  === 'function'){ RE_DATA = null;    tasks.push(loadRealEstate()); }
+  if(tabId === 'tab-fixedincome' && typeof loadFixedIncome  === 'function'){ TD_DATA = null;    tasks.push(loadFixedIncome()); }
   if(tabId === 'tab-crypto'      && typeof loadCrypto      === 'function'){ CR_DATA = null;    tasks.push(loadCrypto()); }
   if(tabId === 'tab-data' && typeof loadExisting === 'function'){
     tasks.push(loadExisting());
