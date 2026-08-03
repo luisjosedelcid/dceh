@@ -178,7 +178,7 @@
 
   <!-- TICKER ROW -->
   <div class="ticker-row" id="ticker-row"></div>
-  <div style="font-size:10px;color:var(--gray-mid);letter-spacing:0.06em;margin:-14px 0 20px 4px">TIP · CMD/CTRL-CLICK TO MULTI-SELECT · SHIFT-CLICK FOR RANGE</div>
+  <div id="multi-hint" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.06em;margin:-14px 0 20px 4px"></div>
 
   <!-- TABS -->
   <div class="tabs">
@@ -278,6 +278,10 @@ let currentView = 'tracker';
 // Each item now carries a `ticker` field so markReported() can route them to
 // the right per-ticker history bucket.
 let freshNews = null;
+// When true, every plain tap on a chip toggles it in/out of the selection
+// (touch-friendly equivalent of Cmd/Ctrl-click). Turned on by the
+// 'Select multiple' button so it works identically on iPhone.
+let multiSelectMode = false;
 
 function authHeaders(extra) {
   const tok = (function(){ try { return localStorage.getItem('dce_admin_token') || ''; } catch { return ''; } })();
@@ -334,24 +338,51 @@ function renderTickers() {
   tickerList.forEach(t => {
     const cls = activeTickers.has(t) ? 'chip active' : 'chip';
     // event is passed through so selectTicker() can inspect modifier keys
-    // (Cmd/Ctrl or Shift) to toggle multi-select.
+    // (Cmd/Ctrl or Shift) or the multi-select mode toggle.
     html += `<div class="${cls}" onclick="selectTicker(event, '${t}')">${t}<span class="x" onclick="event.stopPropagation();removeTicker('${t}')">×</span></div>`;
   });
   html += `<button class="add-btn" onclick="openAddModal()">+ ADD</button>`;
-  // Show 'Clear selection' + count when 2+ tickers are selected — makes the
-  // multi-select state obvious.
+  // Touch-friendly multi-select toggle. When active, every tap toggles the
+  // ticker in/out of the selection — same behaviour as Cmd/Ctrl-click, but
+  // without needing a keyboard (iPhone/iPad).
+  const multiBtn = multiSelectMode
+    ? `<button class="add-btn" style="background:var(--gold);color:#fff;border-color:var(--gold)" onclick="toggleMultiMode()">DONE (${activeTickers.size})</button>`
+    : `<button class="add-btn" onclick="toggleMultiMode()">SELECT MULTIPLE</button>`;
+  html += multiBtn;
+  // 'Clear' link surfaces when 2+ tickers are selected.
   if (activeTickers.size > 1) {
     html += `<span style="margin-left:12px;font-size:11px;color:var(--gray-mid);letter-spacing:0.06em">${activeTickers.size} selected · <a href="#" onclick="event.preventDefault();clearSelection()" style="color:var(--navy);text-decoration:underline">clear</a></span>`;
   }
   row.innerHTML = html;
+
+  // Contextual hint under the row: tell touch users about the mode toggle
+  // while it's off, and remind them what tap does while it's on. On desktop
+  // we still surface the keyboard shortcuts — they are faster.
+  const hint = document.getElementById('multi-hint');
+  if (hint) {
+    const isTouch = matchMedia('(hover:none)').matches;
+    if (multiSelectMode) {
+      hint.textContent = 'MULTI-SELECT ON · TAP CHIPS TO ADD/REMOVE · TAP DONE TO FINISH';
+    } else if (isTouch) {
+      hint.textContent = 'TIP · TAP SELECT MULTIPLE TO PICK SEVERAL TICKERS';
+    } else {
+      hint.textContent = 'TIP · CMD/CTRL-CLICK TO MULTI-SELECT · SHIFT-CLICK FOR RANGE';
+    }
+  }
+}
+
+function toggleMultiMode() {
+  multiSelectMode = !multiSelectMode;
+  renderTickers();
 }
 
 // Toggle multi-select behaviour:
-//   - plain click     → replace selection with just this ticker
-//   - Cmd/Ctrl+click  → toggle this ticker in/out of the selection
-//   - Shift+click     → add range from last selected to this one
+//   - plain click               → replace selection with just this ticker
+//   - Cmd/Ctrl+click            → toggle this ticker in/out of the selection
+//   - Shift+click               → add range from last selected to this one
+//   - multiSelectMode on (tap)  → toggle this ticker in/out (iPhone-friendly)
 function selectTicker(ev, t) {
-  const meta = ev && (ev.metaKey || ev.ctrlKey);
+  const meta = (ev && (ev.metaKey || ev.ctrlKey)) || multiSelectMode;
   const shift = ev && ev.shiftKey;
   if (shift && activeTickers.size > 0) {
     // Select range in tickerList order between last active anchor and t.
