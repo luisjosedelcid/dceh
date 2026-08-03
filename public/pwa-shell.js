@@ -13,10 +13,23 @@
   'use strict';
 
   // ── Face ID / PIN gate (runs before anything else) ──
+  // Only enforced on iOS (iPhone/iPad), where Face ID lives. On Mac and
+  // other desktop browsers we rely on the existing admin-token flow, so
+  // this gate is a no-op there.
   // Redirects to /lock.html unless the current tab has been unlocked
   // (sessionStorage 'dce_auth_ok'=1) or an emergency admin_token query
   // param is present.
   (function authGate(){
+    // Detect iOS. iPadOS 13+ reports as 'MacIntel' but adds touch support,
+    // so we also check for touch + Apple platform to catch that case.
+    const ua = navigator.userAgent || '';
+    const isIPhone = /iPhone|iPod/.test(ua);
+    const isIPad =
+      /iPad/.test(ua) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isIOS = isIPhone || isIPad;
+    if (!isIOS) return;
+
     const path = location.pathname;
     // Whitelist pages that must be reachable without unlock
     const PUBLIC = ['/lock.html', '/enroll.html', '/admin-login.html'];
