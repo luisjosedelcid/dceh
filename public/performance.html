@@ -1481,7 +1481,7 @@ function renderDashboard(j){
   const iwquDelta = (k.twr_cum_pct!=null && k.iwqu_return_pct!=null)
     ? ((1 + k.twr_cum_pct) / (1 + k.iwqu_return_pct) - 1)
     : null;
-  document.getElementById('kpi-twr-sub').textContent = `IWQU.L ${signedPct(k.iwqu_return_pct)} · vs bench ${signedPct(iwquDelta)}`;
+  document.getElementById('kpi-twr-sub').textContent = `Bench TWR ${signedPct(k.iwqu_return_pct)} · Relative return ${signedPct(iwquDelta)}`;
 
   const irrEl = document.getElementById('kpi-irr');
   irrEl.textContent = signedPct(k.irr_pct);
@@ -1538,7 +1538,7 @@ function renderIpsBands(j) {
     { label: 'Cash / equivalents',    min: 0.15, max: 0.25, value: cashSleevePct },
     { label: 'Equity — quality',       min: 0.60, max: 0.80, value: equityPct },
     { label: 'Equity — special sit',   min: 0.00, max: 0.15, value: 0 },
-    { label: 'Fixed income / hedges',  min: 0.00, max: 0.10, value: fixedIncomePct },
+    { label: 'Fixed income',           min: 0.00, max: 0.10, value: fixedIncomePct },
   ];
 
   const tbody = document.getElementById('ips-bands-tbody');
@@ -1676,8 +1676,12 @@ function renderHoldings(holdings){
     const isFiOrCe = h.asset_class === 'fixed_income' || h.asset_class === 'cash_equivalent';
     const pxMinDp = isFiOrCe ? 4 : 2;
     const pxMaxDp = isFiOrCe ? 6 : 4;
+    // Treasury CUSIPs render a small gray sub-line with the security display
+    const tickerCell = h.security_display
+      ? `${tickerLinkHtml(h.ticker)}<div style="font-size:10px;color:var(--gray-mid);margin-top:2px">${escapeAttr(h.security_display)}</div>`
+      : tickerLinkHtml(h.ticker);
     html += `<tr data-ticker="${escapeAttr(h.ticker)}">
-      <td>${tickerLinkHtml(h.ticker)}</td>
+      <td>${tickerCell}</td>
       <td class="r">${Number(h.qty).toLocaleString('en-US',{maximumFractionDigits:4})}</td>
       <td class="r">${h.avg_cost!=null?Number(h.avg_cost).toLocaleString('en-US',{minimumFractionDigits:pxMinDp,maximumFractionDigits:pxMaxDp}):'—'}</td>
       <td class="r" data-cell="last_price">${h.last_price!=null?Number(h.last_price).toLocaleString('en-US',{minimumFractionDigits:pxMinDp,maximumFractionDigits:pxMaxDp}):'—'}</td>

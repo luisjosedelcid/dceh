@@ -5,7 +5,7 @@ const { computeDaily } = require('./_perf-calc');
 async function loadAndCompute({ endDate } = {}) {
   // 1) Pull tx, cf, prices in parallel
   const [tx, cf, prices] = await Promise.all([
-    sbSelect('transactions', 'select=trade_date,ticker,side,qty,price_native,fx_to_usd,fee_native&order=trade_date.asc&limit=10000'),
+    sbSelect('transactions', 'select=trade_date,ticker,side,qty,price_native,fx_to_usd,fee_native,notes&order=trade_date.asc&limit=10000'),
     sbSelect('cashflows',    'select=occurred_at,cf_type,ticker,amount_native,fx_to_usd&order=occurred_at.asc&limit=10000'),
     sbSelect('prices_daily', 'select=ticker,price_date,close_native&order=price_date.asc&limit=100000'),
   ]);

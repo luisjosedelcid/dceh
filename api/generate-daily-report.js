@@ -197,7 +197,7 @@ function drawIpsBands(doc, x, y, w, h, kpis) {
     { label: 'Cash / equivalents',      min: 0.15, max: 0.25, value: cashSleevePct },
     { label: 'Equity — quality',         min: 0.60, max: 0.80, value: equityPct },
     { label: 'Equity — special sit',     min: 0.00, max: 0.15, value: 0 },
-    { label: 'Fixed income / hedges',    min: 0.00, max: 0.10, value: fixedIncomePct },
+    { label: 'Fixed income',            min: 0.00, max: 0.10, value: fixedIncomePct },
   ];
 
   // Frame
@@ -398,10 +398,12 @@ module.exports = async (req, res) => {
       },
       {
         // Label describes the value: absolute TWR since inception.
-        // Excess vs benchmark shown in sub, computed geometrically.
+        // Excess vs benchmark shown in sub as geometric relative return.
+        // Label 'Relative return' makes it explicit that this is NOT
+        // simple arithmetic subtraction (which would misstate the drag).
         label: 'TWR SINCE INCEPTION',
         value: fmtPct(kpis.twr_cum_pct),
-        sub: `Bench ${fmtPct(kpis.iwqu_return_pct)} · vs IWQU.L ${fmtPct(excessTwr)}`,
+        sub: `Bench TWR ${fmtPct(kpis.iwqu_return_pct)} · Relative return ${fmtPct(excessTwr)}`,
         valueColor: pctColor(kpis.twr_cum_pct),
         subColor: GRAY,
       },
@@ -452,18 +454,21 @@ module.exports = async (req, res) => {
        .text(`Positions (${holdings.length})`, M, y + 14);
     y += 38;
 
-    // TICKER wider so 9-char T-bill CUSIPs (e.g. 912797VP9) fit on one line.
-    // Renamed WEIGHT column and dropped signed % (weights don't have direction).
+    // Column widths tuned so:
+    //  - 9-char T-bill CUSIPs (912797VP9) fit on one line under TICKER
+    //  - PRICE IRR fits on one line (was wrapping to 2 rows)
+    //  - DAYS not so cramped
+    // Space taken from MKT VALUE and UNREAL, both had generous padding.
     const cols = [
-      { label: 'TICKER',   w: 62,  align: 'left'  },
-      { label: 'QTY',      w: 42,  align: 'right' },
-      { label: 'AVG COST', w: 56,  align: 'right' },
-      { label: 'LAST',     w: 56,  align: 'right' },
-      { label: 'MKT VALUE',w: 62,  align: 'right' },
-      { label: 'UNREAL',   w: 92,  align: 'right' },
-      { label: 'PRICE IRR',w: 48,  align: 'right' },
-      { label: 'WEIGHT',   w: 40,  align: 'right' },
-      { label: 'DAYS',     w: 28,  align: 'right' },
+      { label: 'TICKER',    w: 62, align: 'left'  },
+      { label: 'QTY',       w: 42, align: 'right' },
+      { label: 'AVG COST',  w: 54, align: 'right' },
+      { label: 'LAST',      w: 54, align: 'right' },
+      { label: 'MKT VALUE', w: 56, align: 'right' },
+      { label: 'UNREAL',    w: 82, align: 'right' },
+      { label: 'PRICE IRR', w: 58, align: 'right' },
+      { label: 'WEIGHT',    w: 42, align: 'right' },
+      { label: 'DAYS',      w: 34, align: 'right' },
     ];
     const tableW = cols.reduce((s, c) => s + c.w, 0);
 
@@ -490,6 +495,9 @@ module.exports = async (req, res) => {
       // Suppress annualized IRR for very short holdings (< 30 days) — annualizing
       // an 11-day return produces meaningless triple-digit numbers.
       const showIrr = h.days_held != null && h.days_held >= 30;
+      // Fixed-income CUSIPs get a parsed description sub-line (e.g. 'UST BILL 11/03/26')
+      // rendered below the CUSIP itself. Increases row height by 8pt when present.
+      const hasSubLine = !!h.security_display;
       const cells = [
         { v: h.ticker, color: NAVY, font: 'Helvetica-Bold' },
         { v: fmtNum(h.qty, 4), color: NEAR_BLACK, font: 'Helvetica' },
@@ -522,7 +530,14 @@ module.exports = async (req, res) => {
         }
         cx += cols[i].w;
       });
-      y += 20;
+      // Sub-line for Treasury CUSIPs: description below the ticker, small gray
+      if (hasSubLine) {
+        doc.fillColor(GRAY).font('Helvetica').fontSize(6.5)
+           .text(h.security_display, M + 4, y + 18, { width: cols[0].w - 8, align: 'left', lineBreak: false });
+        y += 28;
+      } else {
+        y += 20;
+      }
     });
 
     // Totals row

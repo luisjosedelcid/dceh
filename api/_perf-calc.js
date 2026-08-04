@@ -306,11 +306,36 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
 
   // Earliest BUY trade_date per ticker (for holding period + per-position IRR)
   const firstBuyByTicker = new Map();
+  const notesByTicker = new Map();
   for (const tx of sortedTx) {
     if (tx.side !== 'BUY') continue;
     if (!firstBuyByTicker.has(tx.ticker) || tx.trade_date < firstBuyByTicker.get(tx.ticker)) {
       firstBuyByTicker.set(tx.ticker, tx.trade_date);
     }
+    // Keep first non-empty notes for each ticker (for security description parsing)
+    if (!notesByTicker.has(tx.ticker) && tx.notes) {
+      notesByTicker.set(tx.ticker, tx.notes);
+    }
+  }
+
+  // Parse T-bill / Treasury security description from Schwab notes.
+  // Schwab notes format: 'US TREASURY BILL26U S T BILL DUE 11/03/26'
+  // Return { display: 'UST BILL 11/03/26', maturity: '2026-11-03' }.
+  // For non-Treasury tickers, returns null.
+  function parseTreasuryMeta(ticker, notes) {
+    if (!ticker || !notes) return null;
+    if (!/^912[0-9A-Z]{6}$/.test(ticker)) return null; // only Treasury CUSIPs
+    const m = notes.match(/DUE\s+(\d{1,2})\/(\d{1,2})\/(\d{2,4})/i);
+    if (!m) return null;
+    const [, mm, dd, yy] = m;
+    const year = yy.length === 2 ? '20' + yy : yy;
+    const isBill = /BILL/i.test(notes);
+    const isNote = /NOTE|NT/i.test(notes) && !isBill;
+    const kind = isBill ? 'UST BILL' : (isNote ? 'UST NOTE' : 'UST');
+    return {
+      display: `${kind} ${mm.padStart(2,'0')}/${dd.padStart(2,'0')}/${yy.slice(-2)}`,
+      maturity: `${year}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`,
+    };
   }
 
   // Asset class classification (SEC/GAAP cash-equivalents rule).
@@ -357,6 +382,8 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
     else if (assetClass === 'cash_equivalent') mvCashEquivalent += mv;
     else mvEquity += mv;
 
+    // Security description (Treasury CUSIPs get parsed display + maturity)
+    const meta = parseTreasuryMeta(ticker, notesByTicker.get(ticker));
     holdings.push({
       ticker,
       qty: totalQty,
@@ -370,6 +397,8 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
       first_buy_date: fbd || null,
       days_held: daysHeld,
       irr_annualized: irrAnn,
+      security_display: meta ? meta.display : null,
+      maturity_date: meta ? meta.maturity : null,
     });
   }
   // ── weights: use NAV as denominator ─────────────────────────────────────────
