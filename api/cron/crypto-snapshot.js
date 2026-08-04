@@ -17,7 +17,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { createClient } = require('@supabase/supabase-js');
+const { sbUpsert } = require('../_supabase');
 const { fetchCryptoPrices } = require('../_crypto-prices');
 
 function readPublicJson(filename) {
@@ -77,13 +77,10 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseKey) {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       res.status(500).json({ error: 'Supabase env vars missing' });
       return;
     }
-    const sb = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
 
     const rows = [];
     const missing = [];
@@ -106,20 +103,20 @@ module.exports = async (req, res) => {
       return;
     }
 
-    // Upsert with ignore-on-conflict to keep the cron idempotent per (coin, day).
-    const { data, error } = await sb
-      .from('crypto_price_history')
-      .upsert(rows, { onConflict: 'coin_id,snapshot_date', ignoreDuplicates: true })
-      .select();
-    if (error) {
-      res.status(500).json({ error: 'supabase upsert failed', detail: error.message });
+    // Upsert with merge-duplicates; PostgREST needs a unique constraint on
+    // (coin_id, snapshot_date) which the migration created.
+    let inserted = [];
+    try {
+      inserted = await sbUpsert('crypto_price_history', rows, 'coin_id,snapshot_date');
+    } catch (e) {
+      res.status(500).json({ error: 'supabase upsert failed', detail: String(e && e.message || e) });
       return;
     }
 
     res.status(200).json({
       ok: true,
       snapshot_date: snapshotDate,
-      inserted: (data || []).length,
+      inserted: (inserted || []).length,
       requested: rows.length,
       missing,
       coins: rows.map(r => ({ coin_id: r.coin_id, price_usd: r.price_usd })),

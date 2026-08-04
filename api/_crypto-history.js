@@ -25,39 +25,33 @@
 //     × quantity). isLive=false so the UI can flag it.
 // ═══════════════════════════════════════════════════════════════════
 
-const { createClient } = require('@supabase/supabase-js');
-
-let _sb = null;
-function sb() {
-  if (_sb) return _sb;
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error('Supabase env vars missing');
-  _sb = createClient(url, key, { auth: { persistSession: false } });
-  return _sb;
-}
+const { sbSelect } = require('./_supabase');
 
 /**
  * Load, for a list of coin ids, the most-recent price row with
  * snapshot_date <= asOfYMD. Returns { [coinId]: { snapshot_date, price_usd } }.
+ *
+ * Uses PostgREST directly via the project's _supabase helper (no
+ * @supabase/supabase-js dependency).
  */
 async function loadHistoricalPrices(coinIds, asOfYMD) {
   const uniqueIds = Array.from(new Set(coinIds.filter(Boolean)));
   if (uniqueIds.length === 0) return {};
 
-  // We pull every row for the ids up to as_of, then reduce to the latest per coin.
-  // For a handful of coins and a 365-day window this is 366 rows tops — trivial.
-  const { data, error } = await sb()
-    .from('crypto_price_history')
-    .select('coin_id, snapshot_date, price_usd')
-    .in('coin_id', uniqueIds)
-    .lte('snapshot_date', asOfYMD)
-    .order('snapshot_date', { ascending: false });
+  // PostgREST query string: pull every row for the ids up to as_of, ordered
+  // by snapshot_date desc; reduce to latest per coin in JS.
+  const inList = uniqueIds.map(id => `"${id}"`).join(',');
+  const qs =
+    `select=coin_id,snapshot_date,price_usd` +
+    `&coin_id=in.(${inList})` +
+    `&snapshot_date=lte.${asOfYMD}` +
+    `&order=snapshot_date.desc` +
+    `&limit=5000`;
 
-  if (error) throw new Error('crypto_price_history query failed: ' + error.message);
+  const rows = await sbSelect('crypto_price_history', qs);
 
   const latest = {};
-  for (const row of (data || [])) {
+  for (const row of (rows || [])) {
     if (!latest[row.coin_id]) {
       latest[row.coin_id] = {
         snapshot_date: row.snapshot_date,
