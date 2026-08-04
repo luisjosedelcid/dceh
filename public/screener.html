@@ -1112,8 +1112,14 @@ async function loadShortlist() {
       const snapCellId = `snap-${escapeHtmlW(it.ticker)}`;
       const snapButton = `<button id="${snapCellId}" onclick="handleSnapshot(this,'${escapeHtmlW(it.ticker)}')" data-state="unknown" style="font-size:9px;font-weight:700;color:var(--gray-mid);background:none;letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--rule);padding:5px 10px;cursor:pointer;font-family:inherit">Loading…</button>`;
 
+      // Ticker is rendered as plain text by default. If a snapshot exists for
+      // this name, refreshSnapshotButton() below turns it into a link to the
+      // internal Company Dashboard. No external Roic.ai fallback here — the
+      // Snapshot action column is the canonical entry point for coverage.
+      const tkCellId = `tkc-${escapeHtmlW(it.ticker)}`;
+      const tickerCell = `<span id="${tkCellId}" style="font-weight:700;color:var(--navy)">${escapeHtmlW(it.ticker)}</span>`;
       return `<tr>
-        <td class="ticker-cell" style="text-align:left">${_sectorTickerLink(it.ticker)}</td>
+        <td class="ticker-cell" style="text-align:left">${tickerCell}</td>
         <td style="text-align:left">${escapeHtmlW(company)}</td>
         <td style="text-align:left;color:var(--gray-mid);font-size:11px">${escapeHtmlW(sector)}</td>
         <td class="gold" style="font-weight:700">${price ? '$' + price.toFixed(2) : '—'}</td>
@@ -1156,6 +1162,11 @@ async function refreshSnapshotButton(ticker, tk) {
       btn.textContent = 'OPEN →';
       btn.style.color = 'var(--navy)';
       btn.style.borderColor = 'var(--navy)';
+      // Promote the ticker cell to a link into the internal snapshot.
+      const tkCell = document.getElementById(`tkc-${ticker}`);
+      if (tkCell) {
+        tkCell.outerHTML = `<a href="${data.url}" target="_blank" rel="noopener" id="tkc-${ticker}" style="color:var(--navy);text-decoration:none;border-bottom:1px dotted var(--gold);font-weight:700" title="Open Company Dashboard">${ticker}</a>`;
+      }
     } else {
       btn.dataset.state = 'missing';
       btn.textContent = 'GENERATE';
