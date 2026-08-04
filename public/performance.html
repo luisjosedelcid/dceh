@@ -2022,7 +2022,14 @@ async function loadRealEstate(){
 function renderRealEstate(){
   if(!RE_DATA) return;
   const fxToday = Number(RE_DATA.fx_eur_usd.today);
-  const today = new Date();
+  // Terminal date for XIRR must equal the NAV mark date (typically the last
+  // GP semi-annual mark, e.g. 2026-06-30). Using "today" would let calendar
+  // time drift the IRR against a frozen NAV, and would diverge from the PDF
+  // report which anchors the XIRR at navAsOf.
+  const navAsOfDate = RE_DATA.nav_as_of ? new Date(RE_DATA.nav_as_of + 'T00:00:00Z') : new Date();
+  // Lock-up remaining is measured from navAsOf (the economic dating of the
+  // mark), not from today. This mirrors the PDF's monthsElapsed calculation.
+  const asOfForRemaining = navAsOfDate;
   const positions = RE_DATA.positions || [];
 
   const enriched = positions.map(p=>{
@@ -2032,13 +2039,13 @@ function renderRealEstate(){
     const navUsdToday = p.nav_eur * fxToday;
     const moicEur = p.nav_eur / p.amount_eur;
     const moicUsd = navUsdToday / costUsd;
-    const t = reYears(deployDate, today);
+    const t = reYears(deployDate, navAsOfDate);
     const irrUsd = t>0 ? Math.pow(navUsdToday/costUsd, 1/t) - 1 : null;
     const irrEur = t>0 ? Math.pow(p.nav_eur/p.amount_eur, 1/t) - 1 : null;
     const lockupMonthsTotal = p.target_investment_period_months_high || p.target_investment_period_months || null;
     let lockupRemainingMonths = null;
     if(lockupMonthsTotal){
-      const monthsElapsed = (today - deployDate)/(1000*60*60*24*30.4375);
+      const monthsElapsed = (asOfForRemaining - deployDate)/(1000*60*60*24*30.4375);
       lockupRemainingMonths = Math.max(0, lockupMonthsTotal - monthsElapsed);
     }
     return Object.assign({}, p, {
@@ -2053,7 +2060,8 @@ function renderRealEstate(){
   const totMoic = totNavUsd/totInvUsd;
   const cfs = [];
   for(const p of enriched){ cfs.push({date:p.deployDate, amount:-p.costUsd}); }
-  cfs.push({date: today, amount: totNavUsd});
+  // Terminal cashflow is dated on the NAV mark date (navAsOf), not today.
+  cfs.push({date: navAsOfDate, amount: totNavUsd});
   const xirrUsd = reXirr(cfs);
 
   document.getElementById('re-kpi-inv').textContent = reFmtUsd0(totInvUsd);
@@ -2115,8 +2123,8 @@ function renderRealEstate(){
   document.getElementById('re-asof-badge').textContent = 'NAV as of '+RE_DATA.nav_as_of+' · FX as of '+RE_DATA.fx_eur_usd.today_date;
   const fxDetail = 'FX EUR/USD used: '+fxToday.toFixed(4)+' on '+RE_DATA.fx_eur_usd.today_date
     +' (NAV mark on '+RE_DATA.nav_as_of+' at '+Number(RE_DATA.fx_eur_usd.nav_close).toFixed(4)+'). '
-    +'Each contribution was converted to USD at the FX in effect on deployment date; current NAV is converted at today\'s FX. '
-    +'XIRR USD calculated by bisection over individual cashflows (deployment negative, aggregate NAV positive today).';
+    +'Each contribution was converted to USD at the FX in effect on deployment date; the GP NAV in EUR is converted to USD at the latest available ECB reference rate for indicative reporting. '
+    +'XIRR USD is calculated by bisection over individual cashflows, with the terminal cashflow anchored to the NAV mark date ('+RE_DATA.nav_as_of+'), not to today, so calendar time does not erode the IRR against a frozen NAV.';
   document.getElementById('re-fx-detail').textContent = fxDetail;
   document.getElementById('re-disclaimer').textContent = RE_DATA.disclaimer + ' Source: '+RE_DATA.source+'.';
 }

@@ -83,7 +83,6 @@ module.exports = async (req, res) => {
     const rawAsOf = (req.query && req.query.as_of) ? String(req.query.as_of) : today;
     const asOfRequested =
       /^\d{4}-\d{2}-\d{2}$/.test(rawAsOf) ? (rawAsOf > today ? today : rawAsOf) : today;
-    const debugMode = req.query && req.query.debug === '1';
 
     // Resolve the mark that applies at as-of. This overrides nav_as_of, source,
     // and each position's nav_eur / moic_eur_reported / gp_commentary with the
@@ -134,15 +133,6 @@ module.exports = async (req, res) => {
     const fxNav       = Number(fxNavInfo.value) || fxToday;
     const fxNavDate   = fxNavInfo.date || navAsOf;
     const fxNavSrc    = fxNavInfo.source || '\u2014';
-    if (debugMode) {
-      res.status(200).json({
-        asOfRequested, navAsOf, isHistoricalReport,
-        fxToday: { value: fxToday, date: fxTodayDate, source: fxTodaySrc, stale: !!fxTodayInfo.stale, cached: !!fxTodayInfo.cached, error: fxTodayInfo.error || null },
-        fxNav:   { value: fxNav,   date: fxNavDate,   source: fxNavSrc,   stale: !!fxNavInfo.stale,   cached: !!fxNavInfo.cached,   error: fxNavInfo.error || null },
-        fxFallbacks: { today: fxTodayFallback, nav: fxNavFallback },
-      });
-      return;
-    }
 
     // Enrich each position (mirrors performance.html reLoadEnriched logic).
     // Methodology (post-review): the GP NAV mark is dated `navAsOf` (typically
