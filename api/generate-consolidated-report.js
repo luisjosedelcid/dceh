@@ -92,7 +92,7 @@ module.exports = async (req, res) => {
     // interest linearly to asOfRequested via loadAndValueTimeDeposits.
     const t0 = Date.now();
     const [eqResult, tdResult] = await Promise.all([
-      withTimeout(loadAndCompute({ endDate: asOfRequested }), 30_000, 'loadAndCompute').catch(e => ({ _err: e.message })),
+      withTimeout(loadAndCompute({ endDate: asOfRequested }), 45_000, 'loadAndCompute').catch(e => ({ _err: e.message })),
       withTimeout(loadAndValueTimeDeposits(asOfRequested), 8_000, 'timeDeposits').catch(e => ({ _err: e.message })),
     ]);
     dbg.phases.loadAll_ms = Date.now() - t0;

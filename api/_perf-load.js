@@ -3,11 +3,19 @@ const { sbSelect } = require('./_supabase');
 const { computeDaily } = require('./_perf-calc');
 
 async function loadAndCompute({ endDate } = {}) {
-  // 1) Pull tx, cf, prices in parallel
+  // 1) Pull tx, cf, prices in parallel.
+  // When endDate is set (historical rebuild) we scope every query with an
+  // upper bound so Supabase returns fewer rows and _perf-calc doesn't spend
+  // time walking days after the requested as-of. This keeps historical
+  // consolidated PDF generation under Vercel's 60s wall.
+  const isHistorical = !!endDate;
+  const txFilter     = isHistorical ? `&trade_date=lte.${endDate}`  : '';
+  const cfFilter     = isHistorical ? `&occurred_at=lte.${endDate}` : '';
+  const priceFilter  = isHistorical ? `&price_date=lte.${endDate}`  : '';
   const [tx, cf, prices] = await Promise.all([
-    sbSelect('transactions', 'select=trade_date,ticker,side,qty,price_native,fx_to_usd,fee_native,notes&order=trade_date.asc&limit=10000'),
-    sbSelect('cashflows',    'select=occurred_at,cf_type,ticker,amount_native,fx_to_usd&order=occurred_at.asc&limit=10000'),
-    sbSelect('prices_daily', 'select=ticker,price_date,close_native&order=price_date.asc&limit=100000'),
+    sbSelect('transactions', `select=trade_date,ticker,side,qty,price_native,fx_to_usd,fee_native,notes&order=trade_date.asc&limit=10000${txFilter}`),
+    sbSelect('cashflows',    `select=occurred_at,cf_type,ticker,amount_native,fx_to_usd&order=occurred_at.asc&limit=10000${cfFilter}`),
+    sbSelect('prices_daily', `select=ticker,price_date,close_native&order=price_date.asc&limit=100000${priceFilter}`),
   ]);
 
   if (tx.length === 0 && cf.length === 0) {
