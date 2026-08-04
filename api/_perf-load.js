@@ -14,8 +14,12 @@ async function loadAndCompute({ endDate } = {}) {
     return { dailySeries: [], holdings: [], kpis: null };
   }
 
-  const iwquSeries = prices.filter(p => p.ticker === 'IWQU.L');
-  const otherPrices = prices.filter(p => p.ticker !== 'IWQU.L');
+  // Benchmark: S&P 500 (via SPY ETF). Legacy `iwquSeries` var name kept because
+  // downstream schema fields (portfolio_snapshots.benchmark_urth, api response
+  // key `iwqu_norm`) are still named after prior benchmarks. Renaming those
+  // would break the daily snapshot cron and the /api/performance response shape.
+  const iwquSeries = prices.filter(p => p.ticker === 'SPY');
+  const otherPrices = prices.filter(p => p.ticker !== 'SPY');
 
   const startDate = [
     ...tx.map(t => t.trade_date),
@@ -24,8 +28,8 @@ async function loadAndCompute({ endDate } = {}) {
 
   const today = new Date();
   // End = max(last tx date, last cf date) so the window covers all portfolio
-  // activity even when the benchmark series (IWQU.L) is stale. Days without an
-  // IWQU.L close simply get iwqu_norm=null on the series — they don't truncate
+  // activity even when the benchmark series (SPY) is stale. Days without an
+  // SPY close simply get iwqu_norm=null on the series — they don't truncate
   // the whole dashboard. Caller can still override via endDate.
   const todayStr = today.toISOString().slice(0, 10);
   const lastTx = tx.length ? tx[tx.length - 1].trade_date : null;

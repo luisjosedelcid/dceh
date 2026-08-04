@@ -355,7 +355,7 @@
       <div class="kpi-grid">
         <div class="kpi"><div class="kpi-label">Net invested</div><div class="kpi-value" id="kpi-inv">—</div><div class="kpi-sub" id="kpi-inv-sub">contrib. − withdr.</div></div>
         <div class="kpi"><div class="kpi-label">NAV (USD)</div><div class="kpi-value" id="kpi-nav">—</div><div class="kpi-sub" id="kpi-nav-sub">—</div></div>
-        <div class="kpi"><div class="kpi-label">TWR cumulative</div><div class="kpi-value" id="kpi-twr">—</div><div class="kpi-sub" id="kpi-twr-sub">vs IWQU.L —</div></div>
+        <div class="kpi"><div class="kpi-label">TWR cumulative</div><div class="kpi-value" id="kpi-twr">—</div><div class="kpi-sub" id="kpi-twr-sub">vs S&amp;P 500 —</div></div>
         <div class="kpi"><div class="kpi-label">IRR (annualized)</div><div class="kpi-value" id="kpi-irr">—</div><div class="kpi-sub" id="kpi-irr-sub">since inception</div></div>
         <div class="kpi"><div class="kpi-label">Max drawdown</div><div class="kpi-value" id="kpi-dd">—</div><div class="kpi-sub" id="kpi-dd-sub">peak-to-trough</div></div>
       </div>
@@ -366,7 +366,7 @@
           IPS bands — Tactical allocation (§3.5–3.7)
           <span style="font-size:9px;font-weight:400;opacity:0.7">As of last NAV</span>
         </div>
-        <div class="ips-note">IPS benchmark §4.8: MSCI World Quality NR (proxy IWQU.L). Transitional regime acknowledged by IPS §3.7.</div>
+        <div class="ips-note">Benchmark: S&amp;P 500 (SPY). Transitional allocation regime acknowledged by IPS §3.7.</div>
         <table class="ips-bands-table">
           <thead>
             <tr>
@@ -382,8 +382,8 @@
 
       <!-- Equity curve -->
       <div style="margin-top:24px">
-        <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin-bottom:4px">Equity curve — Portfolio TWR vs IWQU.L</h3>
-        <div style="font-size:10px;color:var(--gray-mid);margin-bottom:10px">Benchmark IPS §4.8: MSCI World Quality NR (proxy IWQU.L — iShares Edge MSCI World Quality Factor UCITS, USD)</div>
+        <h3 style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin-bottom:4px">Equity curve — Portfolio TWR vs S&amp;P 500</h3>
+        <div style="font-size:10px;color:var(--gray-mid);margin-bottom:10px">Benchmark: S&amp;P 500 (SPY — SPDR S&amp;P 500 ETF Trust, USD)</div>
         <div style="position:relative;height:340px;background:var(--cream);border:1px solid var(--rule);padding:12px">
           <canvas id="chart-equity"></canvas>
         </div>
@@ -586,7 +586,7 @@
   <!-- ====== PRICES PANEL ====== -->
   <div class="panel" id="panel-prices">
     <h2>Prices &amp; benchmark</h2>
-    <div class="sub" style="margin-bottom:14px">Daily EOD closes for every tracked ticker plus IWQU.L (MSCI World Quality benchmark, IPS §4.8). Cron refreshes Mon–Fri at 22:00 UTC; click Backfill to load history from inception.</div>
+    <div class="sub" style="margin-bottom:14px">Daily EOD closes for every tracked ticker plus SPY (S&amp;P 500 benchmark). Cron refreshes Mon–Fri at 22:00 UTC; click Backfill to load history from inception.</div>
     <div id="prices-summary" class="nodata">Loading…</div>
     <div class="actions">
       <button class="btn ghost" id="btn-prices-reload" type="button">Reload</button>
@@ -1481,7 +1481,7 @@ function renderDashboard(j){
   const iwquDelta = (k.twr_cum_pct!=null && k.iwqu_return_pct!=null)
     ? ((1 + k.twr_cum_pct) / (1 + k.iwqu_return_pct) - 1)
     : null;
-  document.getElementById('kpi-twr-sub').textContent = `Bench TWR ${signedPct(k.iwqu_return_pct)} · Relative return ${signedPct(iwquDelta)}`;
+  document.getElementById('kpi-twr-sub').textContent = `S&P 500 TWR ${signedPct(k.iwqu_return_pct)} · Relative return ${signedPct(iwquDelta)}`;
 
   const irrEl = document.getElementById('kpi-irr');
   irrEl.textContent = signedPct(k.irr_pct);
@@ -1842,7 +1842,7 @@ function renderEquityChart(series){
   const ctx = document.getElementById('chart-equity').getContext('2d');
   if(equityChart) equityChart.destroy();
 
-  // Portfolio = (1+twr_cum)*100; benchmark = iwqu_norm*100
+  // Portfolio = (1+twr_cum)*100; benchmark = iwqu_norm*100 (SPY-normalized)
   const labels = series.map(s=>s.date);
   const portfolio = series.map(s=> (s.twr_cum!=null) ? (1+s.twr_cum)*100 : null);
   const iwqu = series.map(s=> (s.iwqu_norm!=null) ? s.iwqu_norm*100 : null);
@@ -1853,7 +1853,7 @@ function renderEquityChart(series){
       labels,
       datasets: [
         { label: 'Portfolio (TWR)', data: portfolio, borderColor: '#1b2642', backgroundColor: 'rgba(27,38,66,0.06)', borderWidth: 2, fill: true, pointRadius: 0, tension: 0.15 },
-        { label: 'IWQU.L (MSCI World Quality)', data: iwqu, borderColor: '#b88b47', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [4,4], pointRadius: 0, tension: 0.15 },
+        { label: 'S&P 500 (SPY)', data: iwqu, borderColor: '#b88b47', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [4,4], pointRadius: 0, tension: 0.15 },
       ],
     },
     options: {

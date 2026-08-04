@@ -6,12 +6,12 @@
 // is 100% consistent with what the user sees on /performance.html.
 //
 // Includes:
-//   - Hero metrics: NAV, TWR vs IWQU.L, IRR (XIRR), Max DD
+//   - Hero metrics: NAV, TWR vs S&P 500, IRR (XIRR), Max DD
 //   - Holdings table: ticker, qty, avg cost, last price, MV, unrealized P&L,
 //     IRR (annualized), weight, days held
 //   - Cash · Market Value · Realized P&L · Unrealized P&L cards
 //   - Dividends + Interest · Withholding tax cards
-//   - Equity curve TWR vs IWQU.L (line chart, last 180 days or full history)
+//   - Equity curve TWR vs S&P 500 (line chart, last 180 days or full history)
 //
 // GET /api/generate-daily-report  →  application/pdf
 // ═══════════════════════════════════════════════════════════════════
@@ -282,7 +282,7 @@ function drawIpsBands(doc, x, y, w, h, kpis) {
   // Footer note
   const footerY = y + h - 12;
   doc.fillColor(GRAY).font('Helvetica-Oblique').fontSize(7)
-     .text('Asignación táctica IPS §3.5–3.7 · Benchmark IPS §4.8: MSCI World Quality NR (proxy IWQU.L)', x + padX, footerY, { width: w - padX * 2, lineBreak: false });
+     .text('Current allocation vs IPS bands §3.5–3.7 · Benchmark: S&P 500 (SPY)', x + padX, footerY, { width: w - padX * 2, lineBreak: false });
 }
 
 module.exports = async (req, res) => {
@@ -403,7 +403,7 @@ module.exports = async (req, res) => {
         // simple arithmetic subtraction (which would misstate the drag).
         label: 'TWR SINCE INCEPTION',
         value: fmtPct(kpis.twr_cum_pct),
-        sub: `Bench TWR ${fmtPct(kpis.iwqu_return_pct)} · Relative return ${fmtPct(excessTwr)}`,
+        sub: `S&P 500 TWR ${fmtPct(kpis.iwqu_return_pct)} · Relative return ${fmtPct(excessTwr)}`,
         valueColor: pctColor(kpis.twr_cum_pct),
         subColor: GRAY,
       },

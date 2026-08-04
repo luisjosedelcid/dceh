@@ -4,7 +4,7 @@
 //   transactions: [{ trade_date:'YYYY-MM-DD', ticker, side:'BUY'|'SELL', qty, price_native, fee_native, fx_to_usd }]
 //   cashflows:    [{ occurred_at:'YYYY-MM-DD', ticker?, cf_type:'CONTRIBUTION'|'WITHDRAWAL'|'DIVIDEND'|'INTEREST'|'FEE'|'TAX', amount_native, fx_to_usd }]
 //   prices:       [{ price_date:'YYYY-MM-DD', ticker, close_native }]   (currency assumed USD here)
-//   iwquSeries:   [{ price_date, close_native }]                         (IWQU.L benchmark)
+//   iwquSeries:   [{ price_date, close_native }]                         (SPY / S&P 500 benchmark; var name is legacy)
 //   startDate:    'YYYY-MM-DD' (typically MIN(trade_date, occurred_at))
 //   endDate:      'YYYY-MM-DD' (typically today)
 //
@@ -279,7 +279,8 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
     if (nav > peakNav) peakNav = nav;
     const dd = peakNav > 0 ? (peakNav - nav) / peakNav : 0;
 
-    // 5) IWQU.L benchmark — normalize to 1.0 at first date with both IWQU.L price & non-zero NAV
+    // 5) Benchmark (SPY / S&P 500) — normalize to 1.0 at first date with both a SPY close & non-zero NAV.
+    //    Field names (iwqu_*) are legacy; the series is SPY now.
     const iwquPx = iwquOn('__IWQU__', date);
     if (iwquBase == null && iwquPx != null && nav > 0) iwquBase = iwquPx;
     const iwquNorm = (iwquBase != null && iwquPx != null) ? (iwquPx / iwquBase) : null;

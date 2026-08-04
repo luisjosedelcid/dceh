@@ -87,7 +87,7 @@ module.exports = async (req, res) => {
     // Load discipline thresholds from DB (with hardcoded fallback)
     const GATES = await loadDisciplineRules();
 
-    // ── 1) Performance: NAV, holdings, cash, vs IWQU.L ────────────────────
+    // ── 1) Performance: NAV, holdings, cash, vs S&P 500 ───────────────────
     const perf = await loadAndCompute({});
     const k = perf.kpis || null;
     const holdings = perf.holdings || [];
@@ -109,7 +109,8 @@ module.exports = async (req, res) => {
       ? ((1 + (k.twr_cum_pct || 0)) / (1 + (ytdAnchor.twr_cum || 0))) - 1
       : null;
 
-    // IWQU.L YTD same way
+    // Benchmark (S&P 500 via SPY) YTD same way. iwqu_ prefix on the fields
+    // is legacy — kept because /api/cockpit-summary consumers read those keys.
     const iwquAnchor = ytdAnchor && ytdAnchor.iwqu_norm ? ytdAnchor.iwqu_norm : null;
     const iwquLast = series.length ? series[series.length - 1].iwqu_norm : null;
     const iwquYtd = (iwquAnchor && iwquLast) ? (iwquLast / iwquAnchor) - 1 : null;
