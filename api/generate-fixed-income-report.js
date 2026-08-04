@@ -36,14 +36,43 @@ module.exports = async (req, res) => {
 
     let wYieldNumer = 0, wYieldDenom = 0, terminalNet = 0;
     let maxMaturity = '—';
+    // Bank concentration & WAM (principal-weighted days remaining)
+    const bankMap = new Map();
+    let wamNumer = 0, wamDenom = 0;
+    const ccySet = new Set();
     for (const d of deps) {
       const net = Number(d.annual_rate) * (1 - Number(d.tax_rate || 0));
       wYieldNumer += Number(d.principal) * net;
       wYieldDenom += Number(d.principal);
       terminalNet += Number(d.terminal_net || 0);
       if (d.maturity_date > maxMaturity) maxMaturity = d.maturity_date;
+      const bnk = (d.bank || 'Unknown').trim();
+      bankMap.set(bnk, (bankMap.get(bnk) || 0) + Number(d.principal || 0));
+      wamNumer += Number(d.principal || 0) * Number(d.days_remaining || 0);
+      wamDenom += Number(d.principal || 0);
+      ccySet.add((d.currency || 'USD').toUpperCase());
     }
     const wYield = wYieldDenom > 0 ? wYieldNumer / wYieldDenom : null;
+    const wamDays = wamDenom > 0 ? Math.round(wamNumer / wamDenom) : null;
+    // Top-bank concentration string.
+    const bankConc = [...bankMap.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([b, p]) => `${b} ${totalPrincipal > 0 ? ((p / totalPrincipal) * 100).toFixed(0) : '0'}%`)
+      .slice(0, 3)
+      .join(' · ');
+    // Day-count convention (all deposits should use the same; report the mode).
+    const convCount = new Map();
+    for (const d of deps) {
+      const c = d.day_count_convention || 'actual_365';
+      convCount.set(c, (convCount.get(c) || 0) + 1);
+    }
+    const dominantConv = [...convCount.entries()].sort((a, b) => b[1] - a[1])[0];
+    const conventionLabel = dominantConv ? (
+      dominantConv[0] === 'actual_365' ? 'ACT/365' :
+      dominantConv[0] === 'actual_360' ? 'ACT/360' :
+      dominantConv[0] === '30_360'     ? '30/360'  :
+      dominantConv[0]
+    ) : 'ACT/365';
 
     // ─── Build PDF ─────────────────────────────────────────────
     res.setHeader('Content-Type', 'application/pdf');
@@ -59,7 +88,7 @@ module.exports = async (req, res) => {
     doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(20)
        .text('Fixed Income — Bank time deposits (CDs)', 54, 62);
     doc.fillColor(GRAY).font('Helvetica').fontSize(9)
-       .text(`Mark-to-accrual valuation · ${deps.length} active deposit${deps.length === 1 ? '' : 's'} · as of ${asOf}`,
+       .text(`Mark-to-accrual (carrying value) · ${deps.length} active deposit${deps.length === 1 ? '' : 's'} · as of ${asOf}`,
              54, 88);
 
     // ─── HERO STRIP (5 cells) ──────────────────────────────────
@@ -69,13 +98,13 @@ module.exports = async (req, res) => {
     const cells = [
       { label: 'TOTAL PRINCIPAL', value: fmtUSD(totalPrincipal, 0),
         sub: `${deps.length} deposit${deps.length === 1 ? '' : 's'}` },
-      { label: 'MARKET VALUE (M2A)', value: fmtUSD(totalMv, 0), sub: `as of ${asOf}` },
+      { label: 'CARRYING VALUE (M2A)', value: fmtUSD(totalMv, 0), sub: `as of ${asOf}` },
       { label: 'ACCRUED (NET)', value: (totalAccruedNet >= 0 ? '+' : '') + fmtUSD(totalAccruedNet, 0),
         valueColor: pctColor(totalAccruedNet),
-        sub: `gross ${fmtUSD(totalAccruedGross, 0)} − tax ${fmtUSD(totalAccruedTax, 0)}` },
+        sub: `gross ${fmtUSD(totalAccruedGross, 0)} - tax ${fmtUSD(totalAccruedTax, 0)}` },
       { label: 'WEIGHTED YIELD (NET)', value: fmtPctRaw(wYield, 3),
         sub: 'principal-weighted' },
-      { label: 'TERMINAL NET INT.', value: fmtUSD(terminalNet, 0),
+      { label: 'NET INT. AT MATURITY', value: fmtUSD(terminalNet, 0),
         sub: deps.length > 0 ? `through ${maxMaturity}` : '—' },
     ];
     cells.forEach((c, i) => {
@@ -100,7 +129,7 @@ module.exports = async (req, res) => {
       { key: 'tax',       w: 32, align: 'right', title: 'Tax' },
       { key: 'netY',      w: 40, align: 'right', title: 'Net yield' },
       { key: 'accrued',   w: 52, align: 'right', title: 'Accrued (net)' },
-      { key: 'mv',        w: 52, align: 'right', title: 'MV' },
+      { key: 'mv',        w: 52, align: 'right', title: 'Carrying' },
       { key: 'pct',       w: 34, align: 'right', title: 'Prog.' },
       { key: 'daysRem',   w: 32, align: 'right', title: 'Days' },
       { key: 'status',    w: 40, align: 'left',  title: 'Status' },
@@ -263,6 +292,53 @@ module.exports = async (req, res) => {
         cx += c.w;
       }
       y += 17;
+    }
+
+    // ─── PORTFOLIO OPERATIONAL METRICS ─────────────────────────
+    if (deps.length > 0) {
+      y += 14;
+      drawSectionLabel(doc, y, 'Portfolio metrics');
+      y += 12;
+      const opBoxH = 44;
+      doc.rect(startX, y, tableW, opBoxH).fill(CREAM);
+      const colTW = tableW / 3;
+      doc.fillColor(NEAR_BLACK).font('Helvetica-Bold').fontSize(7.5)
+         .text('Bank concentration', startX + 8, y + 6, { width: colTW - 16, lineBreak: false });
+      doc.font('Helvetica').fontSize(7.5)
+         .text(bankConc || '—', startX + 8, y + 18, { width: colTW - 16, lineBreak: false, ellipsis: true });
+      doc.font('Helvetica-Bold')
+         .text('Weighted avg. maturity', startX + colTW + 8, y + 6, { width: colTW - 16, lineBreak: false });
+      doc.font('Helvetica')
+         .text(wamDays != null ? `${wamDays} days remaining` : '—', startX + colTW + 8, y + 18, { width: colTW - 16, lineBreak: false });
+      doc.font('Helvetica-Bold')
+         .text('Currency exposure', startX + (2 * colTW) + 8, y + 6, { width: colTW - 16, lineBreak: false });
+      doc.font('Helvetica')
+         .text([...ccySet].join(', ') + (ccySet.size === 1 ? ' 100%' : ''), startX + (2 * colTW) + 8, y + 18, { width: colTW - 16, lineBreak: false });
+      doc.fillColor(GRAY).font('Helvetica-Oblique').fontSize(6.5)
+         .text('Deposit guarantee: none applicable to USD deposits with Guatemalan private banks (no FOGADE-equivalent for foreign-currency retail deposits). Full counterparty risk on issuing bank.',
+               startX + 8, y + 30, { width: tableW - 16, lineGap: 1 });
+      y += opBoxH;
+    }
+
+    // ─── METHODOLOGICAL BASIS ──────────────────────────────────
+    if (deps.length > 0) {
+      y += 10;
+      drawSectionLabel(doc, y, 'Methodological basis');
+      y += 12;
+      const methBoxH = 46;
+      doc.rect(startX, y, tableW, methBoxH).fill(CREAM);
+      doc.fillColor(NEAR_BLACK).font('Helvetica').fontSize(7)
+         .text(
+           `Day-count: ${conventionLabel} (calendar days, inclusive of start, exclusive of maturity). ` +
+           `Progress % and accrued interest use the same day count, so daily accrual is reproducible and reconciles to carrying value. ` +
+           `Mark-to-accrual: carrying value = principal + accrued net interest. This is NOT a market quote (deposits are not traded) — it is the linear accrual value.`,
+           startX + 8, y + 5,
+           { width: tableW - 16, lineGap: 2 });
+      doc.text(
+           `Tax recognition: the 10% withholding is accrued proportionally each day (accrued_tax = accrued_gross × tax_rate), not deferred to maturity. The Accrued (net) figure already reflects daily tax withholding.`,
+           startX + 8, y + 30,
+           { width: tableW - 16, lineGap: 2 });
+      y += methBoxH;
     }
 
     drawFooter(doc, asOf, 'time_deposits table (Supabase) · mark-to-accrual');
