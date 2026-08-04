@@ -172,8 +172,17 @@ module.exports = async (req, res) => {
     // -- Totals --
     const totNav = eqNav + reNav + crNav + tdMv;
     const totCap = eqCap + reCap + crCap + tdPrincipal;
-    const totPnlUnr = eqPnlUnr + rePnlUnr + crPnlTotal + tdAccruedNet;
-    const totMoic = totCap > 0 ? (totNav + crPnlRealized) / totCap : null;
+    // Header defines MOIC as NAV/Capital — keep it consistent with that
+    // definition. Historical realized crypto P&L is reported separately in the
+    // reconciliation block below (it was already withdrawn from NAV).
+    const totMoic = totCap > 0 ? totNav / totCap : null;
+    // Sleeve-P&L totals may not equal (NAV − Capital) exactly. The delta comes
+    // from realized crypto P&L that has already been withdrawn from NAV and
+    // from accrued-vs-avg-cost differences in Equity. Track it explicitly.
+    const sumSleevePnl = eqPnlUnr + rePnlUnr + crPnlTotal + tdAccruedNet;
+    const navMinusCap = totNav - totCap;
+    const totPnlUnr = navMinusCap; // headline P&L reconciles to NAV − Capital
+    const otherAdjustments = sumSleevePnl - navMinusCap; // typically negative
 
     // Sleeve count (each sub-sleeve of the Equity engine only counts if NAV > 0)
     const sleeveCount = (eqK && eqEquityNav > 0 ? 1 : 0)
@@ -230,7 +239,23 @@ module.exports = async (req, res) => {
       weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
     });
     doc.fillColor(GRAY).font('Helvetica').fontSize(10)
-       .text(`As of ${asOfPretty}  ·  ${sleeveCount} ${sleeveCount === 1 ? 'sleeve' : 'sleeves'} active  ·  All asset classes`, M, 130);
+       .text(`As of ${asOfPretty}  ·  ${sleeveCount} active ${sleeveCount === 1 ? 'sleeve' : 'sleeves'}  ·  Consolidated portfolio`, M, 130);
+    // Staleness warning: flag any sleeve valued > 7 days before the report date
+    const asOfMs = new Date(asOfDate + 'T00:00:00Z').getTime();
+    const staleSleeves = [];
+    const checkStale = (label, isoDate) => {
+      if (!isoDate || isoDate === '\u2014') return;
+      const t = Date.parse(isoDate);
+      if (isNaN(t)) return;
+      const daysOld = Math.floor((asOfMs - t) / (86400 * 1000));
+      if (daysOld > 7) staleSleeves.push(`${label}: ${daysOld}d`);
+    };
+    checkStale('Real Estate', reLast);
+    checkStale('Crypto', crLast);
+    if (staleSleeves.length > 0) {
+      doc.fillColor(RED).font('Helvetica-Oblique').fontSize(8.5)
+         .text(`Warning: consolidated NAV mixes valuation dates. Stale sleeves \u2014 ${staleSleeves.join('; ')}. See \u201cLast update\u201d column.`, M, 145, { width: CW });
+    }
 
     // ─── HERO METRICS ────────────────────────────────────────────
     let y = 160;
@@ -243,7 +268,7 @@ module.exports = async (req, res) => {
       { label: 'CAPITAL CONTRIBUTED', value: fmtUSD(totCap, 0), sub: 'net of withdrawals', subColor: GRAY },
       { label: 'TOTAL P&L (USD)', value: fmtUSD0Signed(totPnlUnr), sub: `${fmtPct(totRoi)} vs capital`, valueColor: pctColor(totPnlUnr), subColor: GRAY },
       { label: 'CONSOLIDATED MOIC', value: fmtMoic(totMoic), sub: 'NAV / Capital', valueColor: (totMoic != null && totMoic >= 1) ? GREEN : RED, subColor: GRAY },
-      { label: 'CONSOLIDATED TWR', value: fmtPct(totTwr), sub: 'weighted avg by NAV', valueColor: pctColor(totTwr), subColor: GRAY },
+      { label: 'NAV-WTD RETURN', value: fmtPct(totTwr), sub: 'Indicative, not true TWR', valueColor: pctColor(totTwr), subColor: GRAY },
     ];
     const cellW = CW / heroCells.length;
     heroCells.forEach((cell, i) => {
@@ -292,14 +317,14 @@ module.exports = async (req, res) => {
 
     // Table layout
     const cols = [
-      { key: 'label', w: 130, align: 'left',  title: 'Sleeve' },
-      { key: 'nav',   w: 80,  align: 'right', title: 'NAV (USD)' },
-      { key: 'pct',   w: 55,  align: 'right', title: '% NAV' },
-      { key: 'cap',   w: 80,  align: 'right', title: 'Capital' },
-      { key: 'pnl',   w: 80,  align: 'right', title: 'P&L' },
-      { key: 'moic',  w: 45,  align: 'right', title: 'MOIC' },
-      { key: 'twr',   w: 65,  align: 'right', title: 'TWR cum.' },
-      { key: 'last',  w: 70,  align: 'left',  title: 'Last update' },
+      { key: 'label', w: 110, align: 'left',  title: 'Sleeve' },
+      { key: 'nav',   w: 68,  align: 'right', title: 'NAV (USD)' },
+      { key: 'pct',   w: 44,  align: 'right', title: '% NAV' },
+      { key: 'cap',   w: 68,  align: 'right', title: 'Capital' },
+      { key: 'pnl',   w: 65,  align: 'right', title: 'P&L' },
+      { key: 'moic',  w: 36,  align: 'right', title: 'MOIC' },
+      { key: 'twr',   w: 48,  align: 'right', title: 'Return' },
+      { key: 'last',  w: 65,  align: 'left',  title: 'Last update' },
     ];
     // Draw header row
     doc.rect(M, y, CW, 18).fill(NAVY);
@@ -318,8 +343,9 @@ module.exports = async (req, res) => {
       const rowH = 16;
       if (rowIdx % 2 === 1) doc.rect(M, y, CW, rowH).fill(ROW_ALT);
       const wNav = totNav > 0 ? s.nav / totNav : 0;
-      const moicNum = s.nav + (s.realized || 0);
-      const moic = s.cap > 0 ? moicNum / s.cap : null;
+      // MOIC = NAV / Capital (consistent with header definition). Realized
+      // historical P&L for Crypto is disclosed in the reconciliation block.
+      const moic = s.cap > 0 ? s.nav / s.cap : null;
 
       cx = M + 6;
       const cells = [
@@ -358,7 +384,18 @@ module.exports = async (req, res) => {
          .text(cell.text, cx, y + 5, { width: cols[i].w - 4, align: cell.align, lineBreak: false });
       cx += cols[i].w;
     });
-    y += 18 + 16;
+    y += 18 + 6;
+    // Reconciliation footnote: explain the sum of sleeve P&L vs NAV − Capital
+    if (Math.abs(otherAdjustments) >= 1) {
+      doc.font('Helvetica-Oblique').fontSize(7.5).fillColor(GRAY)
+         .text(
+           `Reconciliation: sum of sleeve P&L = ${fmtUSD0Signed(sumSleevePnl)}; NAV \u2212 Capital = ${fmtUSD0Signed(navMinusCap)}. Delta of ${fmtUSD0Signed(otherAdjustments)} reflects realized crypto P&L already withdrawn from NAV and cost-basis timing in Equity.`,
+           M, y, { width: CW }
+         );
+      y += 22;
+    } else {
+      y += 10;
+    }
 
     // ─── IPS §3.1 STRATEGIC BANDS ────────────────────────────────
     drawSectionLabel(doc, y, 'IPS §3.1 — Strategic allocation bands');
@@ -394,11 +431,13 @@ module.exports = async (req, res) => {
       const rowH = 14;
       if (ipsIdx % 2 === 1) doc.rect(M, y, CW, rowH).fill(ROW_ALT);
       let status, color;
-      const tol = 0.02;
-      if (b.actual >= b.min && b.actual <= b.max)                         { status = 'OK — within band'; color = GREEN; }
-      else if (b.actual >= (b.min - tol) && b.actual <= (b.max + tol))    { status = 'Near limit';       color = GOLD; }
+      // Band status: hard bands per IPS §3.1. No tolerance above max — any
+      // breach is ABOVE max (rebalance action). Near-limit is a soft warning
+      // strictly between min and max but within 200 bps of either edge.
+      if (b.actual > b.max)                                               { status = 'ABOVE max';         color = RED; }
       else if (b.actual < b.min)                                          { status = 'BELOW min';         color = RED; }
-      else                                                                { status = 'ABOVE max';         color = RED; }
+      else if (b.actual < b.min + 0.02 || b.actual > b.max - 0.02)        { status = 'Near limit';       color = GOLD; }
+      else                                                                { status = 'OK \u2014 within band'; color = GREEN; }
       cx = M + 6;
       const row = [
         { text: b.label,                                     color: NEAR_BLACK, align: 'left'  },

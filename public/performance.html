@@ -2641,11 +2641,14 @@ function renderConsolidado(eqK, eqHoldings){
   }
 
   // ---- Totales ----
-  // Crypto contribuye con P&L total (realized + unrealized) porque el realized ya salió vía retiros y no está en NAV.
-  // Time Deposits: principal es capital adicional; accrued_net es P&L no realizado (mark-to-accrual).
+  // Headline P&L reconciles to NAV − Capital. The sum of sleeve P&L may differ
+  // slightly — the delta comes from realized crypto P&L already withdrawn from
+  // NAV and cost-basis timing differences in Equity.
   const totNav = eqNav + reNav + crNav + tdMv;
   const totCap = eqCap + reCap + crCap + tdPrincipal;
-  const totPnlUnr = eqPnlUnr + rePnlUnr + crPnlTotal + tdAccruedNet;
+  const sumSleevePnl = eqPnlUnr + rePnlUnr + crPnlTotal + tdAccruedNet;
+  const totPnlUnr = totNav - totCap;
+  const otherAdjustments = sumSleevePnl - totPnlUnr;
   const totMoic = totCap>0 ? totNav/totCap : null;
   const totRoi = totCap>0 ? totPnlUnr/totCap : null;
   // Sleeve count: cada sub-sleeve del motor Equity solo cuenta si tiene NAV > 0
