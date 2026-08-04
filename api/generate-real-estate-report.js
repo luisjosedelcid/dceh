@@ -343,11 +343,11 @@ module.exports = async (req, res) => {
          { width: tableW - 16, lineGap: 2 });
     doc.fillColor(GRAY).font('Helvetica-Oblique').fontSize(6.8)
        .text(
-         'GP mark policy. AX Partners has published one official NAV mark for the period ending ' + navAsOf + '. ' +
+         'GP mark policy. AX Partners publishes marks semi-annually (S1 mid-year, S2 year-end). ' +
          'Interim months do not produce a fresh mark. The EUR appreciation vs. contributed capital ' +
-         '(~14% aggregate at ' + navAsOf + ') reflects the GP\u0027s current model-based valuation and ' +
-         'preferred-equity accruals, not a realised gain \u2014 final upside is recognised at exit. ' +
-         'Re-mark on receipt of the next GP report.',
+         '(' + (totInvEur > 0 ? ((totNavEur / totInvEur - 1) * 100).toFixed(1) : '\u2014') + '% aggregate at ' + navAsOf + ') reflects the GP\u0027s current model-based valuation ' +
+         'and preferred-equity accruals, not a realised gain \u2014 final upside is recognised at exit. ' +
+         'Next re-mark expected in H2 2026 / early 2027 on receipt of the S2 2026 report.',
          startX + 8, y + methBoxH - 24,
          { width: tableW - 16, lineGap: 2 });
 
