@@ -153,9 +153,10 @@ module.exports = async (req, res) => {
     const navGainPctIndicative = totInvUsd > 0 ? navGainUsdIndicative / totInvUsd : null;
     // FX effect on the aggregate mark, in USD.
     const fxEffectUsd = totNavUsdIndicative - totNavUsdAtMark;
-    // Legacy alias so subsequent code (rows/total row) keeps compiling.
-    const totNavUsd = totNavUsdIndicative;
-    const totIrrUsd = totIrrUsdAtMark;
+    // Legacy aliases so subsequent code (rows/total row) keeps compiling.
+    const totNavUsd  = totNavUsdIndicative;
+    const totMoicUsd = totMoicUsdIndicative;
+    const totIrrUsd  = totIrrUsdAtMark;
     const navGainUsd = navGainUsdIndicative;
     const navGainPct = navGainPctIndicative;
 
