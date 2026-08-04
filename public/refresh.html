@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DCE — Force refresh</title>
+<style>
+  :root{ --navy:#1B2642; --gold:#B88B47; --cream:#F5F1E8; --gray:#8b8778; }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+    background:var(--cream); color:var(--navy);
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .card{
+    background:#fff; border:1px solid rgba(27,38,66,0.12); border-radius:14px;
+    padding:28px 22px; max-width:420px; width:100%;
+    box-shadow:0 4px 20px rgba(27,38,66,0.06);
+  }
+  h1{font-size:20px; margin:0 0 6px; letter-spacing:-0.01em}
+  .sub{color:var(--gray); font-size:13px; margin:0 0 20px}
+  ul{padding-left:20px; font-size:13.5px; line-height:1.6; margin:0 0 20px; color:var(--navy)}
+  li{margin-bottom:4px}
+  li.done{color:#3d7c4a}
+  li.err{color:#a4243b}
+  .status{font-size:12px; color:var(--gray); min-height:16px; margin-bottom:12px}
+  .btn{
+    display:block; width:100%; padding:14px; border:none; border-radius:10px;
+    background:var(--navy); color:#fff; font-size:15px; font-weight:600;
+    letter-spacing:0.03em; cursor:pointer; text-decoration:none; text-align:center;
+  }
+  .btn:disabled{opacity:0.4}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Force refresh</h1>
+  <p class="sub">Clears the app cache and reinstalls the shell. Use this when the app is stuck on an old version.</p>
+  <ul id="steps">
+    <li id="s1">Unregister service worker</li>
+    <li id="s2">Delete all caches</li>
+    <li id="s3">Clear localStorage session marker</li>
+    <li id="s4">Reload with cache-buster</li>
+  </ul>
+  <div class="status" id="status">Working…</div>
+  <a class="btn" id="btn-reload" href="/?_r=1">Reload now</a>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const setStatus = t => { $('status').textContent = t || ''; };
+const markDone = id => { $(id).classList.add('done'); $(id).textContent = '✓ ' + $(id).textContent; };
+const markErr  = (id, e) => { $(id).classList.add('err'); $(id).textContent = '✗ ' + $(id).textContent + ' — ' + (e && e.message || e); };
+
+(async function nuke(){
+  // 1) Unregister service workers
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+    markDone('s1');
+  } catch (e) { markErr('s1', e); }
+
+  // 2) Delete caches
+  try {
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    markDone('s2');
+  } catch (e) { markErr('s2', e); }
+
+  // 3) Clear the in-session unlocked flag (keeps auth tokens intact)
+  try {
+    sessionStorage.removeItem('dce_auth_ok');
+    markDone('s3');
+  } catch (e) { markErr('s3', e); }
+
+  markDone('s4');
+  setStatus('Reloading in 1 second…');
+  setTimeout(() => {
+    // Force a fresh navigation; skip the return-to on the lock screen
+    location.replace('/?_r=' + Date.now());
+  }, 1000);
+})();
+</script>
+</body>
+</html>

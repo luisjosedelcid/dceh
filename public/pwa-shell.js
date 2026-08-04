@@ -336,6 +336,9 @@
     if (!('serviceWorker' in navigator)) return;
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(reg => {
+        // Check for updates immediately (iOS PWA is aggressive about caching)
+        try { reg.update(); } catch (_) {}
+
         // Listen for a new SW installing after page load
         reg.addEventListener('updatefound', () => {
           const sw = reg.installing;
@@ -351,6 +354,19 @@
 
       navigator.serviceWorker.addEventListener('message', ev => {
         if (ev.data && ev.data.type === 'SW_UPDATED') showUpdateBanner();
+      });
+
+      // When the new SW takes control (skipWaiting + clients.claim), auto-reload once.
+      // Guard against reload loops with a session flag.
+      let _reloadedFor = null;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        const controller = navigator.serviceWorker.controller;
+        if (!controller) return;
+        const key = 'dce_sw_reloaded_' + (controller.scriptURL || '');
+        if (sessionStorage.getItem(key) === '1') return;
+        sessionStorage.setItem(key, '1');
+        _reloadedFor = key;
+        location.reload();
       });
     });
   }
