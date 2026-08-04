@@ -2233,19 +2233,44 @@ function crFmtHold(months){
 }
 
 async function crFetchPricesBatch(positions){
-  // CoinGecko simple/price — CORS habilitado, sin auth, batched
+  // Try CoinGecko directly first (fewer hops when it works). If the
+  // browser blocks it (corporate proxy, CORS glitch, rate-limit), fall
+  // back to /api/crypto-prices which is a server-side proxy over the
+  // exact same endpoint. Without the fallback the UI shows NAV=$0 and
+  // NAV/Net Capital=0.000x whenever CoinGecko is unreachable.
   const ids = positions.filter(p=>p.price_source && p.price_source.live && p.price_source.coingecko_id).map(p=>p.price_source.coingecko_id);
   if(!ids.length) return {};
-  const url = 'https://api.coingecko.com/api/v3/simple/price?ids='+encodeURIComponent(ids.join(','))+'&vs_currencies=usd&include_last_updated_at=true';
-  const r = await fetch(url, {cache:'no-store'});
-  if(!r.ok) throw new Error('HTTP '+r.status+' fetching CoinGecko');
-  const j = await r.json();
   const out = {};
-  for(const p of positions){
-    const id = p.price_source && p.price_source.coingecko_id;
-    if(id && j[id] && j[id].usd!=null){
-      out[p.asset] = { last: Number(j[id].usd), ts: j[id].last_updated_at ? new Date(j[id].last_updated_at*1000) : new Date() };
+  try{
+    const url = 'https://api.coingecko.com/api/v3/simple/price?ids='+encodeURIComponent(ids.join(','))+'&vs_currencies=usd&include_last_updated_at=true';
+    const r = await fetch(url, {cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status+' fetching CoinGecko');
+    const j = await r.json();
+    for(const p of positions){
+      const id = p.price_source && p.price_source.coingecko_id;
+      if(id && j[id] && j[id].usd!=null){
+        out[p.asset] = { last: Number(j[id].usd), ts: j[id].last_updated_at ? new Date(j[id].last_updated_at*1000) : new Date() };
+      }
     }
+    if(Object.keys(out).length === ids.length) return out;
+    // Partial — fall through to proxy for missing ones
+  }catch(e){
+    console.warn('CoinGecko direct failed, falling back to server proxy:', e.message);
+  }
+  // Server-side proxy: /api/crypto-prices returns { ok, prices: { XRP: { last, ts } } }
+  try{
+    const r2 = await fetch('/api/crypto-prices?ids='+encodeURIComponent(ids.join(',')), {cache:'no-store'});
+    if(!r2.ok) throw new Error('HTTP '+r2.status+' fetching /api/crypto-prices');
+    const j2 = await r2.json();
+    if(j2 && j2.ok && j2.prices){
+      for(const [asset, row] of Object.entries(j2.prices)){
+        if(!out[asset] && row && typeof row.last === 'number'){
+          out[asset] = { last: row.last, ts: row.ts ? new Date(row.ts) : new Date() };
+        }
+      }
+    }
+  }catch(e){
+    console.warn('Server proxy also failed:', e.message);
   }
   return out;
 }
@@ -2291,14 +2316,22 @@ function renderCrypto(){
   const realizedHist = Number(CR_DATA.realized_pnl_historico.neto_usd);
   const positions = CR_DATA.positions || [];
 
+  // Enrich with live prices when available. If a position has no live
+  // quote we fall back to its static mv_snapshot_usd (from the source
+  // JSON) so NAV, MOIC and ROI don't collapse to zero when CoinGecko
+  // is unreachable. The fallback flag lets the KPI subtitle disclose
+  // that the numbers are static rather than live.
   const enriched = positions.map(p=>{
     const px = (CR_PRICE && CR_PRICE[p.asset] && CR_PRICE[p.asset].last) || null;
-    const marketUsd = px!=null ? p.quantity * px : null;
     const costBasis = Number(p.cost_basis_total_usd);
-    const unrealUsd = marketUsd!=null ? (marketUsd - costBasis) : null;
-    const unrealPct = (marketUsd!=null && costBasis>0) ? unrealUsd/costBasis : null;
-    return Object.assign({}, p, {priceLive:px, marketUsd, unrealUsd, unrealPct, costBasis});
+    const staticMv = Number(p.mv_snapshot_usd != null ? p.mv_snapshot_usd : costBasis);
+    const marketUsd = px!=null ? p.quantity * px : staticMv;
+    const isLive = px!=null;
+    const unrealUsd = marketUsd - costBasis;
+    const unrealPct = costBasis>0 ? unrealUsd/costBasis : null;
+    return Object.assign({}, p, {priceLive:px, marketUsd, unrealUsd, unrealPct, costBasis, isLive});
   });
+  const anyLive = enriched.some(p=>p.isLive);
 
   const totMarket = enriched.reduce((s,p)=> s + (p.marketUsd||0), 0);
   const totUnreal = enriched.reduce((s,p)=> s + (p.unrealUsd||0), 0);
@@ -2363,7 +2396,7 @@ function renderCrypto(){
       +'<td class="r">'+crFmtQty(p.quantity)+'</td>'
       +'<td class="r">'+crFmtPx(p.cost_basis_unit_usd)+'</td>'
       +'<td class="r">'+crFmtUsd2(p.costBasis)+'</td>'
-      +'<td class="r">'+crFmtPx(p.priceLive)+'</td>'
+      +'<td class="r">'+crFmtPx(p.isLive ? p.priceLive : (p.quantity>0 ? p.marketUsd/p.quantity : null))+(p.isLive?'':' <span style="font-size:9px;color:var(--gray-mid)">(static)</span>')+'</td>'
       +'<td class="r">'+crFmtUsd2(p.marketUsd)+'</td>'
       +'<td class="r '+pnlCls+'" style="font-weight:600">'+(p.unrealUsd!=null?(p.unrealUsd>0?'+':'')+crFmtUsd2(p.unrealUsd):'—')+'</td>'
       +'<td class="r '+pnlCls+'">'+crFmtPct(p.unrealPct)+'</td>'
