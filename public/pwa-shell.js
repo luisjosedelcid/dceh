@@ -2,7 +2,7 @@
  * DCE Holdings — PWA shell enhancements
  *
  * Only active on mobile screens (≤820px — iPhone + iPad Mini portrait). Provides:
- *  - Bottom tab bar (iOS-native feel): Home · Cockpit · Universe · Performance · Menu
+ *  - Bottom tab bar (iOS-native feel): Cockpit · Feed · Universe · Performance · Menu
  *  - "Menu" opens a bottom sheet with the rest of the app sections
  *  - Hides the desktop top nav on mobile
  *  - Locks overscroll bounce (E)
@@ -69,22 +69,28 @@
   // ── Tab bar spec ───────────────────────────────────────────────
   // Primary tabs (always visible)
   const PRIMARY = [
-    { id: 'home',     label: 'Home',     href: '/',                match: ['/', '/index.html', '/landing.html'] },
     { id: 'cockpit',  label: 'Cockpit',  href: '/cockpit.html',    match: ['/cockpit.html'] },
+    { id: 'feed',     label: 'Feed',     href: '#feed',            match: ['/screener.html', '/news.html', '/calendar.html'] },
     { id: 'universe', label: 'Universe', href: '/universe.html',   match: ['/universe.html', '/company.html'] },
     { id: 'performance', label: 'Performance', href: '/performance.html', match: ['/performance.html'] },
     { id: 'menu',     label: 'Menu',     href: '#menu',            match: [] }
   ];
 
-  // Secondary items (bottom sheet)
+  // Feed popover destinations (tap on Feed opens a small action sheet)
+  const FEED_OPTIONS = [
+    { label: 'Ideas',           href: '/screener.html' },
+    { label: 'Portfolio News',  href: '/news.html' },
+    { label: 'Calendar',        href: '/calendar.html' }
+  ];
+
+  // Secondary items (bottom sheet — hidden pages)
   const SECONDARY = [
+    { label: 'Home',      href: '/' },
     { label: 'Find',      href: '/screener.html' },
     { label: 'Journal',   href: '/journal.html' },
     { label: 'Study',     href: '/study.html' },
-    { label: 'News',      href: '/news.html' },
     { label: 'Data Room', href: '/dataroom.html' },
     { label: 'Research',  href: '/research.html' },
-    { label: 'Calendar',  href: '/calendar.html' },
     { label: 'Settings',  href: '/settings.html' }
   ];
 
@@ -92,6 +98,7 @@
   const ICONS = {
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1v-9.5z"/></svg>',
     cockpit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M7.5 9l1.6 1.6L12 8"/><path d="M14 9.2h4"/><path d="M7.5 15l1.6 1.6L12 14"/><path d="M14 15.2h4"/></svg>',
+    feed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/><circle cx="18" cy="18" r="1.5" fill="currentColor"/></svg>',
     find: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
     universe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="9" ry="3.5"/><ellipse cx="12" cy="12" rx="3.5" ry="9"/></svg>',
     performance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>',
@@ -120,9 +127,9 @@
     nav.setAttribute('aria-label', 'Primary navigation');
     nav.innerHTML = PRIMARY.map(t => {
       const isActive = t.id === active;
-      const isMenu = t.id === 'menu';
-      const attr = isMenu ? 'data-menu="1"' : `href="${t.href}"`;
-      const tag = isMenu ? 'button' : 'a';
+      const isSheet = t.id === 'menu' || t.id === 'feed';
+      const attr = isSheet ? `data-sheet="${t.id}"` : `href="${t.href}"`;
+      const tag = isSheet ? 'button' : 'a';
       return `<${tag} class="dce-tab ${isActive ? 'is-active' : ''}" ${attr} data-tab="${t.id}">
         <span class="dce-tab-icon">${ICONS[t.id]}</span>
         <span class="dce-tab-label">${t.label}</span>
@@ -135,9 +142,54 @@
       t.addEventListener('click', () => haptic(8));
     });
 
-    // Wire "Menu" button
-    const menuBtn = nav.querySelector('[data-menu]');
+    // Wire "Menu" and "Feed" buttons (both open bottom sheets)
+    const menuBtn = nav.querySelector('[data-sheet="menu"]');
     if (menuBtn) menuBtn.addEventListener('click', openMenuSheet);
+    const feedBtn = nav.querySelector('[data-sheet="feed"]');
+    if (feedBtn) feedBtn.addEventListener('click', openFeedSheet);
+  }
+
+  // ── Feed action sheet (Ideas / Portfolio News / Calendar) ───────
+  function openFeedSheet() {
+    if (document.getElementById('dce-sheet')) return;
+    const overlay = document.createElement('div');
+    overlay.id = 'dce-sheet-overlay';
+    const sheet = document.createElement('div');
+    sheet.id = 'dce-sheet';
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-modal', 'true');
+    sheet.setAttribute('aria-label', 'Feed sections');
+    sheet.innerHTML = `
+      <div class="dce-sheet-handle"></div>
+      <div class="dce-sheet-title">Feed</div>
+      <div class="dce-sheet-feed">
+        ${FEED_OPTIONS.map(o => `<a class="dce-sheet-feed-item" href="${o.href}">
+          <span class="dce-sheet-feed-label">${o.label}</span>
+          <span class="dce-sheet-feed-arrow">→</span>
+        </a>`).join('')}
+      </div>
+      <button class="dce-sheet-close" type="button" aria-label="Close feed">Close</button>
+    `;
+    document.body.appendChild(overlay);
+    document.body.appendChild(sheet);
+    document.body.classList.add('dce-sheet-open');
+
+    requestAnimationFrame(() => {
+      overlay.classList.add('is-open');
+      sheet.classList.add('is-open');
+    });
+
+    const close = () => closeMenuSheet();
+    overlay.addEventListener('click', close);
+    sheet.querySelector('.dce-sheet-close').addEventListener('click', close);
+    document.addEventListener('keydown', escClose);
+
+    function escClose(e) {
+      if (e.key === 'Escape') {
+        close();
+        document.removeEventListener('keydown', escClose);
+      }
+    }
   }
 
   // ── Bottom sheet (Menu) ───────────────────────────────────────

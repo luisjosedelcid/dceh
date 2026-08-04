@@ -186,6 +186,38 @@ input, textarea, [contenteditable="true"] {
   }
   .dce-sheet-item:active { background: #EDEDE7; }
 
+  /* Feed action sheet (vertical list, gold arrows) */
+  .dce-sheet-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .dce-sheet-feed-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #F7F7F5;
+    border: 1px solid rgba(27, 38, 66, 0.08);
+    border-radius: 10px;
+    padding: 18px 18px;
+    color: #1B2642;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.12s ease;
+  }
+  .dce-sheet-feed-item:active { background: #EDEDE7; }
+  .dce-sheet-feed-label {
+    font-family: 'Archivo', system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .dce-sheet-feed-arrow {
+    color: #B88B47;
+    font-size: 18px;
+    font-weight: 400;
+  }
+
   .dce-sheet-close {
     display: block;
     width: 100%;
