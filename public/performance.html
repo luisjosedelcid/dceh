@@ -276,7 +276,7 @@
           <div class="kpi"><div class="kpi-label">Capital contributed</div><div class="kpi-value" id="cons-kpi-cap">—</div><div class="kpi-sub">net of withdrawals</div></div>
           <div class="kpi" title="Includes historical Crypto realized P&amp;L (gains already crystallized via withdrawals) + unrealized from Equity, RE and Crypto."><div class="kpi-label">Total P&amp;L</div><div class="kpi-value" id="cons-kpi-pnl">—</div><div class="kpi-sub" id="cons-kpi-pnl-sub">vs capital contributed</div></div>
           <div class="kpi"><div class="kpi-label">Consolidated MOIC</div><div class="kpi-value" id="cons-kpi-moic">—</div><div class="kpi-sub">NAV / Capital</div></div>
-          <div class="kpi" title="Consolidated cumulative time-weighted return: NAV-weighted average of each sleeve's TWR. Neutralizes the effect of contributions/withdrawals (GIPS institutional standard)."><div class="kpi-label">Consolidated TWR</div><div class="kpi-value" id="cons-kpi-twr">—</div><div class="kpi-sub" id="cons-kpi-twr-sub">weighted avg by NAV</div></div>
+          <div class="kpi" title="P&amp;L divided by capital contributed. Matches the PDF headline metric. A true consolidated TWR would need a single chained daily NAV series across sleeves — not yet computable, so this is intentionally the same money-weighted read shown in the PDF."><div class="kpi-label">P&amp;L / Capital</div><div class="kpi-value" id="cons-kpi-twr">—</div><div class="kpi-sub" id="cons-kpi-twr-sub">money-weighted return</div></div>
         </div>
 
         <!-- Allocation por sleeve -->
@@ -292,7 +292,7 @@
                   <th class="right">Capital (USD)</th>
                   <th class="right" title="Crystallized historical realized (Crypto only) + Unrealized (NAV vs cost basis). Hover each row for the breakdown.">Total P&amp;L (USD)</th>
                   <th class="right">MOIC</th>
-                  <th class="right" title="Cumulative time-weighted return since sleeve inception. Equity comes from the backend (chained). RE: derived from XIRR USD (proxy). Crypto: (NAV + crystallized realized + withdrawals) / net capital contributed − 1.">TWR cum.</th>
+                  <th class="right" title="P&L / Capital by sleeve. Money-weighted return since inception. Matches the PDF.">P&amp;L / Capital</th>
                   <th>Last update</th>
                 </tr>
               </thead>
@@ -2855,16 +2855,16 @@ function renderConsolidado(eqK, eqHoldings){
   const moicEl = document.getElementById('cons-kpi-moic');
   moicEl.textContent = consFmtMoic(totMoic);
   moicEl.style.color = (totMoic!=null && totMoic>=1) ? 'var(--green)' : 'var(--red)';
+  // P&L / Capital (money-weighted). This replaces the previous NAV-weighted
+  // average of sleeve TWRs — that number (27.51%) mixed sleeves with
+  // different inception dates and TWR conventions and was not a real
+  // consolidated TWR. Until a chained daily NAV series is available across
+  // all sleeves, the headline metric matches the PDF exactly: P&L/Capital.
+  const totPnlOverCap = totCap>0 ? totPnlUnr/totCap : null;
   const twrEl = document.getElementById('cons-kpi-twr');
-  twrEl.textContent = consFmtPct(totTwr);
-  twrEl.style.color = (totTwr!=null && totTwr>=0) ? 'var(--green)' : 'var(--red)';
-  // Subline TWR: weighted-avg con descomposición
-  const twrSubParts = [];
-  if(eqTwr!=null) twrSubParts.push('Eq '+consFmtPct(eqTwr));
-  if(reTwr!=null) twrSubParts.push('RE '+consFmtPct(reTwr));
-  if(crTwr!=null) twrSubParts.push('Cr '+consFmtPct(crTwr));
-  if(tdConsolTwr!=null) twrSubParts.push('CD '+consFmtPct(tdConsolTwr));
-  document.getElementById('cons-kpi-twr-sub').textContent = twrSubParts.join(' · ') || 'weighted avg by NAV';
+  twrEl.textContent = consFmtPct(totPnlOverCap);
+  twrEl.style.color = (totPnlOverCap!=null && totPnlOverCap>=0) ? 'var(--green)' : 'var(--red)';
+  document.getElementById('cons-kpi-twr-sub').textContent = 'money-weighted return';
 
   // ---- Allocation table ----
   // Split cosmético para las 3 sub-sleeves del motor Equity (Equity/T-bills/Cash uninvested):
@@ -2907,12 +2907,19 @@ function renderConsolidado(eqK, eqHoldings){
   for(const s of sleeves){
     if(!s.present) continue;
     const wNav = totNav>0 ? s.nav/totNav : 0;
-    // MOIC: si el sleeve tiene realized cristalizado (Crypto), incluirlo en numerador.
-    const moicNum = s.nav + (s.realized||0);
-    const moic = s.cap>0 ? moicNum/s.cap : null;
+    // MOIC = NAV / Capital by sleeve. Do NOT add realized crypto P&L to
+    // the numerator — realized was already repatriated via withdrawals
+    // and adjusts the denominator (capital_neto_aportado), so adding it
+    // back to the numerator double-counts. Matches the PDF exactly.
+    const moic = s.cap>0 ? s.nav/s.cap : null;
+    // Column now displays P&L / Capital instead of a TWR proxy. Money-
+    // weighted return is comparable across sleeves and reconciles to the
+    // headline metric. TWR reintroduced only when a chained daily NAV
+    // series exists across all sleeves.
+    const sPnlOverCap = s.cap>0 ? s.pnl/s.cap : null;
     const pnlCls = s.pnl>=0 ? 'pos' : 'neg';
     const moicCls = (moic!=null && moic>=1) ? 'pos' : 'neg';
-    const twrCls = (s.twr!=null && s.twr>=0) ? 'pos' : 'neg';
+    const twrCls = (sPnlOverCap!=null && sPnlOverCap>=0) ? 'pos' : 'neg';
     // Tooltip P&L: si hay realized, descomponer en realized + unrealized
     let pnlTooltip = '';
     let pnlLabel = (s.pnl>=0?'+':'')+consFmtUsd0(s.pnl);
@@ -2927,22 +2934,21 @@ function renderConsolidado(eqK, eqHoldings){
       +'<td class="r">'+consFmtUsd0(s.cap)+'</td>'
       +'<td class="r '+pnlCls+'" style="font-weight:600"'+pnlTooltip+'>'+pnlLabel+'</td>'
       +'<td class="r '+moicCls+'" style="font-weight:600">'+consFmtMoic(moic)+'</td>'
-      +'<td class="r '+twrCls+'" style="font-weight:600">'+consFmtPct(s.twr)+'</td>'
+      +'<td class="r '+twrCls+'" style="font-weight:600">'+consFmtPct(sPnlOverCap)+'</td>'
       +'<td style="font-size:11px;color:var(--gray-mid)">'+s.last+'</td>'
       +'</tr>';
   }
   tbody.innerHTML = html;
-  // TOTAL MOIC: incluir realized de Crypto en numerador para consistencia con filas.
-  const totMoicF = totCap>0?(totNav + crPnlRealized)/totCap:null;
+  // TOTAL MOIC = NAV / Capital, no realized adjustment (matches PDF).
   document.getElementById('cons-tbl-alloc-tfoot').innerHTML =
     '<tr style="background:var(--cream);font-weight:700">'
     +'<td>TOTAL</td>'
     +'<td class="r">'+consFmtUsd0(totNav)+'</td>'
     +'<td class="r">100.00%</td>'
     +'<td class="r">'+consFmtUsd0(totCap)+'</td>'
-    +'<td class="r '+(totPnlUnr>=0?'pos':'neg')+'" title="Includes historical Crypto realized: '+(crPnlRealized>=0?'+':'')+consFmtUsd0(crPnlRealized)+'">'+(totPnlUnr>=0?'+':'')+consFmtUsd0(totPnlUnr)+'</td>'
-    +'<td class="r">'+consFmtMoic(totMoicF)+'</td>'
-    +'<td class="r '+(totTwr!=null&&totTwr>=0?'pos':'neg')+'">'+consFmtPct(totTwr)+'</td>'
+    +'<td class="r '+(totPnlUnr>=0?'pos':'neg')+'">'+(totPnlUnr>=0?'+':'')+consFmtUsd0(totPnlUnr)+'</td>'
+    +'<td class="r">'+consFmtMoic(totMoic)+'</td>'
+    +'<td class="r '+(totPnlOverCap!=null&&totPnlOverCap>=0?'pos':'neg')+'">'+consFmtPct(totPnlOverCap)+'</td>'
     +'<td></td>'
     +'</tr>';
 
@@ -2965,12 +2971,23 @@ function renderConsolidado(eqK, eqHoldings){
   const ipsTbody = document.getElementById('cons-ips-tbody');
   let ipsHtml = '';
   for(const b of bands){
+    // IPS status — must match api/generate-consolidated-report.js line 596-612:
+    //   1) actual > max     → ABOVE max (hard breach, even by 0.01pp)
+    //   2) actual < min     → BELOW min (hard breach)
+    //   3) inside band AND within tol of an edge → Near limit (soft warn)
+    //   4) inside band and comfortable → OK
+    // Previous UI code treated 'within tol OUTSIDE the band' as Near limit,
+    // which contradicted the PDF and turned real breaches into warnings.
     let status, color;
-    const tol = 0.02; // ±2pp
-    if(b.actual >= b.min && b.actual <= b.max){ status = 'OK — within band'; color = 'var(--green)'; }
-    else if(b.actual >= (b.min - tol) && b.actual <= (b.max + tol)){ status = 'Near limit'; color = '#B88B47'; }
+    const tol = 0.02;
+    if(b.actual > b.max){ status = 'ABOVE max'; color = 'var(--red)'; }
     else if(b.actual < b.min){ status = 'BELOW min'; color = 'var(--red)'; }
-    else { status = 'ABOVE max'; color = 'var(--red)'; }
+    else {
+      const nearMin = b.min > 0 && b.actual < b.min + tol;
+      const nearMax = b.actual > b.max - tol && b.actual < b.max;
+      if(nearMin || nearMax){ status = 'Near limit'; color = '#B88B47'; }
+      else { status = 'OK — within band'; color = 'var(--green)'; }
+    }
     ipsHtml += '<tr>'
       +'<td>'+b.label+'</td>'
       +'<td class="right">'+(b.min*100).toFixed(0)+'%</td>'
