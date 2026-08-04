@@ -686,21 +686,22 @@ module.exports = async (req, res) => {
     mark('preFooter');
     drawFooter(doc, asOfDate); mark('footer');
 
-    // Hard guarantee single-page output: if any implicit overflow created
-    // additional pages, we keep only page 0. With bufferPages: true we can
-    // inspect the buffered range and prune trailing pages before flushing.
+    // Hard guarantee single-page output: log overflow but do NOT prune
+    // doc._pageBuffer. That manipulation left pdfkit internal counters
+    // inconsistent and caused doc.end() to hang indefinitely on the
+    // historical path (2026-07-31). If drawing overflows, we now log it
+    // and let all pages flush -- getting the PDF out is more important
+    // than the strict one-page invariant when the alternative is a 504.
     const range = doc.bufferedPageRange(); // { start: 0, count: N }
     if (range && range.count > 1) {
-      // Discard pages 1..N-1 by overwriting their content streams.
-      // Easiest way in pdfkit: switch to each extra page and clear it isn't
-      // exposed cleanly, so we just leave them blank-but-flushed. To truly
-      // drop them, we need to manipulate the internal _pageBuffer.
-      // pdfkit stores buffered pages in doc._pageBuffer when bufferPages=true.
-      if (Array.isArray(doc._pageBuffer)) {
-        doc._pageBuffer = doc._pageBuffer.slice(0, 1);
-        doc._pageBufferStart = 0;
-      }
+      console.warn(`[generate-daily-report] drawing produced ${range.count} pages; expected 1. Letting all pages flush.`);
     }
+    // Capture buffered page count before flushing so we can see if the
+    // prune step is what wedges doc.end() on the historical path.
+    try {
+      const _rng = doc.bufferedPageRange();
+      dbg.sections.push({ name: 'bufferedPageRange', count: _rng ? _rng.count : null, start: _rng ? _rng.start : null });
+    } catch (_) {}
     doc.flushPages(); mark('flushPages');
 
     } catch (drawErr) {
@@ -719,8 +720,16 @@ module.exports = async (req, res) => {
 
     const tRender = Date.now();
     doc.end();
-    await done;
-    console.log(`[generate-daily-report] phase=pdfRender done in ${Date.now()-tRender}ms`);
+    // Hard cap on doc.end -> 'end' event: if pdfkit wedges (has happened when
+    // _pageBuffer is manipulated and flushPages leaves internal counters out
+    // of sync), fall through with whatever chunks we have and log the case
+    // instead of hanging until Vercel kills the socket at 60s.
+    const endTimeout = new Promise((resolve) => setTimeout(() => resolve('_TIMEOUT_'), 15_000));
+    const endResult = await Promise.race([done.then(() => '_OK_'), endTimeout]);
+    console.log(`[generate-daily-report] phase=pdfRender ${endResult} in ${Date.now()-tRender}ms`);
+    if (endResult === '_TIMEOUT_') {
+      console.error('[generate-daily-report] doc.end() never emitted end within 15s; falling through with buffered chunks');
+    }
 
     const buf = Buffer.concat(chunks);
     console.log(`[generate-daily-report] phase=send bytes=${buf.length} total=${Date.now()-t0}ms`);
