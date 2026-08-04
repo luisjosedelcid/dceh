@@ -392,6 +392,18 @@
       if (!existingByHref.has(h)) existingByHref.set(h, a);
     });
     const here = _normalizePath(window.location.pathname);
+    const hereHash = (window.location.hash || '').toLowerCase();
+    // Build a combined key so items with a hash (e.g. /screener.html#ideafeed)
+    // don't collide with siblings pointing to the same pathname without a hash.
+    const hereKey = here + hereHash;
+
+    // Helper: normalized path+hash for an <a href>
+    const _hrefKey = (raw) => {
+      const p = _normalizePath(raw);
+      let h = '';
+      try { const u = new URL(raw, window.location.origin); h = (u.hash || '').toLowerCase(); } catch {}
+      return p + h;
+    };
 
     // Build new content
     const frag = document.createDocumentFragment();
@@ -400,7 +412,7 @@
         const a = document.createElement('a');
         a.href = group.href;
         a.textContent = group.label;
-        if (_normalizePath(group.href) === here) a.classList.add('active');
+        if (_hrefKey(group.href) === hereKey) a.classList.add('active');
         frag.appendChild(a);
         return;
       }
@@ -423,7 +435,11 @@
         a.href = it.href;
         a.setAttribute('role','menuitem');
         a.innerHTML = `${it.label}<span class="dce-sub-desc">${it.desc}</span>`;
-        if (_normalizePath(it.href) === here) { a.classList.add('active'); a.setAttribute('aria-current','page'); groupActive = true; }
+        // Prefer exact match including hash. If neither this nor any sibling
+        // has a hash on the current URL, fall back to pathname match.
+        const exact = _hrefKey(it.href) === hereKey;
+        const pathOnly = _normalizePath(it.href) === here && !hereHash && !it.href.includes('#');
+        if (exact || pathOnly) { a.classList.add('active'); a.setAttribute('aria-current','page'); groupActive = true; }
         dd.appendChild(a);
       });
       if (groupActive) wrap.classList.add('is-active');
