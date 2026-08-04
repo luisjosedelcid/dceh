@@ -161,7 +161,6 @@
   <div class="mode-tabs">
     <button class="mode-tab" data-mode="screener" onclick="showMode('screener',this)">Screener</button>
     <button class="mode-tab" data-mode="sectors" onclick="showMode('sectors',this)">Sector Tracker</button>
-    <button class="mode-tab" data-mode="ideafeed" onclick="showMode('ideafeed',this)">Idea Feed <span class="count" id="ideafeed-count">—</span></button>
     <button class="mode-tab" data-mode="superinvestors" onclick="showMode('superinvestors',this)">Superinvestors <span class="count">10</span></button>
     <button class="mode-tab active" data-mode="shortlist" onclick="showMode('shortlist',this)">Shortlist <span class="count" id="shortlist-count">—</span></button>
   </div>
@@ -2002,6 +2001,12 @@ async function renderIdeaFeedTickers(items, status, cont) {
 document.addEventListener('DOMContentLoaded', () => {
   const t = document.getElementById('if-ticker');
   if (t) t.addEventListener('keydown', e => { if (e.key === 'Enter') loadIdeaFeed(); });
+  // Deep-link support: /screener.html#ideafeed | #superinvestors | #sectors | #screener
+  const hash = (location.hash || '').replace('#','').trim().toLowerCase();
+  const validModes = ['screener','sectors','ideafeed','superinvestors','shortlist'];
+  if (hash && validModes.includes(hash)) {
+    showMode(hash);
+  }
 });
 
 // ─── Shortlist → Workflow handoff ─────────────────────────────────────
