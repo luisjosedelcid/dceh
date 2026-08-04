@@ -22,7 +22,16 @@ async function _fetchWithTimeout(url, timeoutMs = 4000) {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const r = await fetch(url, { signal: controller.signal });
+    // Some upstreams (Frankfurter's Cloudflare front, open.er-api) return 403
+    // to node fetch without an explicit User-Agent. Supply one so historical
+    // FX calls succeed from Vercel serverless.
+    const r = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'DCE-Holdings-Investment-Office/1.0 (+https://www.dceholdings.app)',
+        'Accept': 'application/json',
+      },
+    });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return await r.json();
   } finally {
@@ -126,17 +135,30 @@ async function getFxRateOnDate(dateYMD, base, quote, opts = {}) {
     _fxHistCache.set(key, r);
     return { ...r, cached: false, stale: false };
   } catch (e) {
-    if (opts.fallback && Number(opts.fallback.value) > 0) {
+    // Only accept a fallback whose date is on or after the requested date.
+    // A cached fallback dated BEFORE dateYMD would silently pull a stale rate
+    // into a historical snapshot (this is exactly what produced the wrong
+    // 1.1649 dated 2026-06-02 in the 2026-07-31 Real Estate PDF).
+    const fb = opts.fallback;
+    const fbDate = fb && fb.date;
+    const fbUsable = fb && Number(fb.value) > 0 && (!fbDate || fbDate >= dateYMD);
+    if (fbUsable) {
       return {
-        value: Number(opts.fallback.value),
-        date: opts.fallback.date || null,
-        source: (opts.fallback.source || 'fallback (cached in file)') + ' \u2014 live FX unavailable',
+        value: Number(fb.value),
+        date: fb.date || null,
+        source: (fb.source || 'fallback (cached in file)') + ' \u2014 live FX unavailable',
         cached: false,
         stale: true,
         error: String(e.message || e),
       };
     }
-    throw e;
+    // Fallback rejected (or missing): surface the error so the caller can
+    // block the report or show a clear "FX unavailable" state instead of
+    // producing wrong numbers.
+    const rejectionNote = (fb && fbDate && fbDate < dateYMD)
+      ? ` (rejected cached fallback dated ${fbDate}, older than requested ${dateYMD})`
+      : '';
+    throw new Error(`FX historical unavailable for ${dateYMD}: ${e.message || e}${rejectionNote}`);
   }
 }
 
