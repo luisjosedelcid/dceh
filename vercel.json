@@ -4,74 +4,213 @@
     {
       "source": "/sw.js",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
-        { "key": "Service-Worker-Allowed", "value": "/" },
-        { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        }
       ]
     },
     {
       "source": "/manifest.webmanifest",
       "headers": [
-        { "key": "Content-Type", "value": "application/manifest+json; charset=utf-8" },
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
       ]
     },
     {
       "source": "/icons/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, must-revalidate"
+        }
       ]
     },
     {
       "source": "/splash/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=604800, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800, must-revalidate"
+        }
       ]
     },
     {
       "source": "/(pwa-shell\\.css|pwa-shell\\.js)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, must-revalidate"
+        }
       ]
     }
   ],
   "redirects": [
-    { "source": "/portfolio",      "destination": "/performance.html", "permanent": true },
-    { "source": "/portfolio.html", "destination": "/performance.html", "permanent": true }
+    {
+      "source": "/portfolio",
+      "destination": "/performance.html",
+      "permanent": true
+    },
+    {
+      "source": "/portfolio.html",
+      "destination": "/performance.html",
+      "permanent": true
+    }
   ],
   "rewrites": [
-    { "source": "/bkng", "destination": "/company.html?ticker=BKNG" },
-    { "source": "/bkng-legacy", "destination": "/bkng-legacy.html" },
-    { "source": "/sap", "destination": "/company.html?ticker=SAP" },
-    { "source": "/lulu", "destination": "/company.html?ticker=LULU" },
-    { "source": "/msft", "destination": "/company.html?ticker=MSFT" },
-    { "source": "/race", "destination": "/company.html?ticker=RACE" },
-    { "source": "/uber", "destination": "/company.html?ticker=UBER" },
-    { "source": "/universe", "destination": "/universe.html" },
-    { "source": "/screener", "destination": "/screener.html" },
-    { "source": "/news", "destination": "/news.html" },
-    { "source": "/dataroom", "destination": "/dataroom.html" },
-    { "source": "/reporting", "destination": "/reporting.html" },
-    { "source": "/research", "destination": "/research.html" },
-    { "source": "/study", "destination": "/study.html" },
-    { "source": "/journal", "destination": "/journal.html" },
-    { "source": "/performance", "destination": "/performance.html" },
-    { "source": "/reset", "destination": "/reset.html" },
-    { "source": "/premortem", "destination": "/premortem.html" }
+    {
+      "source": "/bkng",
+      "destination": "/company.html?ticker=BKNG"
+    },
+    {
+      "source": "/bkng-legacy",
+      "destination": "/bkng-legacy.html"
+    },
+    {
+      "source": "/sap",
+      "destination": "/company.html?ticker=SAP"
+    },
+    {
+      "source": "/lulu",
+      "destination": "/company.html?ticker=LULU"
+    },
+    {
+      "source": "/msft",
+      "destination": "/company.html?ticker=MSFT"
+    },
+    {
+      "source": "/race",
+      "destination": "/company.html?ticker=RACE"
+    },
+    {
+      "source": "/uber",
+      "destination": "/company.html?ticker=UBER"
+    },
+    {
+      "source": "/universe",
+      "destination": "/universe.html"
+    },
+    {
+      "source": "/screener",
+      "destination": "/screener.html"
+    },
+    {
+      "source": "/news",
+      "destination": "/news.html"
+    },
+    {
+      "source": "/dataroom",
+      "destination": "/dataroom.html"
+    },
+    {
+      "source": "/reporting",
+      "destination": "/reporting.html"
+    },
+    {
+      "source": "/research",
+      "destination": "/research.html"
+    },
+    {
+      "source": "/study",
+      "destination": "/study.html"
+    },
+    {
+      "source": "/journal",
+      "destination": "/journal.html"
+    },
+    {
+      "source": "/performance",
+      "destination": "/performance.html"
+    },
+    {
+      "source": "/reset",
+      "destination": "/reset.html"
+    },
+    {
+      "source": "/premortem",
+      "destination": "/premortem.html"
+    }
   ],
   "crons": [
-    { "path": "/api/cron/refresh-feed", "schedule": "0 */6 * * *" },
-    { "path": "/api/cron/journal-reviews", "schedule": "0 13 * * *" },
-    { "path": "/api/cron/price-alerts", "schedule": "*/10 13-20 * * 1-5" },
-    { "path": "/api/cron/purge-archive", "schedule": "0 4 * * 0" },
-    { "path": "/api/cron/earnings-refresh", "schedule": "0 6 * * *" },
-    { "path": "/api/cron/earnings-alerts", "schedule": "0 8 * * *" },
-    { "path": "/api/cron/prices-refresh", "schedule": "0 22 * * 1-5" },
-    { "path": "/api/cron/portfolio-snapshot", "schedule": "30 22 * * 1-5" },
-    { "path": "/api/cron/ingest-docs", "schedule": "45 22 * * 1-5" },
-    { "path": "/api/cron/watchlist-check", "schedule": "50 22 * * 1-5" },
-    { "path": "/api/cron/premortem-eval", "schedule": "0 23 * * 1-5" },
-    { "path": "/api/cron/purge-login-attempts", "schedule": "0 5 * * *" },
-    { "path": "/api/cron/screener-refresh", "schedule": "0 3 * * *" }
-  ]
+    {
+      "path": "/api/cron/refresh-feed",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/journal-reviews",
+      "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/price-alerts",
+      "schedule": "*/10 13-20 * * 1-5"
+    },
+    {
+      "path": "/api/cron/purge-archive",
+      "schedule": "0 4 * * 0"
+    },
+    {
+      "path": "/api/cron/earnings-refresh",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/earnings-alerts",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/prices-refresh",
+      "schedule": "0 22 * * 1-5"
+    },
+    {
+      "path": "/api/cron/portfolio-snapshot",
+      "schedule": "30 22 * * 1-5"
+    },
+    {
+      "path": "/api/cron/ingest-docs",
+      "schedule": "45 22 * * 1-5"
+    },
+    {
+      "path": "/api/cron/watchlist-check",
+      "schedule": "50 22 * * 1-5"
+    },
+    {
+      "path": "/api/cron/premortem-eval",
+      "schedule": "0 23 * * 1-5"
+    },
+    {
+      "path": "/api/cron/purge-login-attempts",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/screener-refresh",
+      "schedule": "0 3 * * *"
+    }
+  ],
+  "functions": {
+    "api/generate-daily-report.js": {
+      "maxDuration": 60
+    },
+    "api/cron/portfolio-snapshot.js": {
+      "maxDuration": 60
+    },
+    "api/admin-backfill-snapshots.js": {
+      "maxDuration": 60
+    },
+    "api/admin-backfill-prices.js": {
+      "maxDuration": 60
+    }
+  }
 }

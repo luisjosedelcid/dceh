@@ -1918,10 +1918,13 @@ document.getElementById('btn-perf-report').addEventListener('click', async () =>
   btn.textContent = 'Generating…';
   status.textContent = `Building PDF as of ${asOf}…`;
   status.style.color = 'var(--gray-mid)';
+  const ac = new AbortController();
+  const abortTimer = setTimeout(() => ac.abort(), 90_000);
   try {
     const r = await fetch(`/api/generate-daily-report?as_of=${encodeURIComponent(asOf)}`, {
       method: 'GET',
       headers: { 'x-admin-token': adminToken() },
+      signal: ac.signal,
     });
     if (!r.ok) {
       const err = await r.json().catch(() => ({}));
@@ -1939,9 +1942,11 @@ document.getElementById('btn-perf-report').addEventListener('click', async () =>
     status.style.color = 'var(--green, #1F5F3F)';
     setTimeout(() => { status.textContent = ''; }, 4000);
   } catch (e) {
-    status.textContent = `Error: ${e.message}`;
+    const msg = (e && e.name === 'AbortError') ? 'Timeout (90s) — server did not respond. Try again in a moment.' : e.message;
+    status.textContent = `Error: ${msg}`;
     status.style.color = 'var(--red, #7A1010)';
   } finally {
+    clearTimeout(abortTimer);
     btn.disabled = false;
     btn.textContent = original;
   }
