@@ -50,12 +50,32 @@ module.exports = async (req, res) => {
   const today = new Date().toISOString().slice(0, 10);
   const toDate = body.toDate || today;
 
-  // For Treasury synth we need transaction context
+  // For Treasury synth we need transaction context. `notes` carries the
+  // Schwab description ('US TREASURY BILL26U S T BILL DUE 11/03/26') from
+  // which we can extract the true maturity. Without it, when a Treasury has
+  // no SELL yet, the fallback `maturityDate = toDate` collapses the synth
+  // curve to a single point at par (1.00) on the current day, which is why
+  // the UI was quoting a $510,000 face T-bill at exactly $100.00 instead
+  // of the Schwab market price of $99.0621 today.
   let allTx = [];
   try {
-    allTx = await sbSelect('transactions', 'select=ticker,side,trade_date,price_native&order=trade_date.asc');
+    allTx = await sbSelect('transactions', 'select=ticker,side,trade_date,price_native,notes&order=trade_date.asc');
   } catch (e) {
     // proceed without — only Treasuries will fail
+  }
+
+  // Extract the maturity date from a Schwab-style notes string:
+  //   'US TREASURY BILL26U S T BILL DUE 11/03/26' -> '2026-11-03'
+  // Returns null if the ticker isn't a Treasury CUSIP or the notes lack
+  // a DUE mm/dd/yy fragment.
+  function parseMaturityFromNotes(ticker, notes) {
+    if (!ticker || !notes) return null;
+    if (!/^912[0-9A-Z]{6}$/.test(ticker)) return null;
+    const m = notes.match(/DUE\s+(\d{1,2})\/(\d{1,2})\/(\d{2,4})/i);
+    if (!m) return null;
+    const [, mm, dd, yy] = m;
+    const year = yy.length === 2 ? '20' + yy : yy;
+    return `${year}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
   }
 
   const perTicker = {};
@@ -74,7 +94,25 @@ module.exports = async (req, res) => {
           errors.push({ ticker, reason: 'Treasury but no BUY transaction found' });
           continue;
         }
-        const maturityDate = (sell && sell.trade_date) || toDate;
+        // Maturity priority: (1) SELL trade_date if already matured/sold,
+        //                    (2) DUE mm/dd/yy parsed from BUY notes,
+        //                    (3) 30-day bill fallback (buyDate + 30d),
+        //                    (4) `toDate` (last resort; produces par today).
+        let maturityDate = null;
+        if (sell && sell.trade_date) {
+          maturityDate = sell.trade_date;
+        } else {
+          maturityDate = parseMaturityFromNotes(ticker, buy.notes)
+            || parseMaturityFromNotes(ticker, (sell && sell.notes) || null);
+        }
+        if (!maturityDate) {
+          // Last-ditch fallback keeps behavior stable but flags via error log.
+          maturityDate = toDate;
+          errors.push({
+            ticker,
+            reason: 'Treasury: no SELL and could not parse DUE date from notes; using toDate as maturity (price will collapse to par today)',
+          });
+        }
         series = await fetchPriceSeries(ticker, fromDate, toDate, {
           treasury: {
             buyDate: buy.trade_date,
