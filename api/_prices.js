@@ -62,7 +62,12 @@ async function yahooDaily(symbol, fromDate, toDate) {
 async function finnhubQuote(symbol) {
   const key = process.env.FINNHUB_KEY;
   if (!key) throw new Error('FINNHUB_KEY missing');
-  const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${key}`);
+  // 5s timeout — this is called in a live-overlay path that must never block PDF rendering.
+  // AbortSignal.timeout is available in Node 18+.
+  const r = await fetch(
+    `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${key}`,
+    { signal: AbortSignal.timeout(5000) },
+  );
   if (!r.ok) throw new Error(`finnhub ${symbol} ${r.status}`);
   const j = await r.json();
   if (!j || j.c == null) return null;

@@ -305,29 +305,46 @@ module.exports = async (req, res) => {
       }
     } catch (_) {}
 
+    // Utility — wrap a promise in a hard timeout so one slow dep can't wedge the PDF.
+    const withTimeout = (p, ms, label) => Promise.race([
+      p,
+      new Promise((_, rej) => setTimeout(() => rej(new Error(`${label} timeout ${ms}ms`)), ms)),
+    ]);
+
     // ── 1) Pull live performance data (same source as /api/performance) ──
-    const result = await loadAndCompute(requestedAsOf ? { endDate: requestedAsOf } : {});
+    console.log('[generate-daily-report] phase=loadAndCompute start');
+    const t0 = Date.now();
+    const result = await withTimeout(
+      loadAndCompute(requestedAsOf ? { endDate: requestedAsOf } : {}),
+      35_000,
+      'loadAndCompute',
+    );
+    console.log(`[generate-daily-report] phase=loadAndCompute done in ${Date.now()-t0}ms`);
     const kpis = result.kpis;
     const holdings = result.holdings || [];
 
     // Apply Finnhub live overlay (mirrors dashboard liveOverlay) — only when generating for today
-    // or no specific past date was requested.
+    // or no specific past date was requested. Hard 8s ceiling on the whole overlay.
     const todayISO = new Date().toISOString().slice(0, 10);
     const wantLive = !requestedAsOf || requestedAsOf === todayISO;
     if (wantLive && kpis) {
+      const t1 = Date.now();
       try {
-        await applyLiveOverlay(kpis, holdings);
+        await withTimeout(applyLiveOverlay(kpis, holdings), 8_000, 'liveOverlay');
+        console.log(`[generate-daily-report] phase=liveOverlay done in ${Date.now()-t1}ms`);
       } catch (e) {
-        console.warn('[generate-daily-report] live overlay skipped:', e.message);
+        console.warn(`[generate-daily-report] live overlay skipped after ${Date.now()-t1}ms:`, e.message);
       }
     }
 
-    // Pending dividends + interest (same source as dashboard mini-stat)
+    // Pending dividends + interest (same source as dashboard mini-stat). 6s ceiling.
     let pendingDivs = null;
+    const t2 = Date.now();
     try {
-      pendingDivs = await computePendingDividends();
+      pendingDivs = await withTimeout(computePendingDividends(), 6_000, 'pendingDivs');
+      console.log(`[generate-daily-report] phase=pendingDivs done in ${Date.now()-t2}ms`);
     } catch (e) {
-      console.warn('[generate-daily-report] pending dividends unavailable:', e.message);
+      console.warn(`[generate-daily-report] pending dividends unavailable after ${Date.now()-t2}ms:`, e.message);
     }
 
     if (!kpis) {
@@ -617,10 +634,13 @@ module.exports = async (req, res) => {
     }
     doc.flushPages();
 
+    const tRender = Date.now();
     doc.end();
     await done;
+    console.log(`[generate-daily-report] phase=pdfRender done in ${Date.now()-tRender}ms`);
 
     const buf = Buffer.concat(chunks);
+    console.log(`[generate-daily-report] phase=send bytes=${buf.length} total=${Date.now()-t0}ms`);
     const filename = `DCE_Performance_Snapshot_${asOfDate}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
