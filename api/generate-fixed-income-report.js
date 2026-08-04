@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
     const totalAccruedTax = deps.reduce((s, d) => s + Number(d.accrued_tax || 0), 0);
 
     let wYieldNumer = 0, wYieldDenom = 0, terminalNet = 0;
-    let maxMaturity = '—';
+    let maxMaturity = '';
     // Bank concentration & WAM (principal-weighted days remaining)
     const bankMap = new Map();
     let wamNumer = 0, wamDenom = 0;
@@ -105,7 +105,7 @@ module.exports = async (req, res) => {
       { label: 'WEIGHTED YIELD (NET)', value: fmtPctRaw(wYield, 3),
         sub: 'principal-weighted' },
       { label: 'NET INT. AT MATURITY', value: fmtUSD(terminalNet, 0),
-        sub: deps.length > 0 ? `through ${maxMaturity}` : '—' },
+        sub: deps.length > 0 && maxMaturity ? `at maturity ${maxMaturity}` : '—' },
     ];
     cells.forEach((c, i) => {
       const x = 54 + i * cellW;
@@ -199,8 +199,8 @@ module.exports = async (req, res) => {
         principal: fmtUSD(totalPrincipal, 0),
         start: '', maturity: '', gross: '', tax: '',
         netY: fmtPctRaw(wYield, 3),
-        accrued: fmtUSD(totalAccruedNet, 2),
-        mv: fmtUSD(totalMv, 2),
+        accrued: fmtUSD(totalAccruedNet, 0),
+        mv: fmtUSD(totalMv, 0),
         pct: '', daysRem: '', status: '',
       };
       cx = startX;
@@ -299,7 +299,7 @@ module.exports = async (req, res) => {
       y += 14;
       drawSectionLabel(doc, y, 'Portfolio metrics');
       y += 12;
-      const opBoxH = 44;
+      const opBoxH = 30;
       doc.rect(startX, y, tableW, opBoxH).fill(CREAM);
       const colTW = tableW / 3;
       doc.fillColor(NEAR_BLACK).font('Helvetica-Bold').fontSize(7.5)
@@ -314,9 +314,6 @@ module.exports = async (req, res) => {
          .text('Currency exposure', startX + (2 * colTW) + 8, y + 6, { width: colTW - 16, lineBreak: false });
       doc.font('Helvetica')
          .text([...ccySet].join(', ') + (ccySet.size === 1 ? ' 100%' : ''), startX + (2 * colTW) + 8, y + 18, { width: colTW - 16, lineBreak: false });
-      doc.fillColor(GRAY).font('Helvetica-Oblique').fontSize(6.5)
-         .text('Deposit guarantee: none applicable to USD deposits with Guatemalan private banks (no FOGADE-equivalent for foreign-currency retail deposits). Full counterparty risk on issuing bank.',
-               startX + 8, y + 30, { width: tableW - 16, lineGap: 1 });
       y += opBoxH;
     }
 
