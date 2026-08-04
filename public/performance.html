@@ -1477,8 +1477,11 @@ function renderDashboard(j){
   const twrEl = document.getElementById('kpi-twr');
   twrEl.textContent = signedPct(k.twr_cum_pct);
   setSignClass(twrEl, k.twr_cum_pct);
-  const iwquDelta = (k.twr_cum_pct!=null && k.iwqu_return_pct!=null) ? (k.twr_cum_pct - k.iwqu_return_pct) : null;
-  document.getElementById('kpi-twr-sub').textContent = `IWQU.L ${signedPct(k.iwqu_return_pct)} · Δ ${signedPct(iwquDelta)}`;
+  // Geometric excess: (1+r)/(1+b) - 1. Arithmetic subtraction misstates when both are >0.
+  const iwquDelta = (k.twr_cum_pct!=null && k.iwqu_return_pct!=null)
+    ? ((1 + k.twr_cum_pct) / (1 + k.iwqu_return_pct) - 1)
+    : null;
+  document.getElementById('kpi-twr-sub').textContent = `IWQU.L ${signedPct(k.iwqu_return_pct)} · vs bench ${signedPct(iwquDelta)}`;
 
   const irrEl = document.getElementById('kpi-irr');
   irrEl.textContent = signedPct(k.irr_pct);

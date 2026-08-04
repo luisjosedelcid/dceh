@@ -376,8 +376,12 @@ module.exports = async (req, res) => {
     doc.rect(M, y, CW, 90).fill(WHITE).strokeColor(GOLD).lineWidth(0.5).stroke();
     doc.rect(M, y, CW, 2).fill(GOLD);
 
+    // Geometric excess return: (1 + r_port) / (1 + r_bench) - 1.
+    // Arithmetic subtraction (r - b) understates the drag when both returns are >0
+    // and misstates it in general — not appropriate for return comparisons.
     const excessTwr = (kpis.twr_cum_pct != null && kpis.iwqu_return_pct != null)
-      ? kpis.twr_cum_pct - kpis.iwqu_return_pct : null;
+      ? (1 + kpis.twr_cum_pct) / (1 + kpis.iwqu_return_pct) - 1
+      : null;
 
     const heroCells = [
       {
@@ -393,9 +397,11 @@ module.exports = async (req, res) => {
         subColor: GRAY,
       },
       {
-        label: 'TWR vs IWQU.L',
+        // Label describes the value: absolute TWR since inception.
+        // Excess vs benchmark shown in sub, computed geometrically.
+        label: 'TWR SINCE INCEPTION',
         value: fmtPct(kpis.twr_cum_pct),
-        sub: `Bench ${fmtPct(kpis.iwqu_return_pct)} · Excess ${fmtPct(excessTwr)}`,
+        sub: `Bench ${fmtPct(kpis.iwqu_return_pct)} · vs IWQU.L ${fmtPct(excessTwr)}`,
         valueColor: pctColor(kpis.twr_cum_pct),
         subColor: GRAY,
       },

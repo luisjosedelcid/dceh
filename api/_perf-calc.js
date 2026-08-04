@@ -372,14 +372,19 @@ function computeDaily({ transactions, cashflows, prices, iwquSeries, startDate, 
       irr_annualized: irrAnn,
     });
   }
-  // weights
+  // ── weights: use NAV as denominator ─────────────────────────────────────────
+  // Weights against MV would sum to 100% but leave cash out of the picture,
+  // and would use a different denominator than the IPS bands (which use NAV).
+  // Standardize on NAV: weights of open positions sum to (mv / nav) < 100%,
+  // with the remainder being cash. Matches how IPS bands read allocation.
+  const last = daily[daily.length - 1] || { nav: 0, cash: 0, market_value: 0, twr_cum: 0, drawdown: 0, iwqu_norm: null };
+  const navForWeights = last.nav;
   for (const h of holdings) {
-    h.weight_pct = (h.market_value != null && totalMv > 0) ? round4(h.market_value / totalMv) : null;
+    h.weight_pct = (h.market_value != null && navForWeights > 0) ? round4(h.market_value / navForWeights) : null;
   }
   holdings.sort((a, b) => (b.market_value || 0) - (a.market_value || 0));
 
   // ── KPIs ───────────────────────────────────────────────────────────────────
-  const last = daily[daily.length - 1] || { nav: 0, cash: 0, market_value: 0, twr_cum: 0, drawdown: 0, iwqu_norm: null };
   const navInvested = totalContributions - totalWithdrawals;
   const totalPnl = last.nav - navInvested;
   const totalRetPct = navInvested > 0 ? (last.nav / navInvested - 1) : 0;
