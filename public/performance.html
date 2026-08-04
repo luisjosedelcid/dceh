@@ -734,6 +734,33 @@
           <div class="kpi"><div class="kpi-label">Net int. at maturity</div><div class="kpi-value" id="fi-kpi-terminal">—</div><div class="kpi-sub" id="fi-kpi-terminal-sub">at final maturity</div></div>
         </div>
 
+        <!-- Portfolio Metrics (mirrors DCE_BankDeposits_Snapshot PDF) -->
+        <div style="margin-top:24px;border:1px solid var(--rule);background:#faf9f5;padding:14px 16px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin-bottom:10px">Portfolio Metrics</div>
+          <div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:16px 20px">
+            <div>
+              <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Bank concentration</div>
+              <div id="fi-pm-conc" style="font-size:13px;color:var(--navy);font-weight:500;font-variant-numeric:tabular-nums">—</div>
+              <div style="font-size:10px;color:var(--gray-mid);margin-top:2px">principal-weighted, top 3</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Weighted avg. maturity</div>
+              <div id="fi-pm-wam" style="font-size:16px;color:var(--navy);font-weight:600;font-variant-numeric:tabular-nums">—</div>
+              <div style="font-size:10px;color:var(--gray-mid);margin-top:2px">principal-weighted days remaining</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Currency exposure</div>
+              <div id="fi-pm-ccy" style="font-size:16px;color:var(--navy);font-weight:600">—</div>
+              <div style="font-size:10px;color:var(--gray-mid);margin-top:2px">deposit currencies</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Day-count convention</div>
+              <div id="fi-pm-conv" style="font-size:16px;color:var(--navy);font-weight:600">—</div>
+              <div style="font-size:10px;color:var(--gray-mid);margin-top:2px" id="fi-pm-final-mat">final maturity —</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Deposits table -->
         <div style="margin-top:24px">
           <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;gap:12px">
@@ -2444,6 +2471,41 @@ function renderFixedIncome(){
   document.getElementById('fi-kpi-terminal-sub').textContent = deps.length > 0 && maxMaturity ? ('at maturity '+maxMaturity) : '—';
 
   document.getElementById('fi-asof-badge').textContent = 'as of '+asOf;
+
+  // Portfolio Metrics (mirrors DCE_BankDeposits_Snapshot PDF calculations).
+  // Kept identical to api/generate-fixed-income-report.js:48-88 so the two
+  // views round to the same result.
+  const bankMap = new Map();
+  let wamNumer = 0, wamDenom = 0;
+  const ccySet = new Set();
+  const convCount = new Map();
+  for(const d of deps){
+    const bnk = ((d.bank||'Unknown')+'').trim();
+    bankMap.set(bnk, (bankMap.get(bnk)||0) + Number(d.principal||0));
+    wamNumer += Number(d.principal||0) * Number(d.days_remaining||0);
+    wamDenom += Number(d.principal||0);
+    ccySet.add(((d.currency||'USD')+'').toUpperCase());
+    const c = d.day_count_convention || 'actual_365';
+    convCount.set(c, (convCount.get(c)||0)+1);
+  }
+  const bankConc = [...bankMap.entries()]
+    .sort((a,b)=>b[1]-a[1])
+    .map(([b,p])=>b+' '+(totalPrincipal>0?((p/totalPrincipal)*100).toFixed(0):'0')+'%')
+    .slice(0,3)
+    .join(' · ');
+  const wamDays = wamDenom>0 ? Math.round(wamNumer/wamDenom) : null;
+  const dominantConv = [...convCount.entries()].sort((a,b)=>b[1]-a[1])[0];
+  const conventionLabel = dominantConv ? (
+    dominantConv[0]==='actual_365' ? 'ACT/365' :
+    dominantConv[0]==='actual_360' ? 'ACT/360' :
+    dominantConv[0]==='30_360'     ? '30/360'  :
+    dominantConv[0]
+  ) : 'ACT/365';
+  document.getElementById('fi-pm-conc').textContent = bankConc || '—';
+  document.getElementById('fi-pm-wam').textContent  = (wamDays != null ? (wamDays + ' days') : '—');
+  document.getElementById('fi-pm-ccy').textContent  = ccySet.size ? [...ccySet].sort().join(' · ') : '—';
+  document.getElementById('fi-pm-conv').textContent = conventionLabel;
+  document.getElementById('fi-pm-final-mat').textContent = 'final maturity ' + (maxMaturity || '—');
 
   // Deposits table
   const tbl = document.getElementById('fi-tbl-deposits');
