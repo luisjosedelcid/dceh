@@ -176,13 +176,39 @@ module.exports = async (req, res) => {
     // definition. Historical realized crypto P&L is reported separately in the
     // reconciliation block below (it was already withdrawn from NAV).
     const totMoic = totCap > 0 ? totNav / totCap : null;
-    // Sleeve-P&L totals may not equal (NAV − Capital) exactly. The delta comes
-    // from realized crypto P&L that has already been withdrawn from NAV and
-    // from accrued-vs-avg-cost differences in Equity. Track it explicitly.
+    // Headline Total P&L reconciles exactly against NAV − Capital. The sum of
+    // sleeve P&L may differ; the difference is decomposed below into three
+    // explicit adjustments so the identity is fully auditable.
     const sumSleevePnl = eqPnlUnr + rePnlUnr + crPnlTotal + tdAccruedNet;
     const navMinusCap = totNav - totCap;
-    const totPnlUnr = navMinusCap; // headline P&L reconciles to NAV − Capital
-    const otherAdjustments = sumSleevePnl - navMinusCap; // typically negative
+    const totPnlUnr = navMinusCap; // headline P&L
+
+    // === Reconciliation decomposition ================================
+    // Identity we want to expose:
+    //   sum(sleeve_P&L) + adjustments = NAV − Capital
+    //
+    // (A) Crypto realized adjustment: crypto sleeve P&L includes realized
+    //     historical P&L (already withdrawn from NAV via distributions).
+    //     From the NAV − Capital perspective it must be subtracted so we
+    //     don't double-count value that already left the account. This is
+    //     typically the largest component of the delta.
+    const adjCryptoRealized = -crPnlRealized;
+    // (B) Equity cost-basis adjustment: the Schwab engine reports unrealized
+    //     P&L against Schwab's cost basis (which may include wash sales,
+    //     lot-transfer adjustments, and small pending items) while our
+    //     Capital figure is net cash invested. This bridge is small but
+    //     structural.
+    const adjEquityCostBasis = (eqNav - eqCap) - eqPnlUnr;
+    // (C) Real-estate residual: NAV − Capital already equals unrealized P&L
+    //     for RE, so this should be zero — kept for symmetry.
+    const adjRealEstate = (reNav - reCap) - rePnlUnr;
+    // (D) Fixed income (bank CDs) residual: MV − Principal vs. accrued_net.
+    const adjFixedIncome = (tdMv - tdPrincipal) - tdAccruedNet;
+    // (E) Rounding: everything else (should be < $2).
+    const adjRounding = navMinusCap - sumSleevePnl
+                       - adjCryptoRealized - adjEquityCostBasis
+                       - adjRealEstate - adjFixedIncome;
+    const otherAdjustments = navMinusCap - sumSleevePnl; // total delta
 
     // Sleeve count (each sub-sleeve of the Equity engine only counts if NAV > 0)
     const sleeveCount = (eqK && eqEquityNav > 0 ? 1 : 0)
@@ -254,7 +280,7 @@ module.exports = async (req, res) => {
     checkStale('Crypto', crLast);
     if (staleSleeves.length > 0) {
       doc.fillColor(RED).font('Helvetica-Oblique').fontSize(8.5)
-         .text(`Warning: consolidated NAV mixes valuation dates. Stale sleeves \u2014 ${staleSleeves.join('; ')}. See \u201cLast update\u201d column.`, M, 145, { width: CW });
+         .text(`Stale valuations: ${staleSleeves.join(' \u00b7 ')}. Consolidated NAV mixes valuation dates \u2014 see \u201cLast update\u201d column.`, M, 145, { width: CW });
     }
 
     // ─── HERO METRICS ────────────────────────────────────────────
@@ -264,11 +290,11 @@ module.exports = async (req, res) => {
 
     const totRoi = totCap > 0 ? totPnlUnr / totCap : null;
     const heroCells = [
-      { label: 'NAV TOTAL (USD)', value: fmtUSD(totNav, 0), sub: `${sleeveCount} sleeves active`, subColor: GRAY },
-      { label: 'CAPITAL CONTRIBUTED', value: fmtUSD(totCap, 0), sub: 'net of withdrawals', subColor: GRAY },
-      { label: 'TOTAL P&L (USD)', value: fmtUSD0Signed(totPnlUnr), sub: `${fmtPct(totRoi)} vs capital`, valueColor: pctColor(totPnlUnr), subColor: GRAY },
-      { label: 'CONSOLIDATED MOIC', value: fmtMoic(totMoic), sub: 'NAV / Capital', valueColor: (totMoic != null && totMoic >= 1) ? GREEN : RED, subColor: GRAY },
-      { label: 'NAV-WTD RETURN', value: fmtPct(totTwr), sub: 'Indicative, not true TWR', valueColor: pctColor(totTwr), subColor: GRAY },
+      { label: 'NAV TOTAL (USD)',        value: fmtUSD(totNav, 0),         sub: `${sleeveCount} sleeves active`,     subColor: GRAY },
+      { label: 'NET CONTRIBUTED CAPITAL', value: fmtUSD(totCap, 0),         sub: 'cash in \u2212 cash out',                subColor: GRAY },
+      { label: 'TOTAL P&L (USD)',         value: fmtUSD0Signed(totPnlUnr),  sub: `NAV \u2212 Capital`,                        valueColor: pctColor(totPnlUnr), subColor: GRAY },
+      { label: 'CONSOLIDATED MOIC',       value: fmtMoic(totMoic),          sub: 'NAV / Capital',                     valueColor: (totMoic != null && totMoic >= 1) ? GREEN : RED, subColor: GRAY },
+      { label: 'P&L / CAPITAL',           value: fmtPct(totRoi),            sub: 'Simple cumulative return',          valueColor: pctColor(totRoi),    subColor: GRAY },
     ];
     const cellW = CW / heroCells.length;
     heroCells.forEach((cell, i) => {
@@ -323,7 +349,7 @@ module.exports = async (req, res) => {
       { key: 'cap',   w: 68,  align: 'right', title: 'Capital' },
       { key: 'pnl',   w: 65,  align: 'right', title: 'P&L' },
       { key: 'moic',  w: 36,  align: 'right', title: 'MOIC' },
-      { key: 'twr',   w: 48,  align: 'right', title: 'Return' },
+      { key: 'twr',   w: 48,  align: 'right', title: 'Ret. cum.' },
       { key: 'last',  w: 65,  align: 'left',  title: 'Last update' },
     ];
     // Draw header row
@@ -376,7 +402,7 @@ module.exports = async (req, res) => {
       { text: fmtUSD(totCap, 0),    color: NAVY, align: 'right' },
       { text: fmtUSD0Signed(totPnlUnr), color: pctColor(totPnlUnr), align: 'right' },
       { text: fmtMoic(totMoic),     color: (totMoic != null && totMoic >= 1) ? GREEN : RED, align: 'right' },
-      { text: fmtPct(totTwr),       color: pctColor(totTwr), align: 'right' },
+      { text: fmtPct(totRoi),       color: pctColor(totRoi), align: 'right' },
       { text: '',                   color: NAVY, align: 'left' },
     ];
     totalCells.forEach((cell, i) => {
@@ -384,14 +410,20 @@ module.exports = async (req, res) => {
          .text(cell.text, cx, y + 5, { width: cols[i].w - 4, align: cell.align, lineBreak: false });
       cx += cols[i].w;
     });
-    y += 18 + 6;
-    // Reconciliation footnote: explain the sum of sleeve P&L vs NAV − Capital
+    y += 18 + 8;
+    // Reconciliation footnote: sum(sleeve P&L) + adjustments = NAV − Capital
     if (Math.abs(otherAdjustments) >= 1) {
+      const parts = [];
+      parts.push(`Sum of sleeve P&L: ${fmtUSD0Signed(sumSleevePnl)}`);
+      if (Math.abs(adjCryptoRealized) >= 1)  parts.push(`Crypto realized withdrawn: ${fmtUSD0Signed(adjCryptoRealized)}`);
+      if (Math.abs(adjEquityCostBasis) >= 1) parts.push(`Equity cost-basis timing: ${fmtUSD0Signed(adjEquityCostBasis)}`);
+      if (Math.abs(adjRealEstate) >= 1)      parts.push(`RE residual: ${fmtUSD0Signed(adjRealEstate)}`);
+      if (Math.abs(adjFixedIncome) >= 1)     parts.push(`FI residual: ${fmtUSD0Signed(adjFixedIncome)}`);
+      if (Math.abs(adjRounding) >= 1)        parts.push(`Rounding: ${fmtUSD0Signed(adjRounding)}`);
+      parts.push(`\u2192 NAV \u2212 Capital: ${fmtUSD0Signed(navMinusCap)}`);
       doc.font('Helvetica-Oblique').fontSize(7.5).fillColor(GRAY)
-         .text(
-           `Reconciliation: sum of sleeve P&L = ${fmtUSD0Signed(sumSleevePnl)}; NAV \u2212 Capital = ${fmtUSD0Signed(navMinusCap)}. Delta of ${fmtUSD0Signed(otherAdjustments)} reflects realized crypto P&L already withdrawn from NAV and cost-basis timing in Equity.`,
-           M, y, { width: CW }
-         );
+         .text(`Reconciliation: ${parts.join('  \u00b7  ')}`,
+           M, y, { width: CW });
       y += 22;
     } else {
       y += 10;
@@ -431,13 +463,25 @@ module.exports = async (req, res) => {
       const rowH = 14;
       if (ipsIdx % 2 === 1) doc.rect(M, y, CW, rowH).fill(ROW_ALT);
       let status, color;
-      // Band status: hard bands per IPS §3.1. No tolerance above max — any
-      // breach is ABOVE max (rebalance action). Near-limit is a soft warning
-      // strictly between min and max but within 200 bps of either edge.
-      if (b.actual > b.max)                                               { status = 'ABOVE max';         color = RED; }
-      else if (b.actual < b.min)                                          { status = 'BELOW min';         color = RED; }
-      else if (b.actual < b.min + 0.02 || b.actual > b.max - 0.02)        { status = 'Near limit';       color = GOLD; }
-      else                                                                { status = 'OK \u2014 within band'; color = GREEN; }
+      // Band status: hard bands per IPS §3.1. Order matters:
+      //   1. Above max → hard breach, ABOVE max.
+      //   2. Below min → hard breach, BELOW min.
+      //   3. Exactly at min (0% floor, e.g. Private Equity at 0/0-20)
+      //      or exactly at max → boundary but not a warning: OK.
+      //   4. Strictly inside the band and within 200 bps of an edge
+      //      that is > 0 → Near limit (soft warning).
+      //   5. Otherwise → OK.
+      const tol = 0.02;
+      if (b.actual > b.max) {
+        status = 'ABOVE max'; color = RED;
+      } else if (b.actual < b.min) {
+        status = 'BELOW min'; color = RED;
+      } else {
+        const nearMin = b.min > 0 && b.actual < b.min + tol;
+        const nearMax = b.actual > b.max - tol && b.actual < b.max;
+        if (nearMin || nearMax) { status = 'Near limit'; color = GOLD; }
+        else { status = 'OK \u2014 within band'; color = GREEN; }
+      }
       cx = M + 6;
       const row = [
         { text: b.label,                                     color: NEAR_BLACK, align: 'left'  },
