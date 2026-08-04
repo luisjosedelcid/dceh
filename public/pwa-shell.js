@@ -182,16 +182,18 @@
     // If the destination is the same pathname (i.e. we're already on /screener.html
     // and the user taps Ideas which goes to /screener.html#ideafeed), the browser
     // will only change the hash — no DOMContentLoaded fires. Force a full load so
-    // the applyHashMode() runs cleanly.
+    // the applyHashMode() runs cleanly. Use replace() with a cache-buster query
+    // to guarantee a fresh navigation on iOS.
     sheet.querySelectorAll('[data-feed-href]').forEach(a => {
       a.addEventListener('click', (ev) => {
         const target = a.getAttribute('data-feed-href') || '';
-        const [targetPath] = target.split('#');
+        const [targetPath, targetHash = ''] = target.split('#');
         if (targetPath === location.pathname) {
           ev.preventDefault();
           closeMenuSheet();
-          location.href = target;
-          location.reload();
+          const cacheBust = '_r=' + Date.now();
+          const sep = targetPath.includes('?') ? '&' : '?';
+          location.replace(targetPath + sep + cacheBust + (targetHash ? '#' + targetHash : ''));
         }
       });
     });
@@ -352,21 +354,23 @@
         });
       }).catch(() => {});
 
+      // When the new SW installs and broadcasts SW_UPDATED (with its version),
+      // auto-reload the page once per version. This is version-keyed so future
+      // deploys still trigger a fresh reload — unlike keying on scriptURL, which
+      // never changes and would only fire once ever.
       navigator.serviceWorker.addEventListener('message', ev => {
-        if (ev.data && ev.data.type === 'SW_UPDATED') showUpdateBanner();
-      });
-
-      // When the new SW takes control (skipWaiting + clients.claim), auto-reload once.
-      // Guard against reload loops with a session flag.
-      let _reloadedFor = null;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        const controller = navigator.serviceWorker.controller;
-        if (!controller) return;
-        const key = 'dce_sw_reloaded_' + (controller.scriptURL || '');
-        if (sessionStorage.getItem(key) === '1') return;
+        if (!ev.data || ev.data.type !== 'SW_UPDATED') return;
+        const ver = ev.data.version || 'unknown';
+        const key = 'dce_sw_reloaded_' + ver;
+        if (sessionStorage.getItem(key) === '1') {
+          // Already reloaded for this version — just show the banner in case
+          // the user did a soft in-tab navigation.
+          showUpdateBanner();
+          return;
+        }
         sessionStorage.setItem(key, '1');
-        _reloadedFor = key;
-        location.reload();
+        // Small delay so any in-flight requests can settle.
+        setTimeout(() => location.reload(), 250);
       });
     });
   }
