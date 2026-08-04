@@ -219,9 +219,9 @@ module.exports = async (req, res) => {
         sub: (navGainUsdIndicative >= 0 ? '+' : '') + fmtUSD(navGainUsdIndicative, 0) +
              ' (' + (navGainPctIndicative != null ? fmtPctRaw(navGainPctIndicative, 2) : '\u2014') + ')',
         subColor: pctColor(navGainUsdIndicative) },
-      { label: 'INDICATIVE MOIC (USD)', value: fmtMoic(totMoicUsdIndicative),
+      { label: 'NAV / INVESTED (USD)', value: fmtMoic(totMoicUsdIndicative),
         valueColor: totMoicUsdIndicative != null && totMoicUsdIndicative >= 1 ? GREEN : RED,
-        sub: 'GP NAV / net invested' },
+        sub: 'residual multiple; no distributions yet' },
       { label: 'INDICATIVE XIRR (USD, ann.)', value: fmtPct(totIrrUsdAtMark),
         valueColor: pctColor(totIrrUsdAtMark),
         sub: `to ${navAsOf}` },
@@ -239,20 +239,21 @@ module.exports = async (req, res) => {
     drawSectionLabel(doc, y, 'Holdings');
     y += 14;
 
-    // Columns: Position | Vehicle | Deploy | Aporte EUR | FX depl. | Cost USD | NAV EUR | NAV USD | MOIC USD | IRR USD | Weight | Lockup rem
+    // Columns: Position | Vehicle | Deploy | Contrib EUR | FX depl. | Cost USD | NAV EUR | NAV USD | NAV/Inv | IRR USD | Weight | Est. exit
+    // Widths tuned so numeric columns don't wrap. Total: 504pt (letter usable).
     const cols = [
-      { key: 'name',       w: 72, align: 'left',  title: 'Position' },
-      { key: 'vehicle',    w: 62, align: 'left',  title: 'Vehicle' },
-      { key: 'deployDate', w: 46, align: 'left',  title: 'Deploy' },
-      { key: 'aporteEur',  w: 40, align: 'right', title: 'Contrib EUR' },
-      { key: 'fxDeploy',   w: 30, align: 'right', title: 'FX depl.' },
+      { key: 'name',       w: 70, align: 'left',  title: 'Position' },
+      { key: 'vehicle',    w: 54, align: 'left',  title: 'Vehicle' },
+      { key: 'deployDate', w: 44, align: 'left',  title: 'Deploy' },
+      { key: 'aporteEur',  w: 48, align: 'right', title: 'Contrib EUR' },
+      { key: 'fxDeploy',   w: 28, align: 'right', title: 'FX depl.' },
       { key: 'costUsd',    w: 40, align: 'right', title: 'Cost USD' },
       { key: 'navEur',     w: 40, align: 'right', title: 'NAV EUR' },
       { key: 'navUsd',     w: 40, align: 'right', title: 'NAV USD' },
-      { key: 'moicUsd',    w: 28, align: 'right', title: 'MOIC USD' },
-      { key: 'irrUsd',     w: 34, align: 'right', title: 'IRR USD' },
-      { key: 'weight',     w: 24, align: 'right', title: 'Wt.' },
-      { key: 'lockup',     w: 48, align: 'right', title: 'Est. exit' },
+      { key: 'moicUsd',    w: 36, align: 'right', title: 'NAV/Inv' },
+      { key: 'irrUsd',     w: 32, align: 'right', title: 'IRR USD' },
+      { key: 'weight',     w: 30, align: 'right', title: 'Wt.' },
+      { key: 'lockup',     w: 42, align: 'right', title: 'Est. exit' },
     ];
     const tableW = cols.reduce((s, c) => s + c.w, 0);
     const startX = 54;
