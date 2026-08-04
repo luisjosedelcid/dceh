@@ -434,7 +434,7 @@ module.exports = async (req, res) => {
     y = 270;
     drawSectionLabel(doc, y, 'IPS Bands');
     doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(13)
-       .text('Asignación táctica vs bandas IPS', M, y + 14);
+       .text('Current allocation vs IPS bands', M, y + 14);
     y += 38;
 
     drawIpsBands(doc, M, y, CW, 130, kpis);
@@ -446,16 +446,18 @@ module.exports = async (req, res) => {
        .text(`Positions (${holdings.length})`, M, y + 14);
     y += 38;
 
+    // TICKER wider so 9-char T-bill CUSIPs (e.g. 912797VP9) fit on one line.
+    // Renamed WEIGHT column and dropped signed % (weights don't have direction).
     const cols = [
-      { label: 'TICKER',   w: 46,  align: 'left'  },
+      { label: 'TICKER',   w: 62,  align: 'left'  },
       { label: 'QTY',      w: 42,  align: 'right' },
-      { label: 'AVG COST', w: 54,  align: 'right' },
-      { label: 'LAST',     w: 48,  align: 'right' },
-      { label: 'MKT VALUE',w: 66,  align: 'right' },
-      { label: 'UNREAL',   w: 96,  align: 'right' },
-      { label: 'IRR (ANN)',w: 52,  align: 'right' },
-      { label: 'WEIGHT',   w: 48,  align: 'right' },
-      { label: 'DAYS',     w: 32,  align: 'right' },
+      { label: 'AVG COST', w: 56,  align: 'right' },
+      { label: 'LAST',     w: 56,  align: 'right' },
+      { label: 'MKT VALUE',w: 62,  align: 'right' },
+      { label: 'UNREAL',   w: 92,  align: 'right' },
+      { label: 'PRICE IRR',w: 48,  align: 'right' },
+      { label: 'WEIGHT',   w: 40,  align: 'right' },
+      { label: 'DAYS',     w: 28,  align: 'right' },
     ];
     const tableW = cols.reduce((s, c) => s + c.w, 0);
 
@@ -475,15 +477,22 @@ module.exports = async (req, res) => {
       cx = M;
       const unrealPct = (h.cost_basis > 0 && h.unrealized_pnl != null)
         ? h.unrealized_pnl / h.cost_basis : null;
+      // Price precision: fixed-income CUSIPs & cash-equivalent ETFs quote in ~$1
+      // notionals; 2 decimals hides basis-point moves. Use 4 dp for those.
+      const isSubDollarQuote = h.asset_class === 'fixed_income' || h.asset_class === 'cash_equivalent';
+      const priceDp = isSubDollarQuote ? 4 : 2;
+      // Suppress annualized IRR for very short holdings (< 30 days) — annualizing
+      // an 11-day return produces meaningless triple-digit numbers.
+      const showIrr = h.days_held != null && h.days_held >= 30;
       const cells = [
         { v: h.ticker, color: NAVY, font: 'Helvetica-Bold' },
         { v: fmtNum(h.qty, 4), color: NEAR_BLACK, font: 'Helvetica' },
-        { v: h.avg_cost != null ? `$${h.avg_cost.toFixed(2)}` : '—', color: NEAR_BLACK, font: 'Helvetica' },
-        { v: h.last_price != null ? `$${h.last_price.toFixed(2)}` : '—', color: NEAR_BLACK, font: 'Helvetica' },
+        { v: h.avg_cost != null ? `$${Number(h.avg_cost).toFixed(priceDp)}` : '—', color: NEAR_BLACK, font: 'Helvetica' },
+        { v: h.last_price != null ? `$${Number(h.last_price).toFixed(priceDp)}` : '—', color: NEAR_BLACK, font: 'Helvetica' },
         { v: fmtUSD(h.market_value, 0), color: NEAR_BLACK, font: 'Helvetica' },
         null, // UNREAL handled separately so the % stays on the same line in smaller gray
-        { v: fmtPct(h.irr_annualized, 1), color: pctColor(h.irr_annualized), font: 'Helvetica-Bold' },
-        { v: fmtPct(h.weight_pct, 1), color: NEAR_BLACK, font: 'Helvetica' },
+        { v: showIrr ? fmtPct(h.irr_annualized, 1) : '—', color: showIrr ? pctColor(h.irr_annualized) : GRAY, font: 'Helvetica-Bold' },
+        { v: fmtPctRaw(h.weight_pct, 1), color: NEAR_BLACK, font: 'Helvetica' },
         { v: h.days_held != null ? String(h.days_held) : '—', color: GRAY, font: 'Helvetica' },
       ];
       cells.forEach((cell, i) => {
@@ -531,12 +540,12 @@ module.exports = async (req, res) => {
       { label: 'CASH (USD)',                value: fmtUSD(kpis.cash_usd, 0),         color: NAVY  },
       { label: 'MARKET VALUE',              value: fmtUSD(kpis.market_value_usd, 0), color: NAVY  },
       { label: 'DIVIDENDS + INTEREST',      value: fmtUSD((kpis.total_dividends || 0) + (kpis.total_interest || 0), 2), color: GREEN, sub: 'received' },
-      { label: 'DIVIDENDS + INTEREST',      value: pendingDivs && typeof pendingDivs.total_pending_usd === 'number'
+      { label: 'ACCRUED INCOME',            value: pendingDivs && typeof pendingDivs.total_pending_usd === 'number'
                                                 ? fmtUSD(pendingDivs.total_pending_usd, 2)
-                                                : 'Pendiente',
+                                                : 'Pending',
         color: (pendingDivs && pendingDivs.total_pending_usd > 0) ? GREEN : GRAY,
         italic: !(pendingDivs && pendingDivs.total_pending_usd > 0),
-        sub: 'pending' },
+        sub: 'memo — not in NAV' },
     ];
     cards1.forEach((c, i) => {
       const x = M + i * (cardW + 8);
