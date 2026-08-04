@@ -30,6 +30,7 @@
 
   /* MODE TABS (Screener / Idea Feed / Superinvestors / Sector Tracker / Shortlist) */
   .mode-tabs{display:flex;gap:0;margin-bottom:28px;border-bottom:1px solid var(--rule)}
+  body.mode-ideafeed .mode-tabs{display:none !important}
   .mode-tab{font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;padding:14px 28px;background:none;border:none;border-bottom:2px solid transparent;color:var(--gray-mid);cursor:pointer;transition:all .2s;margin-bottom:-1px}
   .mode-tab:hover{color:var(--navy)}
   .mode-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
@@ -2004,7 +2005,8 @@ function applyHashMode() {
     showMode('ideafeed');
     if (h1)  h1.textContent  = 'Ideas';
     if (sub) sub.textContent = 'Curated inbound ideas from blogs, Substacks and podcasts. Refreshed every 6h.';
-    if (tabs) tabs.style.display = 'none';
+    if (tabs) { tabs.style.setProperty('display', 'none', 'important'); tabs.setAttribute('hidden', ''); }
+    document.body.classList.add('mode-ideafeed');
     document.title = 'DCE Holdings \u2014 Ideas';
     if (meta) meta.textContent = 'Feed \u00b7 Ideas v1';
     return;
@@ -2017,7 +2019,8 @@ function applyHashMode() {
   // No hash (or non-ideafeed) => restore Find defaults in case we came back from Ideas.
   if (h1)  h1.textContent  = 'Find';
   if (sub) sub.textContent = 'Idea generation pipeline. Sector quality screening + smart-money tracking, before the full Columbia model.';
-  if (tabs) tabs.style.display = '';
+  if (tabs) { tabs.style.removeProperty('display'); tabs.removeAttribute('hidden'); }
+  document.body.classList.remove('mode-ideafeed');
   document.title = 'DCE Holdings \u2014 Find';
   if (meta) meta.textContent = 'Find \u00b7 Screener v0 + Idea Feed v1 + Superinvestors v1 + Sector Tracker v4';
 }
