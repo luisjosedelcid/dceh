@@ -251,7 +251,7 @@
     <button class="tab-btn active" data-tab="tab-consolidado" role="tab" type="button">Consolidated</button>
     <button class="tab-btn" data-tab="tab-dashboard" role="tab" type="button">Public Markets</button>
     <button class="tab-btn" data-tab="tab-realestate" role="tab" type="button">Real Estate</button>
-    <button class="tab-btn" data-tab="tab-fixedincome" role="tab" type="button">Fixed Income</button>
+    <button class="tab-btn" data-tab="tab-fixedincome" role="tab" type="button">Bank Deposits</button>
     <button class="tab-btn" data-tab="tab-crypto" role="tab" type="button">Crypto</button>
     <button class="tab-btn" data-tab="tab-data" role="tab" type="button">Data &amp; audit <span class="tab-badge admin-only-badge">Admin</span></button>
   </nav>
@@ -698,11 +698,11 @@
 
   </section><!-- /tab-crypto -->
 
-  <!-- ================== TAB: FIXED INCOME ================== -->
+  <!-- ================== TAB: BANK DEPOSITS ================== -->
   <section class="tab-pane" id="tab-fixedincome" role="tabpanel">
 
     <div class="panel">
-      <h2>Fixed Income — Bank time deposits (CDs)</h2>
+      <h2>Bank Deposits — Time deposits (CDs)</h2>
       <div style="font-size:11px;color:var(--gray-mid);margin-bottom:14px">Bank certificates of deposit with linear accrual valuation. Interest accrues day by day (mark-to-accrual) net of applicable tax withholding; principal returns at maturity along with any unpaid interest.</div>
 
       <div id="fi-loading" class="nodata">Loading…</div>
@@ -711,10 +711,10 @@
         <!-- KPI strip Fixed Income -->
         <div class="kpi-grid">
           <div class="kpi"><div class="kpi-label">Total principal</div><div class="kpi-value" id="fi-kpi-principal">—</div><div class="kpi-sub" id="fi-kpi-count">—</div></div>
-          <div class="kpi"><div class="kpi-label">Market value (mark-to-accrual)</div><div class="kpi-value" id="fi-kpi-mv">—</div><div class="kpi-sub" id="fi-kpi-asof">—</div></div>
-          <div class="kpi"><div class="kpi-label">Accrued interest (net)</div><div class="kpi-value" id="fi-kpi-accrued">—</div><div class="kpi-sub" id="fi-kpi-accrued-sub">gross − tax</div></div>
+          <div class="kpi"><div class="kpi-label">Carrying value (mark-to-accrual)</div><div class="kpi-value" id="fi-kpi-mv">—</div><div class="kpi-sub" id="fi-kpi-asof">—</div></div>
+          <div class="kpi"><div class="kpi-label">Accrued interest (net)</div><div class="kpi-value" id="fi-kpi-accrued">—</div><div class="kpi-sub" id="fi-kpi-accrued-sub">gross - tax</div></div>
           <div class="kpi"><div class="kpi-label">Weighted yield (net p.a.)</div><div class="kpi-value" id="fi-kpi-yield">—</div><div class="kpi-sub">principal-weighted</div></div>
-          <div class="kpi"><div class="kpi-label">Terminal net interest</div><div class="kpi-value" id="fi-kpi-terminal">—</div><div class="kpi-sub" id="fi-kpi-terminal-sub">at final maturity</div></div>
+          <div class="kpi"><div class="kpi-label">Net int. at maturity</div><div class="kpi-value" id="fi-kpi-terminal">—</div><div class="kpi-sub" id="fi-kpi-terminal-sub">at final maturity</div></div>
         </div>
 
         <!-- Deposits table -->
@@ -2346,7 +2346,7 @@ function renderFixedIncome(){
   // Weighted net yield = sum(principal * annual_rate * (1-tax)) / sum(principal)
   let wYieldNumer = 0, wYieldDenom = 0;
   let terminalNet = 0;
-  let maxMaturity = '—';
+  let maxMaturity = '';
   for(const td of deps){
     const netYield = Number(td.annual_rate) * (1 - Number(td.tax_rate||0));
     wYieldNumer += Number(td.principal) * netYield;
@@ -2363,10 +2363,10 @@ function renderFixedIncome(){
   const accEl = document.getElementById('fi-kpi-accrued');
   accEl.textContent = (totalAccruedNet>=0?'+':'')+fiFmtUsd0(totalAccruedNet);
   accEl.style.color = totalAccruedNet>=0 ? 'var(--green)' : 'var(--red)';
-  document.getElementById('fi-kpi-accrued-sub').textContent = 'gross '+fiFmtUsd0(totalAccruedGross)+' − tax '+fiFmtUsd0(totalAccruedTax);
+  document.getElementById('fi-kpi-accrued-sub').textContent = 'gross '+fiFmtUsd0(totalAccruedGross)+' - tax '+fiFmtUsd0(totalAccruedTax);
   document.getElementById('fi-kpi-yield').textContent = fiFmtPct(wYield, 3);
   document.getElementById('fi-kpi-terminal').textContent = fiFmtUsd0(terminalNet);
-  document.getElementById('fi-kpi-terminal-sub').textContent = deps.length > 0 ? ('through '+maxMaturity) : '—';
+  document.getElementById('fi-kpi-terminal-sub').textContent = deps.length > 0 && maxMaturity ? ('at maturity '+maxMaturity) : '—';
 
   document.getElementById('fi-asof-badge').textContent = 'as of '+asOf;
 

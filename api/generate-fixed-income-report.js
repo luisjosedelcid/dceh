@@ -77,16 +77,16 @@ module.exports = async (req, res) => {
     // ─── Build PDF ─────────────────────────────────────────────
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition',
-      `attachment; filename="DCE_FixedIncome_Snapshot_${today}.pdf"`);
+      `attachment; filename="DCE_BankDeposits_Snapshot_${today}.pdf"`);
 
     const doc = new PDFDocument({ size: 'LETTER', margin: 54, bufferPages: true });
     doc.pipe(res);
 
     const W = doc.page.width;
-    drawHeaderBar(doc, 'Fixed Income Snapshot');
+    drawHeaderBar(doc, 'Bank Deposits Snapshot');
 
     doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(20)
-       .text('Fixed Income — Bank time deposits (CDs)', 54, 62);
+       .text('Bank Deposits — Time deposits (CDs)', 54, 62);
     doc.fillColor(GRAY).font('Helvetica').fontSize(9)
        .text(`Mark-to-accrual (carrying value) · ${deps.length} active deposit${deps.length === 1 ? '' : 's'} · as of ${asOf}`,
              54, 88);
