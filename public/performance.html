@@ -303,7 +303,7 @@
             IPS §3.1 — Strategic allocation bands
             <span style="font-size:9px;font-weight:400;opacity:0.7">DCE Holdings institutional policy</span>
           </div>
-          <div class="ips-note">Current reading against ranges defined in IPS v1.0 §3.1. Green: within band. Amber: near the limit (±2pp). Red: out of band. Non-implemented sleeves (PE, Fixed income) appear as 0% — out of band by convention.</div>
+          <div class="ips-note">Current reading against ranges defined in IPS v1.0 §3.1. Green: within band. Red: out of band. Cash sleeve includes account cash and cash-equivalent ETFs (SGOV, BIL, etc.). Fixed income sleeve includes T-bill CUSIPs and CDs.</div>
           <table class="ips-bands-table">
             <thead>
               <tr>
@@ -1517,25 +1517,33 @@ function renderDashboard(j){
 
 function renderIpsBands(j) {
   // Tactical bands per IPS §3.5-3.7
-  const BANDS = [
-    { label: 'Cash / equivalents',   min: 0.15, max: 0.25, getValue: (nav, cash, mv, holdings) => nav > 0 ? cash / nav : 0 },
-    { label: 'Equity — quality',       min: 0.60, max: 0.80, getValue: (nav, cash, mv, holdings) => nav > 0 ? mv / nav : 0 },
-    { label: 'Equity — special sit',   min: 0.00, max: 0.15, getValue: (nav, cash, mv, holdings) => 0 },
-    { label: 'Fixed income / hedges', min: 0.00, max: 0.10, getValue: (nav, cash, mv, holdings) => 0 },
-  ];
+  // Cash sleeve = account cash + cash-equivalent ETFs (SGOV, BIL, etc.)
+  // Equity sleeve = only equity holdings (excludes SGOV & T-bill CUSIPs)
+  // Fixed income sleeve = T-bill CUSIPs, CDs, and other fixed-income holdings
+  const k = j.kpis || {};
+  const nav        = Number(k.nav || 0);
+  const cash       = Number(k.cash_usd || 0);
+  const mvEquity   = Number(k.mv_equity_usd || 0);
+  const mvFixedInc = Number(k.mv_fixed_income_usd || 0);
+  const mvCashEq   = Number(k.mv_cash_equivalent_usd || 0);
 
-  const k = j.kpis;
-  const nav  = k ? (k.nav || 0) : 0;
-  const cash = k ? (k.cash_usd || 0) : 0;
-  const mv   = k ? (k.market_value_usd || 0) : 0;
-  const holdings = j.holdings || [];
+  const cashSleevePct  = nav > 0 ? (cash + mvCashEq) / nav : 0;
+  const equityPct      = nav > 0 ? mvEquity / nav : 0;
+  const fixedIncomePct = nav > 0 ? mvFixedInc / nav : 0;
+
+  const BANDS = [
+    { label: 'Cash / equivalents',    min: 0.15, max: 0.25, value: cashSleevePct },
+    { label: 'Equity — quality',       min: 0.60, max: 0.80, value: equityPct },
+    { label: 'Equity — special sit',   min: 0.00, max: 0.15, value: 0 },
+    { label: 'Fixed income / hedges',  min: 0.00, max: 0.10, value: fixedIncomePct },
+  ];
 
   const tbody = document.getElementById('ips-bands-tbody');
   if (!tbody) return;
   tbody.innerHTML = '';
 
   BANDS.forEach(b => {
-    const reading = b.getValue(nav, cash, mv, holdings);
+    const reading = b.value;
     const pct = (reading * 100).toFixed(1) + '%';
     const bandLabel = b.min === b.max ? (b.min * 100).toFixed(0) + '%'
                     : (b.min * 100).toFixed(0) + '–' + (b.max * 100).toFixed(0) + '%';

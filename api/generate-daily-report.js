@@ -179,16 +179,25 @@ function drawSectionLabel(doc, y, label) {
 
 // ─── IPS tactical bands (§3.5–3.7) ─────────────────────────────────
 function drawIpsBands(doc, x, y, w, h, kpis) {
-  // Same thresholds as the dashboard's renderIpsBands()
-  const nav  = (kpis && kpis.nav) || 0;
-  const cash = (kpis && kpis.cash_usd) || 0;
-  const mv   = (kpis && kpis.market_value_usd) || 0;
+  // Same thresholds and asset-class classification as renderIpsBands() in performance.html.
+  // Cash sleeve = account cash + cash-equivalent ETFs (SGOV, BIL, ...).
+  // Equity sleeve = only true equity holdings (excludes SGOV & T-bill CUSIPs).
+  // Fixed income sleeve = T-bill CUSIPs, CDs, other fixed-income holdings.
+  const nav        = Number((kpis && kpis.nav) || 0);
+  const cash       = Number((kpis && kpis.cash_usd) || 0);
+  const mvEquity   = Number((kpis && kpis.mv_equity_usd) || 0);
+  const mvFixedInc = Number((kpis && kpis.mv_fixed_income_usd) || 0);
+  const mvCashEq   = Number((kpis && kpis.mv_cash_equivalent_usd) || 0);
+
+  const cashSleevePct  = nav > 0 ? (cash + mvCashEq) / nav : 0;
+  const equityPct      = nav > 0 ? mvEquity / nav : 0;
+  const fixedIncomePct = nav > 0 ? mvFixedInc / nav : 0;
 
   const BANDS = [
-    { label: 'Cash / equivalentes',     min: 0.15, max: 0.25, value: nav > 0 ? cash / nav : 0 },
-    { label: 'Equity — quality',         min: 0.60, max: 0.80, value: nav > 0 ? mv / nav   : 0 },
+    { label: 'Cash / equivalents',      min: 0.15, max: 0.25, value: cashSleevePct },
+    { label: 'Equity — quality',         min: 0.60, max: 0.80, value: equityPct },
     { label: 'Equity — special sit',     min: 0.00, max: 0.15, value: 0 },
-    { label: 'Renta fija / coberturas',  min: 0.00, max: 0.10, value: 0 },
+    { label: 'Fixed income / hedges',    min: 0.00, max: 0.10, value: fixedIncomePct },
   ];
 
   // Frame
