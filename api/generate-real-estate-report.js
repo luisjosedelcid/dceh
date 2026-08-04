@@ -15,6 +15,7 @@ const {
   fmtUSD, fmtUSDSigned, fmtPct, fmtPctRaw, fmtMoic, fmtEUR, fmtNum, pctColor,
   drawHeaderBar, drawFooter, drawSectionLabel, drawHeroCell,
 } = require('./_pdf-helpers');
+const { getFxRate, getFxRateOnDate } = require('./_fx-rates');
 
 function readPublicJson(filename) {
   const candidates = [
@@ -76,11 +77,36 @@ module.exports = async (req, res) => {
     }
 
     const today = new Date().toISOString().slice(0, 10);
-    const fxToday = Number(reJson.fx_eur_usd?.today || 1);
-    const fxTodayDate = reJson.fx_eur_usd?.today_date || '\u2014';
-    const fxNav = Number(reJson.fx_eur_usd?.nav_close || fxToday);
     const navAsOf = reJson.nav_as_of || '\u2014';
     const positions = Array.isArray(reJson.positions) ? reJson.positions : [];
+
+    // ── Live FX (ECB via Frankfurter, 60-min cache) with file fallback ──
+    // fxToday: rate at report generation (latest published ECB reference).
+    // fxNav:   rate on the NAV mark date (historical ECB reference).
+    // If either live call fails we fall back to whatever is in the JSON so
+    // the PDF still renders \u2014 the source label makes the fallback visible.
+    const fxTodayFallback = {
+      value: Number(reJson.fx_eur_usd?.today || 0),
+      date:  reJson.fx_eur_usd?.today_date || null,
+      source: 'real_estate_positions.json (cached)',
+    };
+    const fxNavFallback = {
+      value: Number(reJson.fx_eur_usd?.nav_close || reJson.fx_eur_usd?.today || 0),
+      date:  reJson.fx_eur_usd?.nav_close_date || null,
+      source: 'real_estate_positions.json (cached)',
+    };
+    const [fxTodayInfo, fxNavInfo] = await Promise.all([
+      getFxRate('EUR', 'USD', { fallback: fxTodayFallback }),
+      /^\d{4}-\d{2}-\d{2}$/.test(navAsOf)
+        ? getFxRateOnDate(navAsOf, 'EUR', 'USD', { fallback: fxNavFallback })
+        : Promise.resolve({ value: fxNavFallback.value || 1, date: null, source: fxNavFallback.source, cached: false, stale: true }),
+    ]);
+    const fxToday     = Number(fxTodayInfo.value) || 1;
+    const fxTodayDate = fxTodayInfo.date || today;
+    const fxTodaySrc  = fxTodayInfo.source || '\u2014';
+    const fxNav       = Number(fxNavInfo.value) || fxToday;
+    const fxNavDate   = fxNavInfo.date || navAsOf;
+    const fxNavSrc    = fxNavInfo.source || '\u2014';
 
     // Enrich each position (mirrors performance.html reLoadEnriched logic).
     // Methodology (post-review): the GP NAV mark is dated `navAsOf` (typically
@@ -179,7 +205,7 @@ module.exports = async (req, res) => {
     doc.fillColor(GRAY).font('Helvetica').fontSize(9)
        .text(
          `AX Partners aggregate  \u00b7  Latest GP NAV mark: ${navAsOf}  \u00b7  ` +
-         `Converted to USD at FX EUR/USD ${fxToday.toFixed(4)} dated ${fxTodayDate}`,
+         `Converted to USD at FX EUR/USD ${fxToday.toFixed(4)} dated ${fxTodayDate} \u00b7 ${fxTodaySrc}`,
          54, 88);
 
     // ─── HERO STRIP (5 cells) ──────────────────────────────────
@@ -320,15 +346,15 @@ module.exports = async (req, res) => {
     const fxEffectAbsStr = fmtUSD(Math.abs(fxEffectUsd), 0);
     doc.fillColor(NEAR_BLACK).font('Helvetica').fontSize(7.5)
        .text(
-         `Dates. Latest official GP NAV mark: ${navAsOf}. FX EUR/USD used to convert that NAV to USD: ` +
-         `${fxToday.toFixed(4)} \u2014 latest FX available on file, dated ${fxTodayDate}. ` +
-         `FX at the NAV-close date was ${fxNav.toFixed(4)}. Report generated ${today}.`,
+         `Dates. Latest official GP NAV mark: ${navAsOf}. FX EUR/USD used to convert that NAV to USD (indicative): ` +
+         `${fxToday.toFixed(4)} dated ${fxTodayDate} (${fxTodaySrc}). ` +
+         `FX at the NAV-close date: ${fxNav.toFixed(4)} dated ${fxNavDate} (${fxNavSrc}). Report generated ${today}.`,
          startX + 8, y + 6,
          { width: tableW - 16, lineGap: 2 });
     doc.text(
          `NAV in USD. Contributions were converted to USD at the FX in effect on each deployment date. ` +
-         `The "Indicative NAV (USD)" figure re-values the December GP NAV at the latest FX quote we hold on ` +
-         `file; it is NOT a fresh valuation. When the GP publishes its next official mark the number will move.`,
+         `The "Indicative NAV (USD)" figure re-values the GP NAV at the latest ECB reference FX rate; ` +
+         `it is NOT a fresh valuation. When the GP publishes its next semi-annual mark the number will move.`,
          startX + 8, y + 30,
          { width: tableW - 16, lineGap: 2 });
     doc.text(
