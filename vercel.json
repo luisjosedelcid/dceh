@@ -206,6 +206,15 @@
     "api/generate-consolidated-report.js": {
       "maxDuration": 60
     },
+    "api/generate-real-estate-report.js": {
+      "maxDuration": 60
+    },
+    "api/generate-fixed-income-report.js": {
+      "maxDuration": 60
+    },
+    "api/generate-crypto-report.js": {
+      "maxDuration": 60
+    },
     "api/cron/portfolio-snapshot.js": {
       "maxDuration": 60
     },

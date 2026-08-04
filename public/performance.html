@@ -643,6 +643,8 @@
 
         <div class="actions" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <button class="btn ghost" id="btn-re-reload" type="button">Reload</button>
+          <button class="btn primary" id="btn-re-report" type="button">Generate PDF</button>
+          <span id="re-report-status" style="font-size:11px;color:var(--gray-mid)"></span>
         </div>
       </div>
     </div>
@@ -687,6 +689,8 @@
 
         <div class="actions" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <button class="btn ghost" id="btn-cr-reload" type="button">Refresh price</button>
+          <button class="btn primary" id="btn-cr-report" type="button">Generate PDF</button>
+          <span id="cr-report-status" style="font-size:11px;color:var(--gray-mid)"></span>
           <span id="cr-last-update" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.08em">—</span>
         </div>
       </div>
@@ -743,6 +747,8 @@
 
         <div class="actions" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <button class="btn ghost" id="btn-fi-reload" type="button">Reload</button>
+          <button class="btn primary" id="btn-fi-report" type="button">Generate PDF</button>
+          <span id="fi-report-status" style="font-size:11px;color:var(--gray-mid)"></span>
           <span id="fi-last-update" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.08em">—</span>
         </div>
       </div>
@@ -2848,6 +2854,63 @@ function renderConsolidado(eqK, eqHoldings){
 }
 
 document.getElementById('btn-cons-reload').addEventListener('click', loadConsolidado);
+
+// ── Generic PDF-download helper for the sleeve-level reports ─────────────
+async function downloadSleeveReport({ url, fileBase, btnId, statusId }) {
+  const btn = document.getElementById(btnId);
+  const status = document.getElementById(statusId);
+  if (!btn) return;
+  const original = btn.textContent;
+  const asOf = new Date().toISOString().slice(0, 10);
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  if (status) { status.textContent = `Building PDF as of ${asOf}…`; status.style.color = 'var(--gray-mid)'; }
+  const ac = new AbortController();
+  const abortTimer = setTimeout(() => ac.abort(), 90_000);
+  try {
+    const r = await fetch(url, {
+      method: 'GET',
+      headers: { 'x-admin-token': adminToken() },
+      signal: ac.signal,
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${r.status}`);
+    }
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${fileBase}_${asOf}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    if (status) { status.textContent = 'Done — PDF downloaded.'; status.style.color = 'var(--green, #1F5F3F)'; setTimeout(() => { status.textContent = ''; }, 4000); }
+  } catch (e) {
+    const msg = (e && e.name === 'AbortError') ? 'Timeout (90s) — server did not respond. Try again in a moment.' : e.message;
+    if (status) { status.textContent = `Error: ${msg}`; status.style.color = 'var(--red, #7A1010)'; }
+  } finally {
+    clearTimeout(abortTimer);
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+document.getElementById('btn-re-report').addEventListener('click', () => downloadSleeveReport({
+  url: '/api/generate-real-estate-report',
+  fileBase: 'DCE_RealEstate_Snapshot',
+  btnId: 'btn-re-report', statusId: 're-report-status',
+}));
+document.getElementById('btn-cr-report').addEventListener('click', () => downloadSleeveReport({
+  url: '/api/generate-crypto-report',
+  fileBase: 'DCE_Crypto_Snapshot',
+  btnId: 'btn-cr-report', statusId: 'cr-report-status',
+}));
+document.getElementById('btn-fi-report').addEventListener('click', () => downloadSleeveReport({
+  url: '/api/generate-fixed-income-report',
+  fileBase: 'DCE_FixedIncome_Snapshot',
+  btnId: 'btn-fi-report', statusId: 'fi-report-status',
+}));
 
 document.getElementById('btn-cons-report').addEventListener('click', async () => {
   const btn = document.getElementById('btn-cons-report');

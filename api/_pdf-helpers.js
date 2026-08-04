@@ -52,6 +52,18 @@ function fmtNum(n, digits = 4) {
   if (n === null || n === undefined || Number.isNaN(n)) return '—';
   return Number(n).toLocaleString('en-US', { maximumFractionDigits: digits });
 }
+function fmtEUR(n, digits = 0) {
+  if (n === null || n === undefined || Number.isNaN(n)) return '—';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency', currency: 'EUR',
+    maximumFractionDigits: digits, minimumFractionDigits: digits,
+  }).format(n);
+}
+function fmtQty(n, digits = 4) {
+  if (n === null || n === undefined || Number.isNaN(n)) return '—';
+  return Number(n).toLocaleString('en-US', { maximumFractionDigits: digits, minimumFractionDigits: 0 });
+}
+function fmtDate(s) { return s || '—'; }
 function pctColor(n) {
   if (n === null || n === undefined || Number.isNaN(n)) return NEAR_BLACK;
   return n >= 0 ? GREEN : RED;
@@ -110,6 +122,6 @@ function drawHeroCell(doc, cell, x, y, w, h) {
 
 module.exports = {
   NAVY, GOLD, GRAY, LIGHT, GREEN, RED, NEAR_BLACK, WHITE, CREAM, ROW_ALT,
-  fmtUSD, fmtUSDSigned, fmtUSD0Signed, fmtPct, fmtPctRaw, fmtMoic, fmtNum, pctColor,
+  fmtUSD, fmtUSDSigned, fmtUSD0Signed, fmtPct, fmtPctRaw, fmtMoic, fmtNum, fmtEUR, fmtQty, fmtDate, pctColor,
   drawHeaderBar, drawFooter, drawSectionLabel, drawHeroCell,
 };
