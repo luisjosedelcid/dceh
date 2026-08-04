@@ -71,7 +71,7 @@
   </div>
 
   <div id="enroll-panel" style="display:none">
-    <p style="font-size:14px; color:var(--gray); margin:0 0 20px; line-height:1.5">
+    <p id="enroll-copy" style="font-size:14px; color:var(--gray); margin:0 0 20px; line-height:1.5">
       This device isn't set up yet. You need to enroll Face ID and a PIN before you can unlock.
     </p>
     <a href="/enroll.html" class="btn" style="text-decoration:none; display:block; text-align:center">Enroll this device</a>
@@ -201,19 +201,32 @@ $('btn-emergency').addEventListener('click', () => {
 // On load: check if this device is already enrolled. If not, show the
 // enrollment CTA instead of auto-triggering Face ID (which would just
 // pop the iOS "no passkey saved" sheet and confuse the user).
+async function deviceSupportsBiometrics() {
+  try {
+    if (!window.PublicKeyCredential) return false;
+    if (typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !== 'function') return false;
+    return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+  } catch (_) { return false; }
+}
+
+function showPinOnly() {
+  $('btn-faceid').style.display = 'none';
+  $('btn-showpin').style.display = 'none';
+  $('pin-panel').classList.add('on');
+  $('pin').focus();
+}
+
 window.addEventListener('load', async () => {
-  if (!window.PublicKeyCredential) {
-    $('unlock-panel').style.display = 'none';
-    $('enroll-panel').style.display = 'block';
-    setStatus('Face ID not supported on this device', true);
-    return;
-  }
+  const hasBio = await deviceSupportsBiometrics();
 
   const email = localStorage.getItem('dce_admin_email');
   if (!email) {
     // No email cached => this device has never logged in.
     $('unlock-panel').style.display = 'none';
     $('enroll-panel').style.display = 'block';
+    if (!hasBio) {
+      $('enroll-copy').textContent = "This device isn't set up yet. Enroll it with a 6-digit PIN before you can unlock (biometrics are not available on this device).";
+    }
     return;
   }
 
@@ -224,17 +237,25 @@ window.addEventListener('load', async () => {
     if (!j.hasPasskey && !j.hasPin) {
       $('unlock-panel').style.display = 'none';
       $('enroll-panel').style.display = 'block';
+      if (!hasBio) {
+        $('enroll-copy').textContent = "This device isn't set up yet. Enroll it with a 6-digit PIN before you can unlock (biometrics are not available on this device).";
+      }
       return;
     }
-    if (!j.hasPasskey) {
-      // Only PIN is set — hide Face ID, show PIN by default.
-      $('btn-faceid').style.display = 'none';
-      $('btn-showpin').style.display = 'none';
-      $('pin-panel').classList.add('on');
-      $('pin').focus();
+    if (!hasBio || !j.hasPasskey) {
+      // No biometrics on this device OR only PIN set — show PIN by default.
+      if (!j.hasPin) {
+        // Edge case: passkey exists but no PIN, and this device has no biometrics.
+        // Nothing to unlock with here — send to emergency password.
+        setStatus('This device has no biometrics and no PIN is set. Sign in with password.', true);
+        $('btn-faceid').style.display = 'none';
+        $('btn-showpin').style.display = 'none';
+        return;
+      }
+      showPinOnly();
       return;
     }
-    // Passkey exists — auto-trigger Face ID after a beat
+    // Passkey exists AND biometrics available — auto-trigger Face ID after a beat
     setTimeout(tryFaceID, 400);
   } catch (e) {
     // Fallback: assume unlock is possible; user can pick a method.

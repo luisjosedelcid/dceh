@@ -60,9 +60,10 @@
   </div>
 
   <div class="step" id="step-faceid" style="opacity:0.4; pointer-events:none">
-    <h2>2. Register Face ID</h2>
-    <p>Your iPhone will prompt for Face ID. This creates a passkey stored on the device (never leaves it).</p>
-    <button class="btn gold" id="btn-faceid" disabled>Register Face ID</button>
+    <h2>2. Register biometrics</h2>
+    <p id="faceid-copy">Your device will prompt for Face ID or Touch ID. This creates a passkey stored on the device (never leaves it).</p>
+    <button class="btn gold" id="btn-faceid" disabled>Register biometrics</button>
+    <button class="btn ghost" id="btn-skip-faceid" style="margin-top:8px; display:none">Skip &mdash; use PIN only</button>
     <div class="status" id="status-faceid"></div>
   </div>
 
@@ -114,6 +115,23 @@ let currentEmail = null;
 const savedEmail = localStorage.getItem('dce_admin_email') || '';
 if (savedEmail) $('email').value = savedEmail;
 
+// Detect whether this device supports platform biometrics (Face ID / Touch ID).
+// iPad Mini (no biometrics) and other non-biometric devices skip step 2.
+async function deviceSupportsBiometrics() {
+  try {
+    if (!window.PublicKeyCredential) return false;
+    if (typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !== 'function') return false;
+    return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+  } catch (_) { return false; }
+}
+
+function enablePinStep() {
+  $('step-pin').style.opacity = '1';
+  $('step-pin').style.pointerEvents = 'auto';
+  $('btn-pin').disabled = false;
+  $('pin1').focus();
+}
+
 $('btn-check').addEventListener('click', async () => {
   const email = $('email').value.trim().toLowerCase();
   if (!email){ setStatus('status-auth','Enter your email','err'); return; }
@@ -126,14 +144,33 @@ $('btn-check').addEventListener('click', async () => {
     if (!j.exists){ setStatus('status-auth','User not found or inactive','err'); return; }
     currentEmail = email;
     localStorage.setItem('dce_admin_email', email);
+
+    const hasBio = await deviceSupportsBiometrics();
+    if (!hasBio) {
+      setStatus('status-auth','Ready to enroll (biometrics not available on this device — PIN only)', 'ok');
+      $('step-faceid').classList.add('done');
+      $('faceid-copy').textContent = 'This device has no Face ID or Touch ID. Skipping — you will use the PIN to unlock.';
+      $('btn-faceid').style.display = 'none';
+      $('btn-skip-faceid').style.display = 'none';
+      enablePinStep();
+      return;
+    }
+
     setStatus('status-auth','Ready to enroll' + (j.hasPasskey ? ' (existing passkey found — adding another device)' : ''), 'ok');
     $('step-faceid').style.opacity = '1';
     $('step-faceid').style.pointerEvents = 'auto';
     $('btn-faceid').disabled = false;
+    $('btn-skip-faceid').style.display = 'block';
     if (j.hasPin) setStatus('status-pin','A PIN is already set — you can replace it here.', '');
   } catch (e) {
     setStatus('status-auth', 'Check failed: ' + e.message, 'err');
   }
+});
+
+$('btn-skip-faceid').addEventListener('click', () => {
+  $('step-faceid').classList.add('done');
+  setStatus('status-faceid','Skipped — using PIN only','ok');
+  enablePinStep();
 });
 
 $('btn-faceid').addEventListener('click', async () => {
@@ -165,12 +202,9 @@ $('btn-faceid').addEventListener('click', async () => {
     });
     if (!r2.ok) throw new Error((await r2.json()).error || 'finish failed');
 
-    setStatus('status-faceid','Face ID registered','ok');
+    setStatus('status-faceid','Biometrics registered','ok');
     $('step-faceid').classList.add('done');
-    $('step-pin').style.opacity = '1';
-    $('step-pin').style.pointerEvents = 'auto';
-    $('btn-pin').disabled = false;
-    $('pin1').focus();
+    enablePinStep();
   } catch (e) {
     setStatus('status-faceid', 'Failed: ' + (e.message || e), 'err');
     btn.disabled = false;
