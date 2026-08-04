@@ -61,6 +61,11 @@
   table.tbl{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
   table.tbl th{background:var(--navy);color:var(--white);font-weight:500;text-transform:uppercase;letter-spacing:0.1em;font-size:10px;padding:8px 10px;text-align:left}
   table.tbl td{padding:8px 10px;border-bottom:1px solid var(--rule)}
+  /* Compact layout for Fixed Income table (14 columns, dense on 1080-1280px viewports). */
+  #fi-tbl-deposits{font-size:11px}
+  #fi-tbl-deposits th{padding:6px 6px;font-size:9px;letter-spacing:0.06em}
+  #fi-tbl-deposits td{padding:6px 6px}
+  #fi-tbl-deposits td:first-child,#fi-tbl-deposits td:nth-child(2){max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   table.tbl tr:nth-child(even) td{background:var(--row-alt)}
   table.tbl td.r,table.tbl th.r{text-align:right}
   table.tbl td.c,table.tbl th.c{text-align:center}
@@ -754,7 +759,7 @@
           <div><strong>Linear accrual (mark-to-accrual)</strong> — accrued interest is recognized daily as principal × annual_rate × (1 − tax_rate) × days_elapsed / day_count_denominator. Even for bullet-payment deposits (interest paid at maturity), the P&amp;L is booked as it accrues, matching the economic reality reported in fund financials.</div>
           <div style="margin-top:8px"><strong>Asset class</strong> — bank CDs are classified as Fixed Income (not Cash &amp; Equivalents) because early liquidation carries a material interest penalty. This diverges from money-market ETFs (SGOV, BIL) that are redeemable at par with negligible loss risk and belong in Cash &amp; Equivalents per SEC/GAAP.</div>
           <div style="margin-top:8px"><strong>Yield</strong> — the weighted yield displayed is net of withholding tax; gross yield is available in the deposits table.</div>
-          <div style="margin-top:8px;font-style:italic;color:var(--gray-mid)">TWR reported at consolidated level uses accrued_net / principal as a return-since-inception proxy for the CD engine (bullet interest, no intermediate marks). Consistent with GIPS but conservative vs. IRR.</div>
+          <div style="margin-top:8px;font-style:italic;color:var(--gray-mid)">At the consolidated level, this sleeve contributes a simple P&amp;L / principal figure (accrued_net &divide; principal) as an <strong>accrued return proxy</strong>, not a true TWR. Bullet-payment CDs have no intermediate marks, so a real TWR is not measurable; the proxy is intentionally conservative vs. an IRR that would annualise the same P&amp;L.</div>
         </div>
 
         <div class="actions" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -940,7 +945,7 @@ async function loadTimeDepositsAdmin(){
     const fmtPct = n => (Number(n||0)*100).toFixed(3)+'%';
     let html = '<h2 style="font-size:11px;margin-top:0;border:0;padding-bottom:6px">Active time deposits ('+deps.length+')</h2>';
     html += '<div style="overflow-x:auto;border:1px solid var(--rule)"><table class="tbl"><thead><tr>';
-    html += '<th>Name</th><th>Bank</th><th class="r">Principal</th><th>Start</th><th>Maturity</th><th class="r">Rate</th><th class="r">Tax</th><th class="r">Accrued (net)</th><th class="r">MV</th><th class="r">Days rem.</th><th>Status</th>';
+    html += '<th>Name</th><th>Bank</th><th class="r">Principal</th><th>Start</th><th>Maturity</th><th class="r">Rate</th><th class="r">Tax</th><th class="r">Accrued (net)</th><th class="r">Carrying</th><th class="r">Days rem.</th><th>Status</th>';
     html += '</tr></thead><tbody>';
     for(const td of deps){
       html += '<tr>'
@@ -960,7 +965,7 @@ async function loadTimeDepositsAdmin(){
     html += '</tbody></table></div>';
     // Totals
     const k=j.kpis||{};
-    html += '<div style="margin-top:10px;font-size:12px"><strong>Totals</strong> — Principal: '+fmt0(k.total_principal)+' · MV: '+fmt2(k.total_mv)+' · Accrued net: <span style="color:var(--green);font-weight:600">'+fmt2(k.total_accrued_net)+'</span> (gross '+fmt2(k.total_accrued_gross)+' − tax '+fmt2(k.total_accrued_tax)+')</div>';
+    html += '<div style="margin-top:10px;font-size:12px"><strong>Totals</strong> — Principal: '+fmt0(k.total_principal)+' · Carrying: '+fmt2(k.total_mv)+' · Accrued net: <span style="color:var(--green);font-weight:600">'+fmt2(k.total_accrued_net)+'</span> (gross '+fmt2(k.total_accrued_gross)+' − tax '+fmt2(k.total_accrued_tax)+')</div>';
     wrap.className='';
     wrap.innerHTML = html;
   }catch(e){
@@ -2433,7 +2438,7 @@ function renderFixedIncome(){
       +'<th class="r">Tax</th>'
       +'<th class="r">Net yield</th>'
       +'<th class="r">Accrued (net)</th>'
-      +'<th class="r">MV</th>'
+      +'<th class="r">Carrying</th>'
       +'<th class="r">Progress</th>'
       +'<th class="r">Days rem.</th>'
       +'<th>Status</th>'
@@ -2453,9 +2458,11 @@ function renderFixedIncome(){
       const redeemBtn = td.is_matured
         ? '<button type="button" class="btn ghost btn-fi-redeem" data-id="'+td.id+'" style="font-size:10px;padding:2px 8px">Redeem</button>'
         : '';
+      const nameStr = td.name || '';
+      const bankStr = td.bank || '—';
       body += '<tr>'
-        +'<td><strong>'+(td.name||'')+'</strong></td>'
-        +'<td>'+(td.bank||'—')+'</td>'
+        +'<td title="'+nameStr.replace(/"/g,'&quot;')+'"><strong>'+nameStr+'</strong></td>'
+        +'<td title="'+bankStr.replace(/"/g,'&quot;')+'">'+bankStr+'</td>'
         +'<td class="r">'+fiFmtUsd0(td.principal)+'</td>'
         +'<td>'+td.start_date+'</td>'
         +'<td>'+td.maturity_date+'</td>'
