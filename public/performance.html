@@ -628,7 +628,7 @@
           <div class="kpi"><div class="kpi-label">Net invested (USD)</div><div class="kpi-value" id="re-kpi-inv">—</div><div class="kpi-sub" id="re-kpi-inv-sub">@ FX deploy</div></div>
           <div class="kpi"><div class="kpi-label">NAV (USD)</div><div class="kpi-value" id="re-kpi-nav">—</div><div class="kpi-sub" id="re-kpi-nav-sub">—</div></div>
           <div class="kpi"><div class="kpi-label">NAV / Invested (USD)</div><div class="kpi-value" id="re-kpi-moic">—</div><div class="kpi-sub">portfolio aggregate</div></div>
-          <div class="kpi"><div class="kpi-label">XIRR (USD, ann.)</div><div class="kpi-value" id="re-kpi-irr">—</div><div class="kpi-sub">since inception</div></div>
+          <div class="kpi"><div class="kpi-label">XIRR (USD, ann.)</div><div class="kpi-value" id="re-kpi-irr">—</div><div class="kpi-sub" id="re-kpi-irr-sub">—</div></div>
           <div class="kpi"><div class="kpi-label">Posiciones</div><div class="kpi-value" id="re-kpi-count">—</div><div class="kpi-sub" id="re-kpi-nav-eur">NAV EUR: —</div></div>
         </div>
 
@@ -2079,8 +2079,15 @@ function renderRealEstate(){
     const lockTotal = lockHigh > 0 ? (lockLow + lockHigh) / 2 : 0;
     let lockupRemainingMonths = null;
     if(lockTotal > 0){
-      const monthsElapsed = (asOfForRemaining - deployDate)/(1000*60*60*24*30.4375);
-      lockupRemainingMonths = Math.max(0, lockTotal - monthsElapsed);
+      // Match the PDF exactly. PDF uses monthsBetween() which counts
+      // completed calendar months (year*12+month difference, days
+      // ignored). Fractional days/30.4375 math drifts ±1 month vs.
+      // the calendar-based PDF value; align to calendar months here.
+      const dDep = deployDate;
+      const dAsOf = new Date(asOfForRemaining);
+      const monthsElapsedCal = (dAsOf.getFullYear() - dDep.getFullYear()) * 12
+                             + (dAsOf.getMonth() - dDep.getMonth());
+      lockupRemainingMonths = Math.max(0, lockTotal - monthsElapsedCal);
     }
     return Object.assign({}, p, {
       deployDate, costUsd, navUsdToday, navUsdAtMark,
@@ -2114,6 +2121,11 @@ function renderRealEstate(){
   const irrEl = document.getElementById('re-kpi-irr');
   irrEl.textContent = reFmtPct(xirrUsd);
   irrEl.style.color = xirrUsd>=0 ? 'var(--green)' : 'var(--red)';
+  // XIRR terminal is anchored on the NAV mark date, not "today". Reflect
+  // that in the subtitle so it reads "to 2026-06-30" and does not falsely
+  // claim inclusion through the current picker date.
+  const irrSubEl = document.getElementById('re-kpi-irr-sub');
+  if (irrSubEl && navAsOfDate) irrSubEl.textContent = 'to ' + navAsOfDate;
   document.getElementById('re-kpi-count').textContent = String(enriched.length);
   document.getElementById('re-kpi-nav-eur').textContent = 'NAV EUR: '+reFmtEur0(totNavEur);
 
