@@ -336,8 +336,10 @@
           </div>
         </div>
 
-        <div class="actions" style="margin-top:18px">
+        <div class="actions" style="margin-top:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
           <button class="btn ghost" id="btn-cons-reload" type="button">Reload</button>
+          <button class="btn primary" id="btn-cons-report" type="button">Generate PDF</button>
+          <span id="cons-report-status" style="font-size:11px;color:var(--gray-mid)"></span>
         </div>
       </div>
     </div>
@@ -2846,6 +2848,49 @@ function renderConsolidado(eqK, eqHoldings){
 }
 
 document.getElementById('btn-cons-reload').addEventListener('click', loadConsolidado);
+
+document.getElementById('btn-cons-report').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-cons-report');
+  const status = document.getElementById('cons-report-status');
+  const original = btn.textContent;
+  const asOf = new Date().toISOString().slice(0, 10);
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  status.textContent = `Building consolidated PDF as of ${asOf}…`;
+  status.style.color = 'var(--gray-mid)';
+  const ac = new AbortController();
+  const abortTimer = setTimeout(() => ac.abort(), 90_000);
+  try {
+    const r = await fetch(`/api/generate-consolidated-report`, {
+      method: 'GET',
+      headers: { 'x-admin-token': adminToken() },
+      signal: ac.signal,
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${r.status}`);
+    }
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `DCE_Consolidated_Snapshot_${asOf}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    status.textContent = 'Done — PDF downloaded.';
+    status.style.color = 'var(--green, #1F5F3F)';
+    setTimeout(() => { status.textContent = ''; }, 4000);
+  } catch (e) {
+    const msg = (e && e.name === 'AbortError') ? 'Timeout (90s) — server did not respond. Try again in a moment.' : e.message;
+    status.textContent = `Error: ${msg}`;
+    status.style.color = 'var(--red, #7A1010)';
+  } finally {
+    clearTimeout(abortTimer);
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+});
 
 const TAB_STORAGE_KEY = 'dce-perf-tab';
 const VALID_TABS = new Set(['tab-consolidado','tab-dashboard','tab-data','tab-realestate','tab-fixedincome','tab-crypto']);

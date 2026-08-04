@@ -203,6 +203,9 @@
     "api/generate-daily-report.js": {
       "maxDuration": 60
     },
+    "api/generate-consolidated-report.js": {
+      "maxDuration": 60
+    },
     "api/cron/portfolio-snapshot.js": {
       "maxDuration": 60
     },
