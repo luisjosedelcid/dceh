@@ -169,7 +169,7 @@
       <div class="dce-sheet-handle"></div>
       <div class="dce-sheet-title">Feed</div>
       <div class="dce-sheet-feed">
-        ${FEED_OPTIONS.map(o => `<a class="dce-sheet-feed-item" href="${o.href}">
+        ${FEED_OPTIONS.map(o => `<a class="dce-sheet-feed-item" href="${o.href}" data-feed-href="${o.href}">
           <span class="dce-sheet-feed-label">${o.label}</span>
           <span class="dce-sheet-feed-arrow">→</span>
         </a>`).join('')}
@@ -178,6 +178,23 @@
     `;
     document.body.appendChild(overlay);
     document.body.appendChild(sheet);
+
+    // If the destination is the same pathname (i.e. we're already on /screener.html
+    // and the user taps Ideas which goes to /screener.html#ideafeed), the browser
+    // will only change the hash — no DOMContentLoaded fires. Force a full load so
+    // the applyHashMode() runs cleanly.
+    sheet.querySelectorAll('[data-feed-href]').forEach(a => {
+      a.addEventListener('click', (ev) => {
+        const target = a.getAttribute('data-feed-href') || '';
+        const [targetPath] = target.split('#');
+        if (targetPath === location.pathname) {
+          ev.preventDefault();
+          closeMenuSheet();
+          location.href = target;
+          location.reload();
+        }
+      });
+    });
     document.body.classList.add('dce-sheet-open');
 
     requestAnimationFrame(() => {

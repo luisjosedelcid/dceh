@@ -128,8 +128,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=11">
-<script defer src="/pwa-shell.js?v=11"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=12">
+<script defer src="/pwa-shell.js?v=12"></script>
 <!--PWA:END-->
 </head>
 <body data-pull-refresh="1">
@@ -1987,26 +1987,42 @@ async function renderIdeaFeedTickers(items, status, cont) {
 document.addEventListener('DOMContentLoaded', () => {
   const t = document.getElementById('if-ticker');
   if (t) t.addEventListener('keydown', e => { if (e.key === 'Enter') loadIdeaFeed(); });
-  // Deep-link support: /screener.html#ideafeed | #superinvestors | #sectors | #screener
+  applyHashMode();
+});
+
+// Deep-link support: /screener.html#ideafeed | #superinvestors | #sectors | #screener | #shortlist
+// Called on load AND on hashchange (client-side navigation from the Feed popover).
+function applyHashMode() {
   const hash = (location.hash || '').replace('#','').trim().toLowerCase();
   const validModes = ['screener','sectors','ideafeed','superinvestors','shortlist'];
+  const h1  = document.getElementById('page-h1');
+  const sub = document.getElementById('page-sub');
+  const tabs = document.getElementById('mode-tabs');
+  const meta = document.getElementById('footer-meta');
+
+  if (hash === 'ideafeed') {
+    showMode('ideafeed');
+    if (h1)  h1.textContent  = 'Ideas';
+    if (sub) sub.textContent = 'Curated inbound ideas from blogs, Substacks and podcasts. Refreshed every 6h.';
+    if (tabs) tabs.style.display = 'none';
+    document.title = 'DCE Holdings \u2014 Ideas';
+    if (meta) meta.textContent = 'Feed \u00b7 Ideas v1';
+    return;
+  }
+
   if (hash && validModes.includes(hash)) {
     showMode(hash);
-    // When linked directly from the Feed dropdown, present Idea Feed as its
-    // own page: swap the header, hide the sibling tabs, hide the Find intro.
-    if (hash === 'ideafeed') {
-      const h1  = document.getElementById('page-h1');
-      const sub = document.getElementById('page-sub');
-      const tabs = document.getElementById('mode-tabs');
-      if (h1)  h1.textContent  = 'Ideas';
-      if (sub) sub.textContent = 'Curated inbound ideas from blogs, Substacks and podcasts. Refreshed every 6h.';
-      if (tabs) tabs.style.display = 'none';
-      document.title = 'DCE Holdings \u2014 Ideas';
-      const meta = document.getElementById('footer-meta');
-      if (meta) meta.textContent = 'Feed \u00b7 Ideas v1';
-    }
   }
-});
+
+  // No hash (or non-ideafeed) => restore Find defaults in case we came back from Ideas.
+  if (h1)  h1.textContent  = 'Find';
+  if (sub) sub.textContent = 'Idea generation pipeline. Sector quality screening + smart-money tracking, before the full Columbia model.';
+  if (tabs) tabs.style.display = '';
+  document.title = 'DCE Holdings \u2014 Find';
+  if (meta) meta.textContent = 'Find \u00b7 Screener v0 + Idea Feed v1 + Superinvestors v1 + Sector Tracker v4';
+}
+
+window.addEventListener('hashchange', applyHashMode);
 
 // ─── Shortlist → Workflow handoff ─────────────────────────────────────
 // Click "→ Workflow" from the Shortlist page to push a ticker to the kanban
