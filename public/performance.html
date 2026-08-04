@@ -1849,8 +1849,14 @@ async function liveOverlay(holdings){
       const navEl = document.getElementById('kpi-nav');
       if (navEl) navEl.textContent = fmtUsdShort(liveNav);
 
-      // Update Total P&L mini-stat = realized + live unrealized
-      const totalPnlLive = (cachedKpis.realized_pnl || 0) + unrealizedAll;
+      // Update Total P&L mini-stat. Must reconcile to NAV - Invested; using
+      // realized + unrealized alone would drop net dividends and interest,
+      // and would produce a card that no longer ties to the NAV bridge.
+      // Round at 2dp identically to the backend so UI and PDF match to the
+      // cent (SGOV / MSFT / LULU had prior 1-cent drift).
+      const r2 = (n) => Math.round(Number(n || 0) * 100) / 100;
+      const investedForPnl = Number(cachedKpis.invested_usd || 0);
+      const totalPnlLive = r2(liveNav - investedForPnl);
       const totalPnlEl = document.getElementById('st-totalpnl');
       if (totalPnlEl) { totalPnlEl.textContent = signedUsd(totalPnlLive); setSignClass(totalPnlEl, totalPnlLive); }
     }
@@ -1950,7 +1956,11 @@ document.getElementById('btn-perf-report').addEventListener('click', async () =>
   const ac = new AbortController();
   const abortTimer = setTimeout(() => ac.abort(), 90_000);
   try {
-    const r = await fetch(`/api/generate-daily-report?as_of=${encodeURIComponent(asOf)}&fast=1`, {
+    // fast=1 skipped Finnhub live overlay AND pending-dividend computation,
+    // which is what caused Total P&L, live prices and Accrued income to
+    // diverge between UI (live) and PDF (stale close). Remove it so both
+    // views consume the same live overlay + pending-income lookup.
+    const r = await fetch(`/api/generate-daily-report?as_of=${encodeURIComponent(asOf)}`, {
       method: 'GET',
       headers: { 'x-admin-token': adminToken() },
       signal: ac.signal,

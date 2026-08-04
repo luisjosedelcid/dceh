@@ -80,10 +80,16 @@ async function applyLiveOverlay(kpis, holdings) {
 
   if (anyUpdated) {
     const oldMv = kpis.market_value_usd || 0;
-    kpis.market_value_usd = liveTotalMv;
-    kpis.unrealized_pnl = liveTotalUnrealized;
-    kpis.nav = (kpis.cash_usd || 0) + liveTotalMv;
-    kpis.total_pnl_usd = (kpis.realized_pnl || 0) + liveTotalUnrealized;
+    // Round consistently at 2dp everywhere so UI and PDF match to the cent.
+    const r2 = (n) => Math.round(Number(n || 0) * 100) / 100;
+    kpis.market_value_usd = r2(liveTotalMv);
+    kpis.unrealized_pnl   = r2(liveTotalUnrealized);
+    kpis.nav              = r2((kpis.cash_usd || 0) + liveTotalMv);
+    // Total P&L must reconcile to NAV - Invested. This includes:
+    //   realized + unrealized + net dividends + net interest - taxes - fees.
+    // Computing it as (realized + unrealized) drops the yield/withholding
+    // legs and produces a card that no longer ties to the NAV bridge.
+    kpis.total_pnl_usd    = r2((kpis.nav || 0) - (kpis.invested_usd || 0));
     if ((kpis.invested_usd || 0) > 0) {
       kpis.total_return_pct = kpis.total_pnl_usd / kpis.invested_usd;
     }
@@ -160,7 +166,7 @@ function drawFooter(doc, asOfDate) {
 
   doc.fillColor(GRAY).font('Helvetica').fontSize(7)
      .text(
-       `Generated ${new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC  ·  As of close ${asOfDate}  ·  Source: portfolio_snapshots + transactions + cashflows`,
+       `Generated ${new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC  ·  As of ${asOfDate}  ·  Source: portfolio_snapshots + transactions + cashflows`,
        54, txt1Y,
        { width: pageW - 108, height: 10, lineBreak: false, ellipsis: true }
      );
@@ -466,8 +472,17 @@ module.exports = async (req, res) => {
     const asOfPretty = new Date(asOfDate + 'T00:00:00Z').toLocaleDateString('en-US', {
       weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
     });
+    // If the live overlay was applied (i.e., prices are intraday quotes for
+    // today), stamp the report as a live snapshot at the intraday time.
+    // Otherwise it is a historical close for a prior date.
+    const todayISO2 = new Date().toISOString().slice(0, 10);
+    const isLiveNow = kpis.live_overlay_applied === true && asOfDate === todayISO2;
+    const nowHHMM = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+    const dateLabel = isLiveNow
+      ? `Live snapshot as of ${asOfPretty} ${nowHHMM}`
+      : `As of close ${asOfPretty}`;
     doc.fillColor(GRAY).font('Helvetica').fontSize(10)
-       .text(`As of close ${asOfPretty}  ·  ${kpis.days_elapsed} days since inception (${kpis.inception_date})`, M, 130);
+       .text(`${dateLabel}  ·  ${kpis.days_elapsed} days since inception (${kpis.inception_date})`, M, 130);
 
     mark('title');
     // ─── HERO METRICS ─────────────────────────────────────────────
