@@ -622,7 +622,7 @@
         <div class="kpi-grid">
           <div class="kpi"><div class="kpi-label">Net invested (USD)</div><div class="kpi-value" id="re-kpi-inv">—</div><div class="kpi-sub" id="re-kpi-inv-sub">@ FX deploy</div></div>
           <div class="kpi"><div class="kpi-label">NAV (USD)</div><div class="kpi-value" id="re-kpi-nav">—</div><div class="kpi-sub" id="re-kpi-nav-sub">—</div></div>
-          <div class="kpi"><div class="kpi-label">MOIC (USD)</div><div class="kpi-value" id="re-kpi-moic">—</div><div class="kpi-sub">portfolio agregado</div></div>
+          <div class="kpi"><div class="kpi-label">NAV / Invested (USD)</div><div class="kpi-value" id="re-kpi-moic">—</div><div class="kpi-sub">portfolio aggregate</div></div>
           <div class="kpi"><div class="kpi-label">XIRR (USD, ann.)</div><div class="kpi-value" id="re-kpi-irr">—</div><div class="kpi-sub">since inception</div></div>
           <div class="kpi"><div class="kpi-label">Posiciones</div><div class="kpi-value" id="re-kpi-count">—</div><div class="kpi-sub" id="re-kpi-nav-eur">NAV EUR: —</div></div>
         </div>
@@ -2027,9 +2027,15 @@ function renderRealEstate(){
   // time drift the IRR against a frozen NAV, and would diverge from the PDF
   // report which anchors the XIRR at navAsOf.
   const navAsOfDate = RE_DATA.nav_as_of ? new Date(RE_DATA.nav_as_of + 'T00:00:00Z') : new Date();
-  // Lock-up remaining is measured from navAsOf (the economic dating of the
-  // mark), not from today. This mirrors the PDF's monthsElapsed calculation.
-  const asOfForRemaining = navAsOfDate;
+  // Lock-up remaining is measured from the REPORT date (picker value, or
+  // today if no picker set), so the field ages correctly with the calendar.
+  // Mirrors the PDF's `asOfRequested` used for monthsElapsed. The IRR/XIRR
+  // terminal above still uses navAsOf (the economic date of the mark).
+  const reportAsOfRaw = document.getElementById('re-report-asof') ? document.getElementById('re-report-asof').value : '';
+  const reportAsOf = /^\d{4}-\d{2}-\d{2}$/.test(reportAsOfRaw)
+    ? new Date(reportAsOfRaw + 'T00:00:00Z')
+    : new Date();
+  const asOfForRemaining = reportAsOf;
   const positions = RE_DATA.positions || [];
 
   // FX at NAV mark date is used for the RETURN calculation. Applying today's
@@ -2106,8 +2112,8 @@ function renderRealEstate(){
     +'<th class="r">Cost basis USD</th>'
     +'<th class="r">NAV EUR</th>'
     +'<th class="r" title="NAV EUR convertido a USD al FX vigente">NAV USD</th>'
-    +'<th class="r">MOIC EUR</th>'
-    +'<th class="r">MOIC USD</th>'
+    +'<th class="r">NAV / Inv (EUR)</th>'
+    +'<th class="r">NAV / Inv (USD)</th>'
     +'<th class="r">IRR USD (ann.)</th>'
     +'<th class="r" title="% sobre NAV total del portfolio Real Estate">Weight RE</th>'
     +'<th class="r" title="Time remaining until the end of the vehicle Target Investment Period">Lock-up rem.</th>'
@@ -2978,6 +2984,10 @@ document.getElementById('btn-fi-report').addEventListener('click', () => downloa
       el.max = todayStr;
     }
   });
+  // Recompute Real Estate on picker change so "Estimated exit" ages against
+  // the selected report date instead of the initial page-load date.
+  const re = document.getElementById('re-report-asof');
+  if (re) re.addEventListener('change', () => { if (RE_DATA) renderRealEstate(); });
 })();
 
 document.getElementById('btn-cons-report').addEventListener('click', async () => {
