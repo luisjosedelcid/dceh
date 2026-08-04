@@ -11,6 +11,7 @@
 const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
+const { requireRole } = require('./_require-role');
 
 const {
   NAVY, GOLD, GRAY, LIGHT, GREEN, RED, NEAR_BLACK, WHITE, CREAM, ROW_ALT,
@@ -44,13 +45,12 @@ function fmtHold(months) {
 }
 
 module.exports = async (req, res) => {
-  const adminToken = req.headers['x-admin-token'] || req.headers['X-Admin-Token'];
-  if (!adminToken || adminToken !== process.env.DCE_ADMIN_TOKEN) {
-    res.status(401).json({ error: 'Unauthorized' });
-    return;
-  }
-
   try {
+    const auth = await requireRole(req, ['any']);
+    if (!auth.ok) {
+      res.status(auth.status).json({ error: auth.error });
+      return;
+    }
     const crJson = readPublicJson('crypto_positions.json');
     if (!crJson) {
       res.status(500).json({ error: 'crypto_positions.json not found' });

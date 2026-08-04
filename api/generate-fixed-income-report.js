@@ -7,6 +7,7 @@
 
 const PDFDocument = require('pdfkit');
 const { loadAndValueTimeDeposits } = require('./_time-deposits');
+const { requireRole } = require('./_require-role');
 
 const {
   NAVY, GOLD, GRAY, LIGHT, GREEN, RED, NEAR_BLACK, WHITE, CREAM, ROW_ALT,
@@ -15,13 +16,12 @@ const {
 } = require('./_pdf-helpers');
 
 module.exports = async (req, res) => {
-  const adminToken = req.headers['x-admin-token'] || req.headers['X-Admin-Token'];
-  if (!adminToken || adminToken !== process.env.DCE_ADMIN_TOKEN) {
-    res.status(401).json({ error: 'Unauthorized' });
-    return;
-  }
-
   try {
+    const auth = await requireRole(req, ['any']);
+    if (!auth.ok) {
+      res.status(auth.status).json({ error: auth.error });
+      return;
+    }
     const today = new Date().toISOString().slice(0, 10);
     const td = await loadAndValueTimeDeposits(today);
     const deps = (td.deposits || []).filter(d => d.status !== 'redeemed');
