@@ -1162,11 +1162,8 @@ async function refreshSnapshotButton(ticker, tk) {
       btn.textContent = 'OPEN →';
       btn.style.color = 'var(--navy)';
       btn.style.borderColor = 'var(--navy)';
-      // Promote the ticker cell to a link into the internal snapshot.
-      const tkCell = document.getElementById(`tkc-${ticker}`);
-      if (tkCell) {
-        tkCell.outerHTML = `<a href="${data.url}" target="_blank" rel="noopener" id="tkc-${ticker}" style="color:var(--navy);text-decoration:none;border-bottom:1px dotted var(--gold);font-weight:700" title="Open Company Dashboard">${ticker}</a>`;
-      }
+      // Ticker cell stays as plain text — navigation is exclusively through
+      // the Snapshot action column.
     } else {
       btn.dataset.state = 'missing';
       btn.textContent = 'GENERATE';
