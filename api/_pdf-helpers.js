@@ -19,10 +19,20 @@ const ROW_ALT = '#fafaf7';
 // ─── Formatting helpers ────────────────────────────────────────────
 function fmtUSD(n, digits = 0) {
   if (n === null || n === undefined || Number.isNaN(n)) return '—';
+  // Use half-away-from-zero rounding (“banker’s cash”) instead of the default
+  // banker’s rounding in Intl.NumberFormat. Prevents $449,376.50 from being
+  // rendered as $449,376 (which shifts the totals by ±$1 for auditors).
+  let rounded;
+  if (digits === 0) {
+    rounded = Math.sign(n) * Math.round(Math.abs(n));
+  } else {
+    const factor = Math.pow(10, digits);
+    rounded = Math.sign(n) * Math.round(Math.abs(n) * factor) / factor;
+  }
   return new Intl.NumberFormat('en-US', {
     style: 'currency', currency: 'USD',
     maximumFractionDigits: digits, minimumFractionDigits: digits,
-  }).format(n);
+  }).format(rounded);
 }
 function fmtUSDSigned(n) {
   if (n === null || n === undefined || Number.isNaN(n)) return '—';

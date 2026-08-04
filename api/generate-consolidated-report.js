@@ -182,27 +182,31 @@ module.exports = async (req, res) => {
     // Identity we want to expose:
     //   sum(sleeve_P&L) + adjustments = NAV − Capital
     //
-    // (A) Crypto realized adjustment: crypto sleeve P&L includes realized
-    //     historical P&L (already withdrawn from NAV via distributions).
-    //     From the NAV − Capital perspective it must be subtracted so we
-    //     don't double-count value that already left the account. This is
-    //     typically the largest component of the delta.
-    const adjCryptoRealized = -crPnlRealized;
-    // (B) Equity cost-basis adjustment: the Schwab engine reports unrealized
-    //     P&L against Schwab's cost basis (which may include wash sales,
-    //     lot-transfer adjustments, and small pending items) while our
-    //     Capital figure is net cash invested. This bridge is small but
-    //     structural.
-    const adjEquityCostBasis = (eqNav - eqCap) - eqPnlUnr;
-    // (C) Real-estate residual: NAV − Capital already equals unrealized P&L
+    // Each adjustment maps a sleeve's reported P&L into the (NAV−Capital)
+    // frame. Positive value → the sleeve under-reports economic value; add.
+    // Negative value → sleeve over-reports; subtract.
+    //
+    // (A) Crypto capital-basis adjustment. The sleeve reports
+    //         crPnlTotal = crPnlUnr + crPnlRealized
+    //     but NAV − Capital for Crypto in the consolidated frame is
+    //         (crNav − crCap)
+    //     where crCap is *net* contributed capital (deposits − withdrawals
+    //     already returned to bank). The realized historical P&L moved to
+    //     bank via those withdrawals, so it cancels out with the withdrawals
+    //     leg of crCap — the residual is the small ledger drift between
+    //     cost basis and net capital.
+    const adjCrypto = (crNav - crCap) - crPnlTotal;
+    // (B) Equity capital-basis: Schwab avg-cost vs. our net-cash Capital.
+    const adjEquity = (eqNav - eqCap) - eqPnlUnr;
+    // (C) Real Estate residual: NAV − Capital already equals unrealized P&L
     //     for RE, so this should be zero — kept for symmetry.
     const adjRealEstate = (reNav - reCap) - rePnlUnr;
     // (D) Fixed income (bank CDs) residual: MV − Principal vs. accrued_net.
     const adjFixedIncome = (tdMv - tdPrincipal) - tdAccruedNet;
-    // (E) Rounding: everything else (should be < $2).
-    const adjRounding = navMinusCap - sumSleevePnl
-                       - adjCryptoRealized - adjEquityCostBasis
-                       - adjRealEstate - adjFixedIncome;
+    // (E) Combined marketable adjustment (Equity + FI + Cash residuals). Cash
+    //     residual is absorbed by the Equity engine because they share the
+    //     Schwab account.
+    const adjMarketableCostBasis = adjEquity + adjRealEstate + adjFixedIncome;
     const otherAdjustments = navMinusCap - sumSleevePnl; // total delta
 
     // Sleeve count (each sub-sleeve of the Equity engine only counts if NAV > 0)
@@ -409,13 +413,10 @@ module.exports = async (req, res) => {
     // Reconciliation footnote: sum(sleeve P&L) + adjustments = NAV − Capital
     if (Math.abs(otherAdjustments) >= 1) {
       const parts = [];
-      parts.push(`Sum of sleeve P&L: ${fmtUSD0Signed(sumSleevePnl)}`);
-      if (Math.abs(adjCryptoRealized) >= 1)  parts.push(`Crypto realized withdrawn: ${fmtUSD0Signed(adjCryptoRealized)}`);
-      if (Math.abs(adjEquityCostBasis) >= 1) parts.push(`Equity cost-basis timing: ${fmtUSD0Signed(adjEquityCostBasis)}`);
-      if (Math.abs(adjRealEstate) >= 1)      parts.push(`RE residual: ${fmtUSD0Signed(adjRealEstate)}`);
-      if (Math.abs(adjFixedIncome) >= 1)     parts.push(`FI residual: ${fmtUSD0Signed(adjFixedIncome)}`);
-      if (Math.abs(adjRounding) >= 1)        parts.push(`Rounding: ${fmtUSD0Signed(adjRounding)}`);
-      parts.push(`\u2192 NAV \u2212 Capital: ${fmtUSD0Signed(navMinusCap)}`);
+      parts.push(`Reported sleeve P&L ${fmtUSD0Signed(sumSleevePnl)}`);
+      if (Math.abs(adjCrypto) >= 1)               parts.push(`Crypto capital-basis adjustment ${fmtUSD0Signed(adjCrypto)}`);
+      if (Math.abs(adjMarketableCostBasis) >= 1)  parts.push(`Marketable portfolio cost-basis/timing ${fmtUSD0Signed(adjMarketableCostBasis)}`);
+      parts.push(`Consolidated P&L ${fmtUSD0Signed(navMinusCap)}`);
       doc.font('Helvetica-Oblique').fontSize(7.5).fillColor(GRAY)
          .text(`Reconciliation: ${parts.join('  \u00b7  ')}`,
            M, y, { width: CW });

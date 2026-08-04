@@ -126,7 +126,7 @@ module.exports = async (req, res) => {
     const cellW = (W - 108) / 5;
     const cells = [
       { label: 'NET CAPITAL', value: fmtUSD(capNeto, 0),
-        sub: `deposits ${fmtUSD(depositsFiat, 0)} − withdrawals ${fmtUSD(Math.abs(withdrawalsFiat), 0)}` },
+        sub: `deposits ${fmtUSD(depositsFiat, 0)} - withdrawals ${fmtUSD(Math.abs(withdrawalsFiat), 0)}` },
       { label: 'NAV CRYPTO', value: fmtUSD(totMarket, 0),
         sub: (totUnreal >= 0 ? '+' : '') + fmtUSD(totUnreal, 0) +
              ' (' + (totCost > 0 ? fmtPctRaw(totUnreal / totCost, 2) : '—') + ' vs cost)',
@@ -134,9 +134,9 @@ module.exports = async (req, res) => {
       { label: 'CUMULATIVE P&L', value: (pnlTotal >= 0 ? '+' : '') + fmtUSD(pnlTotal, 0),
         valueColor: pctColor(pnlTotal),
         sub: `unrealized ${fmtUSDSigned(totUnreal)} + realized ${fmtUSD(realizedHist, 0)}` },
-      { label: 'MOIC', value: fmtMoic(moicSleeve),
+      { label: 'NAV / NET CAPITAL', value: fmtMoic(moicSleeve),
         valueColor: moicSleeve != null && moicSleeve >= 1 ? GREEN : RED,
-        sub: 'over net capital' },
+        sub: 'residual value multiple' },
       { label: 'ROI OVER CAPITAL', value: fmtPct(roi),
         valueColor: pctColor(roi), sub: 'Holding: ' + fmtHold(holdMonths) },
     ];
@@ -257,11 +257,13 @@ module.exports = async (req, res) => {
     doc.rect(startX, y, tableW, 74).fill(CREAM);
     doc.fillColor(NEAR_BLACK).font('Helvetica').fontSize(7.5)
        .text(
-         `Accounting method: ${crJson.accounting_method || '—'}. ` +
-         `NAV (PDF) = Σ (quantity × snapshot price from the last cached mark). ` +
-         `The web view overlays live spot prices from Crypto.com Exchange; this PDF uses the ` +
-         `snapshot to stay well below the request timeout. ` +
-         `Net capital contributed: fiat deposits ${fmtUSD(depositsFiat, 0)} − fiat withdrawals to bank ` +
+         `Accounting method: ${crJson.accounting_method || '-'}. ` +
+         (priceSource === 'live'
+           ? `NAV (PDF) = sum of (quantity x live spot price from CoinGecko), captured at report generation on ${priceAsOf}. `
+           : `NAV (PDF) = sum of (quantity x static snapshot from ${asOfStatic}); live prices unavailable (${liveResult.staleReason || 'fallback'}). `) +
+         `Sleeve MOIC = NAV / net contributed capital (not the traditional PE MOIC of residual + distributions over gross invested; ` +
+         `historical realized P&L is disclosed separately below and not double-counted). ` +
+         `Net capital contributed: fiat deposits ${fmtUSD(depositsFiat, 0)} - fiat withdrawals to bank ` +
          `${fmtUSD(Math.abs(withdrawalsFiat), 0)} = ${fmtUSD(capNeto, 0)}.`,
          startX + 8, y + 8,
          { width: tableW - 16, lineGap: 2 });
@@ -272,8 +274,8 @@ module.exports = async (req, res) => {
        .text(
          `${fmtUSD(crJson.realized_pnl_historico?.y2024_usd, 0)} (2024) + ` +
          `${fmtUSD(crJson.realized_pnl_historico?.y2025_q1_usd, 0)} (Q1 2025) ` +
-         `= ${fmtUSD(realizedHist, 0)} net. Cristalizado y repatriado al sleeve Cash en banco; ` +
-         `no integra el NAV del sleeve crypto vivo.`,
+         `= ${fmtUSD(realizedHist, 0)} net. Crystallized and repatriated to the Cash sleeve in bank; ` +
+         `does not integrate the live NAV of the crypto sleeve.`,
          { width: tableW - 16 - 190, lineBreak: false, ellipsis: true });
 
     drawFooter(doc, today,
