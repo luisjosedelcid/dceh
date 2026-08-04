@@ -70,7 +70,7 @@
   // Primary tabs (always visible)
   const PRIMARY = [
     { id: 'cockpit',  label: 'Cockpit',  href: '/cockpit.html',    match: ['/cockpit.html'] },
-    { id: 'feed',     label: 'Feed',     href: '#feed',            match: ['/screener.html', '/news.html', '/calendar.html'] },
+    { id: 'feed',     label: 'Feed',     href: '#feed',            match: ['/screener.html#ideafeed', '/news.html', '/calendar.html'] },
     { id: 'universe', label: 'Universe', href: '/universe.html',   match: ['/universe.html', '/company.html'] },
     { id: 'performance', label: 'Performance', href: '/performance.html', match: ['/performance.html'] },
     { id: 'menu',     label: 'Menu',     href: '#menu',            match: [] }
@@ -78,7 +78,7 @@
 
   // Feed popover destinations (tap on Feed opens a small action sheet)
   const FEED_OPTIONS = [
-    { label: 'Ideas',           href: '/screener.html' },
+    { label: 'Ideas',           href: '/screener.html#ideafeed' },
     { label: 'Portfolio News',  href: '/news.html' },
     { label: 'Calendar',        href: '/calendar.html' }
   ];
@@ -108,11 +108,17 @@
   // ── Guard: only run on mobile ─────────────────────────────────
   function isMobile() { return window.matchMedia('(max-width: 820px)').matches; }
 
-  // ── Determine active tab from pathname ────────────────────────
+  // ── Determine active tab from pathname (and hash when specified) ─
   function activeTab() {
     const p = location.pathname;
+    const ph = p + (location.hash || '');
     for (const t of PRIMARY) {
-      if (t.match.includes(p)) return t.id;
+      // A match entry containing '#' must match path+hash exactly;
+      // plain-path entries only need pathname equality.
+      for (const m of t.match) {
+        if (m.includes('#')) { if (m === ph) return t.id; }
+        else if (m === p) return t.id;
+      }
     }
     return null; // no primary match — likely a secondary page
   }
