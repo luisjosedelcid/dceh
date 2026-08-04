@@ -693,6 +693,10 @@
 
         <div class="actions" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <button class="btn ghost" id="btn-cr-reload" type="button">Refresh price</button>
+          <div style="display:inline-flex;align-items:center;gap:6px">
+            <label for="cr-report-asof" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.06em;text-transform:uppercase;font-weight:600">As of</label>
+            <input type="date" id="cr-report-asof" style="font-size:12px;padding:6px 8px;border:1px solid #d0d2d6;border-radius:4px;font-family:inherit;color:var(--navy)" title="Select the report date. Today uses live CoinGecko spot; earlier dates use historical daily close from Supabase.">
+          </div>
           <button class="btn primary" id="btn-cr-report" type="button">Generate PDF</button>
           <span id="cr-report-status" style="font-size:11px;color:var(--gray-mid)"></span>
           <span id="cr-last-update" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.08em">—</span>
@@ -2925,6 +2929,7 @@ document.getElementById('btn-cr-report').addEventListener('click', () => downloa
   url: '/api/generate-crypto-report',
   fileBase: 'DCE_Crypto_Snapshot',
   btnId: 'btn-cr-report', statusId: 'cr-report-status',
+  asOfInputId: 'cr-report-asof',
 }));
 document.getElementById('btn-fi-report').addEventListener('click', () => downloadSleeveReport({
   url: '/api/generate-fixed-income-report',
@@ -2936,7 +2941,7 @@ document.getElementById('btn-fi-report').addEventListener('click', () => downloa
 // Initialize the sleeve-level as-of pickers to today (block future dates).
 (function initSleevePickers(){
   const todayStr = new Date().toISOString().slice(0, 10);
-  ['re-report-asof', 'fi-report-asof'].forEach(id => {
+  ['re-report-asof', 'fi-report-asof', 'cr-report-asof'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       if (!el.value) el.value = todayStr;

@@ -13,6 +13,7 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 const { requireRole } = require('./_require-role');
 const { valueCryptoLive } = require('./_crypto-prices');
+const { valueCryptoAtDate } = require('./_crypto-history');
 
 const {
   NAVY, GOLD, GRAY, LIGHT, GREEN, RED, NEAR_BLACK, WHITE, CREAM, ROW_ALT,
@@ -61,6 +62,15 @@ module.exports = async (req, res) => {
     const today = new Date().toISOString().slice(0, 10);
     const asOfStatic = crJson.as_of_static_data || '—';
 
+    // Requested as-of date via ?as_of=YYYY-MM-DD. When absent the endpoint
+    // uses live CoinGecko spot (existing behavior). When present we pull
+    // the closest daily-close price from crypto_price_history.
+    const rawAsOf = (req.query && req.query.as_of) ? String(req.query.as_of) : today;
+    const asOfRequested =
+      /^\d{4}-\d{2}-\d{2}$/.test(rawAsOf) ? (rawAsOf > today ? today : rawAsOf) : today;
+    const isHistorical =
+      req.query && req.query.as_of && asOfRequested !== today;
+
     // Capital breakdown
     const capital = crJson.capital || {};
     const depositsFiat = Number(capital.deposits_fiat_acumulados_usd || 0);
@@ -71,8 +81,11 @@ module.exports = async (req, res) => {
     // Realized historical P&L (already withdrawn to bank; disclosed as note)
     const realizedHist = Number(crJson.realized_pnl_historico?.neto_usd || 0);
 
-    // Live spot valuation via CoinGecko (with static fallback)
-    const liveResult = await valueCryptoLive(crJson, 4000);
+    // Live spot (today) or historical daily close (as_of). Both helpers
+    // return the same shape so the renderer below is unchanged.
+    const liveResult = isHistorical
+      ? await valueCryptoAtDate(crJson, asOfRequested)
+      : await valueCryptoLive(crJson, 4000);
     const positions = Array.isArray(crJson.positions) ? crJson.positions : [];
     const enriched = positions.map((p, idx) => {
       const qty = Number(p.quantity || 0);
@@ -97,14 +110,14 @@ module.exports = async (req, res) => {
     const priceSource = liveResult.priceSource;
     const priceAsOf = liveResult.asOfDate;
 
-    // Holding period since first deposit
+    // Holding period since first deposit (relative to the report date).
     const firstDeposit = '2024-07-03';
-    const holdMonths = monthsBetween(firstDeposit, today);
+    const holdMonths = monthsBetween(firstDeposit, asOfRequested);
 
     // ─── Build PDF ───────────────────────────────────────────────
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition',
-      `attachment; filename="DCE_Crypto_Snapshot_${today}.pdf"`);
+      `attachment; filename="DCE_Crypto_Snapshot_${asOfRequested}.pdf"`);
 
     const doc = new PDFDocument({ size: 'LETTER', margin: 54, bufferPages: true });
     doc.pipe(res);
@@ -117,7 +130,11 @@ module.exports = async (req, res) => {
     doc.fillColor(GRAY).font('Helvetica').fontSize(9)
        .text(priceSource === 'live'
          ? `Live spot as of ${priceAsOf} · CoinGecko · ${enriched.filter(e=>e.isLive).length}/${enriched.length} positions priced live`
-         : `Static NAV as of ${asOfStatic} · live prices unavailable (${liveResult.staleReason || 'fallback'})`,
+         : (priceSource === 'historical'
+             ? `Historical daily close as of ${priceAsOf} · crypto_price_history · ${enriched.filter(e=>e.isLive).length}/${enriched.length} positions priced from history`
+             : (priceSource === 'par_fallback'
+                 ? `As of ${asOfRequested} · par fallback: no historical price on or before this date, NAV set to cost basis (${liveResult.staleReason || ''})`
+                 : `Static NAV as of ${asOfStatic} · live prices unavailable (${liveResult.staleReason || 'fallback'})`)),
              54, 88);
 
     // ─── HERO STRIP (5 cells) ──────────────────────────────────
@@ -260,7 +277,11 @@ module.exports = async (req, res) => {
          `Accounting method: ${crJson.accounting_method || '-'}. ` +
          (priceSource === 'live'
            ? `NAV (PDF) = sum of (quantity x live spot price from CoinGecko), captured at report generation on ${priceAsOf}. `
-           : `NAV (PDF) = sum of (quantity x static snapshot from ${asOfStatic}); live prices unavailable (${liveResult.staleReason || 'fallback'}). `) +
+           : (priceSource === 'historical'
+               ? `NAV (PDF) = sum of (quantity x historical daily-close price from crypto_price_history on ${priceAsOf}). `
+               : (priceSource === 'par_fallback'
+                   ? `NAV (PDF) = par fallback at cost basis (no historical price on or before ${asOfRequested}). `
+                   : `NAV (PDF) = sum of (quantity x static snapshot from ${asOfStatic}); live prices unavailable (${liveResult.staleReason || 'fallback'}). `))) +
          `Residual value multiple = NAV / net contributed capital (not the traditional PE MOIC of residual + distributions over gross invested; ` +
          `historical realized P&L is disclosed separately below and not double-counted). ` +
          `Net capital contributed: fiat deposits ${fmtUSD(depositsFiat, 0)} - fiat withdrawals to bank ` +
@@ -278,10 +299,14 @@ module.exports = async (req, res) => {
          `does not integrate the live NAV of the crypto sleeve.`,
          { width: tableW - 16 - 190, lineBreak: false, ellipsis: true });
 
-    drawFooter(doc, today,
+    drawFooter(doc, asOfRequested,
       priceSource === 'live'
         ? 'crypto_positions.json + CoinGecko live spot'
-        : `crypto_positions.json (static fallback — ${liveResult.staleReason || 'no live'})`);
+        : (priceSource === 'historical'
+            ? `crypto_positions.json + crypto_price_history (daily close, as of ${priceAsOf})`
+            : (priceSource === 'par_fallback'
+                ? `crypto_positions.json (par fallback — no history on or before ${asOfRequested})`
+                : `crypto_positions.json (static fallback — ${liveResult.staleReason || 'no live'})`)));
     doc.end();
   } catch (e) {
     if (!res.headersSent) {

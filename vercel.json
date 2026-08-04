@@ -197,6 +197,10 @@
     {
       "path": "/api/cron/screener-refresh",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/crypto-snapshot",
+      "schedule": "15 0 * * *"
     }
   ],
   "functions": {
@@ -223,6 +227,9 @@
     },
     "api/admin-backfill-prices.js": {
       "maxDuration": 60
+    },
+    "api/cron/crypto-snapshot.js": {
+      "maxDuration": 30
     }
   }
 }
