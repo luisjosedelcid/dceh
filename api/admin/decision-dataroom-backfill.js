@@ -18,7 +18,6 @@ const {
   mirrorDecisionToDataroom,
   subfolderForDecision,
   loadDecisionJournalFolders,
-  getPortfolioClosedFolderId,
 } = require('../_decision-dataroom-mirror');
 
 module.exports = async (req, res) => {
@@ -50,18 +49,15 @@ module.exports = async (req, res) => {
     );
 
     const folders = await loadDecisionJournalFolders();
-    const closedFolderId = await getPortfolioClosedFolderId();
     const results = [];
 
     for (const d of decisions) {
-      const t = String(d.decision_type || '').toUpperCase();
-      const isSell = t === 'SELL';
-      const sub = isSell ? 'Closed' : subfolderForDecision(d.decision_type);
+      const sub = subfolderForDecision(d.decision_type);
       if (!sub) {
         results.push({ id: d.id, ticker: d.ticker, decision_type: d.decision_type, skipped: 'unsupported_type' });
         continue;
       }
-      const folderId = isSell ? closedFolderId : folders.bySubName[sub];
+      const folderId = folders.bySubName[sub];
       if (!folderId) {
         results.push({ id: d.id, ticker: d.ticker, decision_type: d.decision_type, skipped: `folder_not_found:${sub}` });
         continue;

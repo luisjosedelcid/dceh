@@ -5,10 +5,9 @@
 // analyst can download on demand (via /api/decision-pdf) and archive
 // a copy under Data Room ▸ Decision Journal ▸ <subfolder>.
 //
-// Routing map (decision_type → subfolder):
-//   BUY, ADD                → Invested
-//   SELL, TRIM              → Invested         (still a position event)
-//   HOLD                    → Invested         (informational, keep with position)
+// Routing map (decision_type → subfolder, all under Decision Journal):
+//   BUY, ADD, TRIM, HOLD    → Invested
+//   SELL                    → Sold
 //   FOLLOW                  → Followed
 //   PASS                    → Passed
 //
@@ -42,8 +41,8 @@ async function loadDecisionJournalFolders() {
 
 function subfolderForDecision(decisionType) {
   const t = String(decisionType || '').toUpperCase();
-  // SELL is handled separately (Portfolio▸Closed only, no Journal mirror).
   if (t === 'BUY' || t === 'ADD' || t === 'TRIM' || t === 'HOLD') return 'Invested';
+  if (t === 'SELL') return 'Sold';
   if (t === 'FOLLOW') return 'Followed';
   if (t === 'PASS') return 'Passed';
   return null;
@@ -112,24 +111,14 @@ async function uploadPdfToDataroom({ folderId, filename, displayName, buffer, de
 // Decision Journal subfolder based on the decision type.
 async function mirrorDecisionToDataroom({ entryId, adminToken, actor, decisionType, ticker, decisionDate }) {
   try {
-    const t = String(decisionType || '').toUpperCase();
-    const isSell = t === 'SELL';
+    const decisionTypeUC = String(decisionType || '').toUpperCase();
 
-    // For SELL: target is 02 Portfolio▸Closed (single mirror, no Journal).
-    // For everything else: standard Decision Journal subfolder.
-    let folderId;
-    let subName;
-    if (isSell) {
-      folderId = await getPortfolioClosedFolderId();
-      if (!folderId) return { ok: false, error: `Portfolio▸Closed folder not found` };
-      subName = 'Closed';
-    } else {
-      subName = subfolderForDecision(decisionType);
-      if (!subName) return { ok: false, error: `No subfolder for decision_type=${decisionType}` };
-      const folders = await loadDecisionJournalFolders();
-      folderId = folders.bySubName[subName];
-      if (!folderId) return { ok: false, error: `Subfolder '${subName}' not found under Decision Journal` };
-    }
+    // All decision types route to a subfolder under Decision Journal.
+    const subName = subfolderForDecision(decisionType);
+    if (!subName) return { ok: false, error: `No subfolder for decision_type=${decisionType}` };
+    const folders = await loadDecisionJournalFolders();
+    const folderId = folders.bySubName[subName];
+    if (!folderId) return { ok: false, error: `Subfolder '${subName}' not found under Decision Journal` };
 
     // Build the absolute base URL. On Vercel serverless, VERCEL_URL is the
     // deployment hostname without protocol. Locally, DCE_APP_ORIGIN can be
@@ -156,11 +145,9 @@ async function mirrorDecisionToDataroom({ entryId, adminToken, actor, decisionTy
 
     const dateCompact = String(decisionDate || '').replace(/-/g, '');
     // filename = storage-safe, machine-readable; displayName = what the UI shows
-    const filename = `Decision_${ticker}_${t}_${dateCompact}.pdf`;
-    const displayName = `${ticker} — ${t} — ${decisionDate}.pdf`;
-    const detail = isSell
-      ? `Auto-archived SELL decision PDF (entry #${entryId}) — 02 Portfolio▸Closed`
-      : `Auto-archived decision PDF (entry #${entryId})`;
+    const filename = `Decision_${ticker}_${decisionTypeUC}_${dateCompact}.pdf`;
+    const displayName = `${ticker} — ${decisionTypeUC} — ${decisionDate}.pdf`;
+    const detail = `Auto-archived decision PDF (entry #${entryId}) — Decision Journal▸${subName}`;
 
     const upload = await uploadPdfToDataroom({
       folderId, filename, displayName, buffer, detail, actor,
