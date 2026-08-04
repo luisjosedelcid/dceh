@@ -358,9 +358,9 @@
     { id:'home',     label:'Home',    href:'/',              single:true },
     { id:'cockpit',  label:'Cockpit', href:'/cockpit.html',  single:true },
     { id:'research', label:'Feed', items:[
-      { href:'/screener.html#ideafeed', label:'Idea Feed', desc:'Curated inbound ideas across sources' },
-      { href:'/news.html',              label:'News',      desc:'Daily AI-summarized scanner' },
-      { href:'/calendar.html',          label:'Calendar',  desc:'Earnings and events for coverage' },
+      { href:'/screener.html#ideafeed', label:'Ideas',          desc:'Curated inbound ideas across sources' },
+      { href:'/news.html',              label:'Portfolio News', desc:'Daily AI-summarized scanner' },
+      { href:'/calendar.html',          label:'Calendar',       desc:'Earnings and events for coverage' },
     ]},
     { id:'pipeline', label:'Pipeline', items:[
       { href:'/screener.html',    label:'Find',     desc:'Screener, superinvestors, sector tracker' },
