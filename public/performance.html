@@ -338,6 +338,10 @@
 
         <div class="actions" style="margin-top:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
           <button class="btn ghost" id="btn-cons-reload" type="button">Reload</button>
+          <div style="display:inline-flex;align-items:center;gap:6px">
+            <label for="cons-report-asof" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.06em;text-transform:uppercase;font-weight:600">As of</label>
+            <input type="date" id="cons-report-asof" style="font-size:12px;padding:6px 8px;border:1px solid #d0d2d6;border-radius:4px;font-family:inherit;color:var(--navy)" title="Historical rebuild: Equity uses transactions/prices up to this date, Fixed Income reprojects accrued interest, Real Estate uses the latest GP mark on or before this date (par fallback otherwise), and Crypto uses daily-close prices from history.">
+          </div>
           <button class="btn primary" id="btn-cons-report" type="button">Generate PDF</button>
           <span id="cons-report-status" style="font-size:11px;color:var(--gray-mid)"></span>
         </div>
@@ -2941,7 +2945,7 @@ document.getElementById('btn-fi-report').addEventListener('click', () => downloa
 // Initialize the sleeve-level as-of pickers to today (block future dates).
 (function initSleevePickers(){
   const todayStr = new Date().toISOString().slice(0, 10);
-  ['re-report-asof', 'fi-report-asof', 'cr-report-asof'].forEach(id => {
+  ['re-report-asof', 'fi-report-asof', 'cr-report-asof', 'cons-report-asof'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       if (!el.value) el.value = todayStr;
@@ -2954,15 +2958,22 @@ document.getElementById('btn-cons-report').addEventListener('click', async () =>
   const btn = document.getElementById('btn-cons-report');
   const status = document.getElementById('cons-report-status');
   const original = btn.textContent;
-  const asOf = new Date().toISOString().slice(0, 10);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const asofInput = document.getElementById('cons-report-asof');
+  const asOfRaw = (asofInput && asofInput.value) ? asofInput.value : todayStr;
+  const asOf = /^\d{4}-\d{2}-\d{2}$/.test(asOfRaw) ? asOfRaw : todayStr;
+  const isHistorical = asOf !== todayStr;
   btn.disabled = true;
   btn.textContent = 'Generating…';
-  status.textContent = `Building consolidated PDF as of ${asOf}…`;
+  status.textContent = isHistorical
+    ? `Historical rebuild as of ${asOf}…`
+    : `Building consolidated PDF as of ${asOf}…`;
   status.style.color = 'var(--gray-mid)';
   const ac = new AbortController();
   const abortTimer = setTimeout(() => ac.abort(), 90_000);
   try {
-    const r = await fetch(`/api/generate-consolidated-report`, {
+    const qs = isHistorical ? `?as_of=${encodeURIComponent(asOf)}` : '';
+    const r = await fetch(`/api/generate-consolidated-report${qs}`, {
       method: 'GET',
       headers: { 'x-admin-token': adminToken() },
       signal: ac.signal,

@@ -31,6 +31,9 @@ const PDFDocument = require('pdfkit');
 const { loadAndCompute } = require('./_perf-load');
 const { loadAndValueTimeDeposits } = require('./_time-deposits');
 const { valueCryptoLive } = require('./_crypto-prices');
+const { valueCryptoAtDate } = require('./_crypto-history');
+const { resolveRealEstateAsOf } = require('./_real-estate-marks');
+const { getFxRateOnDate } = require('./_fx-rates');
 const { requireRole } = require('./_require-role');
 const {
   NAVY, GOLD, GRAY, LIGHT, GREEN, RED, NEAR_BLACK, WHITE, CREAM, ROW_ALT,
@@ -69,25 +72,52 @@ module.exports = async (req, res) => {
     }
 
     let debugMode = false;
+    let asOfRequested = new Date().toISOString().slice(0, 10);
+    let isHistorical = false;
     try {
       const u = new URL(req.url, 'http://x');
       debugMode = u.searchParams.get('debug') === '1';
+      const rawAsOf = u.searchParams.get('as_of');
+      const today = new Date().toISOString().slice(0, 10);
+      if (rawAsOf && /^\d{4}-\d{2}-\d{2}$/.test(rawAsOf)) {
+        asOfRequested = rawAsOf > today ? today : rawAsOf;
+        isHistorical = asOfRequested !== today;
+      }
     } catch (_) {}
-    const dbg = { phases: {} };
+    const dbg = { phases: {}, as_of: asOfRequested, historical: isHistorical };
 
     // ── 1) Load all sleeves in parallel ─────────────────────────────
+    // Equity engine uses endDate = asOfRequested so historical NAV reflects
+    // prices/transactions up to that date. Time Deposits reproject accrued
+    // interest linearly to asOfRequested via loadAndValueTimeDeposits.
     const t0 = Date.now();
     const [eqResult, tdResult] = await Promise.all([
-      withTimeout(loadAndCompute({}), 30_000, 'loadAndCompute').catch(e => ({ _err: e.message })),
-      withTimeout(loadAndValueTimeDeposits(new Date().toISOString().slice(0, 10)), 8_000, 'timeDeposits').catch(e => ({ _err: e.message })),
+      withTimeout(loadAndCompute({ endDate: asOfRequested }), 30_000, 'loadAndCompute').catch(e => ({ _err: e.message })),
+      withTimeout(loadAndValueTimeDeposits(asOfRequested), 8_000, 'timeDeposits').catch(e => ({ _err: e.message })),
     ]);
     dbg.phases.loadAll_ms = Date.now() - t0;
     dbg.phases.equity_err = eqResult?._err || null;
     dbg.phases.td_err = tdResult?._err || null;
 
-    const reJson = readPublicJson('real_estate_positions.json');
+    const reJsonStatic = readPublicJson('real_estate_positions.json');
     const crJson = readPublicJson('crypto_positions.json');
+    // Resolve Real Estate marks at the requested as-of (GP semi-annual marks
+    // from real_estate_marks; par fallback before the first mark).
+    let reJson = reJsonStatic;
+    if (reJsonStatic) {
+      try {
+        reJson = await withTimeout(
+          resolveRealEstateAsOf(reJsonStatic, asOfRequested),
+          8_000, 'resolveRealEstateAsOf'
+        );
+      } catch (e) {
+        dbg.phases.re_resolve_err = e.message;
+        reJson = reJsonStatic; // hard fallback to static JSON if resolver dies
+      }
+    }
     dbg.phases.re_loaded = !!reJson;
+    dbg.phases.re_asof_effective = reJson && reJson._asof_effective;
+    dbg.phases.re_par_fallback = reJson && reJson._using_par_fallback;
     dbg.phases.cr_loaded = !!crJson;
 
     // ── 2) Reduce each sleeve to a small set of numbers ─────────────
@@ -124,11 +154,33 @@ module.exports = async (req, res) => {
     const fixedIncomeNav = eqFixedIncomeNav + tdMv;
 
     // -- Real Estate --
+    // For a historical rebuild we need the FX EUR/USD on the effective
+    // mark date, not today's rate. Use getFxRateOnDate (ECB) with the
+    // JSON's cached today rate as a hard fallback so the endpoint never
+    // blocks on external calls.
     let reNav = 0, reCap = 0, reLast = '—', reTwr = null;
     const reEnriched = [];
     if (reJson) {
-      const fxToday = Number(reJson.fx_eur_usd?.today || 0);
-      const todayD = new Date();
+      const fxTodayFromJson = Number(reJson.fx_eur_usd?.today || 0);
+      const fxAsOfDate = (isHistorical && reJson.nav_as_of) ? reJson.nav_as_of : asOfRequested;
+      let fxToday = fxTodayFromJson;
+      let fxTodaySrc = 'json_today';
+      if (isHistorical) {
+        try {
+          const fxInfo = await withTimeout(
+            getFxRateOnDate(fxAsOfDate, 'EUR', 'USD', {
+              fallback: { value: fxTodayFromJson, date: reJson.fx_eur_usd?.today_date || null },
+            }),
+            5_000, 'getFxRateOnDate'
+          );
+          fxToday = Number(fxInfo.value) || fxTodayFromJson;
+          fxTodaySrc = fxInfo.source || 'fallback';
+        } catch (e) {
+          dbg.phases.fx_err = e.message;
+        }
+      }
+      dbg.phases.re_fx_used = fxToday;
+      dbg.phases.re_fx_src = fxTodaySrc;
       for (const p of (reJson.positions || [])) {
         const fxDeploy = Number(p.fx_eur_usd_at_deploy || 0);
         const costUsd = Number(p.amount_eur || 0) * fxDeploy;
@@ -149,7 +201,9 @@ module.exports = async (req, res) => {
     if (crJson) {
       crCap = Number(crJson.capital?.capital_neto_aportado_usd || 0);
       const t1 = Date.now();
-      const liveResult = await valueCryptoLive(crJson, 4000);
+      const liveResult = isHistorical
+        ? await valueCryptoAtDate(crJson, asOfRequested)
+        : await valueCryptoLive(crJson, 4000);
       dbg.phases.crypto_live_ms = Date.now() - t1;
       dbg.phases.crypto_price_source = liveResult.priceSource;
       dbg.phases.crypto_stale_reason = liveResult.staleReason || null;
@@ -283,7 +337,7 @@ module.exports = async (req, res) => {
     }
 
     // ── 3) Build PDF ────────────────────────────────────────────────
-    const asOfDate = new Date().toISOString().slice(0, 10);
+    const asOfDate = asOfRequested;
     const doc = new PDFDocument({
       size: 'LETTER',
       margins: { top: 60, bottom: 60, left: 54, right: 54 },
@@ -313,8 +367,9 @@ module.exports = async (req, res) => {
     const asOfPretty = new Date(asOfDate + 'T00:00:00Z').toLocaleDateString('en-US', {
       weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
     });
+    const _asofSuffix = isHistorical ? '  ·  historical rebuild' : '';
     doc.fillColor(GRAY).font('Helvetica').fontSize(10)
-       .text(`As of ${asOfPretty}  ·  ${sleeveCount} active ${sleeveCount === 1 ? 'sleeve' : 'sleeves'}  ·  Consolidated portfolio`, M, 130);
+       .text(`As of ${asOfPretty}  ·  ${sleeveCount} active ${sleeveCount === 1 ? 'sleeve' : 'sleeves'}  ·  Consolidated portfolio${_asofSuffix}`, M, 130);
     // Staleness warning: flag any sleeve valued > 7 days before the report date
     const asOfMs = new Date(asOfDate + 'T00:00:00Z').getTime();
     const staleSleeves = [];
@@ -665,7 +720,10 @@ module.exports = async (req, res) => {
     });
 
     // Footer
-    drawFooter(doc, asOfDate, 'portfolio_snapshots + real_estate + crypto + time_deposits');
+    const _footerSrc = isHistorical
+      ? `portfolio_snapshots + real_estate_marks + crypto_price_history + time_deposits (as of ${asOfDate})`
+      : 'portfolio_snapshots + real_estate + crypto + time_deposits';
+    drawFooter(doc, asOfDate, _footerSrc);
     doc.end();
     await done;
 
