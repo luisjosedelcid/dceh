@@ -299,6 +299,7 @@ module.exports = async (req, res) => {
     let requestedAsOf = null;
     let debugMode = false;
     let fastMode = false;
+    let traceMode = false;
     try {
       const u = new URL(req.url, 'http://x');
       const v = (u.searchParams.get('as_of') || '').trim();
@@ -310,8 +311,29 @@ module.exports = async (req, res) => {
       // Snapshot data alone is fine for a portfolio PDF; the extra network hops
       // are what push us into 504-territory on Vercel Hobby's shrinking limits.
       fastMode = u.searchParams.get('fast') === '1';
+      // ?trace=1 wraps every PDF drawing section in a try/catch that logs
+      // its elapsed time. If a section throws, we return the trace as JSON
+      // instead of a half-broken PDF so we can pinpoint the hang.
+      traceMode = u.searchParams.get('trace') === '1';
     } catch (_) {}
-    const dbg = { requestedAsOf, phases: {} };
+    const dbg = { requestedAsOf, phases: {}, sections: [] };
+    // Helper: run a synchronous drawing block, record ms + any thrown error.
+    // Failures do NOT abort the run in normal mode (best-effort PDF); in
+    // trace mode we surface them so the caller can pinpoint the offender.
+    function traceSection(name, fn) {
+      const s = Date.now();
+      try {
+        fn();
+        const ms = Date.now() - s;
+        dbg.sections.push({ name, ms });
+        if (traceMode) console.log(`[trace] ${name} ok in ${ms}ms`);
+      } catch (e) {
+        const ms = Date.now() - s;
+        dbg.sections.push({ name, ms, error: String(e && e.message || e) });
+        if (traceMode) console.warn(`[trace] ${name} FAILED in ${ms}ms: ${e.message}`);
+        if (traceMode) throw e; // In trace mode propagate so the catch below returns JSON.
+      }
+    }
 
     // Utility — wrap a promise in a hard timeout so one slow dep can't wedge the PDF.
     const withTimeout = (p, ms, label) => Promise.race([
@@ -406,7 +428,17 @@ module.exports = async (req, res) => {
     const M = 54;
     const CW = W - M * 2;
 
-    drawHeaderBar(doc);
+    // Checkpoint helper for ?trace=1 diagnostics.
+    const tRenderStart = Date.now();
+    const mark = (name) => {
+      const ms = Date.now() - tRenderStart;
+      dbg.sections.push({ name, ms });
+      console.log(`[generate-daily-report] section=${name} at ${ms}ms`);
+    };
+
+    try {
+
+    drawHeaderBar(doc); mark('headerBar');
 
     // ─── TITLE ────────────────────────────────────────────────────
     doc.fillColor(GOLD).font('Helvetica').fontSize(8)
@@ -420,6 +452,7 @@ module.exports = async (req, res) => {
     doc.fillColor(GRAY).font('Helvetica').fontSize(10)
        .text(`As of close ${asOfPretty}  ·  ${kpis.days_elapsed} days since inception (${kpis.inception_date})`, M, 130);
 
+    mark('title');
     // ─── HERO METRICS ─────────────────────────────────────────────
     let y = 160;
     doc.rect(M, y, CW, 90).fill(WHITE).strokeColor(GOLD).lineWidth(0.5).stroke();
@@ -487,6 +520,7 @@ module.exports = async (req, res) => {
       }
     });
 
+    mark('hero');
     // ─── IPS BANDS ────────────────────────────────────────────────
     y = 270;
     drawSectionLabel(doc, y, 'IPS Bands');
@@ -497,6 +531,7 @@ module.exports = async (req, res) => {
     drawIpsBands(doc, M, y, CW, 130, kpis);
     y += 130 + 16;
 
+    mark('ipsBands');
     // ─── HOLDINGS TABLE ───────────────────────────────────────────
     drawSectionLabel(doc, y, 'Holdings');
     doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(13)
@@ -599,6 +634,7 @@ module.exports = async (req, res) => {
        .text(fmtUSD(kpis.market_value_usd, 0), totalsX + 4, y + 6, { width: cols[4].w - 8, align: 'right', lineBreak: false });
     y += 20;
 
+    mark('holdings');
     // ─── MINI-STATS GRID (8 cells: composition + P&L generation) ──
     y += 18;
     const cardCols = 4;
@@ -647,7 +683,8 @@ module.exports = async (req, res) => {
          .text(c.value, x + 10, y + 25, { width: cardW - 20, lineBreak: false });
     });
 
-    drawFooter(doc, asOfDate);
+    mark('preFooter');
+    drawFooter(doc, asOfDate); mark('footer');
 
     // Hard guarantee single-page output: if any implicit overflow created
     // additional pages, we keep only page 0. With bufferPages: true we can
@@ -664,7 +701,21 @@ module.exports = async (req, res) => {
         doc._pageBufferStart = 0;
       }
     }
-    doc.flushPages();
+    doc.flushPages(); mark('flushPages');
+
+    } catch (drawErr) {
+      const ms = Date.now() - tRenderStart;
+      dbg.sections.push({ name: 'FAILED', ms, error: String(drawErr && drawErr.message || drawErr) });
+      console.error(`[generate-daily-report] draw failed after ${ms}ms:`, drawErr);
+      if (traceMode) {
+        return res.status(500).json({ error: String(drawErr.message || drawErr), dbg });
+      }
+      throw drawErr;
+    }
+
+    if (traceMode) {
+      return res.status(200).json({ ok: true, dbg });
+    }
 
     const tRender = Date.now();
     doc.end();
