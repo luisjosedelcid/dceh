@@ -30,6 +30,7 @@ const fs   = require('fs');
 const PDFDocument = require('pdfkit');
 const { loadAndCompute } = require('./_perf-load');
 const { loadAndValueTimeDeposits } = require('./_time-deposits');
+const { valueCryptoLive } = require('./_crypto-prices');
 const { requireRole } = require('./_require-role');
 const {
   NAVY, GOLD, GRAY, LIGHT, GREEN, RED, NEAR_BLACK, WHITE, CREAM, ROW_ALT,
@@ -141,31 +142,25 @@ module.exports = async (req, res) => {
     }
     const rePnlUnr = reNav - reCap;
 
-    // -- Crypto (uses static NAV; no live price to avoid timeouts) --
+    // -- Crypto (fetches CoinGecko live spot; falls back to static NAV) --
     let crNav = 0, crCap = 0, crPnlUnr = 0, crPnlRealized = 0, crPnlTotal = 0, crLast = '—', crTwr = null;
-    const crEnriched = [];
+    let crEnriched = [];
+    let crPriceSource = 'static';
     if (crJson) {
       crCap = Number(crJson.capital?.capital_neto_aportado_usd || 0);
-      // Use the static NAV embedded in the JSON as a proxy — the browser
-      // overlays live prices, but for the PDF we accept the last-recorded
-      // NAV to keep the endpoint below the 504 window.
-      const staticNav = Number(crJson.market_value_snapshot_usd || 0);
-      // Fallback: sum cost basis of each position if snapshot missing.
-      if (staticNav > 0) {
-        crNav = staticNav;
-      } else {
-        for (const p of (crJson.positions || [])) {
-          crNav += Number(p.cost_basis_total_usd || 0);
-        }
-      }
-      for (const p of (crJson.positions || [])) {
-        crEnriched.push({ name: (p.asset || '?') + ' — ' + (p.asset_name || ''), marketUsd: Number(p.mv_snapshot_usd || p.cost_basis_total_usd || 0) });
-      }
+      const t1 = Date.now();
+      const liveResult = await valueCryptoLive(crJson, 4000);
+      dbg.phases.crypto_live_ms = Date.now() - t1;
+      dbg.phases.crypto_price_source = liveResult.priceSource;
+      dbg.phases.crypto_stale_reason = liveResult.staleReason || null;
+      crNav = liveResult.crNav;
+      crEnriched = liveResult.crEnriched;
+      crLast = liveResult.asOfDate;
+      crPriceSource = liveResult.priceSource;
       const costTotal = (crJson.positions || []).reduce((s, p) => s + Number(p.cost_basis_total_usd || 0), 0);
       crPnlUnr = crNav - costTotal;
       crPnlRealized = Number(crJson.realized_pnl_historico?.neto_usd || 0);
       crPnlTotal = crPnlRealized + crPnlUnr;
-      crLast = crJson.as_of_static_data || '—';
       if (crCap > 0) crTwr = (crNav + crPnlRealized) / crCap - 1;
     }
 

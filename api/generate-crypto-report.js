@@ -12,6 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const { requireRole } = require('./_require-role');
+const { valueCryptoLive } = require('./_crypto-prices');
 
 const {
   NAVY, GOLD, GRAY, LIGHT, GREEN, RED, NEAR_BLACK, WHITE, CREAM, ROW_ALT,
@@ -67,25 +68,21 @@ module.exports = async (req, res) => {
     const capNeto = Number(capital.capital_neto_aportado_usd ??
       (depositsFiat + withdrawalsFiat));
 
-    // Realized historical P&L (kept as informational; not part of NAV)
+    // Realized historical P&L (already withdrawn to bank; disclosed as note)
     const realizedHist = Number(crJson.realized_pnl_historico?.neto_usd || 0);
 
-    // Enrich positions (cost-basis fallback for market value — no live spot)
+    // Live spot valuation via CoinGecko (with static fallback)
+    const liveResult = await valueCryptoLive(crJson, 4000);
     const positions = Array.isArray(crJson.positions) ? crJson.positions : [];
-    const enriched = positions.map(p => {
+    const enriched = positions.map((p, idx) => {
       const qty = Number(p.quantity || 0);
       const costBasis = Number(p.cost_basis_total_usd || 0);
-      // Prefer snapshot MV if the JSON carries one; else fall back to cost.
-      const marketUsd = Number(
-        p.mv_snapshot_usd
-        ?? p.market_value_snapshot_usd
-        ?? p.cost_basis_total_usd
-        ?? 0
-      );
-      const priceLive = qty > 0 ? marketUsd / qty : Number(p.cost_basis_unit_usd || 0);
+      const live = liveResult.crEnriched[idx] || {};
+      const marketUsd = Number(live.marketUsd || 0);
+      const priceLive = Number(live.priceUsd || (qty > 0 ? marketUsd / qty : (p.cost_basis_unit_usd || 0)));
       const unrealUsd = marketUsd - costBasis;
       const unrealPct = costBasis > 0 ? unrealUsd / costBasis : null;
-      return { ...p, qty, costBasis, marketUsd, priceLive, unrealUsd, unrealPct };
+      return { ...p, qty, costBasis, marketUsd, priceLive, unrealUsd, unrealPct, isLive: !!live.isLive };
     });
 
     const totMarket = enriched.reduce((s, p) => s + p.marketUsd, 0);
@@ -93,7 +90,12 @@ module.exports = async (req, res) => {
     const totUnreal = totMarket - totCost;
     const pnlTotal = totUnreal + realizedHist;
     const roi = capNeto > 0 ? pnlTotal / capNeto : null;
-    const moicSleeve = capNeto > 0 ? (totMarket + realizedHist) / capNeto : null;
+    // Sleeve MOIC = NAV / net contributed capital. Realized P&L already left
+    // NAV via withdrawals and is disclosed separately — don't double-count it
+    // in the numerator.
+    const moicSleeve = capNeto > 0 ? totMarket / capNeto : null;
+    const priceSource = liveResult.priceSource;
+    const priceAsOf = liveResult.asOfDate;
 
     // Holding period since first deposit
     const firstDeposit = '2024-07-03';
@@ -113,7 +115,9 @@ module.exports = async (req, res) => {
     doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(20)
        .text('Crypto — Self-custody sleeve', 54, 62);
     doc.fillColor(GRAY).font('Helvetica').fontSize(9)
-       .text(`Static NAV as of ${asOfStatic} · live prices overlaid in web view only`,
+       .text(priceSource === 'live'
+         ? `Live spot as of ${priceAsOf} · CoinGecko · ${enriched.filter(e=>e.isLive).length}/${enriched.length} positions priced live`
+         : `Static NAV as of ${asOfStatic} · live prices unavailable (${liveResult.staleReason || 'fallback'})`,
              54, 88);
 
     // ─── HERO STRIP (5 cells) ──────────────────────────────────
@@ -272,7 +276,10 @@ module.exports = async (req, res) => {
          `no integra el NAV del sleeve crypto vivo.`,
          { width: tableW - 16 - 190, lineBreak: false, ellipsis: true });
 
-    drawFooter(doc, asOfStatic, 'crypto_positions.json (static snapshot)');
+    drawFooter(doc, today,
+      priceSource === 'live'
+        ? 'crypto_positions.json + CoinGecko live spot'
+        : `crypto_positions.json (static fallback — ${liveResult.staleReason || 'no live'})`);
     doc.end();
   } catch (e) {
     if (!res.headersSent) {
