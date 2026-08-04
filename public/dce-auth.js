@@ -352,12 +352,12 @@
   }
 
   // ── Nav grouping: 7 top-level items in fixed order ──────────────────────
-  // Order: Home · Cockpit · Research ▾ · Pipeline ▾ · Performance · Reporting · Data Room
+  // Order: Home · Cockpit · Feed ▾ · Pipeline ▾ · Performance · Reporting · Data Room
   // Decisions (Journal) absorbido al final del Pipeline — es parte del proceso
   const NAV_GROUPS = [
     { id:'home',     label:'Home',    href:'/',              single:true },
     { id:'cockpit',  label:'Cockpit', href:'/cockpit.html',  single:true },
-    { id:'research', label:'Research', items:[
+    { id:'research', label:'Feed', items:[
       { href:'/study.html',       label:'Study',    desc:'Sector memos underpinning the portfolio thesis' },
       { href:'/news.html',        label:'News',     desc:'Daily AI-summarized scanner' },
       { href:'/calendar.html',    label:'Calendar', desc:'Earnings and events for coverage' },
