@@ -162,7 +162,12 @@ module.exports = async (req, res) => {
     const reEnriched = [];
     if (reJson) {
       const fxTodayFromJson = Number(reJson.fx_eur_usd?.today || 0);
-      const fxAsOfDate = (isHistorical && reJson.nav_as_of) ? reJson.nav_as_of : asOfRequested;
+      // Reconcile with generate-real-estate-report.js: the "indicative" NAV
+      // in USD uses the FX rate ON asOfRequested (or live for today's run),
+      // not the FX on nav_as_of. Using nav_as_of here caused the consolidated
+      // to report reNav=$655,539 vs the standalone's $663,651 at 2026-07-31.
+      // Both reports must use the same FX so per-position USD figures match.
+      const fxAsOfDate = asOfRequested;
       let fxToday = fxTodayFromJson;
       let fxTodaySrc = 'json_today';
       if (isHistorical) {
@@ -412,8 +417,8 @@ module.exports = async (req, res) => {
     // reader can reconstruct every ratio from the values on screen.
     const heroCells = [
       { label: 'NAV TOTAL (USD)',        value: '$' + totNavShown.toLocaleString('en-US'),         sub: `${sleeveCount} sleeves active`,     subColor: GRAY },
-      { label: 'NET CONTRIBUTED CAPITAL', value: '$' + totCapShown.toLocaleString('en-US'),         sub: 'cash in \u2212 cash out',                subColor: GRAY },
-      { label: 'TOTAL P&L (USD)',         value: (totPnlShown >= 0 ? '+$' : '-$') + Math.abs(totPnlShown).toLocaleString('en-US'), sub: `NAV \u2212 Capital`, valueColor: pctColor(totPnlShown), subColor: GRAY },
+      { label: 'NET CONTRIBUTED CAPITAL', value: '$' + totCapShown.toLocaleString('en-US'),         sub: 'cash in - cash out',                subColor: GRAY },
+      { label: 'TOTAL P&L (USD)',         value: (totPnlShown >= 0 ? '+$' : '-$') + Math.abs(totPnlShown).toLocaleString('en-US'), sub: 'NAV - Capital', valueColor: pctColor(totPnlShown), subColor: GRAY },
       { label: 'CONSOLIDATED MOIC',       value: fmtMoic(totMoicShown),     sub: 'NAV / Capital',                     valueColor: (totMoicShown != null && totMoicShown >= 1) ? GREEN : RED, subColor: GRAY },
       { label: 'P&L / CAPITAL',           value: fmtPct(totRoiShown),       sub: 'Simple cumulative return',          valueColor: pctColor(totRoiShown),    subColor: GRAY },
     ];

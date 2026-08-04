@@ -113,8 +113,16 @@ module.exports = async (req, res) => {
       date:  reJson.fx_eur_usd?.nav_close_date || null,
       source: 'real_estate_positions.json (cached)',
     };
+    // Historical snapshots must NOT use a live FX quote dated after the
+    // requested as-of date. For a snapshot at 2026-07-31 the "indicative"
+    // NAV-to-USD translation must use the FX rate ON 2026-07-31, not today.
+    // Detect the historical case and route both quotes through
+    // getFxRateOnDate. Only when as_of == today do we hit the live endpoint.
+    const isHistoricalReport = asOfRequested < today;
     const [fxTodayInfo, fxNavInfo] = await Promise.all([
-      getFxRate('EUR', 'USD', { fallback: fxTodayFallback }),
+      isHistoricalReport
+        ? getFxRateOnDate(asOfRequested, 'EUR', 'USD', { fallback: fxTodayFallback })
+        : getFxRate('EUR', 'USD', { fallback: fxTodayFallback }),
       /^\d{4}-\d{2}-\d{2}$/.test(navAsOf)
         ? getFxRateOnDate(navAsOf, 'EUR', 'USD', { fallback: fxNavFallback })
         : Promise.resolve({ value: fxNavFallback.value || 1, date: null, source: fxNavFallback.source, cached: false, stale: true }),

@@ -419,6 +419,23 @@ module.exports = async (req, res) => {
         Author: 'DCE Holdings Investment Office',
       },
     });
+    // Hard-guarantee single-page output: pdfkit auto-adds a page whenever a
+    // text() or rect() call requests a Y past the bottom margin. We intercept
+    // addPage AFTER the (auto) first page has been created so any implicit
+    // overflow just gets clipped instead of spilling into pages 2..N.
+    // Previous approach (manipulating doc._pageBuffer AFTER drawing + calling
+    // flushPages) caused doc.end() to hang -- avoided here by preventing the
+    // second page from being created in the first place.
+    const _origAddPage = doc.addPage.bind(doc);
+    let _pagesCreated = 1; // autoFirstPage already made page 1
+    doc.addPage = function(...args) {
+      if (_pagesCreated >= 1) {
+        console.warn('[generate-daily-report] suppressed implicit addPage (would overflow)');
+        return doc; // no-op, keep drawing on page 1 (clipped by page bounds)
+      }
+      _pagesCreated++;
+      return _origAddPage(...args);
+    };
     const chunks = [];
     doc.on('data', c => chunks.push(c));
     const done = new Promise(resolve => doc.on('end', resolve));
