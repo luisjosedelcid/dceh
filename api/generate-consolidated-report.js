@@ -279,6 +279,22 @@ module.exports = async (req, res) => {
     if (tdConsolTwr != null && tdMv > 0) { twrNumer += tdConsolTwr * tdMv; twrWeights += tdMv; }
     const totTwr = twrWeights > 0 ? twrNumer / twrWeights : null;
 
+    // Cosmetic split for the Equity engine sub-sleeves (Equity / T-bills /
+    // Cash). Declared up here so _presentSleeves below can reference the
+    // sleeve-level caps and pnls without a TDZ ReferenceError.
+    const eqMvTotal = eqEquityNav + eqFixedIncomeNav + cashNav;
+    const eqEquityShare      = eqMvTotal > 0 ? eqEquityNav      / eqMvTotal : 0;
+    const eqFixedIncomeShare = eqMvTotal > 0 ? eqFixedIncomeNav / eqMvTotal : 0;
+    const cashShare          = eqMvTotal > 0 ? cashNav          / eqMvTotal : 0;
+    const eqEquityCap      = eqCap * eqEquityShare;
+    const eqFixedIncomeCap = eqCap * eqFixedIncomeShare;
+    const cashCap          = eqCap * cashShare;
+    const eqEquityPnl      = eqPnlUnr * eqEquityShare;
+    const eqFixedIncomePnl = eqPnlUnr * eqFixedIncomeShare;
+    const cashPnl          = eqPnlUnr * cashShare;
+    const fixedIncomeCap = eqFixedIncomeCap + tdPrincipal;
+    const fixedIncomePnl = eqFixedIncomePnl + tdAccruedNet;
+
     // Precompute sum-preserving integers for the visible sleeves so the
     // hero KPI strip, allocation table, top-holdings section and
     // reconciliation footnote all render off the same integer amounts.
@@ -415,19 +431,9 @@ module.exports = async (req, res) => {
     drawSectionLabel(doc, y, 'Allocation by sleeve');
     y += 16;
 
-    // Cosmetic split for the Equity engine sub-sleeves (Equity / T-bills / Cash)
-    const eqMvTotal = eqEquityNav + eqFixedIncomeNav + cashNav;
-    const eqEquityShare      = eqMvTotal > 0 ? eqEquityNav      / eqMvTotal : 0;
-    const eqFixedIncomeShare = eqMvTotal > 0 ? eqFixedIncomeNav / eqMvTotal : 0;
-    const cashShare          = eqMvTotal > 0 ? cashNav          / eqMvTotal : 0;
-    const eqEquityCap      = eqCap * eqEquityShare;
-    const eqFixedIncomeCap = eqCap * eqFixedIncomeShare;
-    const cashCap          = eqCap * cashShare;
-    const eqEquityPnl      = eqPnlUnr * eqEquityShare;
-    const eqFixedIncomePnl = eqPnlUnr * eqFixedIncomeShare;
-    const cashPnl          = eqPnlUnr * cashShare;
-    const fixedIncomeCap = eqFixedIncomeCap + tdPrincipal;
-    const fixedIncomePnl = eqFixedIncomePnl + tdAccruedNet;
+    // NOTE: eqMvTotal / eqEquityShare / eqEquityCap / fixedIncomeCap / ...
+    // are declared earlier (before _presentSleeves) to avoid TDZ. Do not
+    // redeclare them here.
     const tdTwr = tdPrincipal > 0 ? tdAccruedNet / tdPrincipal : null;
     let fiTwr = null;
     if (fixedIncomeNav > 0) {
