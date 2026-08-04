@@ -77,42 +77,87 @@ module.exports = async (req, res) => {
 
     const today = new Date().toISOString().slice(0, 10);
     const fxToday = Number(reJson.fx_eur_usd?.today || 1);
-    const fxTodayDate = reJson.fx_eur_usd?.today_date || '—';
+    const fxTodayDate = reJson.fx_eur_usd?.today_date || '\u2014';
     const fxNav = Number(reJson.fx_eur_usd?.nav_close || fxToday);
+    const navAsOf = reJson.nav_as_of || '\u2014';
     const positions = Array.isArray(reJson.positions) ? reJson.positions : [];
 
     // Enrich each position (mirrors performance.html reLoadEnriched logic).
+    // Methodology (post-review): the GP NAV mark is dated `navAsOf` (typically
+    // year-end). The FX quote is dated `fxTodayDate` (typically stale by a few
+    // months). Terminal date of the XIRR must equal the NAV mark date, not
+    // today, otherwise we would let calendar time erode the IRR against a
+    // frozen NAV. We therefore compute XIRR in two dimensions:
+    //   \u2022 EUR XIRR      \u2192 economic return of the asset (no FX effect)
+    //   \u2022 USD XIRR      \u2192 economic return + FX effect, in USD terms
+    //     terminal date = navAsOf, terminal FX = fxNav (NAV-close FX).
+    // The USD figure shown in the hero is INDICATIVE: same GP NAV re-valued at
+    // the most recent FX quote we have on file (dated fxTodayDate). This keeps
+    // the mark auditable and makes the FX date honest.
     const enriched = positions.map(p => {
-      const costUsd = Number(p.amount_eur) * Number(p.fx_eur_usd_at_deploy);
-      const navUsdToday = Number(p.nav_eur) * fxToday;
+      const costUsdAtDeploy = Number(p.amount_eur) * Number(p.fx_eur_usd_at_deploy);
+      // NAV in USD at NAV-close FX (economic USD value at the mark date).
+      const navUsdAtMark = Number(p.nav_eur) * fxNav;
+      // NAV in USD at latest available FX (indicative current value).
+      const navUsdIndicative = Number(p.nav_eur) * fxToday;
       const moicEur = Number(p.nav_eur) / Number(p.amount_eur);
-      const moicUsd = navUsdToday / costUsd;
+      const moicUsdAtMark = navUsdAtMark / costUsdAtDeploy;
+      const moicUsdIndicative = navUsdIndicative / costUsdAtDeploy;
       const deployDate = p.deployment_date;
-      const tYears = (new Date(today) - new Date(deployDate)) / (365.25 * 86400_000);
-      const irrUsd = tYears > 0 ? Math.pow(moicUsd, 1 / tYears) - 1 : null;
-      const irrEur = tYears > 0 ? Math.pow(moicEur, 1 / tYears) - 1 : null;
-      // Lockup logic — use midpoint of low/high if pair, else single value.
+      // Years from deploy to NAV-close date (economic horizon).
+      const tYearsToMark = (new Date(navAsOf) - new Date(deployDate)) / (365.25 * 86400_000);
+      const irrEurToMark = tYearsToMark > 0 ? Math.pow(moicEur, 1 / tYearsToMark) - 1 : null;
+      const irrUsdToMark = tYearsToMark > 0 ? Math.pow(moicUsdAtMark, 1 / tYearsToMark) - 1 : null;
+      // Lockup semantics fix: this is the EXPECTED REMAINING TERM to exit,
+      // computed as (midpoint of GP target investment period) minus months
+      // elapsed since deployment. Show 0 if past the upper bound.
       const lockLow = Number(p.target_investment_period_months_low || 0);
       const lockHigh = Number(p.target_investment_period_months_high || lockLow || 0);
       const lockTotal = lockHigh > 0 ? (lockLow + lockHigh) / 2 : 0;
       const monthsElapsed = monthsBetween(deployDate, today);
-      const lockupRem = Math.max(0, lockTotal - monthsElapsed);
+      const remainingTerm = Math.max(0, lockTotal - monthsElapsed);
       return Object.assign({}, p, {
-        deployDate, costUsd, navUsdToday, moicEur, moicUsd, irrUsd, irrEur, lockupRem,
+        deployDate,
+        costUsd: costUsdAtDeploy,
+        // Preserve legacy field name for the row rendering.
+        navUsdToday: navUsdIndicative,
+        navUsdAtMark,
+        moicEur,
+        moicUsd: moicUsdIndicative,
+        moicUsdAtMark,
+        irrEur: irrEurToMark,
+        irrUsd: irrUsdToMark,
+        lockupRem: remainingTerm,
       });
     });
 
-    const totInvUsd = enriched.reduce((s, p) => s + p.costUsd, 0);
-    const totNavUsd = enriched.reduce((s, p) => s + p.navUsdToday, 0);
+    const totInvUsd  = enriched.reduce((s, p) => s + p.costUsd, 0);
+    const totNavUsdIndicative = enriched.reduce((s, p) => s + p.navUsdToday, 0);
+    const totNavUsdAtMark     = enriched.reduce((s, p) => s + p.navUsdAtMark, 0);
     const totNavEur = enriched.reduce((s, p) => s + Number(p.nav_eur), 0);
     const totInvEur = enriched.reduce((s, p) => s + Number(p.amount_eur), 0);
-    const totMoicUsd = totInvUsd > 0 ? totNavUsd / totInvUsd : null;
-    const totMoicEur = totInvEur > 0 ? totNavEur / totInvEur : null;
-    const cfs = enriched.map(p => ({ date: p.deployDate, amount: -p.costUsd }));
-    cfs.push({ date: today, amount: totNavUsd });
-    const totIrrUsd = xirr(cfs);
-    const navGainUsd = totNavUsd - totInvUsd;
-    const navGainPct = totInvUsd > 0 ? navGainUsd / totInvUsd : null;
+    const totMoicUsdIndicative = totInvUsd > 0 ? totNavUsdIndicative / totInvUsd : null;
+    const totMoicUsdAtMark     = totInvUsd > 0 ? totNavUsdAtMark / totInvUsd : null;
+    const totMoicEur           = totInvEur > 0 ? totNavEur / totInvEur : null;
+    // Portfolio EUR XIRR: cashflows in EUR, terminal date = navAsOf.
+    const cfsEur = enriched.map(p => ({ date: p.deployDate, amount: -Number(p.amount_eur) }));
+    cfsEur.push({ date: navAsOf, amount: totNavEur });
+    const totIrrEur = xirr(cfsEur);
+    // Portfolio USD XIRR (asset return + FX effect), terminal at navAsOf.
+    const cfsUsdMark = enriched.map(p => ({ date: p.deployDate, amount: -p.costUsd }));
+    cfsUsdMark.push({ date: navAsOf, amount: totNavUsdAtMark });
+    const totIrrUsdAtMark = xirr(cfsUsdMark);
+    // NAV gain in USD at the mark FX (auditable) and indicative (headline).
+    const navGainUsdAtMark = totNavUsdAtMark - totInvUsd;
+    const navGainUsdIndicative = totNavUsdIndicative - totInvUsd;
+    const navGainPctIndicative = totInvUsd > 0 ? navGainUsdIndicative / totInvUsd : null;
+    // FX effect on the aggregate mark, in USD.
+    const fxEffectUsd = totNavUsdIndicative - totNavUsdAtMark;
+    // Legacy alias so subsequent code (rows/total row) keeps compiling.
+    const totNavUsd = totNavUsdIndicative;
+    const totIrrUsd = totIrrUsdAtMark;
+    const navGainUsd = navGainUsdIndicative;
+    const navGainPct = navGainPctIndicative;
 
     // ─── Build PDF ───────────────────────────────────────────────
     res.setHeader('Content-Type', 'application/pdf');
@@ -129,26 +174,30 @@ module.exports = async (req, res) => {
 
     // Title
     doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(20)
-       .text('Real Estate — Active positions', 54, 62);
+       .text('Real Estate \u2014 Active positions', 54, 62);
     doc.fillColor(GRAY).font('Helvetica').fontSize(9)
-       .text(`AX Partners aggregate · NAV mark ${reJson.nav_as_of || '—'} · FX EUR/USD ${fxToday.toFixed(4)} (${fxTodayDate})`,
-             54, 88);
+       .text(
+         `AX Partners aggregate  \u00b7  Latest GP NAV mark: ${navAsOf}  \u00b7  ` +
+         `Converted to USD at FX EUR/USD ${fxToday.toFixed(4)} dated ${fxTodayDate}`,
+         54, 88);
 
     // ─── HERO STRIP (5 cells) ──────────────────────────────────
     const heroY = 110;
     const heroH = 62;
     const cellW = (W - 108) / 5;
     const cells = [
-      { label: 'NET INVESTED (USD)', value: fmtUSD(totInvUsd, 0), sub: '@ FX deploy' },
-      { label: 'NAV (USD)', value: fmtUSD(totNavUsd, 0),
-        sub: (navGainUsd >= 0 ? '+' : '') + fmtUSD(navGainUsd, 0) +
-             ' (' + (navGainPct != null ? fmtPctRaw(navGainPct, 2) : '—') + ')',
-        subColor: pctColor(navGainUsd) },
-      { label: 'MOIC (USD)', value: fmtMoic(totMoicUsd),
-        valueColor: totMoicUsd != null && totMoicUsd >= 1 ? GREEN : RED,
-        sub: 'portfolio aggregate' },
-      { label: 'XIRR (USD, ann.)', value: fmtPct(totIrrUsd),
-        valueColor: pctColor(totIrrUsd), sub: 'since inception' },
+      { label: 'NET INVESTED (USD)', value: fmtUSD(totInvUsd, 0),
+        sub: 'at FX on deploy' },
+      { label: 'INDICATIVE NAV (USD)', value: fmtUSD(totNavUsdIndicative, 0),
+        sub: (navGainUsdIndicative >= 0 ? '+' : '') + fmtUSD(navGainUsdIndicative, 0) +
+             ' (' + (navGainPctIndicative != null ? fmtPctRaw(navGainPctIndicative, 2) : '\u2014') + ')',
+        subColor: pctColor(navGainUsdIndicative) },
+      { label: 'INDICATIVE MOIC (USD)', value: fmtMoic(totMoicUsdIndicative),
+        valueColor: totMoicUsdIndicative != null && totMoicUsdIndicative >= 1 ? GREEN : RED,
+        sub: 'GP NAV / net invested' },
+      { label: 'INDICATIVE XIRR (USD, ann.)', value: fmtPct(totIrrUsdAtMark),
+        valueColor: pctColor(totIrrUsdAtMark),
+        sub: `to ${navAsOf}` },
       { label: 'POSITIONS', value: String(enriched.length),
         sub: 'NAV EUR: ' + fmtEUR(totNavEur, 0) },
     ];
@@ -176,7 +225,7 @@ module.exports = async (req, res) => {
       { key: 'moicUsd',    w: 32, align: 'right', title: 'MOIC USD' },
       { key: 'irrUsd',     w: 38, align: 'right', title: 'IRR USD' },
       { key: 'weight',     w: 30, align: 'right', title: 'Wt.' },
-      { key: 'lockup',     w: 34, align: 'right', title: 'Lockup' },
+      { key: 'lockup',     w: 42, align: 'right', title: 'Est. rem. term' },
     ];
     const tableW = cols.reduce((s, c) => s + c.w, 0);
     const startX = 54;
@@ -258,24 +307,45 @@ module.exports = async (req, res) => {
     }
     y += 18;
 
-    // ─── METHODOLOGICAL BASIS ──────────────────────────────────
+    // ─── METHODOLOGICAL BASIS ──────────────────────────
     y += 12;
     drawSectionLabel(doc, y, 'Methodological basis');
     y += 12;
-    doc.rect(startX, y, tableW, 60).fill(CREAM);
+    const methBoxH = 108;
+    doc.rect(startX, y, tableW, methBoxH).fill(CREAM);
     doc.fillColor(NEAR_BLACK).font('Helvetica').fontSize(7.5)
        .text(
-         `FX EUR/USD used: ${fxToday.toFixed(4)} on ${fxTodayDate} (NAV mark on ${reJson.nav_as_of} at ${fxNav.toFixed(4)}). ` +
-         `Each contribution was converted to USD at the FX in effect on deployment date; current NAV is converted at today's FX. ` +
-         `XIRR USD calculated by bisection over individual cashflows (deployment negative, aggregate NAV positive today).`,
-         startX + 8, y + 8,
+         `Dates. Latest official GP NAV mark: ${navAsOf}. FX EUR/USD used to convert that NAV to USD today: ` +
+         `${fxToday.toFixed(4)} dated ${fxTodayDate}. FX at the NAV-close date was ${fxNav.toFixed(4)}. ` +
+         `Report generated ${today}.`,
+         startX + 8, y + 6,
          { width: tableW - 16, lineGap: 2 });
-    doc.fillColor(GRAY).font('Helvetica-Oblique').fontSize(7)
-       .text(reJson.disclaimer || '',
-             startX + 8, y + 42,
-             { width: tableW - 16, lineGap: 2, height: 18, ellipsis: true });
+    doc.text(
+         `NAV in USD. Contributions were converted to USD at the FX in effect on each deployment date. The ` +
+         `"Indicative NAV (USD)" figure re-values the December GP NAV at the latest FX quote we hold on file; ` +
+         `it is NOT a fresh valuation. When the GP publishes the next quarterly mark the number will move.`,
+         startX + 8, y + 30,
+         { width: tableW - 16, lineGap: 2 });
+    doc.text(
+         `XIRR. Aggregate portfolio IRR is calculated in USD by bisection over individual cashflows: each ` +
+         `deployment is a negative flow on its actual date; the terminal positive flow is the GP NAV converted ` +
+         `at NAV-close FX and dated ${navAsOf} \u2014 NOT dated today, so calendar time cannot erode the IRR ` +
+         `against a stale mark. EUR XIRR (asset economics, no FX effect): ${fmtPct(totIrrEur)}. ` +
+         `USD XIRR (asset + FX to ${navAsOf}): ${fmtPct(totIrrUsdAtMark)}. ` +
+         `FX effect on the aggregate mark (indicative NAV minus NAV at close FX): ` +
+         `${(fxEffectUsd >= 0 ? '+' : '\u2212') + fmtUSD(Math.abs(fxEffectUsd), 0)}.`,
+         startX + 8, y + 60,
+         { width: tableW - 16, lineGap: 2 });
+    doc.fillColor(GRAY).font('Helvetica-Oblique').fontSize(6.8)
+       .text(
+         'GP mark policy. AX Partners publishes an official NAV once per reporting period; interim months do not ' +
+         'produce a fresh mark. The EUR appreciation vs. contributed capital (\u007e14% aggregate at ' + navAsOf + ') ' +
+         'reflects the GP\u0027s current model-based valuation and preferred-equity accruals, not a realised gain. ' +
+         'Final upside is only recognised at exit; expect the mark to be re-underwritten each quarter.',
+         startX + 8, y + methBoxH - 24,
+         { width: tableW - 16, lineGap: 2 });
 
-    drawFooter(doc, today, `real_estate_positions.json · ${reJson.source || 'AX Partners'}`);
+    drawFooter(doc, today, `real_estate_positions.json  \u00b7  ${reJson.source || 'AX Partners'}`);
     doc.end();
   } catch (e) {
     if (!res.headersSent) {
