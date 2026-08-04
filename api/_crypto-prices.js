@@ -18,9 +18,21 @@
 //   { ok: false, error: '...' }
 // ═══════════════════════════════════════════════════════════════════
 
+// Module-level cache. Vercel serverless runtime keeps warm instances alive
+// long enough for two back-to-back PDF requests (Consolidated + Crypto) to
+// share the same price snapshot. TTL is intentionally short so live spot
+// still refreshes on the next report generation.
+const PRICE_CACHE_TTL_MS = 60_000;
+const _priceCache = new Map(); // key: sorted-ids -> { at:number, prices, source }
+
 async function fetchCryptoPrices(coingeckoIds, timeoutMs = 4000) {
   if (!Array.isArray(coingeckoIds) || coingeckoIds.length === 0) {
     return { ok: true, prices: {}, source: 'noop' };
+  }
+  const cacheKey = [...coingeckoIds].sort().join(',');
+  const cached = _priceCache.get(cacheKey);
+  if (cached && (Date.now() - cached.at) < PRICE_CACHE_TTL_MS) {
+    return { ok: true, prices: cached.prices, source: cached.source + '_cached' };
   }
   const url = 'https://api.coingecko.com/api/v3/simple/price'
             + '?ids=' + encodeURIComponent(coingeckoIds.join(','))
@@ -50,6 +62,7 @@ async function fetchCryptoPrices(coingeckoIds, timeoutMs = 4000) {
         };
       }
     }
+    _priceCache.set(cacheKey, { at: Date.now(), prices, source: 'coingecko' });
     return { ok: true, prices, source: 'coingecko' };
   } catch (err) {
     return { ok: false, error: err.name === 'AbortError' ? 'coingecko_timeout' : (err.message || 'coingecko_error') };

@@ -168,27 +168,6 @@ module.exports = async (req, res) => {
     const totNav = eqNav + reNav + crNav + tdMv;
     const totCap = eqCap + reCap + crCap + tdPrincipal;
 
-    // Sum-preserving integer rounding (largest-remainder). Ensures
-    // Sum(sleeve_shown) === Total_shown so the reader can reconstruct
-    // the arithmetic from the visible integers with no $1 shift.
-    function roundPreservingSum(values, targetInt) {
-      const floored = values.map(v => Math.floor(v));
-      const remainders = values.map((v, i) => ({ i, r: v - floored[i] }));
-      const currentSum = floored.reduce((s, v) => s + v, 0);
-      let diff = targetInt - currentSum;
-      const rounded = floored.slice();
-      remainders.sort((a, b) => b.r - a.r);
-      for (let k = 0; k < remainders.length && diff > 0; k++) {
-        rounded[remainders[k].i] += 1; diff -= 1;
-      }
-      if (diff < 0) {
-        remainders.sort((a, b) => a.r - b.r);
-        for (let k = 0; k < remainders.length && diff < 0; k++) {
-          rounded[remainders[k].i] -= 1; diff += 1;
-        }
-      }
-      return rounded;
-    }
     // Header defines MOIC as NAV/Capital — keep it consistent with that
     // definition. Historical realized crypto P&L is reported separately in the
     // reconciliation block below (it was already withdrawn from NAV).
@@ -245,6 +224,55 @@ module.exports = async (req, res) => {
     if (crTwr != null && crNav > 0)  { twrNumer += crTwr * crNav; twrWeights += crNav; }
     if (tdConsolTwr != null && tdMv > 0) { twrNumer += tdConsolTwr * tdMv; twrWeights += tdMv; }
     const totTwr = twrWeights > 0 ? twrNumer / twrWeights : null;
+
+    // Precompute sum-preserving integers for the visible sleeves so the
+    // hero KPI strip, allocation table, top-holdings section and
+    // reconciliation footnote all render off the same integer amounts.
+    // Sleeves in the same order as the allocation table.
+    const _fiLastEarly = (tdResult && tdResult.as_of) ? tdResult.as_of : eqLast;
+    const _presentSleeves = [
+      { label: 'Equity',              nav: eqEquityNav,     cap: eqEquityCap,      pnl: eqEquityPnl,   twr: eqTwr, last: eqLast,      present: !!eqK && eqEquityNav > 0 },
+      { label: 'Fixed Income',        nav: fixedIncomeNav,  cap: fixedIncomeCap,   pnl: fixedIncomePnl,twr: null,  last: _fiLastEarly, present: fixedIncomeNav > 0 },
+      { label: 'Cash & Equivalents',  nav: cashNav,         cap: cashCap,          pnl: cashPnl,       twr: eqTwr, last: eqLast,      present: !!eqK && cashNav > 0 },
+      { label: 'Real Estate',         nav: reNav,           cap: reCap,            pnl: rePnlUnr,      twr: reTwr, last: reLast,      present: !!reJson },
+      { label: 'Crypto',              nav: crNav,           cap: crCap,            pnl: crPnlTotal,    twr: crTwr, last: crLast,      present: !!crJson, realized: crPnlRealized },
+    ].filter(s => s.present);
+
+    function _roundPreservingSum(values, targetInt) {
+      const floored = values.map(v => Math.floor(v));
+      const remainders = values.map((v, i) => ({ i, r: v - floored[i] }));
+      const currentSum = floored.reduce((s, v) => s + v, 0);
+      let diff = targetInt - currentSum;
+      const rounded = floored.slice();
+      remainders.sort((a, b) => b.r - a.r);
+      for (let k = 0; k < remainders.length && diff > 0; k++) {
+        rounded[remainders[k].i] += 1; diff -= 1;
+      }
+      if (diff < 0) {
+        remainders.sort((a, b) => a.r - b.r);
+        for (let k = 0; k < remainders.length && diff < 0; k++) {
+          rounded[remainders[k].i] -= 1; diff += 1;
+        }
+      }
+      return rounded;
+    }
+    const _totNavInt = Math.round(totNav);
+    const _totCapInt = Math.round(totCap);
+    const _sumPnlInt = Math.round(sumSleevePnl);
+    const prShown = {
+      nav:       _roundPreservingSum(_presentSleeves.map(s => s.nav), _totNavInt),
+      cap:       _roundPreservingSum(_presentSleeves.map(s => s.cap), _totCapInt),
+      pnl:       _roundPreservingSum(_presentSleeves.map(s => s.pnl), _sumPnlInt),
+      totNavInt: _totNavInt,
+      totCapInt: _totCapInt,
+    };
+    // Visible-integer totals that reconcile from the visible sleeves.
+    const totNavShown = prShown.nav.reduce((s, v) => s + v, 0);
+    const totCapShown = prShown.cap.reduce((s, v) => s + v, 0);
+    const totPnlShown = totNavShown - totCapShown;
+    const totMoicShown = totCapShown > 0 ? totNavShown / totCapShown : null;
+    const totRoiShown  = totCapShown > 0 ? totPnlShown / totCapShown : null;
+    const sumSleevePnlShown = prShown.pnl.reduce((s, v) => s + v, 0);
 
     // Debug probe short-circuits here.
     if (debugMode) {
@@ -309,13 +337,14 @@ module.exports = async (req, res) => {
     doc.rect(M, y, CW, 90).fill(WHITE).strokeColor(GOLD).lineWidth(0.5).stroke();
     doc.rect(M, y, CW, 2).fill(GOLD);
 
-    const totRoi = totCap > 0 ? totPnlUnr / totCap : null;
+    // Hero uses the same visible-integer totals as the table so the
+    // reader can reconstruct every ratio from the values on screen.
     const heroCells = [
-      { label: 'NAV TOTAL (USD)',        value: fmtUSD(totNav, 0),         sub: `${sleeveCount} sleeves active`,     subColor: GRAY },
-      { label: 'NET CONTRIBUTED CAPITAL', value: fmtUSD(totCap, 0),         sub: 'cash in \u2212 cash out',                subColor: GRAY },
-      { label: 'TOTAL P&L (USD)',         value: fmtUSD0Signed(totPnlUnr),  sub: `NAV \u2212 Capital`,                        valueColor: pctColor(totPnlUnr), subColor: GRAY },
-      { label: 'CONSOLIDATED MOIC',       value: fmtMoic(totMoic),          sub: 'NAV / Capital',                     valueColor: (totMoic != null && totMoic >= 1) ? GREEN : RED, subColor: GRAY },
-      { label: 'P&L / CAPITAL',           value: fmtPct(totRoi),            sub: 'Simple cumulative return',          valueColor: pctColor(totRoi),    subColor: GRAY },
+      { label: 'NAV TOTAL (USD)',        value: '$' + totNavShown.toLocaleString('en-US'),         sub: `${sleeveCount} sleeves active`,     subColor: GRAY },
+      { label: 'NET CONTRIBUTED CAPITAL', value: '$' + totCapShown.toLocaleString('en-US'),         sub: 'cash in \u2212 cash out',                subColor: GRAY },
+      { label: 'TOTAL P&L (USD)',         value: (totPnlShown >= 0 ? '+$' : '-$') + Math.abs(totPnlShown).toLocaleString('en-US'), sub: `NAV \u2212 Capital`, valueColor: pctColor(totPnlShown), subColor: GRAY },
+      { label: 'CONSOLIDATED MOIC',       value: fmtMoic(totMoicShown),     sub: 'NAV / Capital',                     valueColor: (totMoicShown != null && totMoicShown >= 1) ? GREEN : RED, subColor: GRAY },
+      { label: 'P&L / CAPITAL',           value: fmtPct(totRoiShown),       sub: 'Simple cumulative return',          valueColor: pctColor(totRoiShown),    subColor: GRAY },
     ];
     const cellW = CW / heroCells.length;
     heroCells.forEach((cell, i) => {
@@ -352,15 +381,10 @@ module.exports = async (req, res) => {
       if (tdTwr != null && tdMv > 0)             { n += tdTwr * tdMv;             d += tdMv; }
       fiTwr = d > 0 ? n / d : null;
     }
-    const fiLast = (tdResult && tdResult.as_of) ? tdResult.as_of : eqLast;
-
-    const sleeves = [
-      { label: 'Equity',              nav: eqEquityNav,     cap: eqEquityCap,      pnl: eqEquityPnl,   twr: eqTwr,  last: eqLast, present: !!eqK && eqEquityNav > 0 },
-      { label: 'Fixed Income',        nav: fixedIncomeNav,  cap: fixedIncomeCap,   pnl: fixedIncomePnl,twr: fiTwr,  last: fiLast, present: fixedIncomeNav > 0 },
-      { label: 'Cash & Equivalents',  nav: cashNav,         cap: cashCap,          pnl: cashPnl,       twr: eqTwr,  last: eqLast, present: !!eqK && cashNav > 0 },
-      { label: 'Real Estate',         nav: reNav,           cap: reCap,            pnl: rePnlUnr,      twr: reTwr,  last: reLast, present: !!reJson },
-      { label: 'Crypto',              nav: crNav,           cap: crCap,            pnl: crPnlTotal,    twr: crTwr,  last: crLast, present: !!crJson, realized: crPnlRealized },
-    ];
+    // FI last-update override with weighted TWR baked in (used only if you
+    // decide to reintroduce a TWR column later; the fiTwr weighted average
+    // is not currently displayed).
+    void fiTwr; // eslint-quiet, keep computation for future use
 
     // Table layout
     const cols = [
@@ -383,22 +407,13 @@ module.exports = async (req, res) => {
     }
     y += 18;
 
-    // Build shown integers over only the present sleeves so the visible
-    // integer subtotals sum exactly to the visible total row.
-    const presentSleeves = sleeves.filter(s => s.present);
-    const totNavInt = Math.round(totNav);
-    const totCapInt = Math.round(totCap);
-    const sumPnlInt = Math.round(sumSleevePnl);
-    const prShown = {
-      nav: roundPreservingSum(presentSleeves.map(s => s.nav), totNavInt),
-      cap: roundPreservingSum(presentSleeves.map(s => s.cap), totCapInt),
-      pnl: roundPreservingSum(presentSleeves.map(s => s.pnl), sumPnlInt),
-      totNavInt,
-    };
-
+    // prShown, totNavShown, totCapShown, totPnlShown, totMoicShown, totRoiShown
+    // were precomputed near the totals block (before the hero KPI strip) so
+    // that the KPI strip, allocation table and reconciliation all render off
+    // the same integer amounts.
     doc.font('Helvetica').fontSize(8.5).fillColor(NEAR_BLACK);
     let rowIdx = 0;
-    for (const s of presentSleeves) {
+    for (const s of _presentSleeves) {
       const rowH = 16;
       if (rowIdx % 2 === 1) doc.rect(M, y, CW, rowH).fill(ROW_ALT);
       // Sum-preserving shown integers computed once above (see prShown maps).
@@ -430,15 +445,10 @@ module.exports = async (req, res) => {
       y += rowH;
       rowIdx++;
     }
-    // TOTAL row — uses integer sums that equal the sum of the visible sleeves.
-    const totNavShown = prShown.nav.reduce((s, v) => s + v, 0);
-    const totCapShown = prShown.cap.reduce((s, v) => s + v, 0);
-    // navMinusCapShown is the reported total P&L. Reconciliation still lives
-    // in the footnote below; here we anchor to (NAV − Capital) on shown ints.
-    const totPnlShown = totNavShown - totCapShown;
-    const totMoicShown = totCapShown > 0 ? totNavShown / totCapShown : null;
-    const totRoiShown = totCapShown > 0 ? totPnlShown / totCapShown : null;
-
+    // TOTAL row — uses the integer sums that equal the sum of the visible
+    // sleeves. totNavShown / totCapShown / totPnlShown / totMoicShown /
+    // totRoiShown are all precomputed near the totals block above so they
+    // match the hero KPI strip exactly.
     doc.rect(M, y, CW, 18).fill(CREAM);
     cx = M + 6;
     const totalCells = [
@@ -460,7 +470,7 @@ module.exports = async (req, res) => {
     // Reconciliation footnote. All amounts here are the visible integer
     // amounts — same values printed in the sleeve rows and total row — so
     // the identity reconciles arithmetically for the reader.
-    const sumSleevePnlShown = prShown.pnl.reduce((s, v) => s + v, 0);
+    // sumSleevePnlShown was already computed in the pre-hero precompute block.
     const navMinusCapShown = totNavShown - totCapShown;
     const otherAdjustmentsShown = navMinusCapShown - sumSleevePnlShown;
     // Attribute the Crypto capital-basis adjustment to Crypto, and the
@@ -593,8 +603,18 @@ module.exports = async (req, res) => {
     for (const r of reEnriched) {
       if (r.navUsd > 0) allHoldings.push({ sleeve: 'Real Estate', name: r.name, mv: r.navUsd });
     }
-    for (const c of crEnriched) {
-      if (c.marketUsd > 0) allHoldings.push({ sleeve: 'Crypto', name: c.name, mv: c.marketUsd });
+    // Crypto sleeve holdings: if there is only one crypto position, anchor its
+    // displayed MV to the same integer the Allocation table shows for the
+    // Crypto sleeve so the reader never sees the two tables disagreeing by ±1.
+    const _cryptoIdxInPresent = _presentSleeves.findIndex(s => s.label === 'Crypto');
+    const _cryptoNavShownInt = _cryptoIdxInPresent >= 0 ? prShown.nav[_cryptoIdxInPresent] : null;
+    if (crEnriched.length === 1 && _cryptoNavShownInt != null) {
+      // Single position: attribute the whole sleeve's shown NAV to it.
+      allHoldings.push({ sleeve: 'Crypto', name: crEnriched[0].name, mv: _cryptoNavShownInt });
+    } else {
+      for (const c of crEnriched) {
+        if (c.marketUsd > 0) allHoldings.push({ sleeve: 'Crypto', name: c.name, mv: c.marketUsd });
+      }
     }
     if (tdResult && !tdResult._err && Array.isArray(tdResult.deposits)) {
       for (const td of tdResult.deposits) {
