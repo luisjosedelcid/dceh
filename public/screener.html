@@ -154,11 +154,11 @@
 
 <main>
   <div class="slbl">DCE Holdings — Investment Office</div>
-  <h1>Find</h1>
-  <div class="sub">Idea generation pipeline. Sector quality screening + smart-money tracking, before the full Columbia model.</div>
+  <h1 id="page-h1">Find</h1>
+  <div class="sub" id="page-sub">Idea generation pipeline. Sector quality screening + smart-money tracking, before the full Columbia model.</div>
 
   <!-- ═══ MODE TABS ═══ -->
-  <div class="mode-tabs">
+  <div class="mode-tabs" id="mode-tabs">
     <button class="mode-tab" data-mode="screener" onclick="showMode('screener',this)">Screener</button>
     <button class="mode-tab" data-mode="sectors" onclick="showMode('sectors',this)">Sector Tracker</button>
     <button class="mode-tab" data-mode="superinvestors" onclick="showMode('superinvestors',this)">Superinvestors <span class="count">10</span></button>
@@ -2006,6 +2006,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const validModes = ['screener','sectors','ideafeed','superinvestors','shortlist'];
   if (hash && validModes.includes(hash)) {
     showMode(hash);
+    // When linked directly from the Feed dropdown, present Idea Feed as its
+    // own page: swap the header, hide the sibling tabs, hide the Find intro.
+    if (hash === 'ideafeed') {
+      const h1  = document.getElementById('page-h1');
+      const sub = document.getElementById('page-sub');
+      const tabs = document.getElementById('mode-tabs');
+      if (h1)  h1.textContent  = 'Idea Feed';
+      if (sub) sub.textContent = 'Curated inbound ideas from blogs, Substacks and podcasts. Refreshed every 6h.';
+      if (tabs) tabs.style.display = 'none';
+      document.title = 'DCE Holdings \u2014 Idea Feed';
+      const meta = document.getElementById('footer-meta');
+      if (meta) meta.textContent = 'Feed \u00b7 Idea Feed v1';
+    }
   }
 });
 
