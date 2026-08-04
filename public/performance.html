@@ -643,6 +643,10 @@
 
         <div class="actions" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <button class="btn ghost" id="btn-re-reload" type="button">Reload</button>
+          <div style="display:inline-flex;align-items:center;gap:6px">
+            <label for="re-report-asof" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.06em;text-transform:uppercase;font-weight:600">As of</label>
+            <input type="date" id="re-report-asof" style="font-size:12px;padding:6px 8px;border:1px solid #d0d2d6;border-radius:4px;font-family:inherit;color:var(--navy)" title="Select the report date. The PDF will use the most recent GP mark whose date is on or before this.">
+          </div>
           <button class="btn primary" id="btn-re-report" type="button">Generate PDF</button>
           <span id="re-report-status" style="font-size:11px;color:var(--gray-mid)"></span>
         </div>
@@ -747,6 +751,10 @@
 
         <div class="actions" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <button class="btn ghost" id="btn-fi-reload" type="button">Reload</button>
+          <div style="display:inline-flex;align-items:center;gap:6px">
+            <label for="fi-report-asof" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.06em;text-transform:uppercase;font-weight:600">As of</label>
+            <input type="date" id="fi-report-asof" style="font-size:12px;padding:6px 8px;border:1px solid #d0d2d6;border-radius:4px;font-family:inherit;color:var(--navy)" title="Select the report date. Bank CDs are re-valued at that date via mark-to-accrual.">
+          </div>
           <button class="btn primary" id="btn-fi-report" type="button">Generate PDF</button>
           <span id="fi-report-status" style="font-size:11px;color:var(--gray-mid)"></span>
           <span id="fi-last-update" style="font-size:10px;color:var(--gray-mid);letter-spacing:0.08em">—</span>
@@ -2859,19 +2867,27 @@ function renderConsolidado(eqK, eqHoldings){
 document.getElementById('btn-cons-reload').addEventListener('click', loadConsolidado);
 
 // ── Generic PDF-download helper for the sleeve-level reports ─────────────
-async function downloadSleeveReport({ url, fileBase, btnId, statusId }) {
+async function downloadSleeveReport({ url, fileBase, btnId, statusId, asOfInputId }) {
   const btn = document.getElementById(btnId);
   const status = document.getElementById(statusId);
   if (!btn) return;
   const original = btn.textContent;
-  const asOf = new Date().toISOString().slice(0, 10);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  // Pull as-of from the accompanying picker if provided; clamp future dates.
+  let asOf = todayStr;
+  if (asOfInputId) {
+    const el = document.getElementById(asOfInputId);
+    const raw = el && el.value ? el.value : todayStr;
+    asOf = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? (raw > todayStr ? todayStr : raw) : todayStr;
+  }
   btn.disabled = true;
   btn.textContent = 'Generating…';
   if (status) { status.textContent = `Building PDF as of ${asOf}…`; status.style.color = 'var(--gray-mid)'; }
   const ac = new AbortController();
   const abortTimer = setTimeout(() => ac.abort(), 90_000);
   try {
-    const r = await fetch(url, {
+    const qs = asOfInputId ? `?as_of=${encodeURIComponent(asOf)}` : '';
+    const r = await fetch(url + qs, {
       method: 'GET',
       headers: { 'x-admin-token': adminToken() },
       signal: ac.signal,
@@ -2903,6 +2919,7 @@ document.getElementById('btn-re-report').addEventListener('click', () => downloa
   url: '/api/generate-real-estate-report',
   fileBase: 'DCE_RealEstate_Snapshot',
   btnId: 'btn-re-report', statusId: 're-report-status',
+  asOfInputId: 're-report-asof',
 }));
 document.getElementById('btn-cr-report').addEventListener('click', () => downloadSleeveReport({
   url: '/api/generate-crypto-report',
@@ -2911,9 +2928,22 @@ document.getElementById('btn-cr-report').addEventListener('click', () => downloa
 }));
 document.getElementById('btn-fi-report').addEventListener('click', () => downloadSleeveReport({
   url: '/api/generate-fixed-income-report',
-  fileBase: 'DCE_FixedIncome_Snapshot',
+  fileBase: 'DCE_BankDeposits_Snapshot',
   btnId: 'btn-fi-report', statusId: 'fi-report-status',
+  asOfInputId: 'fi-report-asof',
 }));
+
+// Initialize the sleeve-level as-of pickers to today (block future dates).
+(function initSleevePickers(){
+  const todayStr = new Date().toISOString().slice(0, 10);
+  ['re-report-asof', 'fi-report-asof'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      if (!el.value) el.value = todayStr;
+      el.max = todayStr;
+    }
+  });
+})();
 
 document.getElementById('btn-cons-report').addEventListener('click', async () => {
   const btn = document.getElementById('btn-cons-report');

@@ -23,9 +23,20 @@ module.exports = async (req, res) => {
       return;
     }
     const today = new Date().toISOString().slice(0, 10);
-    const td = await loadAndValueTimeDeposits(today);
-    const deps = (td.deposits || []).filter(d => d.status !== 'redeemed');
-    const asOf = td.as_of || today;
+    // Requested as-of date via ?as_of=YYYY-MM-DD; clamp future dates to today.
+    // Bank CDs re-value linearly on any historical date via mark-to-accrual.
+    const rawAsOf = (req.query && req.query.as_of) ? String(req.query.as_of) : today;
+    const asOfRequested =
+      /^\d{4}-\d{2}-\d{2}$/.test(rawAsOf) ? (rawAsOf > today ? today : rawAsOf) : today;
+    const td = await loadAndValueTimeDeposits(asOfRequested);
+    // Filter out redeemed AND deposits that had not started yet as of the requested date.
+    const deps = (td.deposits || []).filter(d =>
+      d.status !== 'redeemed' && d.start_date <= asOfRequested);
+    if (deps.length === 0) {
+      res.status(400).json({ error: `No active bank deposits as of ${asOfRequested}.` });
+      return;
+    }
+    const asOf = td.as_of || asOfRequested;
 
     // ─── Aggregate KPIs ────────────────────────────────────────
     const totalPrincipal = deps.reduce((s, d) => s + Number(d.principal || 0), 0);
@@ -77,7 +88,7 @@ module.exports = async (req, res) => {
     // ─── Build PDF ─────────────────────────────────────────────
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition',
-      `attachment; filename="DCE_BankDeposits_Snapshot_${today}.pdf"`);
+      `attachment; filename="DCE_BankDeposits_Snapshot_${asOfRequested}.pdf"`);
 
     const doc = new PDFDocument({ size: 'LETTER', margin: 54, bufferPages: true });
     doc.pipe(res);

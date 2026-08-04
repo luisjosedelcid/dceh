@@ -16,6 +16,7 @@ const {
   drawHeaderBar, drawFooter, drawSectionLabel, drawHeroCell,
 } = require('./_pdf-helpers');
 const { getFxRate, getFxRateOnDate } = require('./_fx-rates');
+const { resolveRealEstateAsOf } = require('./_real-estate-marks');
 
 function readPublicJson(filename) {
   const candidates = [
@@ -70,15 +71,32 @@ module.exports = async (req, res) => {
       res.status(auth.status).json({ error: auth.error });
       return;
     }
-    const reJson = readPublicJson('real_estate_positions.json');
-    if (!reJson) {
+    const staticJson = readPublicJson('real_estate_positions.json');
+    if (!staticJson) {
       res.status(500).json({ error: 'real_estate_positions.json not found' });
       return;
     }
 
     const today = new Date().toISOString().slice(0, 10);
+    // Requested as-of date via ?as_of=YYYY-MM-DD; clamp future dates to today.
+    // If missing or malformed we default to today (matches the UI default).
+    const rawAsOf = (req.query && req.query.as_of) ? String(req.query.as_of) : today;
+    const asOfRequested =
+      /^\d{4}-\d{2}-\d{2}$/.test(rawAsOf) ? (rawAsOf > today ? today : rawAsOf) : today;
+
+    // Resolve the mark that applies at as-of. This overrides nav_as_of, source,
+    // and each position's nav_eur / moic_eur_reported / gp_commentary with the
+    // most recent published mark <= as-of. Positions with no prior mark fall
+    // back to par (NAV = capital contributed).
+    const reJson = await resolveRealEstateAsOf(staticJson, asOfRequested);
     const navAsOf = reJson.nav_as_of || '\u2014';
-    const positions = Array.isArray(reJson.positions) ? reJson.positions : [];
+    // Filter out positions not yet deployed as of the requested date.
+    const positions = (Array.isArray(reJson.positions) ? reJson.positions : [])
+      .filter(p => p._mark_status !== 'pre_deploy');
+    if (positions.length === 0) {
+      res.status(400).json({ error: `No Real Estate positions deployed as of ${asOfRequested}.` });
+      return;
+    }
 
     // ── Live FX (ECB via Frankfurter, 60-min cache) with file fallback ──
     // fxToday: rate at report generation (latest published ECB reference).
@@ -140,7 +158,7 @@ module.exports = async (req, res) => {
       const lockLow = Number(p.target_investment_period_months_low || 0);
       const lockHigh = Number(p.target_investment_period_months_high || lockLow || 0);
       const lockTotal = lockHigh > 0 ? (lockLow + lockHigh) / 2 : 0;
-      const monthsElapsed = monthsBetween(deployDate, today);
+      const monthsElapsed = monthsBetween(deployDate, asOfRequested);
       const remainingTerm = Math.max(0, lockTotal - monthsElapsed);
       return Object.assign({}, p, {
         deployDate,
@@ -189,7 +207,7 @@ module.exports = async (req, res) => {
     // ─── Build PDF ───────────────────────────────────────────────
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition',
-      `attachment; filename="DCE_RealEstate_Snapshot_${today}.pdf"`);
+      `attachment; filename="DCE_RealEstate_Snapshot_${asOfRequested}.pdf"`);
 
     const doc = new PDFDocument({ size: 'LETTER', margin: 54, bufferPages: true });
     doc.pipe(res);
@@ -378,7 +396,8 @@ module.exports = async (req, res) => {
          startX + 8, y + methBoxH - 24,
          { width: tableW - 16, lineGap: 2 });
 
-    drawFooter(doc, today, `real_estate_positions.json  \u00b7  ${reJson.source || 'AX Partners'}`);
+    drawFooter(doc, asOfRequested,
+      `real_estate_positions.json + real_estate_marks (as of ${asOfRequested})  \u00b7  ${reJson.source || 'AX Partners'}`);
     doc.end();
   } catch (e) {
     if (!res.headersSent) {
