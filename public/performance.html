@@ -677,7 +677,7 @@
           <div class="kpi"><div class="kpi-label">Net capital contributed</div><div class="kpi-value" id="cr-kpi-cap">—</div><div class="kpi-sub">deposits − fiat withdrawals</div></div>
           <div class="kpi"><div class="kpi-label">NAV crypto (live)</div><div class="kpi-value" id="cr-kpi-nav">—</div><div class="kpi-sub" id="cr-kpi-nav-sub">—</div></div>
           <div class="kpi"><div class="kpi-label">Cumulative total P&amp;L</div><div class="kpi-value" id="cr-kpi-pnl">—</div><div class="kpi-sub" id="cr-kpi-pnl-sub">unrealized + realized hist.</div></div>
-          <div class="kpi"><div class="kpi-label">MOIC</div><div class="kpi-value" id="cr-kpi-moic">—</div><div class="kpi-sub">over net capital</div></div>
+          <div class="kpi"><div class="kpi-label">NAV / Net Capital</div><div class="kpi-value" id="cr-kpi-moic">—</div><div class="kpi-sub">residual value multiple</div></div>
           <div class="kpi"><div class="kpi-label">ROI over net capital</div><div class="kpi-value" id="cr-kpi-roi">—</div><div class="kpi-sub" id="cr-kpi-hold">—</div></div>
         </div>
 
@@ -2307,7 +2307,12 @@ function renderCrypto(){
   // ROI sobre capital neto: lo que sigue expuesto vale totMarket; el realizado ya fue repatriado.
   // Definición consistente con mock: P&L total acumulado / capital neto aportado.
   const roi = capNeto>0 ? pnlTotal/capNeto : null;
-  const moicSleeve = capNeto>0 ? (totMarket + realizedHist) / capNeto : null;
+  // Residual value multiple = NAV over net contributed capital. Matches the
+  // PDF exactly (api/generate-crypto-report.js:109). Do NOT add realizedHist
+  // to the numerator: realized P&L that was repatriated already reduced the
+  // net contributed capital via withdrawals_fiat_to_bank_usd, so including it
+  // here would double-count and inflate the multiple (was 2.42x vs 1.54x).
+  const moicSleeve = capNeto>0 ? totMarket / capNeto : null;
 
   // KPIs
   document.getElementById('cr-kpi-cap').textContent = crFmtUsd0(capNeto);
@@ -2374,7 +2379,7 @@ function renderCrypto(){
   document.getElementById('cr-asof-badge').textContent = 'Static data as of '+CR_DATA.as_of_static_data+' · Live price: '+(latestTs?new Date(latestTs).toLocaleTimeString('en-US'):'—');
 
   document.getElementById('cr-method').innerHTML = '<strong>Accounting method:</strong> '+CR_DATA.accounting_method+'. '
-    +'<strong>NAV crypto</strong> = Σ (quantity × live spot price from Crypto.com Exchange API). '
+    +'<strong>NAV crypto</strong> = Σ (quantity × live spot price from CoinGecko). '
     +'<strong>Net capital contributed:</strong> fiat deposits '+crFmtUsd0(CR_DATA.capital.deposits_fiat_acumulados_usd)
     +' − fiat withdrawals to bank '+crFmtUsd0(Math.abs(CR_DATA.capital.withdrawals_fiat_to_bank_usd))
     +' = '+crFmtUsd0(capNeto)+'.';
@@ -2998,7 +3003,7 @@ function renderConsolidado(eqK, eqHoldings){
 document.getElementById('btn-cons-reload').addEventListener('click', loadConsolidado);
 
 // ── Generic PDF-download helper for the sleeve-level reports ─────────────
-async function downloadSleeveReport({ url, fileBase, btnId, statusId, asOfInputId }) {
+async function downloadSleeveReport({ url, fileBase, btnId, statusId, asOfInputId, buildBody }) {
   const btn = document.getElementById(btnId);
   const status = document.getElementById(statusId);
   if (!btn) return;
@@ -3018,9 +3023,18 @@ async function downloadSleeveReport({ url, fileBase, btnId, statusId, asOfInputI
   const abortTimer = setTimeout(() => ac.abort(), 90_000);
   try {
     const qs = asOfInputId ? `?as_of=${encodeURIComponent(asOf)}` : '';
+    // When buildBody is provided (e.g., Crypto sleeve pins UI-fetched spot
+    // prices so PDF and UI use the exact same quote instead of re-calling
+    // CoinGecko a few seconds later), POST the payload; otherwise GET.
+    const body = typeof buildBody === 'function' ? buildBody(asOf) : null;
+    const useBody = body !== null && typeof body === 'object';
     const r = await fetch(url + qs, {
-      method: 'GET',
-      headers: { 'x-admin-token': adminToken() },
+      method: useBody ? 'POST' : 'GET',
+      headers: Object.assign(
+        { 'x-admin-token': adminToken() },
+        useBody ? { 'Content-Type': 'application/json' } : {}
+      ),
+      body: useBody ? JSON.stringify(body) : undefined,
       signal: ac.signal,
     });
     if (!r.ok) {
@@ -3057,6 +3071,21 @@ document.getElementById('btn-cr-report').addEventListener('click', () => downloa
   fileBase: 'DCE_Crypto_Snapshot',
   btnId: 'btn-cr-report', statusId: 'cr-report-status',
   asOfInputId: 'cr-report-asof',
+  // Pin UI-fetched CoinGecko spot into the PDF for today's report so both
+  // views quote to the same last price (previous $0.001 XRP drift produced
+  // a ~$400 NAV divergence across 400,012 XRP tokens).
+  buildBody: (asOf) => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (asOf !== todayStr) return null;
+    if (!CR_PRICE || !Object.keys(CR_PRICE).length) return null;
+    const prices = {};
+    for (const [asset, v] of Object.entries(CR_PRICE)) {
+      if (v && typeof v.last === 'number' && !isNaN(v.last)) {
+        prices[asset] = { last: v.last, ts: (v.ts && v.ts.toISOString) ? v.ts.toISOString() : null };
+      }
+    }
+    return Object.keys(prices).length ? { prices_override: prices, source_label: 'UI-pinned CoinGecko' } : null;
+  },
 }));
 document.getElementById('btn-fi-report').addEventListener('click', () => downloadSleeveReport({
   url: '/api/generate-fixed-income-report',

@@ -81,11 +81,46 @@ module.exports = async (req, res) => {
     // Realized historical P&L (already withdrawn to bank; disclosed as note)
     const realizedHist = Number(crJson.realized_pnl_historico?.neto_usd || 0);
 
+    // Optional UI-pinned price override (POST body). When the UI generates a
+    // PDF for today, it POSTs its already-fetched CoinGecko spot so both
+    // views quote to the same last price. Without this, the endpoint re-
+    // calls CoinGecko a few seconds later and can catch a different tick.
+    let pricesOverride = null;
+    if (req.method === 'POST') {
+      try {
+        const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+        if (body && body.prices_override && typeof body.prices_override === 'object') {
+          pricesOverride = body.prices_override;
+        }
+      } catch (_) { /* ignore malformed body; fall back to live fetch */ }
+    }
+
     // Live spot (today) or historical daily close (as_of). Both helpers
     // return the same shape so the renderer below is unchanged.
-    const liveResult = isHistorical
-      ? await valueCryptoAtDate(crJson, asOfRequested)
-      : await valueCryptoLive(crJson, 4000);
+    let liveResult;
+    if (pricesOverride && !isHistorical) {
+      // Build the same shape valueCryptoLive returns but from pinned quotes.
+      const posList = Array.isArray(crJson.positions) ? crJson.positions : [];
+      const crEnriched = posList.map(p => {
+        const q = Number(p.quantity || 0);
+        const pin = pricesOverride[p.asset];
+        const px = pin && typeof pin.last === 'number' ? Number(pin.last) : null;
+        if (px == null || !isFinite(px)) {
+          return { priceUsd: Number(p.cost_basis_unit_usd || 0), marketUsd: 0, isLive: false };
+        }
+        return { priceUsd: px, marketUsd: q * px, isLive: true };
+      });
+      liveResult = {
+        crEnriched,
+        priceSource: 'live',
+        asOfDate: asOfRequested,
+        staleReason: null,
+      };
+    } else {
+      liveResult = isHistorical
+        ? await valueCryptoAtDate(crJson, asOfRequested)
+        : await valueCryptoLive(crJson, 4000);
+    }
     const positions = Array.isArray(crJson.positions) ? crJson.positions : [];
     const enriched = positions.map((p, idx) => {
       const qty = Number(p.quantity || 0);
@@ -289,14 +324,21 @@ module.exports = async (req, res) => {
          startX + 8, y + 8,
          { width: tableW - 16, lineGap: 2 });
 
+    // Historical realized P&L breakdown: gross gains minus network / interest
+    // fees. Prior version only printed the two gain legs and left the fees
+    // implicit, so the equation appeared not to close (95,639 + 155,762 !=
+    // 248,420). Now fees are itemised so the total reconciles on the face.
+    const feeUsdc = Number(crJson.realized_pnl_historico?.fees_intereses_usdc_usd || 0);
+    const feeRedXrp = Number(crJson.realized_pnl_historico?.fees_red_xrp_usd || 0);
+    const feesTotal = feeUsdc + feeRedXrp;
     doc.fillColor(NAVY).font('Helvetica-Bold').fontSize(7.5)
        .text('Historical realized P&L (2024 + Q1 2025): ', startX + 8, y + 50, { continued: true, lineBreak: false });
     doc.fillColor(NEAR_BLACK).font('Helvetica').fontSize(7.5)
        .text(
          `${fmtUSD(crJson.realized_pnl_historico?.y2024_usd, 0)} (2024) + ` +
          `${fmtUSD(crJson.realized_pnl_historico?.y2025_q1_usd, 0)} (Q1 2025) ` +
-         `= ${fmtUSD(realizedHist, 0)} net. Crystallized and repatriated to the Cash sleeve in bank; ` +
-         `does not integrate the live NAV of the crypto sleeve.`,
+         `- ${fmtUSD(Math.abs(feesTotal), 0)} fees = ${fmtUSD(realizedHist, 0)} net. ` +
+         `Crystallized and repatriated to Cash; not in live NAV.`,
          { width: tableW - 16 - 190, lineBreak: false, ellipsis: true });
 
     drawFooter(doc, asOfRequested,
