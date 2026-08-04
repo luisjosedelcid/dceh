@@ -215,18 +215,18 @@ module.exports = async (req, res) => {
 
     // Columns: Position | Vehicle | Deploy | Aporte EUR | FX depl. | Cost USD | NAV EUR | NAV USD | MOIC USD | IRR USD | Weight | Lockup rem
     const cols = [
-      { key: 'name',       w: 92, align: 'left',  title: 'Position' },
-      { key: 'vehicle',    w: 78, align: 'left',  title: 'Vehicle' },
-      { key: 'deployDate', w: 52, align: 'left',  title: 'Deploy' },
-      { key: 'aporteEur',  w: 46, align: 'right', title: 'Aporte EUR' },
-      { key: 'fxDeploy',   w: 34, align: 'right', title: 'FX depl.' },
-      { key: 'costUsd',    w: 48, align: 'right', title: 'Cost USD' },
-      { key: 'navEur',     w: 46, align: 'right', title: 'NAV EUR' },
-      { key: 'navUsd',     w: 46, align: 'right', title: 'NAV USD' },
-      { key: 'moicUsd',    w: 32, align: 'right', title: 'MOIC USD' },
-      { key: 'irrUsd',     w: 38, align: 'right', title: 'IRR USD' },
-      { key: 'weight',     w: 30, align: 'right', title: 'Wt.' },
-      { key: 'lockup',     w: 42, align: 'right', title: 'Est. rem. term' },
+      { key: 'name',       w: 72, align: 'left',  title: 'Position' },
+      { key: 'vehicle',    w: 62, align: 'left',  title: 'Vehicle' },
+      { key: 'deployDate', w: 46, align: 'left',  title: 'Deploy' },
+      { key: 'aporteEur',  w: 40, align: 'right', title: 'Contrib EUR' },
+      { key: 'fxDeploy',   w: 30, align: 'right', title: 'FX depl.' },
+      { key: 'costUsd',    w: 40, align: 'right', title: 'Cost USD' },
+      { key: 'navEur',     w: 40, align: 'right', title: 'NAV EUR' },
+      { key: 'navUsd',     w: 40, align: 'right', title: 'NAV USD' },
+      { key: 'moicUsd',    w: 28, align: 'right', title: 'MOIC USD' },
+      { key: 'irrUsd',     w: 34, align: 'right', title: 'IRR USD' },
+      { key: 'weight',     w: 24, align: 'right', title: 'Wt.' },
+      { key: 'lockup',     w: 48, align: 'right', title: 'Est. exit' },
     ];
     const tableW = cols.reduce((s, c) => s + c.w, 0);
     const startX = 54;
@@ -314,35 +314,40 @@ module.exports = async (req, res) => {
     y += 12;
     const methBoxH = 108;
     doc.rect(startX, y, tableW, methBoxH).fill(CREAM);
+    // Sign for the FX-effect figure (ASCII hyphen-minus so pdfkit's built-in
+    // WinAnsi font handles it \u2014 no glyph fallback boxes).
+    const fxEffectSign = fxEffectUsd >= 0 ? '+' : '-';
+    const fxEffectAbsStr = fmtUSD(Math.abs(fxEffectUsd), 0);
     doc.fillColor(NEAR_BLACK).font('Helvetica').fontSize(7.5)
        .text(
-         `Dates. Latest official GP NAV mark: ${navAsOf}. FX EUR/USD used to convert that NAV to USD today: ` +
-         `${fxToday.toFixed(4)} dated ${fxTodayDate}. FX at the NAV-close date was ${fxNav.toFixed(4)}. ` +
-         `Report generated ${today}.`,
+         `Dates. Latest official GP NAV mark: ${navAsOf}. FX EUR/USD used to convert that NAV to USD: ` +
+         `${fxToday.toFixed(4)} \u2014 latest FX available on file, dated ${fxTodayDate}. ` +
+         `FX at the NAV-close date was ${fxNav.toFixed(4)}. Report generated ${today}.`,
          startX + 8, y + 6,
          { width: tableW - 16, lineGap: 2 });
     doc.text(
-         `NAV in USD. Contributions were converted to USD at the FX in effect on each deployment date. The ` +
-         `"Indicative NAV (USD)" figure re-values the December GP NAV at the latest FX quote we hold on file; ` +
-         `it is NOT a fresh valuation. When the GP publishes the next quarterly mark the number will move.`,
+         `NAV in USD. Contributions were converted to USD at the FX in effect on each deployment date. ` +
+         `The "Indicative NAV (USD)" figure re-values the December GP NAV at the latest FX quote we hold on ` +
+         `file; it is NOT a fresh valuation. When the GP publishes its next official mark the number will move.`,
          startX + 8, y + 30,
          { width: tableW - 16, lineGap: 2 });
     doc.text(
-         `XIRR. Aggregate portfolio IRR is calculated in USD by bisection over individual cashflows: each ` +
-         `deployment is a negative flow on its actual date; the terminal positive flow is the GP NAV converted ` +
-         `at NAV-close FX and dated ${navAsOf} \u2014 NOT dated today, so calendar time cannot erode the IRR ` +
-         `against a stale mark. EUR XIRR (asset economics, no FX effect): ${fmtPct(totIrrEur)}. ` +
+         `XIRR. Aggregate portfolio IRR is calculated by bisection over individual cashflows: each deployment ` +
+         `is a negative flow on its actual date; the terminal positive flow is the GP NAV dated ${navAsOf} ` +
+         `(converted at NAV-close FX for the USD version) \u2014 NOT dated today, so calendar time cannot erode ` +
+         `the IRR against a stale mark. EUR XIRR (asset economics, no FX effect): ${fmtPct(totIrrEur)}. ` +
          `USD XIRR (asset + FX to ${navAsOf}): ${fmtPct(totIrrUsdAtMark)}. ` +
          `FX effect on the aggregate mark (indicative NAV minus NAV at close FX): ` +
-         `${(fxEffectUsd >= 0 ? '+' : '\u2212') + fmtUSD(Math.abs(fxEffectUsd), 0)}.`,
+         `${fxEffectSign}${fxEffectAbsStr}.`,
          startX + 8, y + 60,
          { width: tableW - 16, lineGap: 2 });
     doc.fillColor(GRAY).font('Helvetica-Oblique').fontSize(6.8)
        .text(
-         'GP mark policy. AX Partners publishes an official NAV once per reporting period; interim months do not ' +
-         'produce a fresh mark. The EUR appreciation vs. contributed capital (\u007e14% aggregate at ' + navAsOf + ') ' +
-         'reflects the GP\u0027s current model-based valuation and preferred-equity accruals, not a realised gain. ' +
-         'Final upside is only recognised at exit; expect the mark to be re-underwritten each quarter.',
+         'GP mark policy. AX Partners has published one official NAV mark for the period ending ' + navAsOf + '. ' +
+         'Interim months do not produce a fresh mark. The EUR appreciation vs. contributed capital ' +
+         '(~14% aggregate at ' + navAsOf + ') reflects the GP\u0027s current model-based valuation and ' +
+         'preferred-equity accruals, not a realised gain \u2014 final upside is recognised at exit. ' +
+         'Re-mark on receipt of the next GP report.',
          startX + 8, y + methBoxH - 24,
          { width: tableW - 16, lineGap: 2 });
 
