@@ -1921,7 +1921,7 @@ document.getElementById('btn-perf-report').addEventListener('click', async () =>
   const ac = new AbortController();
   const abortTimer = setTimeout(() => ac.abort(), 90_000);
   try {
-    const r = await fetch(`/api/generate-daily-report?as_of=${encodeURIComponent(asOf)}`, {
+    const r = await fetch(`/api/generate-daily-report?as_of=${encodeURIComponent(asOf)}&fast=1`, {
       method: 'GET',
       headers: { 'x-admin-token': adminToken() },
       signal: ac.signal,

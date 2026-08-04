@@ -298,6 +298,7 @@ module.exports = async (req, res) => {
     // Default: today (loadAndCompute clamps to the latest available data).
     let requestedAsOf = null;
     let debugMode = false;
+    let fastMode = false;
     try {
       const u = new URL(req.url, 'http://x');
       const v = (u.searchParams.get('as_of') || '').trim();
@@ -305,6 +306,10 @@ module.exports = async (req, res) => {
         requestedAsOf = v;
       }
       debugMode = u.searchParams.get('debug') === '1';
+      // ?fast=1 skips Finnhub live overlay + pending-dividends network calls.
+      // Snapshot data alone is fine for a portfolio PDF; the extra network hops
+      // are what push us into 504-territory on Vercel Hobby's shrinking limits.
+      fastMode = u.searchParams.get('fast') === '1';
     } catch (_) {}
     const dbg = { requestedAsOf, phases: {} };
 
@@ -333,7 +338,7 @@ module.exports = async (req, res) => {
     // or no specific past date was requested. Hard 8s ceiling on the whole overlay.
     const todayISO = new Date().toISOString().slice(0, 10);
     const wantLive = !requestedAsOf || requestedAsOf === todayISO;
-    if (wantLive && kpis) {
+    if (wantLive && kpis && !fastMode) {
       const t1 = Date.now();
       try {
         await withTimeout(applyLiveOverlay(kpis, holdings), 8_000, 'liveOverlay');
@@ -344,19 +349,28 @@ module.exports = async (req, res) => {
         dbg.phases.liveOverlay_error = e.message;
         console.warn(`[generate-daily-report] live overlay skipped after ${Date.now()-t1}ms:`, e.message);
       }
+    } else if (fastMode) {
+      dbg.phases.liveOverlay_ms = 0;
+      dbg.phases.liveOverlay_skipped = 'fast_mode';
     }
 
     // Pending dividends + interest (same source as dashboard mini-stat). 6s ceiling.
+    // Skipped in fast mode.
     let pendingDivs = null;
-    const t2 = Date.now();
-    try {
-      pendingDivs = await withTimeout(computePendingDividends(), 6_000, 'pendingDivs');
-      dbg.phases.pendingDivs_ms = Date.now() - t2;
-      console.log(`[generate-daily-report] phase=pendingDivs done in ${Date.now()-t2}ms`);
-    } catch (e) {
-      dbg.phases.pendingDivs_ms = Date.now() - t2;
-      dbg.phases.pendingDivs_error = e.message;
-      console.warn(`[generate-daily-report] pending dividends unavailable after ${Date.now()-t2}ms:`, e.message);
+    if (!fastMode) {
+      const t2 = Date.now();
+      try {
+        pendingDivs = await withTimeout(computePendingDividends(), 6_000, 'pendingDivs');
+        dbg.phases.pendingDivs_ms = Date.now() - t2;
+        console.log(`[generate-daily-report] phase=pendingDivs done in ${Date.now()-t2}ms`);
+      } catch (e) {
+        dbg.phases.pendingDivs_ms = Date.now() - t2;
+        dbg.phases.pendingDivs_error = e.message;
+        console.warn(`[generate-daily-report] pending dividends unavailable after ${Date.now()-t2}ms:`, e.message);
+      }
+    } else {
+      dbg.phases.pendingDivs_ms = 0;
+      dbg.phases.pendingDivs_skipped = 'fast_mode';
     }
 
     if (debugMode) {
