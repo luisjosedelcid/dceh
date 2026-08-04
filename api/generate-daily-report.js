@@ -297,13 +297,16 @@ module.exports = async (req, res) => {
     // Parse optional ?as_of=YYYY-MM-DD to generate the snapshot for a past date.
     // Default: today (loadAndCompute clamps to the latest available data).
     let requestedAsOf = null;
+    let debugMode = false;
     try {
       const u = new URL(req.url, 'http://x');
       const v = (u.searchParams.get('as_of') || '').trim();
       if (v && /^\d{4}-\d{2}-\d{2}$/.test(v)) {
         requestedAsOf = v;
       }
+      debugMode = u.searchParams.get('debug') === '1';
     } catch (_) {}
+    const dbg = { requestedAsOf, phases: {} };
 
     // Utility — wrap a promise in a hard timeout so one slow dep can't wedge the PDF.
     const withTimeout = (p, ms, label) => Promise.race([
@@ -319,6 +322,9 @@ module.exports = async (req, res) => {
       35_000,
       'loadAndCompute',
     );
+    dbg.phases.loadAndCompute_ms = Date.now() - t0;
+    dbg.phases.holdings_count = (result.holdings || []).length;
+    dbg.phases.series_count = (result.dailySeries || []).length;
     console.log(`[generate-daily-report] phase=loadAndCompute done in ${Date.now()-t0}ms`);
     const kpis = result.kpis;
     const holdings = result.holdings || [];
@@ -331,8 +337,11 @@ module.exports = async (req, res) => {
       const t1 = Date.now();
       try {
         await withTimeout(applyLiveOverlay(kpis, holdings), 8_000, 'liveOverlay');
+        dbg.phases.liveOverlay_ms = Date.now() - t1;
         console.log(`[generate-daily-report] phase=liveOverlay done in ${Date.now()-t1}ms`);
       } catch (e) {
+        dbg.phases.liveOverlay_ms = Date.now() - t1;
+        dbg.phases.liveOverlay_error = e.message;
         console.warn(`[generate-daily-report] live overlay skipped after ${Date.now()-t1}ms:`, e.message);
       }
     }
@@ -342,9 +351,18 @@ module.exports = async (req, res) => {
     const t2 = Date.now();
     try {
       pendingDivs = await withTimeout(computePendingDividends(), 6_000, 'pendingDivs');
+      dbg.phases.pendingDivs_ms = Date.now() - t2;
       console.log(`[generate-daily-report] phase=pendingDivs done in ${Date.now()-t2}ms`);
     } catch (e) {
+      dbg.phases.pendingDivs_ms = Date.now() - t2;
+      dbg.phases.pendingDivs_error = e.message;
       console.warn(`[generate-daily-report] pending dividends unavailable after ${Date.now()-t2}ms:`, e.message);
+    }
+
+    if (debugMode) {
+      dbg.phases.total_ms = Date.now() - t0;
+      res.status(200).json(dbg);
+      return;
     }
 
     if (!kpis) {
