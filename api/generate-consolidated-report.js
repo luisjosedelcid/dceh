@@ -167,6 +167,28 @@ module.exports = async (req, res) => {
     // -- Totals --
     const totNav = eqNav + reNav + crNav + tdMv;
     const totCap = eqCap + reCap + crCap + tdPrincipal;
+
+    // Sum-preserving integer rounding (largest-remainder). Ensures
+    // Sum(sleeve_shown) === Total_shown so the reader can reconstruct
+    // the arithmetic from the visible integers with no $1 shift.
+    function roundPreservingSum(values, targetInt) {
+      const floored = values.map(v => Math.floor(v));
+      const remainders = values.map((v, i) => ({ i, r: v - floored[i] }));
+      const currentSum = floored.reduce((s, v) => s + v, 0);
+      let diff = targetInt - currentSum;
+      const rounded = floored.slice();
+      remainders.sort((a, b) => b.r - a.r);
+      for (let k = 0; k < remainders.length && diff > 0; k++) {
+        rounded[remainders[k].i] += 1; diff -= 1;
+      }
+      if (diff < 0) {
+        remainders.sort((a, b) => a.r - b.r);
+        for (let k = 0; k < remainders.length && diff < 0; k++) {
+          rounded[remainders[k].i] -= 1; diff += 1;
+        }
+      }
+      return rounded;
+    }
     // Header defines MOIC as NAV/Capital — keep it consistent with that
     // definition. Historical realized crypto P&L is reported separately in the
     // reconciliation block below (it was already withdrawn from NAV).
@@ -348,7 +370,7 @@ module.exports = async (req, res) => {
       { key: 'cap',   w: 68,  align: 'right', title: 'Capital' },
       { key: 'pnl',   w: 65,  align: 'right', title: 'P&L' },
       { key: 'moic',  w: 36,  align: 'right', title: 'MOIC' },
-      { key: 'twr',   w: 48,  align: 'right', title: 'Ret. cum.' },
+      { key: 'twr',   w: 48,  align: 'right', title: 'P&L / Cap.' },
       { key: 'last',  w: 65,  align: 'left',  title: 'Last update' },
     ];
     // Draw header row
@@ -361,26 +383,43 @@ module.exports = async (req, res) => {
     }
     y += 18;
 
+    // Build shown integers over only the present sleeves so the visible
+    // integer subtotals sum exactly to the visible total row.
+    const presentSleeves = sleeves.filter(s => s.present);
+    const totNavInt = Math.round(totNav);
+    const totCapInt = Math.round(totCap);
+    const sumPnlInt = Math.round(sumSleevePnl);
+    const prShown = {
+      nav: roundPreservingSum(presentSleeves.map(s => s.nav), totNavInt),
+      cap: roundPreservingSum(presentSleeves.map(s => s.cap), totCapInt),
+      pnl: roundPreservingSum(presentSleeves.map(s => s.pnl), sumPnlInt),
+      totNavInt,
+    };
+
     doc.font('Helvetica').fontSize(8.5).fillColor(NEAR_BLACK);
     let rowIdx = 0;
-    for (const s of sleeves) {
-      if (!s.present) continue;
+    for (const s of presentSleeves) {
       const rowH = 16;
       if (rowIdx % 2 === 1) doc.rect(M, y, CW, rowH).fill(ROW_ALT);
-      const wNav = totNav > 0 ? s.nav / totNav : 0;
-      // MOIC = NAV / Capital (consistent with header definition). Realized
-      // historical P&L for Crypto is disclosed in the reconciliation block.
-      const moic = s.cap > 0 ? s.nav / s.cap : null;
+      // Sum-preserving shown integers computed once above (see prShown maps).
+      const shownNav = prShown.nav[rowIdx];
+      const shownCap = prShown.cap[rowIdx];
+      const shownPnl = prShown.pnl[rowIdx];
+      const wNav = prShown.totNavInt > 0 ? shownNav / prShown.totNavInt : 0;
+      // MOIC = NAV / Capital — use shown integers so the ratio is reproducible.
+      const moic = shownCap > 0 ? shownNav / shownCap : null;
+      // Homogeneous return metric across sleeves = P&L / Capital, on shown ints.
+      const pnlOverCap = shownCap > 0 ? shownPnl / shownCap : null;
 
       cx = M + 6;
       const cells = [
         { text: s.label, color: NAVY, bold: true },
-        { text: fmtUSD(s.nav, 0), color: NEAR_BLACK },
+        { text: '$' + shownNav.toLocaleString('en-US'), color: NEAR_BLACK },
         { text: fmtPctRaw(wNav), color: NEAR_BLACK },
-        { text: fmtUSD(s.cap, 0), color: NEAR_BLACK },
-        { text: fmtUSD0Signed(s.pnl), color: pctColor(s.pnl), bold: true },
+        { text: '$' + shownCap.toLocaleString('en-US'), color: NEAR_BLACK },
+        { text: (shownPnl >= 0 ? '+$' : '-$') + Math.abs(shownPnl).toLocaleString('en-US'), color: pctColor(shownPnl), bold: true },
         { text: fmtMoic(moic), color: (moic != null && moic >= 1) ? GREEN : RED, bold: true },
-        { text: fmtPct(s.twr), color: pctColor(s.twr), bold: true },
+        { text: fmtPct(pnlOverCap), color: pctColor(pnlOverCap), bold: true },
         { text: s.last, color: GRAY },
       ];
       cells.forEach((cell, i) => {
@@ -391,18 +430,26 @@ module.exports = async (req, res) => {
       y += rowH;
       rowIdx++;
     }
-    // TOTAL row
+    // TOTAL row — uses integer sums that equal the sum of the visible sleeves.
+    const totNavShown = prShown.nav.reduce((s, v) => s + v, 0);
+    const totCapShown = prShown.cap.reduce((s, v) => s + v, 0);
+    // navMinusCapShown is the reported total P&L. Reconciliation still lives
+    // in the footnote below; here we anchor to (NAV − Capital) on shown ints.
+    const totPnlShown = totNavShown - totCapShown;
+    const totMoicShown = totCapShown > 0 ? totNavShown / totCapShown : null;
+    const totRoiShown = totCapShown > 0 ? totPnlShown / totCapShown : null;
+
     doc.rect(M, y, CW, 18).fill(CREAM);
     cx = M + 6;
     const totalCells = [
-      { text: 'TOTAL',              color: NAVY, align: 'left' },
-      { text: fmtUSD(totNav, 0),    color: NAVY, align: 'right' },
-      { text: '100.00%',            color: NAVY, align: 'right' },
-      { text: fmtUSD(totCap, 0),    color: NAVY, align: 'right' },
-      { text: fmtUSD0Signed(totPnlUnr), color: pctColor(totPnlUnr), align: 'right' },
-      { text: fmtMoic(totMoic),     color: (totMoic != null && totMoic >= 1) ? GREEN : RED, align: 'right' },
-      { text: fmtPct(totRoi),       color: pctColor(totRoi), align: 'right' },
-      { text: '',                   color: NAVY, align: 'left' },
+      { text: 'TOTAL',                                                                            color: NAVY, align: 'left' },
+      { text: '$' + totNavShown.toLocaleString('en-US'),                                          color: NAVY, align: 'right' },
+      { text: '100.00%',                                                                          color: NAVY, align: 'right' },
+      { text: '$' + totCapShown.toLocaleString('en-US'),                                          color: NAVY, align: 'right' },
+      { text: (totPnlShown >= 0 ? '+$' : '-$') + Math.abs(totPnlShown).toLocaleString('en-US'),   color: pctColor(totPnlShown), align: 'right' },
+      { text: fmtMoic(totMoicShown),                                                              color: (totMoicShown != null && totMoicShown >= 1) ? GREEN : RED, align: 'right' },
+      { text: fmtPct(totRoiShown),                                                                color: pctColor(totRoiShown), align: 'right' },
+      { text: '',                                                                                 color: NAVY, align: 'left' },
     ];
     totalCells.forEach((cell, i) => {
       doc.font('Helvetica-Bold').fillColor(cell.color).fontSize(9)
@@ -410,13 +457,23 @@ module.exports = async (req, res) => {
       cx += cols[i].w;
     });
     y += 18 + 8;
-    // Reconciliation footnote: sum(sleeve P&L) + adjustments = NAV − Capital
-    if (Math.abs(otherAdjustments) >= 1) {
+    // Reconciliation footnote. All amounts here are the visible integer
+    // amounts — same values printed in the sleeve rows and total row — so
+    // the identity reconciles arithmetically for the reader.
+    const sumSleevePnlShown = prShown.pnl.reduce((s, v) => s + v, 0);
+    const navMinusCapShown = totNavShown - totCapShown;
+    const otherAdjustmentsShown = navMinusCapShown - sumSleevePnlShown;
+    // Attribute the Crypto capital-basis adjustment to Crypto, and the
+    // residual to the marketable portfolio. Both computed on unrounded
+    // values then rounded so the two components sum to the visible delta.
+    const _adjCryptoInt = Math.round(adjCrypto);
+    const _adjMkbInt = otherAdjustmentsShown - _adjCryptoInt;
+    if (Math.abs(otherAdjustmentsShown) >= 1) {
       const parts = [];
-      parts.push(`Reported sleeve P&L ${fmtUSD0Signed(sumSleevePnl)}`);
-      if (Math.abs(adjCrypto) >= 1)               parts.push(`Crypto capital-basis adjustment ${fmtUSD0Signed(adjCrypto)}`);
-      if (Math.abs(adjMarketableCostBasis) >= 1)  parts.push(`Marketable portfolio cost-basis/timing ${fmtUSD0Signed(adjMarketableCostBasis)}`);
-      parts.push(`Consolidated P&L ${fmtUSD0Signed(navMinusCap)}`);
+      parts.push(`Reported sleeve P&L ${sumSleevePnlShown >= 0 ? '+' : '-'}$${Math.abs(sumSleevePnlShown).toLocaleString('en-US')}`);
+      if (Math.abs(_adjCryptoInt) >= 1)  parts.push(`Crypto capital-basis adjustment ${_adjCryptoInt >= 0 ? '+' : '-'}$${Math.abs(_adjCryptoInt).toLocaleString('en-US')}`);
+      if (Math.abs(_adjMkbInt) >= 1)     parts.push(`Marketable portfolio cost-basis/timing ${_adjMkbInt >= 0 ? '+' : '-'}$${Math.abs(_adjMkbInt).toLocaleString('en-US')}`);
+      parts.push(`Consolidated P&L ${navMinusCapShown >= 0 ? '+' : '-'}$${Math.abs(navMinusCapShown).toLocaleString('en-US')}`);
       doc.font('Helvetica-Oblique').fontSize(7.5).fillColor(GRAY)
          .text(`Reconciliation: ${parts.join('  \u00b7  ')}`,
            M, y, { width: CW });

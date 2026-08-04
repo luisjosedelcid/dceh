@@ -261,7 +261,7 @@ module.exports = async (req, res) => {
          (priceSource === 'live'
            ? `NAV (PDF) = sum of (quantity x live spot price from CoinGecko), captured at report generation on ${priceAsOf}. `
            : `NAV (PDF) = sum of (quantity x static snapshot from ${asOfStatic}); live prices unavailable (${liveResult.staleReason || 'fallback'}). `) +
-         `Sleeve MOIC = NAV / net contributed capital (not the traditional PE MOIC of residual + distributions over gross invested; ` +
+         `Residual value multiple = NAV / net contributed capital (not the traditional PE MOIC of residual + distributions over gross invested; ` +
          `historical realized P&L is disclosed separately below and not double-counted). ` +
          `Net capital contributed: fiat deposits ${fmtUSD(depositsFiat, 0)} - fiat withdrawals to bank ` +
          `${fmtUSD(Math.abs(withdrawalsFiat), 0)} = ${fmtUSD(capNeto, 0)}.`,
