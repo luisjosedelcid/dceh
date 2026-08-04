@@ -373,7 +373,7 @@ module.exports = async (req, res) => {
          'Interim months do not produce a fresh mark. The EUR appreciation vs. contributed capital ' +
          '(' + (totInvEur > 0 ? ((totNavEur / totInvEur - 1) * 100).toFixed(1) : '\u2014') + '% aggregate at ' + navAsOf + ') reflects the GP\u0027s current model-based valuation ' +
          'and preferred-equity accruals, not a realised gain \u2014 final upside is recognised at exit. ' +
-         'Next re-mark expected in H2 2026 / early 2027 on receipt of the S2 2026 report.',
+         'Next official mark expected with the S2 2026 report.',
          startX + 8, y + methBoxH - 24,
          { width: tableW - 16, lineGap: 2 });
 
