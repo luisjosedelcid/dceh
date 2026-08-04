@@ -7,10 +7,13 @@
 //
 // FALLBACK INTRADAY: Finnhub /quote (only when Yahoo fails for "today's" close)
 //
-// SPECIAL CASE: US Treasury CUSIPs (e.g. 91282CBT7) — Yahoo doesn't carry them.
-//   We synthesize a daily price as a linear interpolation between the buy
-//   price (~par) and 100.00 at maturity. Maturity is inferred as the
-//   trade_date of the SELL row in `transactions` for that ticker.
+// SPECIAL CASE: US Treasury CUSIPs (e.g. 91282CBT7, 912797VP9) — Yahoo doesn't
+//   carry them. Primary source is FedInvest (TreasuryDirect) EOD prices by
+//   CUSIP: real market marks that match the custodian statement (Schwab).
+//   Endpoint returns a CSV via POST, one call per business day covers the
+//   entire marketable universe. Falls back to a straight-line synth curve
+//   between buy price and par at maturity when FedInvest has no rows for
+//   the requested window.
 //
 // FX: ECB daily reference rates (free) for EURUSD. Stored as USD per 1 EUR.
 //   URL: https://api.frankfurter.dev/v1/<from>..<to>?base=EUR&symbols=USD
@@ -133,12 +136,118 @@ async function ecbDaily(pair, fromDate, toDate) {
   return out;
 }
 
+// ── FedInvest real Treasury CUSIP prices ───────────────────────────────────
+// TreasuryDirect publishes daily end-of-day bid/offer/eod prices for every
+// marketable Treasury CUSIP (bills, notes, bonds, TIPS, FRNs). The endpoint
+// expects a POSTed form and returns a CSV with 8 columns:
+//   cusip, security_type, rate, maturity_date, call_date, bid, offer, eod_price
+// eod_price is quoted per $100 par. We normalize to per-$1 (0.0-1.0+) to
+// match the synthTreasury / prices_daily convention.
+//
+// Skips weekends and returns whatever business days respond OK (the site
+// 302-redirects to an error page on non-trading days, which we treat as a
+// no-data day rather than a hard failure).
+async function fedInvestOne(dateYmd) {
+  const d = new Date(dateYmd + 'T00:00:00Z');
+  const dow = d.getUTCDay();
+  if (dow === 0 || dow === 6) return null; // skip Sat/Sun
+  const day   = d.getUTCDate();
+  const month = d.getUTCMonth() + 1;
+  const year  = d.getUTCFullYear();
+  const body = `priceDateDay=${day}&priceDateMonth=${month}&priceDateYear=${year}&fileType=csv&csv=CSV+FORMAT`;
+  let r;
+  try {
+    r = await fetch('https://treasurydirect.gov/GA-FI/FedInvest/securityPriceDetail', {
+      method: 'POST',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 DCE-Holdings/1.0',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Referer': 'https://treasurydirect.gov/',
+        'Origin': 'https://treasurydirect.gov',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body,
+      redirect: 'follow',
+    });
+  } catch (e) {
+    return null;
+  }
+  if (!r.ok) return null;
+  const text = await r.text();
+  // If we got an HTML error page, treat as a no-data day.
+  if (!text || text.length < 200 || /errormessage|Try Again/i.test(text) || !/^\s*912/m.test(text)) return null;
+  // Parse CSV
+  const rows = new Map(); // cusip -> {bid, offer, eod, maturity}
+  const lines = text.split(/\r?\n/);
+  for (const line of lines) {
+    if (!line || !/^912/.test(line)) continue;
+    const parts = line.split(',');
+    if (parts.length < 8) continue;
+    const cusip = parts[0].trim();
+    const bid   = Number(parts[5]);
+    const offer = Number(parts[6]);
+    const eod   = Number(parts[7]);
+    if (!Number.isFinite(eod)) continue;
+    rows.set(cusip, { bid, offer, eod });
+  }
+  return rows;
+}
+
+// Fetch a per-CUSIP series between fromDate and toDate by calling FedInvest
+// once per business day. Returns rows in prices_daily shape. Prices are
+// stored as per-$1 par (divide the per-$100 quote by 100) so they align with
+// buyPrice (already stored per-$1 in transactions.price_native).
+// In-request cache so backfilling N Treasury CUSIPs doesn't hit FedInvest
+// N times for the same date — one HTTP call per business day is enough for
+// the whole marketable universe. Reset per Node process (i.e. per Vercel
+// serverless invocation).
+const _fedInvestDayCache = new Map(); // ymd -> Promise<Map<cusip, quote> | null>
+function fedInvestDay(ymd) {
+  if (!_fedInvestDayCache.has(ymd)) {
+    _fedInvestDayCache.set(ymd, fedInvestOne(ymd));
+  }
+  return _fedInvestDayCache.get(ymd);
+}
+
+async function fedInvestSeries(cusip, fromDate, toDate) {
+  const out = [];
+  const start = new Date(fromDate + 'T00:00:00Z');
+  const end   = new Date(toDate   + 'T00:00:00Z');
+  let cur = new Date(start);
+  while (cur.getTime() <= end.getTime()) {
+    const ymd = cur.toISOString().slice(0, 10);
+    // eslint-disable-next-line no-await-in-loop
+    const day = await fedInvestDay(ymd);
+    if (day && day.has(cusip)) {
+      const q = day.get(cusip);
+      out.push({
+        ticker: cusip,
+        price_date: ymd,
+        close_native: Number((q.eod / 100).toFixed(6)),
+        currency: 'USD',
+        source: 'fedinvest',
+      });
+    }
+    cur = new Date(cur.getTime() + 86400000);
+  }
+  return out;
+}
+
 // ── Main entry: fetch a ticker for a date range using best source ──────────
 async function fetchPriceSeries(ticker, fromDate, toDate, opts = {}) {
   if (isCusip(ticker)) {
-    // Caller must pass treasury params via opts.treasury = {buyDate,buyPrice,maturityDate}
-    const t = opts.treasury;
-    if (!t) throw new Error(`Treasury ${ticker}: missing opts.treasury (buyDate/buyPrice/maturityDate)`);
+    const t = opts.treasury || {};
+    // Try FedInvest first (real market EOD by CUSIP). Fall back to the
+    // straight-line synth curve when FedInvest returns no rows for the
+    // requested window (e.g. the security isn't in the marketable universe).
+    try {
+      const real = await fedInvestSeries(ticker, fromDate, toDate);
+      if (real.length) return real;
+    } catch (_e) { /* fall through to synth */ }
+    if (!t.buyDate || !t.buyPrice || !t.maturityDate) {
+      throw new Error(`Treasury ${ticker}: no FedInvest data and missing opts.treasury (buyDate/buyPrice/maturityDate)`);
+    }
     return synthTreasury(ticker, t.buyDate, t.buyPrice, t.maturityDate, fromDate, toDate);
   }
   // Equities / ETFs → Yahoo
@@ -150,6 +259,8 @@ module.exports = {
   yahooDaily,
   finnhubQuote,
   synthTreasury,
+  fedInvestSeries,
+  fedInvestOne,
   ecbDaily,
   isCusip,
 };
