@@ -24,12 +24,11 @@
 // Only files inside /public/docs/ are exposed. Path traversal is
 // blocked. Only .pdf is accepted.
 
-const fs = require('fs');
-const path = require('path');
-
-const DOCS_DIR = path.join(process.cwd(), 'public', 'docs');
-const BUCKET   = 'reports';
-const PREFIX   = 'proxy';   // reports/proxy/<filename>
+// Vercel serverless functions cannot read /public/* directly, so we
+// fetch the PDF over HTTP against our own origin instead of reading it
+// from disk. Origin is derived from the request host.
+const BUCKET = 'reports';
+const PREFIX = 'proxy';   // reports/proxy/<mtime>__<filename>
 
 async function objectExists(baseUrl, key, objectPath) {
   const r = await fetch(`${baseUrl}/storage/v1/object/info/${BUCKET}/${objectPath}`, {
@@ -89,46 +88,58 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    // Verify the file exists in /public/docs/
-    const localPath = path.join(DOCS_DIR, filename);
-    if (!localPath.startsWith(DOCS_DIR)) {
-      res.status(400).json({ error: 'Invalid path' });
-      return;
-    }
-    let stat;
-    try {
-      stat = fs.statSync(localPath);
-    } catch (e) {
-      res.status(404).json({ error: 'Document not found' });
-      return;
-    }
-    if (!stat.isFile()) {
-      res.status(404).json({ error: 'Document not found' });
-      return;
-    }
-
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
     if (!SUPABASE_URL || !SUPABASE_KEY) {
-      // If Supabase is not configured, fall back to same-origin.
-      // Desktop will still work; PWA standalone loses the Back button
-      // but at least the document loads.
+      // No Supabase env — fall back to same-origin. Desktop still works;
+      // PWA standalone loses QuickLook but at least the doc loads.
       res.writeHead(302, { Location: `/docs/${encodeURIComponent(filename)}` });
       res.end();
       return;
     }
 
-    // Object key on Supabase: proxy/<filename>. Idempotent — if the
-    // local file's mtime is newer than the cache, we re-upload; else
-    // we skip. Cheap ETag: include mtime in the key.
-    const mtime = Math.floor(stat.mtimeMs / 1000);
-    const objectPath = `${PREFIX}/${mtime}__${filename}`;
+    // Determine our own origin from the request headers. In production
+    // this is https://www.dceholdings.app; on preview deployments it
+    // is the auto-generated *.vercel.app hostname.
+    const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
+    const host  = (req.headers['x-forwarded-host']  || req.headers.host || 'www.dceholdings.app').split(',')[0].trim();
+    const originUrl = `${proto}://${host}/docs/${encodeURIComponent(filename)}`;
+
+    // Fetch the PDF from our own static origin (Vercel serves /public/).
+    // Use HEAD first to grab Last-Modified for our cache key, then GET.
+    let headRes;
+    try {
+      headRes = await fetch(originUrl, { method: 'HEAD' });
+    } catch (e) {
+      res.status(502).json({ error: 'origin fetch failed', detail: String(e) });
+      return;
+    }
+    if (!headRes.ok) {
+      res.status(404).json({ error: 'Document not found on origin' });
+      return;
+    }
+
+    // Cheap ETag: use Last-Modified epoch (falls back to a stable
+    // fingerprint so re-generated PDFs still bust the cache).
+    const lm = headRes.headers.get('last-modified');
+    const et = headRes.headers.get('etag') || '';
+    const stamp = lm
+      ? Math.floor(new Date(lm).getTime() / 1000)
+      : (et.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12) || 'v1');
+
+    const objectPath = `${PREFIX}/${stamp}__${filename}`;
     const publicUrl  = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${objectPath}`;
 
-    // If it already exists on Supabase, redirect immediately.
+    // If already on Supabase, redirect immediately.
     const exists = await objectExists(SUPABASE_URL, SUPABASE_KEY, objectPath);
     if (!exists) {
-      const buffer = fs.readFileSync(localPath);
+      const getRes = await fetch(originUrl);
+      if (!getRes.ok) {
+        res.status(502).json({ error: 'origin GET failed', status: getRes.status });
+        return;
+      }
+      const ab = await getRes.arrayBuffer();
+      const buffer = Buffer.from(ab);
       await uploadObject(SUPABASE_URL, SUPABASE_KEY, objectPath, buffer, 'application/pdf');
     }
 
