@@ -91,6 +91,52 @@
   .sup-controls button:hover{background:var(--gold);border-color:var(--gold)}
   .sup-controls button:disabled{opacity:0.5;cursor:wait}
 
+  /* Mobile-friendly filter block. On narrow screens the flex layout
+     wraps awkwardly with orphan labels; switch to a 2-column grid with
+     each label sitting immediately above its own control, and give the
+     Refresh button a full-width row at the bottom. */
+  @media (max-width: 700px) {
+    .sup-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 12px;
+      padding: 12px;
+      align-items: end;
+    }
+    .sup-controls label {
+      grid-column: auto;
+      align-self: end;
+      margin-bottom: 2px;
+    }
+    .sup-controls select,
+    .sup-controls input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      font-size: 13px;
+      margin-left: 0 !important;
+    }
+    /* Each label must not carry the desktop margin-left offset */
+    .sup-controls label[style*="margin-left"] { margin-left: 0 !important; }
+    /* Pair each label with its own control on the same 2-col grid row */
+    .sup-controls .sup-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .sup-controls .sup-field.sup-field-full { grid-column: 1 / -1; }
+    .sup-controls button {
+      grid-column: 1 / -1;
+      width: 100%;
+      padding: 12px;
+      font-size: 12px;
+      margin-left: 0 !important;
+      margin-top: 4px;
+    }
+    .sup-controls #if-ticker { width: 100% }
+  }
+
   .sup-status{font-size:11px;color:var(--gray-mid);font-style:italic;margin-bottom:14px;min-height:16px}
   .sup-status.error{color:var(--red);font-style:normal}
   .sup-status.success{color:var(--green);font-style:normal}
@@ -149,8 +195,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=27">
-<script defer src="/pwa-shell.js?v=27"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=28">
+<script defer src="/pwa-shell.js?v=28"></script>
 <!--PWA:END-->
 </head>
 <body data-pull-refresh="1">
@@ -474,23 +520,31 @@
     </div>
 
     <div class="sup-controls" style="margin-top:14px">
-      <label>View:</label>
-      <select id="if-view" onchange="loadIdeaFeed()">
-        <option value="tickers" selected>Tickers — table (shortlist style)</option>
-        <option value="news">News — chronological feed</option>
-      </select>
-      <label style="margin-left:14px">Window:</label>
-      <select id="if-days" onchange="loadIdeaFeed()">
-        <option value="7">Last 7 days</option>
-        <option value="21" selected>Last 21 days</option>
-        <option value="60">Last 60 days</option>
-      </select>
-      <label style="margin-left:14px">Source:</label>
-      <select id="if-source" onchange="loadIdeaFeed()">
-        <option value="">All sources</option>
-      </select>
-      <label style="margin-left:14px">Ticker:</label>
-      <input type="text" id="if-ticker" placeholder="e.g. AAPL" maxlength="6" style="width:90px;text-transform:uppercase">
+      <div class="sup-field sup-field-full">
+        <label for="if-view">View:</label>
+        <select id="if-view" onchange="loadIdeaFeed()">
+          <option value="tickers" selected>Tickers — table (shortlist style)</option>
+          <option value="news">News — chronological feed</option>
+        </select>
+      </div>
+      <div class="sup-field">
+        <label for="if-days">Window:</label>
+        <select id="if-days" onchange="loadIdeaFeed()">
+          <option value="7">Last 7 days</option>
+          <option value="21" selected>Last 21 days</option>
+          <option value="60">Last 60 days</option>
+        </select>
+      </div>
+      <div class="sup-field">
+        <label for="if-source">Source:</label>
+        <select id="if-source" onchange="loadIdeaFeed()">
+          <option value="">All sources</option>
+        </select>
+      </div>
+      <div class="sup-field">
+        <label for="if-ticker">Ticker:</label>
+        <input type="text" id="if-ticker" placeholder="e.g. AAPL" maxlength="6" style="width:90px;text-transform:uppercase">
+      </div>
       <button id="if-refresh-btn" onclick="loadIdeaFeed()" style="margin-left:auto">↻ Refresh</button>
     </div>
 
