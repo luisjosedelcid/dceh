@@ -299,20 +299,15 @@ function buildNav() {
       return '';
     }
     if (t.external) {
-      // Same-origin PDFs are wrapped through /pdfview.html so the PWA
-      // standalone user (installed iOS app) gets an in-app Back button.
-      // Other links (docx, xlsx, http) keep window.open for native handling.
+      // Same-origin /docs/*.pdf goes through the /api/pdf-open proxy so
+      // iOS PWA standalone gets QuickLook with a close button (see
+      // renderDocTiles in company.html for the full rationale).
       var extUrl = t.external;
-      var isPdf = /\.pdf(\?|#|$)/i.test(extUrl);
-      var isRel = extUrl.charAt(0) === '/';
-      if (isPdf && isRel) {
-        var qs = new URLSearchParams({
-          src:   extUrl,
-          title: t.label,
-          back:  window.location.pathname + window.location.search + window.location.hash
-        });
-        var target = '/pdfview.html?' + qs.toString();
-        return `<button onclick="window.location.href='${target}'" style="${t.style||''}">${t.label}</button>`;
+      var m = /^\/docs\/([^?#]+\.pdf)(\?[^#]*)?(#.*)?$/i.exec(extUrl);
+      if (m) {
+        extUrl = '/api/pdf-open?path=' + encodeURIComponent(m[1]) +
+                 (m[2] || '').replace('?', '&') +
+                 (m[3] || '');
       }
       return `<button onclick="window.open('${extUrl}','_blank')" style="${t.style||''}">${t.label}</button>`;
     }
