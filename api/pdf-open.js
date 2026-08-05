@@ -152,12 +152,13 @@ module.exports = async function handler(req, res) {
     });
     res.end();
   } catch (err) {
-    // Last-resort fallback: try same-origin
+    // Surface failures as JSON so we can diagnose from the browser or curl
+    // instead of silently redirecting back to same-origin (which strands the
+    // iPad Mini PWA user again).
     console.error('pdf-open failed', err);
-    const raw = (req.query && req.query.path) ? String(req.query.path) : '';
-    let filename = raw.trim();
-    if (filename.startsWith('/docs/')) filename = filename.slice('/docs/'.length);
-    res.writeHead(302, { Location: `/docs/${encodeURIComponent(filename)}` });
-    res.end();
+    res.status(500).json({
+      error:  'pdf-open failed',
+      detail: (err && err.message) || String(err),
+    });
   }
 };
