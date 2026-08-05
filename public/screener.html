@@ -149,8 +149,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=25">
-<script defer src="/pwa-shell.js?v=25"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=26">
+<script defer src="/pwa-shell.js?v=26"></script>
 <!--PWA:END-->
 </head>
 <body data-pull-refresh="1">
@@ -699,7 +699,7 @@ function renderScreenerResults(rows, count) {
   const body = rows.map(r => {
     const nm = _scrEsc(r.company_name || '');
     return `<tr>
-      <td style="font-weight:700"><a href="https://www.roic.ai/quote/${_scrEsc(r.ticker)}" target="_blank" rel="noopener noreferrer" style="color:var(--navy);text-decoration:none;border-bottom:1px dotted var(--gold)" title="Open in Roic.ai (external)">${_scrEsc(r.ticker)} ↗</a></td>
+      <td style="font-weight:700;color:var(--navy)">${_scrEsc(r.ticker)}</td>
       <td>${nm}</td>
       <td style="color:var(--gray-mid);font-size:10px">${_scrEsc(r.sector || '—')}</td>
       <td class="num">$${_scrFmtN(r.market_cap)}</td>
@@ -806,7 +806,8 @@ function _sectorTickerLink(tk){
   if (_SECTOR_COVERED.includes(up)) {
     return `<a href="/company.html?ticker=${encodeURIComponent(t)}" style="${style}" title="Open DCE analysis">${t}</a>`;
   }
-  return `<a href="https://www.roic.ai/quote/${encodeURIComponent(t)}" target="_blank" rel="noopener noreferrer" style="${style}" title="Open in Roic.ai (external)">${t} ↗</a>`;
+  // No coverage yet — render as plain text, no external link
+  return `<span style="color:var(--navy);font-weight:700">${t}</span>`;
 }
 
 function renderSector(sector) {
@@ -2087,10 +2088,12 @@ async function loadIdeaFeed() {
       const tickers = (it.tickers || []).map(t => {
         const tUp = String(t).toUpperCase();
         const isCovered = _SECTOR_COVERED.includes(tUp);
-        const href = isCovered ? `/company.html?ticker=${encodeURIComponent(t)}` : `https://www.roic.ai/quote/${encodeURIComponent(t)}`;
-        const extra = isCovered ? '' : ' target="_blank" rel="noopener noreferrer"';
-        const arrow = isCovered ? '' : ' ↗';
-        return `<a href="${href}"${extra} style="display:inline-block;background:var(--gold-dim);color:var(--gold);font-family:'Roboto Mono',Menlo,monospace;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;margin-right:5px;text-decoration:none">${_ifEscape(t)}${arrow}</a>`;
+        // Covered tickers link to the internal DCE dashboard; uncovered
+        // tickers render as plain badges (no external Roic.ai link).
+        if (isCovered) {
+          return `<a href="/company.html?ticker=${encodeURIComponent(t)}" style="display:inline-block;background:var(--gold-dim);color:var(--gold);font-family:'Roboto Mono',Menlo,monospace;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;margin-right:5px;text-decoration:none">${_ifEscape(t)}</a>`;
+        }
+        return `<span style="display:inline-block;background:var(--gold-dim);color:var(--gold);font-family:'Roboto Mono',Menlo,monospace;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;margin-right:5px">${_ifEscape(t)}</span>`;
       }).join('');
       const methodBadge = it.extraction_method === 'llm'
         ? '<span title="AI-extracted" style="font-size:9px;color:var(--gray-mid);margin-left:6px">AI</span>'
@@ -2182,7 +2185,7 @@ async function renderIdeaFeedTickers(items, status, cont) {
             <td style="white-space:nowrap">
               ${(function(){ const tUp = String(r.ticker).toUpperCase(); const isCov = _SECTOR_COVERED.includes(tUp); return isCov
                 ? `<a href="/company.html?ticker=${encodeURIComponent(r.ticker)}" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px;margin-right:4px">Open →</a>`
-                : `<a href="https://www.roic.ai/quote/${encodeURIComponent(r.ticker)}" target="_blank" rel="noopener noreferrer" style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--gold-rule);padding:5px 10px;margin-right:4px">Roic.ai ↗</a>`; })()}
+                : ''; })()}
               <button onclick="sendToShortlist(this)" data-tk="${_ifEscape(r.ticker)}" data-nm="${_ifEscape(r.thesisItem?.title || '')}" style="font-size:9px;font-weight:700;color:var(--white);background:var(--navy);letter-spacing:0.12em;text-transform:uppercase;border:1px solid var(--navy);padding:5px 10px;cursor:pointer;font-family:inherit" title="Add to Shortlist (radar)">→ Shortlist</button>
             </td>
           </tr>`).join('')}
