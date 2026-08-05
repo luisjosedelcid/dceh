@@ -54,6 +54,51 @@
   /* KANBAN */
   .kanban{display:grid;grid-template-columns:repeat(7,minmax(200px,1fr));gap:12px}
   @media (max-width:1400px){.kanban{display:flex;overflow-x:auto;padding-bottom:8px}.kanban>.col{min-width:240px;flex:0 0 240px}}
+
+  /* MOBILE: one column per page with scroll-snap + pagination dots */
+  @media (max-width:820px){
+    .kanban{
+      display:flex;
+      overflow-x:auto;
+      scroll-snap-type:x mandatory;
+      -webkit-overflow-scrolling:touch;
+      scroll-behavior:smooth;
+      scrollbar-width:none;
+      padding:0 20px 8px;
+      margin:0 -20px;
+      gap:0;
+    }
+    .kanban::-webkit-scrollbar{display:none}
+    .kanban>.col{
+      min-width:calc(100vw - 40px);
+      flex:0 0 calc(100vw - 40px);
+      scroll-snap-align:center;
+      scroll-snap-stop:always;
+      margin-right:12px;
+    }
+    .kanban>.col:last-child{margin-right:0}
+    .kanban-pager{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:8px;
+      padding:14px 0 6px;
+      user-select:none;
+    }
+    .kanban-pager .dot{
+      width:6px;height:6px;border-radius:50%;
+      background:rgba(27,38,66,0.2);
+      transition:all .2s;
+      cursor:pointer;
+    }
+    .kanban-pager .dot.active{background:var(--gold);width:20px;border-radius:3px}
+    .kanban-pager .label{
+      font-size:10px;letter-spacing:0.14em;text-transform:uppercase;
+      color:var(--gray-mid);font-weight:600;
+      margin-left:14px;min-width:110px;
+    }
+  }
+  @media (min-width:821px){.kanban-pager{display:none}}
   .col.terminal{border-top-color:#9aa0a6}
   .col.terminal-invested{border-top-color:#2f7a3f}
   .col.terminal-followed{border-top-color:#1b2642}
@@ -186,8 +231,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=14">
-<script defer src="/pwa-shell.js?v=14"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=15">
+<script defer src="/pwa-shell.js?v=15"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -377,6 +422,7 @@ function renderApp() {
 
     <div class="stats" id="stats"></div>
     <div class="kanban" id="kanban"></div>
+    <div class="kanban-pager" id="kanban-pager" role="tablist" aria-label="Pipeline stages"></div>
   `;
 
   // Pre-fill banner if coming from Idea Feed
@@ -437,7 +483,69 @@ function renderBoard() {
       </div>
     `;
   }).join('');
+  setupKanbanPager();
 }
+
+// Mobile-only: horizontal scroll-snap pager for the kanban columns.
+// Renders one dot per column + the active column label, and keeps them
+// in sync as the user swipes.
+function setupKanbanPager() {
+  const pager = document.getElementById('kanban-pager');
+  const kanban = document.getElementById('kanban');
+  if (!pager || !kanban) return;
+
+  // Only build the pager on mobile widths; keep DOM empty on desktop
+  // so the (min-width:821px){display:none} rule has nothing to render.
+  const isMobile = window.matchMedia('(max-width: 820px)').matches;
+  if (!isMobile) { pager.innerHTML = ''; return; }
+
+  const cols = Array.from(kanban.querySelectorAll('.col'));
+  if (!cols.length) { pager.innerHTML = ''; return; }
+
+  pager.innerHTML = cols.map((_, i) =>
+    `<span class="dot${i === 0 ? ' active' : ''}" data-idx="${i}" role="tab" aria-label="Stage ${i + 1}"></span>`
+  ).join('') + `<span class="label" id="kanban-pager-label"></span>`;
+
+  const dots = Array.from(pager.querySelectorAll('.dot'));
+  const label = document.getElementById('kanban-pager-label');
+
+  const setActive = (idx) => {
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    const ttl = cols[idx]?.querySelector('.col-h .ttl');
+    if (label && ttl) label.textContent = (ttl.textContent || '').replace(/\s*auto\s*$/i, '').trim();
+  };
+  setActive(0);
+
+  // Tap dot => scroll to column
+  dots.forEach((d, i) => {
+    d.addEventListener('click', () => {
+      cols[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    });
+  });
+
+  // Observe which column is currently centered
+  if (kanban._pagerObserver) kanban._pagerObserver.disconnect();
+  const io = new IntersectionObserver((entries) => {
+    // Pick the entry with the largest intersection ratio
+    let best = null;
+    entries.forEach(e => {
+      if (!best || e.intersectionRatio > best.intersectionRatio) best = e;
+    });
+    if (best && best.isIntersecting) {
+      const idx = cols.indexOf(best.target);
+      if (idx >= 0) setActive(idx);
+    }
+  }, { root: kanban, threshold: [0.55, 0.75, 0.95] });
+  cols.forEach(c => io.observe(c));
+  kanban._pagerObserver = io;
+}
+
+// Re-run pager setup on resize (viewport crosses the mobile breakpoint).
+let _kanbanResizeT = null;
+window.addEventListener('resize', () => {
+  clearTimeout(_kanbanResizeT);
+  _kanbanResizeT = setTimeout(setupKanbanPager, 150);
+});
 
 function ownerAvatarHTML(c) {
   const a = analystById(c.owner_id);
