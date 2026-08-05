@@ -129,8 +129,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=20">
-<script defer src="/pwa-shell.js?v=20"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=21">
+<script defer src="/pwa-shell.js?v=21"></script>
 <!--PWA:END-->
 </head>
 <body data-pull-refresh="1">
@@ -1353,14 +1353,39 @@ async function handleSnapshot(btn, ticker) {
     });
     const data = await r.json();
     if (!data.ok) throw new Error(data.error || 'error');
-    // Auto-open the freshly generated snapshot in a new tab and reset the
-    // button so a subsequent click regenerates instead of reopening the cached URL.
-    window.open(data.url, '_blank', 'noopener');
+
+    // Safari (iOS/iPadOS) blocks window.open() called from an async
+    // callback because the original user gesture has been "lost" by the
+    // time fetch resolves. Detect mobile and fall back to same-tab
+    // navigation there; on desktop, try window.open first and gracefully
+    // fall back to same-tab if the popup is blocked. Also keep the URL
+    // on the button so the user can tap it again after the fact.
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+                     (window.matchMedia && window.matchMedia('(max-width: 820px)').matches);
+    let opened = false;
+    if (!isMobile) {
+      const w = window.open(data.url, '_blank', 'noopener');
+      opened = !!w;
+    }
+    if (!opened) {
+      // Same-tab open: snapshot is a PDF/HTML file hosted on Supabase
+      // Storage, so navigation replaces the tab. The user can come back
+      // via browser back — the button will be in OPEN state.
+      window.location.href = data.url;
+      // No further UI update needed; the location change unloads the page.
+      return;
+    }
+    // Desktop successful window.open: mark button as ready-to-open so a
+    // second click re-opens the same URL instead of forcing a rebuild.
     btn.dataset.state = 'ready';
-    delete btn.dataset.url;
-    btn.textContent = 'GENERATE';
-    btn.style.color = 'var(--gold)';
-    btn.style.borderColor = 'var(--gold)';
+    btn.dataset.url = data.url;
+    btn.textContent = 'OPEN →';
+    btn.style.color = 'var(--navy)';
+    btn.style.borderColor = 'var(--navy)';
+    btn.onclick = (e) => {
+      e.preventDefault();
+      window.open(data.url, '_blank', 'noopener');
+    };
   } catch (e) {
     console.error('snapshot error', e);
     alert(`Snapshot failed: ${e.message}`);
