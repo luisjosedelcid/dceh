@@ -104,8 +104,28 @@
   footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
 
   @media(max-width:1100px){main{padding:20px 16px}header{padding:0 16px}.stbl{font-size:11px}.stbl th,.stbl td{padding:7px 8px}.mode-tab{padding:12px 16px;font-size:10px}}
-  /* Mobile/tablet: hide thesis column and force horizontal scroll on idea-feed table for legibility */
-  @media(max-width:900px){.col-thesis{display:none !important}.stbl{font-size:11px}.stbl th,.stbl td{padding:6px 8px;white-space:nowrap}}
+  /* Mobile/tablet: hide the standalone Thesis column (its content is
+     rendered inline inside the Latest-mention cell via .mobile-thesis)
+     plus the numeric/context columns that already show on the Radar
+     tab. This trims Idea Feed to the essential trio on narrow screens:
+     Ticker (sticky) · Mentions · Latest mention + inline thesis. */
+  @media(max-width:900px){
+    .col-thesis{display:none !important}
+    .col-if-hide-mobile{display:none !important}
+    .stbl{font-size:11px}
+    .stbl th,.stbl td{padding:6px 8px;white-space:nowrap}
+    /* Latest mention cell needs to wrap and give the thesis breathing room */
+    .stbl td.if-latest-cell{white-space:normal;max-width:none}
+    .mobile-thesis{
+      display:block;margin-top:6px;padding-top:6px;
+      border-top:1px dashed var(--rule);
+      font-size:11px;line-height:1.5;color:var(--navy);
+      text-align:justify;hyphens:auto;white-space:normal;
+    }
+    .mobile-thesis-pending{color:var(--gray-mid);font-style:italic}
+  }
+  /* Desktop: no inline mobile-thesis; keep the dedicated column */
+  @media(min-width:901px){.mobile-thesis{display:none}}
 </style>
 <link rel="stylesheet" href="/responsive.css"><script src="/dce-auth.js" defer></script>
     <script src="/nyse-clock.js" defer></script>
@@ -129,8 +149,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=24">
-<script defer src="/pwa-shell.js?v=24"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=25">
+<script defer src="/pwa-shell.js?v=25"></script>
 <!--PWA:END-->
 </head>
 <body data-pull-refresh="1">
@@ -2132,9 +2152,9 @@ async function renderIdeaFeedTickers(items, status, cont) {
           <th class="ticker-cell" style="text-align:left">Ticker</th>
           <th style="text-align:left">Company</th>
           <th style="text-align:left">Sector</th>
-          <th>Price</th>
-          <th>Day %</th>
-          <th>Mkt Cap</th>
+          <th class="col-if-hide-mobile">Price</th>
+          <th class="col-if-hide-mobile">Day %</th>
+          <th class="col-if-hide-mobile">Mkt Cap</th>
           <th>Mentions</th>
           <th style="text-align:left">Latest mention</th>
           <th class="col-thesis" style="text-align:left">Thesis (≈100w)</th>
@@ -2143,15 +2163,16 @@ async function renderIdeaFeedTickers(items, status, cont) {
         <tbody id="if-tbl-body">
           ${rows.map(r => `<tr data-tk="${_ifEscape(r.ticker)}">
             <td class="ticker-cell" style="text-align:left">${_ifEscape(r.ticker)}</td>
-            <td style="text-align:left;color:var(--gray-mid)">…</td>
-            <td style="text-align:left;color:var(--gray-mid);font-size:11px">—</td>
-            <td class="gold" style="font-weight:700">—</td>
-            <td>—</td>
-            <td>—</td>
+            <td class="col-if-hide-mobile" style="text-align:left;color:var(--gray-mid)">…</td>
+            <td class="col-if-hide-mobile" style="text-align:left;color:var(--gray-mid);font-size:11px">—</td>
+            <td class="col-if-hide-mobile gold" style="font-weight:700">—</td>
+            <td class="col-if-hide-mobile">—</td>
+            <td class="col-if-hide-mobile">—</td>
             <td style="font-weight:700">${r.mentions.length}</td>
-            <td style="text-align:left;font-size:11px;max-width:260px">
+            <td class="if-latest-cell" style="text-align:left;font-size:11px;max-width:260px">
               <a href="${_ifEscape(r.mentions[0].url || '#')}" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:none">${_ifEscape(r.mentions[0].title)}</a>
               <div style="color:var(--gray-mid);font-size:10px;margin-top:3px;letter-spacing:0.04em">${_ifEscape([...r.sources].join(' · '))} — ${_ifFmtDate(r.mentions[0].published_at || r.mentions[0].fetched_at)}</div>
+              <div class="mobile-thesis${r.thesisItem && r.thesisItem.thesis ? '' : ' mobile-thesis-pending'}">${r.thesisItem && r.thesisItem.thesis ? _ifEscape(r.thesisItem.thesis) : 'Pending next refresh…'}</div>
             </td>
             <td class="col-thesis" style="text-align:justify;font-size:11px;max-width:420px;line-height:1.45;color:var(--navy);hyphens:auto">
               ${r.thesisItem && r.thesisItem.thesis
@@ -2192,7 +2213,8 @@ async function renderIdeaFeedTickers(items, status, cont) {
       tds[2].textContent = sector;
       tds[3].textContent = price ? '$' + price.toFixed(2) : '—';
       tds[4].textContent = dp == null ? '—' : dpSign + dp.toFixed(2) + '%';
-      tds[4].className = dpClass;
+      // Preserve col-if-hide-mobile alongside the up/down color class
+      tds[4].className = ['col-if-hide-mobile', dpClass].filter(Boolean).join(' ');
       tds[4].style.fontWeight = '700';
       tds[5].textContent = fmtMktCap(profile?.marketCapitalization);
     } catch (e) { /* ignore */ }
