@@ -188,7 +188,12 @@ async function fedInvestOne(dateYmd) {
     const bid   = Number(parts[5]);
     const offer = Number(parts[6]);
     const eod   = Number(parts[7]);
-    if (!Number.isFinite(eod)) continue;
+    // Guard against corrupted / zero rows from FedInvest. Treasury bills
+    // are always quoted between ~90 and ~100 per $100 par; anything at or
+    // below 0 is either a header row, a missing field parsed as 0, or a
+    // TreasuryDirect upstream glitch. A zero here silently wipes millions
+    // of NAV, so drop the row and let the previous business day carry.
+    if (!Number.isFinite(eod) || eod <= 0) continue;
     rows.set(cusip, { bid, offer, eod });
   }
   return rows;
