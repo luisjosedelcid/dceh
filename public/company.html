@@ -800,6 +800,17 @@
       padding-left: 10px !important;
       padding-right: 10px !important;
     }
+    /* Mix tables (Distribution by Channel, Manufacturing Sourcing) have
+       3 columns: Item / % FY25 / Nota. The Nota column can be long text
+       that we want to fit on ONE line so the table exceeds the viewport
+       width and horizontal scroll kicks in (which is what activates the
+       sticky-left pin visually). Give the Nota (last) column a larger
+       min-width so this holds even when the note text is short. */
+    #tab-sales .fin-tbl:not(.mult-tbl):not(.bu-tbl) th:last-child,
+    #tab-sales .fin-tbl:not(.mult-tbl):not(.bu-tbl) td:last-child {
+      min-width: 240px;
+      white-space: normal;
+    }
 
     /* Version banner: tighter padding */
     #version-banner { padding: 8px 14px !important; font-size: 12px !important; }
@@ -837,8 +848,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=61">
-<script defer src="/pwa-shell.js?v=61"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=62">
+<script defer src="/pwa-shell.js?v=62"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1896,7 +1907,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=61"></script>
+<script src="company.js?v=62"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
