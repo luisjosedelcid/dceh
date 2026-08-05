@@ -1176,12 +1176,16 @@
     /* Give tablet enough columns to avoid wasted lateral space */
     .g4 { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .g3 { grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .g2 { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    /* .g2 stays 1-col on tablet: side-by-side table+chart is too cramped at 768px */
+    .g2 { grid-template-columns: 1fr; gap: 12px; }
     .hright { gap: 14px; }
     /* Health scorecard: force 3-across so PASS/MONITOR/FAIL align in one row */
     .g3.hc-scorecard { grid-template-columns: repeat(3, 1fr) !important; }
     /* Company Profile g3: keep 3 columns of kv pairs */
     .card > .g3 { gap: 0 20px !important; }
+    /* Radar chart: let it size normally now that .g2 is 1-col */
+    .radar-card { position: static !important; min-height: 400px !important; max-width: 100% !important; }
+    .radar-card canvas { max-height: 440px !important; max-width: 560px !important; margin: 0 auto; }
   }
 </style>
 <script src="/dce-auth.js" defer></script>
@@ -1206,8 +1210,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=88">
-<script defer src="/pwa-shell.js?v=88"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=89">
+<script defer src="/pwa-shell.js?v=89"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -2265,7 +2269,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=88"></script>
+<script src="company.js?v=89"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
