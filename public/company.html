@@ -388,6 +388,37 @@
     .card .kv .row { align-items: baseline; }
     .card > .g4 .kv .k { flex: 1 1 auto; }
     .card > .g4 .kv .v { flex: 0 0 auto; white-space: nowrap; }
+
+    /* Growth YoY sub-block: three tiny metrics (Revenue / EBITDA / FCF)
+       that read best as a compact 3-across row on phones, not as a
+       vertical 3-item list. Override the generic g4 -> 2col so this
+       specific bloc lays out as 3 equal columns with the label above
+       the percentage. Hide the trailing empty .kv slot the desktop
+       layout uses to keep alignment. */
+    .kfm-growth .g4 {
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 0 8px !important;
+    }
+    .kfm-growth .g4 > .kv:nth-child(4) { display: none !important; }
+    .kfm-growth .g4 .kv .row {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      padding: 0 !important;
+      gap: 4px !important;
+    }
+    .kfm-growth .g4 .kv .k {
+      font-size: 10px !important;
+      letter-spacing: 0.06em;
+      color: var(--gray-mid);
+      flex: 0 0 auto !important;
+    }
+    .kfm-growth .g4 .kv .v {
+      font-size: 15px !important;
+      font-weight: 600;
+      text-align: left !important;
+      flex: 0 0 auto !important;
+      white-space: nowrap;
+    }
     .kv .row {
       padding: 10px 0 !important;
       font-size: 12px !important;
@@ -663,8 +694,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=50">
-<script defer src="/pwa-shell.js?v=50"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=51">
+<script defer src="/pwa-shell.js?v=51"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -827,7 +858,7 @@
         <div class="row"><span class="k">SBC</span><span class="v" id="kf-sbc">—</span></div>
       </div>
     </div>
-    <div style="border-top:1px solid var(--rule);padding-top:14px;margin-top:6px">
+    <div class="kfm-growth" style="border-top:1px solid var(--rule);padding-top:14px;margin-top:6px">
       <div class="clbl" style="margin-bottom:10px">Growth YoY</div>
       <div class="g4" style="gap:0 28px;margin-bottom:0">
         <div class="kv"><div class="row" style="border:none;padding:0"><span class="k">Revenue</span><span class="v" id="kf-rev-yoy">—</span></div></div>
