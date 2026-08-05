@@ -681,6 +681,32 @@
       white-space: normal;
     }
 
+    /* Quality Radar card: on desktop it lives in a 2-col grid next to the
+       health-check table and uses position:sticky + min-height:480. On
+       mobile that sticky positioning kept it out of flow and the fixed
+       min-height blew the layout so the chart clipped off the right edge
+       of the viewport. Force it back into normal document flow, fit to
+       the container width, and cap the height so the whole radar renders. */
+    .radar-card {
+      position: static !important;
+      top: auto !important;
+      min-height: 320px !important;
+      max-width: 100% !important;
+      overflow: hidden;
+    }
+    .radar-card .radar-wrap {
+      min-height: 280px !important;
+      max-width: 100%;
+    }
+    .radar-card canvas {
+      max-height: 320px !important;
+      max-width: 100% !important;
+    }
+    .radar-legend {
+      font-size: 9px !important;
+      gap: 10px !important;
+    }
+
     /* Version banner: tighter padding */
     #version-banner { padding: 8px 14px !important; font-size: 12px !important; }
   }
@@ -717,8 +743,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=53">
-<script defer src="/pwa-shell.js?v=53"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=54">
+<script defer src="/pwa-shell.js?v=54"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1776,7 +1802,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js"></script>
+<script src="company.js?v=54"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
