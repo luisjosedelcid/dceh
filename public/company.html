@@ -641,11 +641,20 @@
       font-weight: 500;
       flex: 0 0 auto;
     }
-    /* The right side (numeric value / status / rationale text) grows */
-    .hc-tbl tbody tr:not(.cat) td:nth-child(n+2) {
-      text-align: right !important;
+    /* The value span (.hc-cell) is the flex item on the right. Pin it to
+       the right and let it shrink to fit long strings. Without a real
+       inline-element wrapper, iOS Safari sometimes fails to paint the
+       anonymous text-node inside a flex container — that is why the
+       renderer now wraps every cell body in <span class="hc-cell">. */
+    .hc-tbl tbody tr:not(.cat) td:nth-child(n+2) .hc-cell {
+      flex: 1 1 auto;
+      text-align: right;
+      font-weight: 600;
+      color: var(--navy);
+      min-width: 0;
+      white-space: nowrap;
     }
-    /* Rationale can be long — let it wrap and shrink type slightly */
+    /* Rationale can be long — drop it below on its own block so it wraps */
     .hc-tbl tbody tr:not(.cat) td:nth-child(5) {
       display: block !important;
       font-size: 11px !important;
@@ -656,6 +665,13 @@
     .hc-tbl tbody tr:not(.cat) td:nth-child(5)::before {
       display: block;
       margin-bottom: 2px;
+    }
+    .hc-tbl tbody tr:not(.cat) td:nth-child(5) .hc-cell {
+      display: block;
+      text-align: left;
+      font-weight: 400;
+      color: var(--gray-mid);
+      white-space: normal;
     }
 
     /* Version banner: tighter padding */
@@ -694,8 +710,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=51">
-<script defer src="/pwa-shell.js?v=51"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=52">
+<script defer src="/pwa-shell.js?v=52"></script>
 <!--PWA:END-->
 </head>
 <body>

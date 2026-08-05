@@ -2214,11 +2214,11 @@ function renderHealth() {
         thresholdCell = m.threshold || '';
       }
       html += `<tr>
-        <td>${m.label}</td>
-        <td class="num-cell">${m.value}</td>
-        <td class="num-cell">${thresholdCell}</td>
-        <td><span class="${statusCls}">${statusLbl}</span></td>
-        <td class="dim">${m.rationale || ''}</td>
+        <td><span class="hc-cell">${m.label}</span></td>
+        <td class="num-cell"><span class="hc-cell">${m.value}</span></td>
+        <td class="num-cell"><span class="hc-cell">${thresholdCell}</span></td>
+        <td><span class="hc-cell"><span class="${statusCls}">${statusLbl}</span></span></td>
+        <td class="dim"><span class="hc-cell">${m.rationale || ''}</span></td>
       </tr>`;
     });
     el.innerHTML = html;
