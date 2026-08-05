@@ -1106,27 +1106,35 @@
       padding: 0 !important;
     }
     #tab-probability table.pw-sens th:nth-child(1),
-    #tab-probability table.pw-sens td:nth-child(1),
+    #tab-probability table.pw-sens td:nth-child(1) {
+      width: 15% !important;
+      text-align: center !important;
+      padding-left: 4px !important;
+    }
     #tab-probability table.pw-sens th:nth-child(3),
     #tab-probability table.pw-sens td:nth-child(3) {
-      width: 20% !important;
+      width: 15% !important;
       text-align: center !important;
     }
     #tab-probability table.pw-sens th:nth-child(4),
-    #tab-probability table.pw-sens td:nth-child(4),
+    #tab-probability table.pw-sens td:nth-child(4) {
+      width: 35% !important;
+      text-align: right !important;
+    }
     #tab-probability table.pw-sens th:nth-child(5),
     #tab-probability table.pw-sens td:nth-child(5) {
-      width: 30% !important;
-      text-align: center !important;
+      width: 35% !important;
+      text-align: right !important;
+      padding-right: 4px !important;
     }
     #tab-probability table.pw-sens th,
     #tab-probability table.pw-sens td {
-      padding: 9px 6px !important;
+      padding: 9px 4px !important;
       font-size: 13px !important;
     }
     #tab-probability table.pw-sens th {
       font-size: 9px !important;
-      letter-spacing: 0.06em !important;
+      letter-spacing: 0.05em !important;
     }
 
     /* Decision Metrics: 4-card grid with long metric names like
@@ -1192,8 +1200,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=83">
-<script defer src="/pwa-shell.js?v=83"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=84">
+<script defer src="/pwa-shell.js?v=84"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -2251,7 +2259,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=83"></script>
+<script src="company.js?v=84"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
