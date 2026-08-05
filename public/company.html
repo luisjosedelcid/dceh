@@ -641,17 +641,29 @@
       font-weight: 500;
       flex: 0 0 auto;
     }
-    /* The value span (.hc-cell) is the flex item on the right. Pin it to
-       the right and let it wrap if too long — threshold strings like
-       '<0.5x . 0.5-1.0x . >1.0x' are wider than the remaining space. */
+    /* Move value/threshold/status onto a second line under the label so we
+       never have to fight iOS Safari flex text-node painting or overflow
+       cropping. Each td:nth-child(n+2) becomes a block that stacks the
+       ::before label above the .hc-cell value. */
+    .hc-tbl tbody tr:not(.cat) td:nth-child(n+2) {
+      display: block !important;
+      padding: 3px 0 !important;
+      text-align: left !important;
+    }
+    .hc-tbl tbody tr:not(.cat) td:nth-child(n+2)::before {
+      display: block !important;
+      margin-bottom: 2px !important;
+      font-size: 9px !important;
+      letter-spacing: 0.14em !important;
+      text-transform: uppercase !important;
+      color: var(--gray-mid) !important;
+      font-weight: 500 !important;
+    }
     .hc-tbl tbody tr:not(.cat) td:nth-child(n+2) .hc-cell {
-      display: inline-block;
-      flex: 1 1 auto;
-      text-align: right;
+      display: block;
+      font-size: 13px;
       font-weight: 600;
       color: var(--navy);
-      min-width: 0;
-      max-width: 100%;
       white-space: normal;
       word-break: break-word;
       overflow-wrap: anywhere;
@@ -743,8 +755,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=54">
-<script defer src="/pwa-shell.js?v=54"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=55">
+<script defer src="/pwa-shell.js?v=55"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1802,7 +1814,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=54"></script>
+<script src="company.js?v=55"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
