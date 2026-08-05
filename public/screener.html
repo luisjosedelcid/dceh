@@ -129,8 +129,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=19">
-<script defer src="/pwa-shell.js?v=19"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=20">
+<script defer src="/pwa-shell.js?v=20"></script>
 <!--PWA:END-->
 </head>
 <body data-pull-refresh="1">
@@ -282,6 +282,65 @@
     }
     #scr-results td.num { text-align:right; font-variant-numeric:tabular-nums; }
     #scr-results tr:hover td { background:#fcfaf5; }
+
+    /* RADAR ADD-ROW (Find > Screener > Radar tab) */
+    .wl-add-row{
+      margin-top:14px;background:var(--white);border:1px solid var(--rule);
+      padding:10px;grid-template-columns:120px 1fr 110px;gap:10px;
+    }
+    .wl-inp{
+      padding:10px 12px;border:1px solid var(--rule);
+      font-family:inherit;font-size:13px;background:var(--cream);
+      outline:none;width:100%;
+    }
+    .wl-inp:focus{border-color:var(--gold);background:var(--white)}
+    .wl-inp-ticker{font-weight:600;letter-spacing:0.05em;text-transform:uppercase}
+    .wl-add-btn{
+      padding:10px;background:var(--navy);color:var(--white);border:none;
+      font-family:inherit;font-size:11px;letter-spacing:0.15em;font-weight:500;
+      text-transform:uppercase;cursor:pointer;transition:.2s;
+    }
+    .wl-add-btn:hover{background:#0d1428}
+    .wl-add-btn:disabled{opacity:.4;cursor:not-allowed}
+    @media (max-width:820px){
+      .wl-add-row{grid-template-columns:90px 1fr 72px;gap:8px;padding:8px}
+      .wl-inp{padding:9px 10px;font-size:12px}
+      .wl-add-btn{padding:9px 6px;font-size:10px;letter-spacing:0.1em}
+    }
+
+    /* Ticker autocomplete */
+    .wl-ticker-wrap{position:relative}
+    .wl-ticker-suggest{
+      position:absolute;left:0;right:0;top:calc(100% + 4px);
+      background:var(--white);border:1px solid var(--rule);
+      box-shadow:0 6px 20px rgba(27,38,66,0.12);
+      z-index:50;max-height:280px;overflow-y:auto;
+      display:none;
+    }
+    .wl-ticker-suggest.open{display:block}
+    .wl-ticker-suggest .row{
+      padding:10px 12px;cursor:pointer;
+      border-bottom:1px solid var(--rule);
+      display:flex;align-items:baseline;gap:10px;
+    }
+    .wl-ticker-suggest .row:last-child{border-bottom:none}
+    .wl-ticker-suggest .row:hover,
+    .wl-ticker-suggest .row.active{background:var(--cream)}
+    .wl-ticker-suggest .sym{
+      font-weight:700;font-size:12px;color:var(--navy);
+      letter-spacing:0.05em;min-width:70px;
+    }
+    .wl-ticker-suggest .desc{
+      font-size:12px;color:var(--gray-txt);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;
+    }
+    .wl-ticker-suggest .empty{padding:12px;font-size:12px;color:var(--gray-mid);text-align:center}
+    @media (max-width:820px){
+      .wl-ticker-wrap{position:static}
+      .wl-ticker-suggest{left:8px;right:8px;top:auto}
+      .wl-ticker-suggest .sym{min-width:60px;font-size:11px}
+      .wl-ticker-suggest .desc{font-size:11px}
+    }
   </style>
 
   <!-- ════════════════════════════════════════════════════════════ -->
@@ -305,12 +364,13 @@
     <div class="meta">Names on the radar — quick view, no Columbia model required. Synced live to Supabase (table <code style="font-family:Menlo,monospace;font-size:11px">radar</code>) + Finnhub quotes.</div>
 
     <!-- ADD ROW (admin only) -->
-    <div id="wl-add-row" style="margin-top:14px;background:var(--white);border:1px solid var(--rule);padding:10px;grid-template-columns:90px 1.4fr 2.2fr 1.4fr 100px;gap:8px;display:none">
-      <input id="wl-add-ticker" placeholder="TICKER" maxlength="8" style="padding:9px 10px;border:1px solid var(--rule);font-family:inherit;font-size:12px;background:var(--cream);outline:none;font-weight:600;letter-spacing:0.05em;text-transform:uppercase">
-      <input id="wl-add-name" placeholder="Company name" style="padding:9px 10px;border:1px solid var(--rule);font-family:inherit;font-size:12px;background:var(--cream);outline:none">
-      <input id="wl-add-thesis" placeholder="Thesis (optional)" style="padding:9px 10px;border:1px solid var(--rule);font-family:inherit;font-size:12px;background:var(--cream);outline:none">
-      <input id="wl-add-link" placeholder="Link URL (optional)" style="padding:9px 10px;border:1px solid var(--rule);font-family:inherit;font-size:12px;background:var(--cream);outline:none">
-      <button onclick="addToRadar()" style="padding:9px;background:var(--navy);color:var(--white);border:none;font-family:inherit;font-size:10px;letter-spacing:0.15em;font-weight:500;text-transform:uppercase;cursor:pointer">+ Add</button>
+    <div id="wl-add-row" class="wl-add-row" style="display:none">
+      <div class="wl-ticker-wrap">
+        <input id="wl-add-ticker" class="wl-inp wl-inp-ticker" placeholder="TICKER" maxlength="12" autocomplete="off">
+        <div id="wl-ticker-suggest" class="wl-ticker-suggest" role="listbox"></div>
+      </div>
+      <input id="wl-add-name" class="wl-inp" placeholder="Company name (auto)">
+      <button id="wl-add-btn" onclick="addToRadar()" class="wl-add-btn">+ Add</button>
     </div>
     <div id="wl-add-msg" style="min-height:14px;font-size:11px;margin-top:4px"></div>
 
@@ -1032,7 +1092,121 @@ function _wlToggleAddRow() {
   const row = document.getElementById('wl-add-row');
   if (!row) return;
   // Show only if logged in (admin token present)
-  row.style.display = _wlAuthToken() ? 'grid' : 'none';
+  const visible = !!_wlAuthToken();
+  row.style.display = visible ? 'grid' : 'none';
+  if (visible) _wlSetupTickerAutocomplete();
+}
+
+// ============================================================
+// RADAR TICKER AUTOCOMPLETE
+// ============================================================
+// Same behavior as /research.html: debounced /api/finnhub-search,
+// keyboard nav, mousedown-driven pick to survive input blur on mobile.
+// Selecting a suggestion fills BOTH ticker and (if empty) name fields.
+let _wlTsBooted   = false;
+let _wlTsDebounce = null;
+let _wlTsAbort    = null;
+let _wlTsItems    = [];
+let _wlTsActive   = -1;
+let _wlTsLastQ    = '';
+
+function _wlSetupTickerAutocomplete() {
+  if (_wlTsBooted) return;
+  const inp = document.getElementById('wl-add-ticker');
+  const box = document.getElementById('wl-ticker-suggest');
+  const nameInp = document.getElementById('wl-add-name');
+  if (!inp || !box) return;
+  _wlTsBooted = true;
+
+  const escHtml = (s) => String(s || '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+
+  const close = () => { box.classList.remove('open'); _wlTsActive = -1; };
+
+  const render = (items) => {
+    _wlTsItems = items;
+    _wlTsActive = -1;
+    if (!items.length) {
+      box.innerHTML = `<div class="empty">No matches</div>`;
+    } else {
+      box.innerHTML = items.map((it, i) => `
+        <div class="row" data-idx="${i}" role="option">
+          <span class="sym">${escHtml(it.displaySymbol || it.symbol)}</span>
+          <span class="desc">${escHtml(it.description)}</span>
+        </div>
+      `).join('');
+    }
+    box.classList.add('open');
+  };
+
+  const pick = (idx) => {
+    const it = _wlTsItems[idx];
+    if (!it) return;
+    inp.value = (it.displaySymbol || it.symbol).toUpperCase();
+    if (nameInp && !nameInp.value.trim()) nameInp.value = it.description || '';
+    close();
+    inp.focus();
+  };
+
+  inp.addEventListener('input', () => {
+    const q = inp.value.trim();
+    if (q !== q.toUpperCase()) inp.value = q.toUpperCase();
+    const qUp = inp.value.trim();
+    if (qUp.length < 1) { close(); return; }
+    if (qUp === _wlTsLastQ) return;
+    _wlTsLastQ = qUp;
+
+    clearTimeout(_wlTsDebounce);
+    _wlTsDebounce = setTimeout(async () => {
+      if (_wlTsAbort) _wlTsAbort.abort();
+      _wlTsAbort = new AbortController();
+      try {
+        const r = await fetch(`/api/finnhub-search?q=${encodeURIComponent(qUp)}`, { signal: _wlTsAbort.signal });
+        if (!r.ok) return;
+        const data = await r.json();
+        if (inp.value.trim().toUpperCase() !== qUp) return;
+        render(Array.isArray(data.result) ? data.result : []);
+      } catch (e) { /* aborted or network hiccup */ }
+    }, 180);
+  });
+
+  const updateActive = () => {
+    box.querySelectorAll('.row').forEach((r, i) => r.classList.toggle('active', i === _wlTsActive));
+    const el = box.querySelector(`.row[data-idx="${_wlTsActive}"]`);
+    if (el) el.scrollIntoView({ block: 'nearest' });
+  };
+
+  inp.addEventListener('keydown', (e) => {
+    if (!box.classList.contains('open')) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      _wlTsActive = Math.min(_wlTsActive + 1, _wlTsItems.length - 1);
+      updateActive();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      _wlTsActive = Math.max(_wlTsActive - 1, 0);
+      updateActive();
+    } else if (e.key === 'Enter') {
+      if (_wlTsActive >= 0) { e.preventDefault(); pick(_wlTsActive); }
+    } else if (e.key === 'Escape') {
+      close();
+    } else if (e.key === 'Tab' && _wlTsActive >= 0) {
+      pick(_wlTsActive);
+    }
+  });
+
+  box.addEventListener('mousedown', (e) => {
+    const row = e.target.closest('.row');
+    if (!row) return;
+    e.preventDefault();
+    pick(Number(row.dataset.idx));
+  });
+
+  inp.addEventListener('blur', () => setTimeout(close, 120));
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#wl-ticker-suggest') && e.target !== inp) close();
+  });
 }
 
 async function _wlFetchItems() {
@@ -1206,25 +1380,34 @@ async function addToRadar() {
   if (!tk) { msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Log in to add tickers.'; return; }
 
   const ticker = document.getElementById('wl-add-ticker').value.trim().toUpperCase();
-  const name   = document.getElementById('wl-add-name').value.trim();
-  const thesis = document.getElementById('wl-add-thesis').value.trim();
-  const link   = document.getElementById('wl-add-link').value.trim() || null;
+  let name    = document.getElementById('wl-add-name').value.trim();
 
   if (!ticker) { msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Ticker required.'; return; }
+
+  // Auto-resolve company name via Finnhub profile2 when blank.
+  // Fallback to ticker so the DB (name column) always has a value.
+  if (!name) {
+    try {
+      const r = await fetch(`/api/finnhub-quote?profile=1&symbol=${encodeURIComponent(ticker)}`);
+      if (r.ok) {
+        const p = await r.json();
+        name = (p && typeof p.name === 'string' && p.name.trim()) ? p.name.trim() : '';
+      }
+    } catch (_) { /* offline / rate-limited */ }
+    if (!name) name = ticker;
+  }
 
   msgEl.style.color = 'var(--gray-mid)'; msgEl.textContent = 'Adding…';
   try {
     const r = await fetch('/api/admin/radar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-token': tk },
-      body: JSON.stringify({ ticker, name, thesis, link }),
+      body: JSON.stringify({ ticker, name, thesis: '', link: null }),
     });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
     document.getElementById('wl-add-ticker').value = '';
     document.getElementById('wl-add-name').value = '';
-    document.getElementById('wl-add-thesis').value = '';
-    document.getElementById('wl-add-link').value = '';
     msgEl.style.color = 'var(--green, #2a7a56)';
     msgEl.textContent = '✓ ' + ticker + ' added to radar';
     setTimeout(() => { msgEl.textContent = ''; }, 2500);
