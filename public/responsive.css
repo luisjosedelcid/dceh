@@ -91,6 +91,11 @@
   }
   .ips-bands-table th,
   .ips-bands-table td { padding-left: 12px !important; padding-right: 12px !important; }
+  /* First column absorbs slack, right-aligned columns hug the right edge. */
+  .ips-bands-table th:first-child,
+  .ips-bands-table td:first-child { width: auto; }
+  .ips-bands-table th.right,
+  .ips-bands-table td.right { width: 1%; white-space: nowrap; }
   .ips-card { overflow: hidden; }
 
   /* GENERIC: any div that uses inline grid 3-5 cols → single col */
