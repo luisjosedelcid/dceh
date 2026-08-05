@@ -77,7 +77,7 @@
   tbody tr:hover{background:rgba(184,139,71,0.05)}
   tbody tr.expanded{background:rgba(184,139,71,0.08)}
   tbody td{padding:12px 14px;font-size:13px;vertical-align:top}
-  .row-caret{display:inline-block;width:10px;color:var(--gray-mid);transition:transform .18s;font-size:10px;margin-right:6px}
+  .row-caret{display:inline-block;width:10px;color:var(--gray-mid);transition:transform .18s;font-size:9px;margin-right:6px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-variant-emoji:text;-webkit-font-feature-settings:'liga' off}
   tr.expanded .row-caret{transform:rotate(90deg);color:var(--gold)}
   tr.detail-row td{padding:0!important;background:var(--cream)!important;border-bottom:2px solid var(--gold-rule)!important;cursor:default}
   tr.detail-row:hover td{background:var(--cream)!important}
@@ -879,7 +879,7 @@ function renderTable(rows) {
     const thesisShort = (r.thesis || '').length > 220 ? (r.thesis || '').slice(0, 220) + '…' : (r.thesis || '');
     const isExp = _expandedDecisions.has(r.id);
     return `<tr class="row-decision ${isExp?'expanded':''}" data-id="${r.id}" onclick="toggleDecisionRow(${r.id})">
-      <td class="ticker"><span class="row-caret">▶</span>${escapeHtml(r.ticker)}</td>
+      <td class="ticker"><span class="row-caret">&#x203A;</span>${escapeHtml(r.ticker)}</td>
       <td><span class="badge ${escapeHtml(r.decision_type)}">${escapeHtml(r.decision_type)}</span></td>
       <td>${fmtDate(r.decision_date)}</td>
       <td class="right">${fmtPrice(r.price_at_decision)}</td>
