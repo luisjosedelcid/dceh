@@ -813,20 +813,26 @@
       table-layout: fixed;
       font-size: 11px !important;
     }
-    #tab-epv .sens-tbl th,
-    #tab-epv .sens-tbl td {
+    /* First column (NOPAT levels) needs more room for the "NOPAT \ WACC"
+       header label. Fixed 80px keeps the label from overlapping into
+       the 8.2% cell while the five WACC columns share the remainder. */
+    #tab-epv .sens-tbl th:first-child,
+    #tab-epv .sens-tbl td:first-child {
+      width: 80px !important;
+      min-width: 80px !important;
+      max-width: 80px !important;
+      text-align: left;
+      padding: 8px 6px !important;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    #tab-epv .sens-tbl th:not(:first-child),
+    #tab-epv .sens-tbl td:not(:first-child) {
       min-width: 0 !important;
-      padding: 8px 4px !important;
+      padding: 8px 2px !important;
       white-space: nowrap;
       text-align: right;
-    }
-    #tab-epv .sens-tbl th.row-lbl,
-    #tab-epv .sens-tbl td.row-lbl,
-    #tab-epv .sens-tbl td:first-child,
-    #tab-epv .sens-tbl th:first-child {
-      min-width: 0 !important;
-      text-align: left;
-      padding-left: 8px !important;
     }
     /* Mix tables (Distribution by Channel, Manufacturing Sourcing) have
        a Nota last column. Force min-width so the table exceeds viewport
@@ -897,8 +903,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=65">
-<script defer src="/pwa-shell.js?v=65"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=66">
+<script defer src="/pwa-shell.js?v=66"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1956,7 +1962,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=65"></script>
+<script src="company.js?v=66"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
