@@ -1034,27 +1034,107 @@
     }
 
     /* Probability tab: Expected Value + Scenario Details tables (.pw-t)
-       must fit the viewport on mobile without horizontal overflow. */
+     * must fit the viewport on mobile and use the whole width. Give the
+     * scenario label 22% and split the three numeric columns so
+     * Contribution (widest text) gets more room. Values scale up to 13px
+     * to fill the row visually instead of floating in a shrunken block. */
     #tab-probability .pw-section {
-      padding: 16px 12px !important;
+      padding: 14px 12px !important;
     }
     #tab-probability table.pw-t {
       table-layout: fixed;
       width: 100%;
-      font-size: 11px !important;
+      font-size: 12px !important;
     }
     #tab-probability table.pw-t th,
     #tab-probability table.pw-t td {
-      padding: 8px 4px !important;
+      padding: 9px 6px !important;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    #tab-probability table.pw-t tr.weighted td {
+    #tab-probability table.pw-t th:nth-child(1),
+    #tab-probability table.pw-t td:nth-child(1) { width: 22%; }
+    #tab-probability table.pw-t th:nth-child(2),
+    #tab-probability table.pw-t td:nth-child(2) { width: 22%; }
+    #tab-probability table.pw-t th:nth-child(3),
+    #tab-probability table.pw-t td:nth-child(3) { width: 22%; }
+    #tab-probability table.pw-t th:nth-child(4),
+    #tab-probability table.pw-t td:nth-child(4) { width: 34%; }
+    #tab-probability table.pw-t th {
+      font-size: 9.5px !important;
+      letter-spacing: 0.08em !important;
+    }
+    #tab-probability table.pw-t td.scen {
       font-size: 12px !important;
+      font-weight: 700 !important;
+    }
+    #tab-probability table.pw-t td.num {
+      font-size: 13px !important;
+      font-weight: 500 !important;
+    }
+    #tab-probability table.pw-t tr.weighted td {
+      font-size: 14px !important;
     }
     #tab-probability table.pw-t tr.weighted td.lab {
       font-size: 10px !important;
-      letter-spacing: 0.6px !important;
+      letter-spacing: 0.1em !important;
+    }
+
+    /* Sensitivity table (pw-sens): 6 columns don't fit on iPhone. Hide
+     * the Base column (constant across all rows, redundant) and the
+     * Flag column (delta cell is already color-coded green/red). Give
+     * remaining 4 columns balanced widths and enable vertical row
+     * scrolling within a capped container so 12 rows don't push the
+     * whole page. */
+    #tab-probability table.pw-sens th:nth-child(2),
+    #tab-probability table.pw-sens td:nth-child(2),
+    #tab-probability table.pw-sens th:nth-child(6),
+    #tab-probability table.pw-sens td:nth-child(6) {
+      display: none !important;
+    }
+    #tab-probability table.pw-sens th:nth-child(1),
+    #tab-probability table.pw-sens td:nth-child(1) { width: 18% !important; }
+    #tab-probability table.pw-sens th:nth-child(3),
+    #tab-probability table.pw-sens td:nth-child(3) { width: 18% !important; }
+    #tab-probability table.pw-sens th:nth-child(4),
+    #tab-probability table.pw-sens td:nth-child(4) { width: 32% !important; }
+    #tab-probability table.pw-sens th:nth-child(5),
+    #tab-probability table.pw-sens td:nth-child(5) { width: 32% !important; }
+    #tab-probability table.pw-sens th,
+    #tab-probability table.pw-sens td {
+      padding: 8px 4px !important;
+      font-size: 12px !important;
+    }
+    #tab-probability table.pw-sens th {
+      font-size: 9px !important;
+      letter-spacing: 0.06em !important;
+    }
+
+    /* Decision Metrics: 4-card grid with long metric names like
+     * 'Prob-Weighted Loss' and 'Downside Cap (Bear)'. Keep the 2x2 grid
+     * on mobile but let labels wrap to 2 lines only when needed and
+     * pull values up so the cards stay visually balanced. */
+    #tab-probability .pw-mgrid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 10px !important;
+    }
+    #tab-probability .pw-mcard {
+      padding: 12px 10px !important;
+      min-height: 96px;
+    }
+    #tab-probability .pw-mname {
+      font-size: 10px !important;
+      letter-spacing: 0.06em !important;
+      line-height: 1.25 !important;
+      min-height: 26px;
+    }
+    #tab-probability .pw-mvalue {
+      font-size: 22px !important;
+      margin-top: 4px !important;
+    }
+    #tab-probability .pw-mtarget {
+      font-size: 9.5px !important;
+      margin-top: 4px !important;
     }
 
     /* Version banner: tighter padding */
@@ -1093,8 +1173,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=79">
-<script defer src="/pwa-shell.js?v=79"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=80">
+<script defer src="/pwa-shell.js?v=80"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -2152,7 +2232,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=79"></script>
+<script src="company.js?v=80"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
