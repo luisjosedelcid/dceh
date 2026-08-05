@@ -106,8 +106,13 @@
   footer { background: var(--navy); padding: 16px 48px; display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.08em; }
 
   /* TABS */
-  .tabs { display:flex; gap:0; border-bottom:1px solid var(--rule); margin-bottom:24px; }
-  .tab-btn { background:transparent; border:none; padding:12px 20px; font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--gray-mid); cursor:pointer; border-bottom:2px solid transparent; transition:all .2s; margin-bottom:-1px; }
+  /* Horizontally scroll the status tab row (In Research | Invested |
+     Followed | Passed) on narrow viewports. Without this, mobile users
+     can't reach the Followed / Passed tabs because the flex row silently
+     overflows off-screen. Scrollbar is hidden — users swipe or drag. */
+  .tabs { display:flex; gap:0; border-bottom:1px solid var(--rule); margin-bottom:24px; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; scrollbar-width:none; scroll-snap-type:x proximity; }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tab-btn { background:transparent; border:none; padding:12px 20px; font-family:'Archivo',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--gray-mid); cursor:pointer; border-bottom:2px solid transparent; transition:all .2s; margin-bottom:-1px; flex:0 0 auto; white-space:nowrap; scroll-snap-align:start; }
   .tab-btn:hover { color:var(--navy); }
   .tab-btn.active { color:var(--navy); border-bottom-color:var(--gold); }
   .tab-btn .count { display:inline-block; background:var(--gold-dim); color:var(--gold); font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; margin-left:8px; letter-spacing:0; }
@@ -202,8 +207,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=37">
-<script defer src="/pwa-shell.js?v=37"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=38">
+<script defer src="/pwa-shell.js?v=38"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1026,11 +1031,18 @@ function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
 
 // Tabs
 document.querySelectorAll('.tab-btn').forEach(btn => {
+  // no-op marker — real handler below adds scrollIntoView so a
+  // freshly-activated tab that started off-screen scrolls into view.
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
     const target = btn.dataset.tab;
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     wmEl(`pane-${target}`).classList.add('active');
+    // Bring the newly-active tab into view inside the horizontally-
+    // scrollable tab strip so mobile users always see the label they
+    // just tapped. inline:'nearest' avoids yanking already-visible
+    // tabs to the edge.
+    try { btn.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' }); } catch (e) {}
     if (target === 'watchlist' && !watchState.loaded) loadWatchlist();
   });
 });

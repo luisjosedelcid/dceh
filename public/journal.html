@@ -49,8 +49,12 @@
   .kpi.pending .kpi-val{color:var(--red)}
 
   /* Tabs */
-  .mode-tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin-bottom:18px}
-  .mode-tab{background:none;border:none;padding:12px 22px;font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+  /* Horizontal scroll for the tab row on narrow viewports — Research
+     outcomes / Re-underwriting / Lessons learned collectively exceed a
+     phone viewport. Scrollbar hidden; users swipe or drag. */
+  .mode-tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin-bottom:18px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x proximity}
+  .mode-tabs::-webkit-scrollbar{display:none}
+  .mode-tab{background:none;border:none;padding:12px 22px;font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;flex:0 0 auto;white-space:nowrap;scroll-snap-align:start}
   .mode-tab:hover{color:var(--ink)}
   .mode-tab.active{color:var(--navy);border-bottom-color:var(--gold)}
   .mode-tab .count{display:inline-block;margin-left:6px;font-size:10px;font-weight:500;color:var(--gray-mid);background:rgba(0,0,0,0.04);padding:1px 6px;border-radius:8px}
@@ -301,8 +305,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=37">
-<script defer src="/pwa-shell.js?v=37"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=38">
+<script defer src="/pwa-shell.js?v=38"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -768,6 +772,10 @@ function todayStr() { return new Date().toISOString().slice(0, 10); }
 const state = { items: [], filterType: '' };
 
 function showTab(name, btn) {
+  // Ensure the newly-active tab is visible inside the horizontally-
+  // scrollable strip (mobile). block:'nearest' avoids vertical jumps.
+  const activate = btn || document.querySelector(`.mode-tab[data-tab="${name}"]`);
+  if (activate) { try { activate.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' }); } catch (e) {} }
   document.querySelectorAll('.mode-pane').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.mode-tab').forEach(el => el.classList.remove('active'));
   const pane = document.getElementById('pane-' + name);
