@@ -887,7 +887,7 @@ function renderSales() {
   };
 
   const buildMixTable = (rows) => {
-    let html = `<table class="fin-tbl"><thead><tr><th>Item</th><th>% FY25</th><th style="text-align:left;padding-left:14px">Nota</th></tr></thead><tbody>`;
+    let html = `<table class="fin-tbl mix-tbl"><thead><tr><th>Item</th><th>% FY25</th><th style="text-align:left;padding-left:14px">Nota</th></tr></thead><tbody>`;
     rows.forEach(r => {
       html += `<tr class="norm-row"><td class="row-lbl">${r.label}</td><td class="num-cell fw">${r.pctFY25}%</td><td class="num-cell" style="text-align:left;padding-left:14px;font-size:12px;color:var(--gray-mid)">${r.note||'—'}</td></tr>`;
     });

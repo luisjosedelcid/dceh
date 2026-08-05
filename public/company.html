@@ -758,8 +758,8 @@
        to fit the viewport without scroll).
        Scope by wrapper class not by tab id so we don't have to update
        CSS every time a new tab adds a fin-tbl. */
-    :is(.tbl-wrap, .fin-tbl-scroll) > .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl),
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) {
+    :is(.tbl-wrap, .fin-tbl-scroll) > .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl):not(.mix-tbl),
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl):not(.mix-tbl) {
       display: table !important;
       width: max-content !important;
       min-width: 100% !important;
@@ -781,8 +781,8 @@
        that on its own does not cover scrolling text under the pin.
        Tinted rows layer the tint on top of an opaque #FFFFFF base via
        multi-background shorthand. */
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) thead th:first-child,
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tbody td:first-child {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl):not(.mix-tbl) thead th:first-child,
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl):not(.mix-tbl) tbody td:first-child {
       position: sticky;
       left: 0;
       z-index: 2;
@@ -793,13 +793,13 @@
       box-shadow: 2px 0 0 var(--rule);
     }
     /* thead first-child needs the navy background from the parent */
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) thead th:first-child {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl):not(.mix-tbl) thead th:first-child {
       background: var(--navy) !important;
       color: var(--white);
       z-index: 4;
     }
     /* Sticky thead row (year headers) */
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) thead th {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl):not(.mix-tbl) thead th {
       position: sticky;
       top: 0;
       z-index: 3;
@@ -809,7 +809,7 @@
      * sticky (max-width would collide with colspan), so the section
      * label is emitted inside a <span class="sec-lbl"> and THAT span
      * is sticky-pinned to the left edge of the scroll viewport. */
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.sec-row td:first-child {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl):not(.mix-tbl) tr.sec-row td:first-child {
       background: #FFFFFF !important;
       position: static;
       max-width: none;
@@ -817,28 +817,28 @@
       box-shadow: none;
       padding-left: 10px;
     }
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.sec-row td .sec-lbl {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl):not(.mix-tbl) tr.sec-row td .sec-lbl {
       position: sticky;
       left: 10px;
       display: inline-block;
     }
     /* Total / subtotal rows: tint on opaque base */
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.tot-row td:first-child,
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.sub-row td:first-child {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl):not(.mix-tbl) tr.tot-row td:first-child,
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl):not(.mix-tbl) tr.sub-row td:first-child {
       background:
         linear-gradient(rgba(27,38,66,0.085), rgba(27,38,66,0.085)),
         #FFFFFF !important;
     }
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.mrg-row td:first-child,
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.norm-row td:first-child {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl):not(.mix-tbl) tr.mrg-row td:first-child,
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl):not(.mix-tbl) tr.norm-row td:first-child {
       background: #FFFFFF !important;
     }
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.spacer-row td:first-child {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl):not(.mix-tbl) tr.spacer-row td:first-child {
       background: #FFFFFF !important;
     }
     /* Numeric / percentage columns after the pinned Item: keep compact */
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) th:not(:first-child),
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) td:not(:first-child) {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl):not(.mix-tbl) th:not(:first-child),
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl):not(.mix-tbl) td:not(:first-child) {
       min-width: 90px;
       white-space: nowrap;
       padding-left: 10px !important;
@@ -878,13 +878,41 @@
       white-space: nowrap;
       text-align: right;
     }
-    /* Mix tables (Distribution by Channel, Manufacturing Sourcing) have
-       a Nota last column. Force min-width so the table exceeds viewport
-       and scroll engages. */
-    #tab-sales .fin-tbl:not(.mult-tbl):not(.bu-tbl) th:last-child,
-    #tab-sales .fin-tbl:not(.mult-tbl):not(.bu-tbl) td:last-child {
-      min-width: 240px;
+    /* Mix tables (Distribution by Channel, Manufacturing Sourcing):
+     * always 3 columns (Item / % FY25 / Nota). Force fit-to-viewport
+     * with a fixed 3-column proportion so the long Nota entries wrap
+     * ('Concentración principal...', 'Plataforma proprietaria...',
+     * '811 tiendas globales...') without horizontal scroll.
+     * NOTE: Segment / Geo tables are NOT .mix-tbl and keep their
+     * horizontal-scroll behavior because they have N year columns. */
+    .mix-tbl {
+      width: 100% !important;
+      min-width: 0 !important;
+      table-layout: fixed !important;
+    }
+    .mix-tbl th:first-child,
+    .mix-tbl td:first-child {
+      min-width: 0 !important;
+      max-width: none !important;
+      width: 38% !important;
+      box-shadow: none !important;
       white-space: normal;
+      position: static !important;
+    }
+    .mix-tbl th:nth-child(2),
+    .mix-tbl td:nth-child(2) {
+      width: 20% !important;
+      white-space: nowrap;
+    }
+    .mix-tbl th:last-child,
+    .mix-tbl td:last-child {
+      min-width: 0 !important;
+      width: 42% !important;
+      white-space: normal;
+      font-size: 11px;
+    }
+    .tbl-wrap:has(.mix-tbl) {
+      overflow-x: visible !important;
     }
 
     /* Probability tab: Expected Value + Scenario Details tables (.pw-t)
@@ -947,8 +975,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=75">
-<script defer src="/pwa-shell.js?v=75"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=76">
+<script defer src="/pwa-shell.js?v=76"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -2006,7 +2034,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=75"></script>
+<script src="company.js?v=76"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
