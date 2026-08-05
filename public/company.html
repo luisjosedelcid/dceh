@@ -130,7 +130,10 @@
   .dim  { color: var(--gray-mid); font-size: 11px; font-weight: 300; }
 
   /* IRR BARS */
-  .irrwrap { background: var(--white); border: 1px solid var(--rule); padding: 26px 30px; margin-bottom: 20px; }
+  /* No inner card: .irrwrap sits directly inside a .card, so it
+   * inherits the parent's background/border. Padding kept small so
+   * the row list has breathing room without doubling the frame. */
+  .irrwrap { background: transparent; border: 0; padding: 0; margin: 0; }
   .irow { display: flex; align-items: center; gap: 14px; margin-bottom: 11px; }
   .ilbl { font-size: 12px; color: var(--gray-txt); font-weight: 400; width: 210px; flex-shrink: 0; }
   .itrack { flex: 1; height: 5px; background: var(--gray-lt); border-radius: 1px; overflow: hidden; }
@@ -903,8 +906,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=71">
-<script defer src="/pwa-shell.js?v=71"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=72">
+<script defer src="/pwa-shell.js?v=72"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1962,7 +1965,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=71"></script>
+<script src="company.js?v=72"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
