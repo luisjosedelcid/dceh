@@ -58,10 +58,14 @@
   table {
     min-width: max-content;
   }
-  /* Wrap any direct table parent in horizontal scroll */
+  /* Wrap any direct table parent in horizontal scroll.
+     NOTE: .universe-tbl is intentionally excluded here — it's already
+     wrapped in its own <div style="overflow-x:auto"> and needs to keep
+     its native display:table so position:sticky on the first column
+     (freezes the ticker while metrics scroll right) actually works.
+     Forcing display:block breaks sticky and desyncs th/td widths. */
   main > table,
   .table-wrap,
-  .universe-tbl,
   .fin-tbl {
     display: block !important;
     overflow-x: auto !important;
