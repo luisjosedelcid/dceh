@@ -316,16 +316,25 @@
     .hright::-webkit-scrollbar { display: none; }
     .hkpi {
       flex: 0 0 auto;
-      min-width: 96px !important;
+      min-width: 138px !important;
+      max-width: 168px;
       padding: 10px 14px !important;
       text-align: left !important;
       scroll-snap-align: start;
       border-left: 1px solid rgba(255,255,255,0.08) !important;
+      overflow: hidden;
     }
     .hkpi:first-child { border-left: none !important; padding-left: 0 !important; }
     .hkpi + .hkpi { padding-left: 14px !important; }
-    .hkpi .val { font-size: 18px !important; white-space: nowrap; }
-    .hkpi .sub { font-size: 8px !important; letter-spacing: 0.08em; white-space: nowrap; }
+    .hkpi .val { font-size: 18px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hkpi .sub {
+      font-size: 8px !important;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
     /* Hide the trailing Last Review block on mobile — too much for the strip */
     .hkpi[style*="border-left"] { display: none !important; }
     /* Kill the sign-out mount (accessible from the Menu tab) */
@@ -512,6 +521,112 @@
       color: var(--navy) !important;
     }
 
+    /* Health Check scorecard: 3 tiny counters (Pass/Monitor/Fail) that
+       should stay side-by-side on phones instead of stretching over three
+       full-width cards. Override the generic g3 -> 1col collapse for this
+       specific bloc. */
+    .g3.hc-scorecard {
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 8px !important;
+    }
+    .g3.hc-scorecard .card {
+      padding: 12px 10px !important;
+      text-align: center;
+    }
+    .g3.hc-scorecard .clbl {
+      font-size: 9px !important;
+      letter-spacing: 0.14em !important;
+    }
+    .g3.hc-scorecard .cval {
+      font-size: 24px !important;
+      margin-top: 4px;
+    }
+
+    /* Health Check table: 5 columns (Metric, Value, Threshold, Status,
+       Rationale) don't fit on a phone. Reshape into per-row cards —
+       Metric label as kicker, then Value / Threshold / Status / Rationale
+       as space-between rows underneath. Category rows (cat) stay as
+       full-width section headers. */
+    main table.hc-tbl {
+      display: block !important;
+      overflow: visible !important;
+      background: transparent !important;
+    }
+    .hc-tbl thead { display: none !important; }
+    .hc-tbl tbody { display: block !important; }
+    /* Category header rows keep their look but as block */
+    .hc-tbl tbody tr.cat {
+      display: block !important;
+      background: rgba(184,139,71,0.08) !important;
+      padding: 10px 14px !important;
+      margin-top: 14px;
+      border-bottom: 1px solid var(--gold-rule) !important;
+    }
+    .hc-tbl tbody tr.cat td {
+      display: block !important;
+      padding: 0 !important;
+      border: none !important;
+      font-size: 10px !important;
+      letter-spacing: 0.18em !important;
+      text-transform: uppercase !important;
+      color: var(--gold) !important;
+      font-weight: 700 !important;
+    }
+    /* Metric rows */
+    .hc-tbl tbody tr:not(.cat) {
+      display: block !important;
+      background: var(--white);
+      padding: 12px 14px !important;
+      border-bottom: 1px solid var(--rule) !important;
+    }
+    .hc-tbl tbody tr:not(.cat) td {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: baseline !important;
+      padding: 3px 0 !important;
+      border: none !important;
+      text-align: left !important;
+      font-size: 12px !important;
+      gap: 12px;
+    }
+    /* First cell (Metric label) becomes a kicker on top spanning full row */
+    .hc-tbl tbody tr:not(.cat) td:first-child {
+      display: block !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      color: var(--navy) !important;
+      margin-bottom: 6px !important;
+    }
+    /* Inline labels on cells 2-5 via ::before */
+    .hc-tbl tbody tr:not(.cat) td:nth-child(2)::before { content: "Value"; }
+    .hc-tbl tbody tr:not(.cat) td:nth-child(3)::before { content: "Threshold"; }
+    .hc-tbl tbody tr:not(.cat) td:nth-child(4)::before { content: "Status"; }
+    .hc-tbl tbody tr:not(.cat) td:nth-child(5)::before { content: "Rationale"; }
+    .hc-tbl tbody tr:not(.cat) td:nth-child(n+2)::before {
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gray-mid);
+      font-weight: 500;
+      flex: 0 0 auto;
+    }
+    /* The right side (numeric value / status / rationale text) grows */
+    .hc-tbl tbody tr:not(.cat) td:nth-child(n+2) {
+      text-align: right !important;
+    }
+    /* Rationale can be long — let it wrap and shrink type slightly */
+    .hc-tbl tbody tr:not(.cat) td:nth-child(5) {
+      display: block !important;
+      font-size: 11px !important;
+      color: var(--gray-mid) !important;
+      margin-top: 4px;
+      text-align: left !important;
+    }
+    .hc-tbl tbody tr:not(.cat) td:nth-child(5)::before {
+      display: block;
+      margin-bottom: 2px;
+    }
+
     /* Version banner: tighter padding */
     #version-banner { padding: 8px 14px !important; font-size: 12px !important; }
   }
@@ -548,8 +663,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=49">
-<script defer src="/pwa-shell.js?v=49"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=50">
+<script defer src="/pwa-shell.js?v=50"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1434,7 +1549,7 @@
      ══════════════════════════════════════════════════════════ -->
 <div id="tab-health" class="tab-content">
   <div class="slbl">Health Check — Quality &amp; Financial Fitness Scorecard</div>
-  <div class="g3" style="margin-bottom:20px">
+  <div class="g3 hc-scorecard" style="margin-bottom:20px">
     <div class="card accent">
       <div class="clbl">Pass</div>
       <div class="cval green" id="hc-pass">—</div>
@@ -1451,7 +1566,7 @@
 
   <div class="g2">
     <div>
-      <table class="ht">
+      <table class="ht hc-tbl">
         <thead>
           <tr>
             <th style="min-width:190px">Metric</th>
