@@ -120,11 +120,45 @@
   .m-item-added .m-item-tag{background:rgba(42,122,86,0.1);color:var(--green)}
   .m-item-blocked .m-item-tag{background:rgba(155,35,53,0.1);color:var(--red)}
   .m-empty{text-align:center;padding:24px;color:var(--gray-mid);font-size:12px;font-style:italic}
-  .m-manual{display:flex;gap:8px;margin-top:8px}
-  .m-manual input{flex:1;background:var(--white);border:1px solid var(--rule);padding:9px 12px;font-family:'Archivo',monospace;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;outline:none}
-  .m-manual input:focus{border-color:var(--gold)}
+  .m-manual{display:flex;gap:8px;margin-top:8px;align-items:stretch}
+  .m-manual-inp-wrap{position:relative;flex:1;display:flex}
+  .m-manual-inp-wrap input{flex:1;background:var(--white);border:1px solid var(--rule);padding:9px 12px;font-family:'Archivo',monospace;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;outline:none;width:100%}
+  .m-manual-inp-wrap input:focus{border-color:var(--gold)}
   .m-manual button{background:var(--navy);border:1px solid var(--gold-rule);color:var(--gold);padding:9px 18px;font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer}
   .m-manual button:hover{background:#243352;border-color:var(--gold)}
+
+  /* Manual ticker autocomplete — same pattern as /screener.html Radar */
+  .cal-ticker-suggest{
+    position:absolute;left:0;right:0;top:calc(100% + 4px);
+    background:var(--white);border:1px solid var(--rule);
+    box-shadow:0 6px 20px rgba(27,38,66,0.12);
+    z-index:50;max-height:280px;overflow-y:auto;
+    display:none;
+  }
+  .cal-ticker-suggest.open{display:block}
+  .cal-ticker-suggest .row{
+    padding:10px 12px;cursor:pointer;
+    border-bottom:1px solid var(--rule);
+    display:flex;align-items:baseline;gap:10px;
+  }
+  .cal-ticker-suggest .row:last-child{border-bottom:none}
+  .cal-ticker-suggest .row:hover,
+  .cal-ticker-suggest .row.active{background:var(--cream)}
+  .cal-ticker-suggest .sym{
+    font-weight:700;font-size:12px;color:var(--navy);
+    letter-spacing:0.05em;min-width:70px;
+  }
+  .cal-ticker-suggest .desc{
+    font-size:12px;color:var(--gray-txt);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;
+  }
+  .cal-ticker-suggest .empty{padding:12px;font-size:12px;color:var(--gray-mid);text-align:center}
+  @media (max-width:820px){
+    .m-manual-inp-wrap{position:static}
+    .cal-ticker-suggest{left:8px;right:8px;top:auto}
+    .cal-ticker-suggest .sym{min-width:60px;font-size:11px}
+    .cal-ticker-suggest .desc{font-size:11px}
+  }
   .m-error{font-size:11px;color:var(--red);margin-top:10px;display:none}
   .m-error.show{display:block}
   /* Row-level source-tag pills (small navy pills) */
@@ -168,8 +202,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=26">
-<script defer src="/pwa-shell.js?v=26"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=27">
+<script defer src="/pwa-shell.js?v=27"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -246,7 +280,10 @@
         <div class="m-pane" id="mpane-manual">
           <div class="m-sub">Enter ticker symbol</div>
           <div class="m-manual">
-            <input type="text" id="manual-input" placeholder="e.g. NVDA" maxlength="10" autocomplete="off">
+            <div class="m-manual-inp-wrap">
+              <input type="text" id="manual-input" placeholder="e.g. NVDA" maxlength="10" autocomplete="off">
+              <div class="cal-ticker-suggest" id="cal-ticker-suggest" role="listbox"></div>
+            </div>
             <button type="button" id="manual-btn">Add</button>
           </div>
           <p style="font-size:11px;color:var(--gray-mid);margin-top:12px;line-height:1.5">One-off tickers get added as Extras and are pulled into the calendar immediately. Removing a ticker later blocks it — the daily cron will skip it until you unblock from Settings.</p>
@@ -508,8 +545,116 @@
       if (pane) pane.className = 'm-pane' + (k === name ? ' active' : '');
     });
     if (name === 'manual') {
-      setTimeout(() => { const inp = document.getElementById('manual-input'); if (inp) inp.focus(); }, 50);
+      setTimeout(() => {
+        const inp = document.getElementById('manual-input');
+        if (inp) inp.focus();
+        _calSetupTickerAutocomplete();
+      }, 50);
     }
+  }
+
+  // Ticker autocomplete for the Manual tab of the Manage Earnings modal.
+  // Same UX as /screener.html Radar and /research.html: debounced
+  // /api/finnhub-search (Finnhub prefix search proxied server-side),
+  // keyboard nav (↑/↓/Enter/Tab/Esc), mousedown-driven pick to survive
+  // input blur on mobile. First call boots listeners; subsequent calls
+  // are no-ops.
+  let _calTsBooted   = false;
+  let _calTsDebounce = null;
+  let _calTsAbort    = null;
+  let _calTsItems    = [];
+  let _calTsActive   = -1;
+  let _calTsLastQ    = '';
+  function _calSetupTickerAutocomplete() {
+    if (_calTsBooted) return;
+    const inp = document.getElementById('manual-input');
+    const box = document.getElementById('cal-ticker-suggest');
+    if (!inp || !box) return;
+    _calTsBooted = true;
+
+    const escHtml = (s) => String(s || '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+    const close = () => { box.classList.remove('open'); _calTsActive = -1; };
+    const render = (items) => {
+      _calTsItems = items;
+      _calTsActive = -1;
+      if (!items.length) {
+        box.innerHTML = '<div class="empty">No matches</div>';
+      } else {
+        box.innerHTML = items.map((it, i) =>
+          '<div class="row" data-idx="' + i + '" role="option">' +
+            '<span class="sym">' + escHtml(it.displaySymbol || it.symbol) + '</span>' +
+            '<span class="desc">' + escHtml(it.description) + '</span>' +
+          '</div>').join('');
+      }
+      box.classList.add('open');
+    };
+    const pick = (idx) => {
+      const it = _calTsItems[idx];
+      if (!it) return;
+      inp.value = (it.displaySymbol || it.symbol).toUpperCase();
+      close();
+      inp.focus();
+    };
+
+    inp.addEventListener('input', () => {
+      const q = inp.value.trim();
+      if (q !== q.toUpperCase()) inp.value = q.toUpperCase();
+      const qUp = inp.value.trim();
+      if (qUp.length < 1) { close(); return; }
+      if (qUp === _calTsLastQ) return;
+      _calTsLastQ = qUp;
+      clearTimeout(_calTsDebounce);
+      _calTsDebounce = setTimeout(async () => {
+        if (_calTsAbort) _calTsAbort.abort();
+        _calTsAbort = new AbortController();
+        try {
+          const r = await fetch('/api/finnhub-search?q=' + encodeURIComponent(qUp), { signal: _calTsAbort.signal });
+          if (!r.ok) return;
+          const data = await r.json();
+          if (inp.value.trim().toUpperCase() !== qUp) return;
+          render(Array.isArray(data.result) ? data.result : []);
+        } catch (e) { /* aborted or network hiccup */ }
+      }, 180);
+    });
+
+    const updateActive = () => {
+      box.querySelectorAll('.row').forEach((r, i) => r.classList.toggle('active', i === _calTsActive));
+      const el = box.querySelector('.row[data-idx="' + _calTsActive + '"]');
+      if (el) el.scrollIntoView({ block: 'nearest' });
+    };
+
+    inp.addEventListener('keydown', (e) => {
+      if (!box.classList.contains('open')) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        _calTsActive = Math.min(_calTsActive + 1, _calTsItems.length - 1);
+        updateActive();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        _calTsActive = Math.max(_calTsActive - 1, 0);
+        updateActive();
+      } else if (e.key === 'Enter') {
+        if (_calTsActive >= 0) { e.preventDefault(); pick(_calTsActive); }
+      } else if (e.key === 'Escape') {
+        close();
+      } else if (e.key === 'Tab' && _calTsActive >= 0) {
+        pick(_calTsActive);
+      }
+    });
+
+    box.addEventListener('mousedown', (e) => {
+      const row = e.target.closest('.row');
+      if (!row) return;
+      e.preventDefault();
+      pick(Number(row.dataset.idx));
+    });
+
+    inp.addEventListener('blur', () => setTimeout(close, 120));
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#cal-ticker-suggest') && e.target !== inp) close();
+    });
   }
 
   async function loadTickerSources() {
