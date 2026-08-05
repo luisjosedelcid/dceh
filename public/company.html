@@ -1039,7 +1039,7 @@
      * Contribution (widest text) gets more room. Values scale up to 13px
      * to fill the row visually instead of floating in a shrunken block. */
     #tab-probability .pw-section {
-      padding: 14px 12px !important;
+      padding: 14px 10px !important;
     }
     #tab-probability table.pw-t {
       table-layout: fixed;
@@ -1048,21 +1048,27 @@
     }
     #tab-probability table.pw-t th,
     #tab-probability table.pw-t td {
-      padding: 9px 6px !important;
+      padding: 9px 4px !important;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     #tab-probability table.pw-t th:nth-child(1),
-    #tab-probability table.pw-t td:nth-child(1) { width: 20%; }
+    #tab-probability table.pw-t td:nth-child(1) { width: 18%; padding-left: 4px !important; }
     #tab-probability table.pw-t th:nth-child(2),
     #tab-probability table.pw-t td:nth-child(2) { width: 22%; }
     #tab-probability table.pw-t th:nth-child(3),
     #tab-probability table.pw-t td:nth-child(3) { width: 26%; }
     #tab-probability table.pw-t th:nth-child(4),
-    #tab-probability table.pw-t td:nth-child(4) { width: 32%; }
+    #tab-probability table.pw-t td:nth-child(4) { width: 34%; padding-right: 4px !important; }
     #tab-probability table.pw-t th {
-      font-size: 9.5px !important;
-      letter-spacing: 0.08em !important;
+      font-size: 9px !important;
+      letter-spacing: 0.05em !important;
+    }
+    #tab-probability table.pw-t tr.weighted td.lab {
+      padding-left: 8px !important;
+    }
+    #tab-probability table.pw-t tr.weighted td:not(.lab) {
+      padding-right: 8px !important;
     }
     #tab-probability table.pw-t td.scen {
       font-size: 12px !important;
@@ -1186,8 +1192,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=82">
-<script defer src="/pwa-shell.js?v=82"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=83">
+<script defer src="/pwa-shell.js?v=83"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -2245,7 +2251,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=82"></script>
+<script src="company.js?v=83"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
