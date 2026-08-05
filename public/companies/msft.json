@@ -39,7 +39,17 @@
     "da": 34394.0,
     "sbc": 0,
     "cfo": 331047.0,
-    "epsDiluted": 17.0
+    "epsDiluted": 17.0,
+    "multiples": {
+      "peTtm": 24.64,
+      "evEbitda": 16.0,
+      "evRevenue": 9.68,
+      "pFcf": 42.32,
+      "dividendYield": 0.0068
+    },
+    "revenueGrowthYoY": 0.1297,
+    "ebitdaGrowthYoY": 0.14,
+    "fcfGrowthYoY": null
   },
   "financials": {
     "years": [
@@ -839,7 +849,7 @@
         ]
       },
       {
-        "l": "Net Debt (Debt \u2212 Cash)",
+        "l": "Net Debt (Debt − Cash)",
         "t": "normal",
         "v": [
           -2498.0,
@@ -1062,7 +1072,7 @@
         "t": "section"
       },
       {
-        "l": "Free Cash Flow (CFO \u2212 CapEx)",
+        "l": "Free Cash Flow (CFO − CapEx)",
         "t": "subtotal",
         "v": [
           153680.0,
@@ -1083,7 +1093,7 @@
         "adjustable": true,
         "defaultAdj": 100.0,
         "reproValue": 30242.0,
-        "method": "100% \u2014 l\u00edquido, face value"
+        "method": "100% — líquido, face value"
       },
       {
         "label": "Accounts Receivable",
@@ -1091,7 +1101,7 @@
         "adjustable": true,
         "defaultAdj": 100.0,
         "reproValue": 64323.0,
-        "method": "100% \u2014 marked to market"
+        "method": "100% — marked to market"
       },
       {
         "label": "Inventories",
@@ -1099,7 +1109,7 @@
         "adjustable": true,
         "defaultAdj": 97.0,
         "reproValue": 67808.0,
-        "method": "97% \u2014 3% bad debt haircut on enterprise AR"
+        "method": "97% — 3% bad debt haircut on enterprise AR"
       },
       {
         "label": "Other Current Assets",
@@ -1107,7 +1117,7 @@
         "adjustable": true,
         "defaultAdj": 85.0,
         "reproValue": 797.0,
-        "method": "85% \u2014 hardware/device inventory"
+        "method": "85% — hardware/device inventory"
       },
       {
         "label": "Property and Equipment, net",
@@ -1115,7 +1125,7 @@
         "adjustable": true,
         "defaultAdj": 110.0,
         "reproValue": 225463.0,
-        "method": "110% \u2014 AI/cloud infra: replacement cost > book (inflation, new build costs)"
+        "method": "110% — AI/cloud infra: replacement cost > book (inflation, new build costs)"
       }
     ],
     "intangibleAssets": [
@@ -1152,7 +1162,7 @@
         "adjustable": true,
         "defaultAdj": 100.0,
         "reproValue": 48781.0,
-        "method": "100% \u2014 S&M capitalizado (5yr cohort model); proxy CAC \u00d7 enterprise base"
+        "method": "100% — S&M capitalizado (5yr cohort model); proxy CAC × enterprise base"
       }
     ],
     "otherAssets": [
@@ -1162,7 +1172,7 @@
         "adjustable": true,
         "defaultAdj": 70.0,
         "reproValue": 15823.0,
-        "method": "DP13: 70% \u2014 customer relationships, tech, content from Activision/LinkedIn"
+        "method": "DP13: 70% — customer relationships, tech, content from Activision/LinkedIn"
       },
       {
         "label": "Other Non-Current Assets (incl. DTA)",
@@ -1178,28 +1188,28 @@
       {
         "label": "Accounts Payable",
         "value": 0.0,
-        "method": "100% \u2014 Contractual"
+        "method": "100% — Contractual"
       },
       {
         "label": "Lease Liabilities (Total)",
         "value": 0.0,
-        "method": "100% \u2014 Contractual lease"
+        "method": "100% — Contractual lease"
       },
       {
         "label": "Other Current Liabilities",
         "value": 0.0,
-        "method": "100% \u2014 Contractual"
+        "method": "100% — Contractual"
       },
       {
         "label": "Other Non-Current Liabilities",
         "value": 0.0,
-        "method": "100% \u2014 Contractual"
+        "method": "100% — Contractual"
       }
     ],
     "totalLiabilities": 0.0,
     "totalRvEquity": 439609.0,
     "rvPerShare": 58.9,
-    "note": "El Reproduction Value no captura el moat de plataforma, los efectos de red de M365/Teams/GitHub, ni los switching costs empresariales ($50-100K/empleado). Replicar la infraestructura Azure global (60+ regiones) y la base instalada de M365 (400M+ asientos comerciales) tomar\u00eda 15-20 a\u00f1os incluso con capital ilimitado. RV es un piso contable extremo, no un objetivo de mercado."
+    "note": "El Reproduction Value no captura el moat de plataforma, los efectos de red de M365/Teams/GitHub, ni los switching costs empresariales ($50-100K/empleado). Replicar la infraestructura Azure global (60+ regiones) y la base instalada de M365 (400M+ asientos comerciales) tomaría 15-20 años incluso con capital ilimitado. RV es un piso contable extremo, no un objetivo de mercado."
   },
   "epv": {
     "nopatBase": 86629.85,
@@ -1223,8 +1233,8 @@
         "v": "$108,213M"
       },
       {
-        "k": "\u00d7 (1 \u2212 Tax Rate 18%)",
-        "v": "\u00d7 0.82",
+        "k": "× (1 − Tax Rate 18%)",
+        "v": "× 0.82",
         "dim": true
       },
       {
@@ -1237,12 +1247,12 @@
         "v": "+$43,629M"
       },
       {
-        "k": "(\u2212) Maintenance CapEx (= D&A)",
-        "v": "\u2212$43,629M",
+        "k": "(−) Maintenance CapEx (= D&A)",
+        "v": "−$43,629M",
         "dim": true
       },
       {
-        "k": "\u00f7 WACC",
+        "k": "÷ WACC",
         "v": "8.94%",
         "id": "bridge-wacc"
       },
@@ -1254,7 +1264,7 @@
         "gold": true
       },
       {
-        "k": "(+) Excess Cash (Cash+STI \u2212 2% Rev buffer)",
+        "k": "(+) Excess Cash (Cash+STI − 2% Rev buffer)",
         "v": "+$71,863M",
         "green": true
       },
@@ -1264,13 +1274,13 @@
         "dim": true
       },
       {
-        "k": "(\u2212) Total Debt",
-        "v": "\u2212$56,965M",
+        "k": "(−) Total Debt",
+        "v": "−$56,965M",
         "red": true
       },
       {
-        "k": "(\u2212) Lease Liabilities",
-        "v": "\u2212$17,437M",
+        "k": "(−) Lease Liabilities",
+        "v": "−$17,437M",
         "red": true
       },
       {
@@ -1493,42 +1503,42 @@
       {
         "category": "Financial Strength",
         "label": "Leverage (Debt / EBITDA)",
-        "value": "0.30\u00d7",
-        "threshold": "<2.0\u00d7",
+        "value": "0.30×",
+        "threshold": "<2.0×",
         "status": "pass",
         "rationale": "Very low leverage at 0.26x"
       },
       {
         "category": "Financial Strength",
         "label": "Interest Coverage",
-        "value": "52.69\u00d7",
-        "threshold": ">10\u00d7",
+        "value": "52.69×",
+        "threshold": ">10×",
         "status": "pass",
-        "rationale": "91x \u2014 exceptional coverage"
+        "rationale": "91x — exceptional coverage"
       },
       {
         "category": "Financial Strength",
         "label": "Current Ratio",
-        "value": "1.35\u00d7",
-        "threshold": ">1.0\u00d7",
+        "value": "1.35×",
+        "threshold": ">1.0×",
         "status": "pass",
-        "rationale": "1.35x \u2014 comfortable liquidity"
+        "rationale": "1.35x — comfortable liquidity"
       },
       {
         "category": "Financial Strength",
         "label": "Net Debt / EBITDA",
-        "value": "-0.11\u00d7",
-        "threshold": "<2.0\u00d7",
+        "value": "-0.11×",
+        "threshold": "<2.0×",
         "status": "pass",
         "rationale": "Negative net debt (excess cash > debt)"
       },
       {
         "category": "Financial Strength",
         "label": "Debt / Equity",
-        "value": "0.14\u00d7",
-        "threshold": "<1.0\u00d7",
+        "value": "0.14×",
+        "threshold": "<1.0×",
         "status": "pass",
-        "rationale": "0.13x \u2014 equity-dominant capital structure"
+        "rationale": "0.13x — equity-dominant capital structure"
       },
       {
         "category": "Profitability",
@@ -1536,7 +1546,7 @@
         "value": "46.8%",
         "threshold": ">30%",
         "status": "pass",
-        "rationale": "45.6% FY2025 \u2014 top-decile"
+        "rationale": "45.6% FY2025 — top-decile"
       },
       {
         "category": "Profitability",
@@ -1544,7 +1554,7 @@
         "value": "39.9%",
         "threshold": ">15%",
         "status": "pass",
-        "rationale": "~40% \u2014 exceptional value creation"
+        "rationale": "~40% — exceptional value creation"
       },
       {
         "category": "Profitability",
@@ -1556,11 +1566,11 @@
       },
       {
         "category": "Profitability",
-        "label": "ROIC \u2212 WACC spread",
+        "label": "ROIC − WACC spread",
         "value": "30.9%",
         "threshold": ">10pp",
         "status": "pass",
-        "rationale": "Spread +30.9pp \u2014 strong moat"
+        "rationale": "Spread +30.9pp — strong moat"
       },
       {
         "category": "Growth",
@@ -1576,7 +1586,7 @@
         "value": "6.4%",
         "threshold": ">5%",
         "status": "pass",
-        "rationale": "25.4% FCF 3yr CAGR \u2014 AI tailwind"
+        "rationale": "25.4% FCF 3yr CAGR — AI tailwind"
       },
       {
         "category": "Growth",
@@ -1592,7 +1602,7 @@
         "value": "60.6%",
         "threshold": ">40%",
         "status": "pass",
-        "rationale": "60.3% \u2014 strongly positive"
+        "rationale": "60.3% — strongly positive"
       },
       {
         "category": "Software/Tech",
@@ -1600,7 +1610,7 @@
         "value": "3.9%",
         "threshold": "<6%",
         "status": "pass",
-        "rationale": "4.2% \u2014 manageable dilution"
+        "rationale": "4.2% — manageable dilution"
       },
       {
         "category": "Software/Tech",
@@ -1608,7 +1618,7 @@
         "value": "30.5%",
         "threshold": "<25%",
         "status": "monitor",
-        "rationale": "22.9% \u2014 elevated (AI infra surge FY25)"
+        "rationale": "22.9% — elevated (AI infra surge FY25)"
       },
       {
         "category": "Software/Tech",
@@ -1640,37 +1650,37 @@
     {
       "id": "1",
       "decision": "S&M Proxy",
-      "value": "S&M l\u00ednea directa IS",
-      "rationale": "MSFT reporta S&M separado en 10-K; l\u00ednea directa es m\u00e1s precisa que proxy SGA"
+      "value": "S&M línea directa IS",
+      "rationale": "MSFT reporta S&M separado en 10-K; línea directa es más precisa que proxy SGA"
     },
     {
       "id": "2",
-      "decision": "R&D Capitalizaci\u00f3n",
-      "value": "S\u00cd capitalizar",
-      "rationale": "MSFT reporta R&D separado ($32.7B FY25); capitalizar bajo m\u00e9todo cohort"
+      "decision": "R&D Capitalización",
+      "value": "SÍ capitalizar",
+      "rationale": "MSFT reporta R&D separado ($32.7B FY25); capitalizar bajo método cohort"
     },
     {
       "id": "3",
       "decision": "S&M Useful Life",
-      "value": "5 a\u00f1os",
-      "rationale": "Alta retenci\u00f3n enterprise (~115% NRR), sticky contracts; 5yr refleja CAC payback"
+      "value": "5 años",
+      "rationale": "Alta retención enterprise (~115% NRR), sticky contracts; 5yr refleja CAC payback"
     },
     {
       "id": "4",
       "decision": "R&D Useful Life",
-      "value": "6 a\u00f1os",
-      "rationale": "Mix cloud platform (Azure, longer life) + UI/AI (shorter); 6yr = blended \u00fatil"
+      "value": "6 años",
+      "rationale": "Mix cloud platform (Azure, longer life) + UI/AI (shorter); 6yr = blended útil"
     },
     {
       "id": "5",
       "decision": "SBC Treatment",
-      "value": "Caso A \u2014 NO add-back",
+      "value": "Caso A — NO add-back",
       "rationale": "SBC embedded en OpEx (COGS, R&D, S&M, G&A) per MSFT 10-K Note 13"
     },
     {
       "id": "6",
-      "decision": "Ventana Normalizaci\u00f3n",
-      "value": "FY21-FY25 (5 a\u00f1os)",
+      "decision": "Ventana Normalización",
+      "value": "FY21-FY25 (5 años)",
       "rationale": "Suficiente historia post-COVID para normalizar; cubre ciclo completo"
     },
     {
@@ -1683,31 +1693,31 @@
       "id": "8",
       "decision": "Tax Rate Normalizado",
       "value": "18.0%",
-      "rationale": "Mediana ETR FY21-FY25 \u2248 18%; consistente con guidance MSFT"
+      "rationale": "Mediana ETR FY21-FY25 ≈ 18%; consistente con guidance MSFT"
     },
     {
       "id": "9",
       "decision": "Lease Treatment",
       "value": "ASC 842 ya capitalizado",
-      "rationale": "MSFT adopt\u00f3 ASC 842; leases en BS \u2192 no ajuste manual necesario"
+      "rationale": "MSFT adoptó ASC 842; leases en BS → no ajuste manual necesario"
     },
     {
       "id": "10",
       "decision": "Non-Op Assets",
       "value": "Excess Cash $89B + Eq.Inv. $15.4B",
-      "rationale": "Total Cash $94.6B \u2212 2% Rev buffer $5.6B = $89B; Equity investments at MV"
+      "rationale": "Total Cash $94.6B − 2% Rev buffer $5.6B = $89B; Equity investments at MV"
     },
     {
       "id": "11",
       "decision": "WACC Inputs",
-      "value": "Rf 4.39%, \u03b2 1.04, ERP 4.5%, Kd 4.8%",
+      "value": "Rf 4.39%, β 1.04, ERP 4.5%, Kd 4.8%",
       "rationale": "UST 10Y May 2026; GuruFocus beta; Damodaran 2026 ERP; MSFT AAA bond yield"
     },
     {
       "id": "12",
       "decision": "Goodwill RV",
       "value": "0%",
-      "rationale": "Est\u00e1ndar Columbia: reconstruir activos individualmente evita doble conteo"
+      "rationale": "Estándar Columbia: reconstruir activos individualmente evita doble conteo"
     },
     {
       "id": "13",
@@ -1719,13 +1729,13 @@
       "id": "14",
       "decision": "DTA RV",
       "value": "50%",
-      "rationale": "MSFT profitable \u2192 50% conservative realization; upside if full utilization"
+      "rationale": "MSFT profitable → 50% conservative realization; upside if full utilization"
     },
     {
       "id": "15",
       "decision": "Exit Multiple IRR",
       "value": "24x P/E",
-      "rationale": "CIO v2: 24x mean reversion (vs prior 28x); m\u00e1s conservador para ambiente de tasas normalizadas"
+      "rationale": "CIO v2: 24x mean reversion (vs prior 28x); más conservador para ambiente de tasas normalizadas"
     },
     {
       "id": "16",
@@ -1766,7 +1776,7 @@
     "priceEpvRatio": 3.143,
     "impliedIrr": 17.58,
     "marginOfSafety": -214.26,
-    "narrative": "Microsoft cotiza a $414.44 con EPV/share $135.69 (priceEpv 3.05\u00d7). El gap se justifica por crecimiento por reinversi\u00f3n a alto ROIC: ROIC FY25 39.9% vs WACC 8.94% (spread +30.9pp), reinvestment rate 53% sostiene crecimiento total ~23.4%. Implied IRR equity 17.58% supera el hurdle 12% (MoS +5.58pp). El moat estructural es triple: switching costs M365/Azure, network effects GitHub/LinkedIn, econom\u00edas de escala $190B CapEx FY26. Verdict Munger: CONVICCI\u00d3N CONDICIONAL \u2014 entrar a 50% sizing, completar tras 2 trimestres de ROIC marginal Azure AI \u226522%. Riesgos clave: (1) ROIC marginal FY24\u2192FY25 (14.4%) muy por debajo del ROIC_SEL del modelo (40%) \u2014 depende de lag temporal de 18-24 meses no probado; (2) post-OpenAI restructuring (abr-2026, no exclusividad), el moat AI es ahora opcional, no pilar; (3) pagar 3.05\u00d7 EPV es heterodoxo vs franja Munger hist\u00f3rica (1-1.5\u00d7 EPV)."
+    "narrative": "Microsoft cotiza a $414.44 con EPV/share $135.69 (priceEpv 3.05×). El gap se justifica por crecimiento por reinversión a alto ROIC: ROIC FY25 39.9% vs WACC 8.94% (spread +30.9pp), reinvestment rate 53% sostiene crecimiento total ~23.4%. Implied IRR equity 17.58% supera el hurdle 12% (MoS +5.58pp). El moat estructural es triple: switching costs M365/Azure, network effects GitHub/LinkedIn, economías de escala $190B CapEx FY26. Verdict Munger: CONVICCIÓN CONDICIONAL — entrar a 50% sizing, completar tras 2 trimestres de ROIC marginal Azure AI ≥22%. Riesgos clave: (1) ROIC marginal FY24→FY25 (14.4%) muy por debajo del ROIC_SEL del modelo (40%) — depende de lag temporal de 18-24 meses no probado; (2) post-OpenAI restructuring (abr-2026, no exclusividad), el moat AI es ahora opcional, no pilar; (3) pagar 3.05× EPV es heterodoxo vs franja Munger histórica (1-1.5× EPV)."
   },
   "finnhubSymbol": "MSFT",
   "autoInferences": {
@@ -1779,7 +1789,7 @@
         "confidence": "LOW",
         "value": 0.10492394695632548,
         "valueLabel": "S&M/Rev baseline = 10.49%",
-        "reason": "Baseline S&M/Rev = 10.49% sobre 2 a\u00f1os estables. 2 stable years detected (growth band \u00b15.0pp, ratio band \u00b11.0pp). Median rev growth = 15.7%, median S&M/Rev = 10.9%. NOTA: MSFT S&M/Rev muestra tendencia secular declinante (12.0%\u21929.2% FY21\u2192FY25) por operating leverage. Solo 2 a\u00f1os estables detectados \u2014 confidence LOW. Excel actual usa 9.16% (FY2025 directo); v4.3.0 baseline = 10.49% sobre ventana estable.",
+        "reason": "Baseline S&M/Rev = 10.49% sobre 2 años estables. 2 stable years detected (growth band ±5.0pp, ratio band ±1.0pp). Median rev growth = 15.7%, median S&M/Rev = 10.9%. NOTA: MSFT S&M/Rev muestra tendencia secular declinante (12.0%→9.2% FY21→FY25) por operating leverage. Solo 2 años estables detectados — confidence LOW. Excel actual usa 9.16% (FY2025 directo); v4.3.0 baseline = 10.49% sobre ventana estable.",
         "fallbackChain": [
           "Tier 1 (tano_pure) descartado: sin customer/churn data."
         ],
@@ -1806,7 +1816,7 @@
         "confidence": "MEDIUM",
         "value": 0.02,
         "valueLabel": "g_organic = 2.0%",
-        "reason": "g_organic = 2% mantenido del modelo v4.2.x (no recalibraci\u00f3n retroactiva por \u00a711.5). Tech industry pricing power residual + mix shift consumer\u2192enterprise. Cloud/AI secular tailwind ya capturado en ReinvRate \u00d7 ROIC = 54% \u00d7 40% = 21.4%.",
+        "reason": "g_organic = 2% mantenido del modelo v4.2.x (no recalibración retroactiva por §11.5). Tech industry pricing power residual + mix shift consumer→enterprise. Cloud/AI secular tailwind ya capturado en ReinvRate × ROIC = 54% × 40% = 21.4%.",
         "fallbackChain": []
       },
       {
@@ -1816,7 +1826,7 @@
         "confidence": "MEDIUM",
         "value": 0.4736,
         "valueLabel": "b_growth = 47.36%",
-        "reason": "Tano method: growth CapEx = \u03a3(CapEx) \u2212 \u03a3(D&A) = 161,021 \u2212 84,761 = 76,260 sobre FY2022-FY2025. b_growth = 47.36%. Ventana 4y excluye FY2020-2021 (pandemic dynamics) y LTM2026Q3 (AI super-cycle no normalizado, $97B run-rate).",
+        "reason": "Tano method: growth CapEx = Σ(CapEx) − Σ(D&A) = 161,021 − 84,761 = 76,260 sobre FY2022-FY2025. b_growth = 47.36%. Ventana 4y excluye FY2020-2021 (pandemic dynamics) y LTM2026Q3 (AI super-cycle no normalizado, $97B run-rate).",
         "fallbackChain": [],
         "window": {
           "years": [
