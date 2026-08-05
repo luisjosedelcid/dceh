@@ -34,22 +34,25 @@
     "fcfCagr3yr": 0.0639,
     "ebitda": 192586.0,
     "netIncome": 125216.0,
-    "operatingIncome": 148957.0,
-    "capex": 3034.0,
-    "da": 34394.0,
-    "sbc": 0,
-    "cfo": 331047.0,
-    "epsDiluted": 17.0,
+    "operatingIncome": 128124,
+    "capex": null,
+    "da": 32704,
+    "sbc": null,
+    "cfo": 270875,
+    "epsDiluted": 13.64,
     "multiples": {
-      "peTtm": 24.64,
-      "evEbitda": 16.0,
-      "evRevenue": 9.68,
-      "pFcf": 42.32,
+      "peTtm": 30.38,
+      "evEbitda": 18.81,
+      "evRevenue": 10.86,
+      "pFcf": 43.2,
       "dividendYield": 0.0068
     },
-    "revenueGrowthYoY": 0.1297,
-    "ebitdaGrowthYoY": 0.14,
-    "fcfGrowthYoY": null
+    "revenueGrowthYoY": 0.1493,
+    "ebitdaGrowthYoY": 0.1575,
+    "fcfGrowthYoY": null,
+    "sector": "Software & Cloud Infrastructure",
+    "businessModel": "Enterprise software + Cloud (Azure) + Productivity (Microsoft 365) + Gaming + Advertising",
+    "fiscalYearEnd": "June 30"
   },
   "financials": {
     "years": [
