@@ -195,8 +195,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=29">
-<script defer src="/pwa-shell.js?v=29"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=30">
+<script defer src="/pwa-shell.js?v=30"></script>
 <!--PWA:END-->
 </head>
 <body data-pull-refresh="1">
@@ -2050,7 +2050,10 @@ function renderTicker() {
 // ═══════════════════════════════════════════════════════════════════
 // IDEA FEED
 // ═══════════════════════════════════════════════════════════════════
-let _ifSourcesIndex = {};   // id -> source object
+let _ifSourcesIndex = {};
+// Ticker -> Company Name cache, populated on-demand from Finnhub
+// profile2 to label the Idea Feed ticker dropdown options.
+let _ifTickerNames = {};
 
 function _ifFmtDate(iso) {
   if (!iso) return '—';
@@ -2116,6 +2119,9 @@ async function loadIdeaFeed() {
   // result set so users can only pick tickers that actually have
   // mentions in the selected Window + Source. Preserves the current
   // selection if it's still present; otherwise falls back to "all".
+  // Each option shows "TICKER — Company (count)". Names for tickers not
+  // yet cached in _ifTickerNames are fetched from Finnhub in parallel
+  // and the option labels are patched in place once they arrive.
   const allItems = data.items || [];
   const tickerSel = document.getElementById('if-ticker');
   if (tickerSel) {
@@ -2128,11 +2134,38 @@ async function loadIdeaFeed() {
     }
     const sorted = [...tkCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
     const prev = tickerSel.value;
+    const optHtml = ([tk, n]) => {
+      const nm = _ifTickerNames[tk];
+      const label = nm ? `${tk} — ${nm} (${n})` : `${tk} (${n})`;
+      return `<option value="${tk}">${_ifEscape(label)}</option>`;
+    };
     tickerSel.innerHTML = '<option value="">All tickers</option>' +
-      sorted.map(([tk, n]) => `<option value="${tk}">${tk} (${n})</option>`).join('');
-    // Restore selection if still valid; otherwise fall back to "all"
+      sorted.map(optHtml).join('');
     if (prev && tkCounts.has(prev)) tickerSel.value = prev;
     else tickerSel.value = '';
+
+    // Kick off name enrichment for uncached tickers; patch options as
+    // each response arrives. Fire-and-forget — doesn't block render.
+    const uncached = sorted.map(([tk]) => tk).filter(tk => !_ifTickerNames[tk]);
+    uncached.forEach((tk, i) => {
+      setTimeout(async () => {
+        try {
+          const r = await fetch(`/api/finnhub-quote?profile=1&symbol=${encodeURIComponent(tk)}`);
+          if (!r.ok) return;
+          const p = await r.json();
+          const nm = p?.name;
+          if (!nm) return;
+          _ifTickerNames[tk] = nm;
+          // Patch this specific option in place; guard against a later fetch
+          // having already rebuilt the select with a different Window/Source.
+          const opt = tickerSel.querySelector(`option[value="${tk}"]`);
+          if (opt) {
+            const count = tkCounts.get(tk) || 0;
+            opt.textContent = `${tk} — ${nm} (${count})`;
+          }
+        } catch (e) { /* ignore */ }
+      }, i * 40); // gentle throttle, matches the tickers table enrich
+    });
   }
 
   // Client-side ticker filter (applied AFTER the dropdown is repopulated
@@ -2290,6 +2323,19 @@ async function renderIdeaFeedTickers(items, status, cont) {
       if (!tr) return;
       const tds = tr.children;
       const name = profile?.name || r.ticker;
+      // Cache the resolved company name so the ticker <select> can
+      // label its options without a second fetch on the next reload.
+      if (profile?.name) {
+        _ifTickerNames[String(r.ticker).toUpperCase()] = profile.name;
+        const sel = document.getElementById('if-ticker');
+        const opt = sel && sel.querySelector(`option[value="${String(r.ticker).toUpperCase()}"]`);
+        if (opt && !opt.textContent.includes('—')) {
+          // Preserve the existing count suffix at the end
+          const m = opt.textContent.match(/\((\d+)\)\s*$/);
+          const count = m ? m[1] : '';
+          opt.textContent = `${String(r.ticker).toUpperCase()} — ${profile.name}${count ? ' (' + count + ')' : ''}`;
+        }
+      }
       const sector = profile?.finnhubIndustry || '—';
       const price = quote?.c;
       const dp = quote?.dp;
