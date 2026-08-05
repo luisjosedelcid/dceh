@@ -46,12 +46,46 @@
     .add-row .add-inp{padding:9px 10px;font-size:12px}
     .add-row .add-btn{padding:9px 6px;font-size:10px;letter-spacing:0.1em}
   }
-  .add-inp{padding:10px 12px;border:1px solid var(--rule);font-family:inherit;font-size:13px;background:var(--cream);outline:none}
+  .add-inp{padding:10px 12px;border:1px solid var(--rule);font-family:inherit;font-size:13px;background:var(--cream);outline:none;width:100%}
   .add-inp:focus{border-color:var(--gold);background:var(--white)}
   .add-inp.ticker{font-weight:600;letter-spacing:0.05em;text-transform:uppercase}
   .add-btn{padding:10px;background:var(--navy);color:var(--white);border:none;font-family:inherit;font-size:11px;letter-spacing:0.15em;font-weight:500;text-transform:uppercase;cursor:pointer;transition:.2s}
   .add-btn:hover{background:#0d1428}
   .add-btn:disabled{opacity:.4;cursor:not-allowed}
+
+  /* TICKER AUTOCOMPLETE */
+  .ticker-wrap{position:relative}
+  .ticker-suggest{
+    position:absolute;left:0;right:0;top:calc(100% + 4px);
+    background:var(--white);border:1px solid var(--rule);
+    box-shadow:0 6px 20px rgba(27,38,66,0.12);
+    z-index:50;max-height:280px;overflow-y:auto;
+    display:none;
+  }
+  .ticker-suggest.open{display:block}
+  .ticker-suggest .row{
+    padding:10px 12px;cursor:pointer;
+    border-bottom:1px solid var(--rule);
+    display:flex;align-items:baseline;gap:10px;
+  }
+  .ticker-suggest .row:last-child{border-bottom:none}
+  .ticker-suggest .row:hover,
+  .ticker-suggest .row.active{background:var(--cream)}
+  .ticker-suggest .sym{
+    font-weight:700;font-size:12px;color:var(--navy);
+    letter-spacing:0.05em;min-width:70px;
+  }
+  .ticker-suggest .desc{
+    font-size:12px;color:var(--gray-txt);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;
+  }
+  .ticker-suggest .empty{padding:12px;font-size:12px;color:var(--gray-mid);text-align:center}
+  @media (max-width:820px){
+    .ticker-wrap{position:static}
+    .ticker-suggest{left:8px;right:8px;top:auto}
+    .ticker-suggest .sym{min-width:60px;font-size:11px}
+    .ticker-suggest .desc{font-size:11px}
+  }
 
   .stats{display:flex;gap:24px;margin-bottom:18px;font-size:11px;color:var(--gray-txt);letter-spacing:0.05em}
   .stats strong{color:var(--ink);font-weight:600;margin-right:4px}
@@ -236,8 +270,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=18">
-<script defer src="/pwa-shell.js?v=18"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=19">
+<script defer src="/pwa-shell.js?v=19"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -419,7 +453,10 @@ function renderApp() {
     <div id="prefill-slot"></div>
 
     <div class="add-row">
-      <input class="add-inp ticker" id="add-ticker" placeholder="TICKER" maxlength="8" value="${esc(prefill?.ticker || '')}">
+      <div class="ticker-wrap">
+        <input class="add-inp ticker" id="add-ticker" placeholder="TICKER" maxlength="12" autocomplete="off" value="${esc(prefill?.ticker || '')}">
+        <div class="ticker-suggest" id="ticker-suggest" role="listbox"></div>
+      </div>
       <input class="add-inp name" id="add-name" placeholder="Company name (auto)" value="${esc(prefill?.name || '')}">
       <button class="add-btn" id="add-btn" onclick="addCard()">+ Add</button>
     </div>
@@ -441,6 +478,122 @@ function renderApp() {
   }
 
   renderBoard();
+  setupTickerAutocomplete();
+}
+
+// ============================================================
+// TICKER AUTOCOMPLETE
+// ============================================================
+// Debounced /api/finnhub-search lookup. Shows up to 5 matches under
+// the ticker input; user picks with click, tap, arrows+enter, or tab.
+// Selecting a suggestion fills BOTH ticker and name fields.
+let _tsDebounce = null;
+let _tsAbort   = null;
+let _tsItems   = [];
+let _tsActive  = -1;
+let _tsLastQ   = '';
+
+function setupTickerAutocomplete() {
+  const inp = document.getElementById('add-ticker');
+  const box = document.getElementById('ticker-suggest');
+  const nameInp = document.getElementById('add-name');
+  if (!inp || !box) return;
+
+  const close = () => { box.classList.remove('open'); _tsActive = -1; };
+
+  const render = (items) => {
+    _tsItems = items;
+    _tsActive = -1;
+    if (!items.length) {
+      box.innerHTML = `<div class="empty">No matches</div>`;
+    } else {
+      box.innerHTML = items.map((it, i) => `
+        <div class="row" data-idx="${i}" role="option">
+          <span class="sym">${esc(it.displaySymbol || it.symbol)}</span>
+          <span class="desc">${esc(it.description)}</span>
+        </div>
+      `).join('');
+    }
+    box.classList.add('open');
+  };
+
+  const pick = (idx) => {
+    const it = _tsItems[idx];
+    if (!it) return;
+    inp.value = (it.displaySymbol || it.symbol).toUpperCase();
+    if (nameInp && !nameInp.value.trim()) nameInp.value = it.description || '';
+    close();
+    inp.focus();
+  };
+
+  inp.addEventListener('input', () => {
+    const q = inp.value.trim();
+    // Force uppercase visually (ticker input class already does it, but we
+    // also want the value stored uppercase for consistency).
+    if (q !== q.toUpperCase()) inp.value = q.toUpperCase();
+    const qUp = inp.value.trim();
+    if (qUp.length < 1) { close(); return; }
+    if (qUp === _tsLastQ) return;
+    _tsLastQ = qUp;
+
+    clearTimeout(_tsDebounce);
+    _tsDebounce = setTimeout(async () => {
+      if (_tsAbort) _tsAbort.abort();
+      _tsAbort = new AbortController();
+      try {
+        const r = await fetch(`/api/finnhub-search?q=${encodeURIComponent(qUp)}`, { signal: _tsAbort.signal });
+        if (!r.ok) return;
+        const data = await r.json();
+        // Only render if the query still matches what's in the input
+        if (inp.value.trim().toUpperCase() !== qUp) return;
+        render(Array.isArray(data.result) ? data.result : []);
+      } catch (e) { /* aborted or network hiccup */ }
+    }, 180);
+  });
+
+  inp.addEventListener('keydown', (e) => {
+    if (!box.classList.contains('open')) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      _tsActive = Math.min(_tsActive + 1, _tsItems.length - 1);
+      updateActive();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      _tsActive = Math.max(_tsActive - 1, 0);
+      updateActive();
+    } else if (e.key === 'Enter') {
+      if (_tsActive >= 0) { e.preventDefault(); pick(_tsActive); }
+    } else if (e.key === 'Escape') {
+      close();
+    } else if (e.key === 'Tab' && _tsActive >= 0) {
+      pick(_tsActive);
+    }
+  });
+
+  const updateActive = () => {
+    box.querySelectorAll('.row').forEach((r, i) => r.classList.toggle('active', i === _tsActive));
+    const el = box.querySelector(`.row[data-idx="${_tsActive}"]`);
+    if (el) el.scrollIntoView({ block: 'nearest' });
+  };
+
+  // Delegated click (also handles touch tap on mobile)
+  box.addEventListener('mousedown', (e) => {
+    // mousedown fires before blur, keeping the input focused after pick
+    const row = e.target.closest('.row');
+    if (!row) return;
+    e.preventDefault();
+    pick(Number(row.dataset.idx));
+  });
+
+  inp.addEventListener('blur', () => {
+    // Delay so click on suggestion can register first
+    setTimeout(close, 120);
+  });
+
+  // Clicking outside closes the dropdown
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#ticker-suggest') && e.target !== inp) close();
+  });
 }
 
 function dismissPrefill() {
