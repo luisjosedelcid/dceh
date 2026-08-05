@@ -770,7 +770,7 @@ function renderFinancials() {
 function renderTable(containerId, rows, years, fin) {
   const el = document.getElementById(containerId);
   if (!el || !rows) return;
-  let html = `<table class="fin-tbl"><thead><tr><th>Item</th>${years.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>`;
+  let html = `<div class="fin-tbl-scroll"><table class="fin-tbl"><thead><tr><th>Item</th>${years.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>`;
   rows.forEach(r => {
     if (r.t === 'spacer') { html += `<tr class="spacer-row"><td colspan="${years.length+1}"></td></tr>`; return; }
     if (r.t === 'section') { html += `<tr class="sec-row"><td colspan="${years.length+1}">${r.l}</td></tr>`; return; }
@@ -794,7 +794,7 @@ function renderTable(containerId, rows, years, fin) {
     });
     html += `</tr>`;
   });
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
   el.innerHTML = html;
 }
 

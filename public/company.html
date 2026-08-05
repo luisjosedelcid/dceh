@@ -711,6 +711,74 @@
       gap: 10px !important;
     }
 
+    /* Financials tab: Income Statement, Balance Sheet, Cash Flow — all
+       .fin-tbl tables that are NOT the reshaped .mult-tbl or .bu-tbl.
+       Give them horizontal scroll with the Item column pinned to the
+       left and the year-header row pinned to the top so the CIO can
+       always see which line item and which year they are reading. */
+    #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) {
+      display: table !important;
+      width: max-content !important;
+      min-width: 100% !important;
+      border-collapse: collapse;
+    }
+    /* Wrap-around container for each fin-tbl: overflow-x on the table
+       parent (main #tab-financials > .card) is tricky; add scroll on
+       the table's parent element via a helper class we set in HTML. */
+    #tab-financials .fin-tbl-scroll {
+      overflow-x: auto !important;
+      overflow-y: visible !important;
+      -webkit-overflow-scrolling: touch;
+      max-width: 100%;
+    }
+    /* Sticky Item column (first td/th) */
+    #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) thead th:first-child,
+    #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) tbody td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: var(--white);
+      min-width: 170px;
+      max-width: 200px;
+      white-space: normal;
+      box-shadow: 2px 0 0 var(--rule);
+    }
+    /* thead first-child needs the navy background from the parent */
+    #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) thead th:first-child {
+      background: var(--navy) !important;
+      color: var(--white);
+      z-index: 4;
+    }
+    /* Sticky thead row */
+    #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) thead th {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: var(--navy);
+    }
+    /* Section rows (sec-row) need matching sticky background so the pinned
+       Item cell stays readable when it crosses under them */
+    #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.sec-row td:first-child {
+      background: var(--white) !important;
+    }
+    /* Total / subtotal / margin rows: match their row bg on the pinned cell */
+    #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.tot-row td:first-child,
+    #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.sub-row td:first-child {
+      background: rgba(27,38,66,0.085) !important;
+    }
+    #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.mrg-row td:first-child,
+    #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.norm-row td:first-child {
+      background: var(--white) !important;
+    }
+    /* Numeric year columns: keep them compact */
+    #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) th:not(:first-child),
+    #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) td:not(:first-child) {
+      min-width: 90px;
+      white-space: nowrap;
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
     /* Version banner: tighter padding */
     #version-banner { padding: 8px 14px !important; font-size: 12px !important; }
   }
@@ -747,8 +815,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=57">
-<script defer src="/pwa-shell.js?v=57"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=58">
+<script defer src="/pwa-shell.js?v=58"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1806,7 +1874,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=57"></script>
+<script src="company.js?v=58"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
