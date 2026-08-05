@@ -195,8 +195,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=44">
-<script defer src="/pwa-shell.js?v=44"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=45">
+<script defer src="/pwa-shell.js?v=45"></script>
 <!--PWA:END-->
 </head>
 <body data-pull-refresh="1">
@@ -2454,9 +2454,43 @@ window.sendToWorkflow = sendToWorkflow;
 // Idea Feed and Superinvestors. Deliberately keeps thesis/link empty per user
 // preference — Shortlist is now the mandatory intermediate step before Workflow.
 // A 409 (already on radar) is treated as success (silent "already tracked").
+// Heuristic: does this look like an Idea Feed post title rather than a
+// clean company name? Titles from Substack/blog headlines often bundle
+// several tickers ("PayPal-Asml-Uber-Tsm"), start with lowercase brand
+// words, contain punctuation like colons or pipes, or are unusually long.
+function _looksLikeFeedTitle(candidate, ticker) {
+  if (!candidate) return true;
+  const s = String(candidate).trim();
+  if (!s || s.toUpperCase() === ticker) return true;
+  if (s.length > 60) return true;
+  if (/[:|]/.test(s)) return true;
+  // Multiple ticker-shaped tokens joined by dashes/spaces
+  const tickerish = s.match(/\b[A-Za-z]{2,5}\b/g) || [];
+  if (tickerish.length >= 3 && /-/.test(s)) return true;
+  return false;
+}
+
+// Resolve the canonical company name for a ticker via Finnhub profile2.
+// Returns null if we cannot resolve (caller should fall back).
+async function _resolveCompanyName(ticker) {
+  if (!ticker) return null;
+  // Reuse Idea Feed cache when we already have it.
+  if (window._ifTickerNames && window._ifTickerNames[ticker]) {
+    return window._ifTickerNames[ticker];
+  }
+  try {
+    const r = await fetch(`/api/finnhub-quote?profile=1&symbol=${encodeURIComponent(ticker)}`);
+    if (!r.ok) return null;
+    const data = await r.json().catch(() => ({}));
+    const nm = (data && (data.name || data.profile?.name)) || null;
+    if (nm && window._ifTickerNames) window._ifTickerNames[ticker] = nm;
+    return nm;
+  } catch { return null; }
+}
+
 async function sendToShortlist(btn) {
   const ticker = (btn.dataset.tk || '').toUpperCase().trim();
-  const name   = (btn.dataset.nm  || '').trim() || ticker;
+  let name     = (btn.dataset.nm  || '').trim();
   if (!ticker) { alert('Ticker missing'); return; }
 
   const tk = (window.dceAuth && window.dceAuth.token) ? window.dceAuth.token() : null;
@@ -2465,6 +2499,16 @@ async function sendToShortlist(btn) {
   const original = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Adding…';
+
+  // If the supplied name looks like an Idea Feed post title (or is missing),
+  // resolve the canonical company name from Finnhub before saving so the
+  // radar always shows the real company, not the article headline.
+  if (_looksLikeFeedTitle(name, ticker)) {
+    const resolved = await _resolveCompanyName(ticker);
+    if (resolved) name = resolved;
+  }
+  if (!name) name = ticker;
+
   try {
     const r = await fetch('/api/admin/radar', {
       method: 'POST',
