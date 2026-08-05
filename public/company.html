@@ -916,19 +916,33 @@
       table-layout: fixed;
       font-size: 11px !important;
     }
-    /* First column (NOPAT levels) needs more room for the "NOPAT \ WACC"
-       header label. Fixed 80px keeps the label from overlapping into
-       the 8.2% cell while the five WACC columns share the remainder. */
+    /* First column (NOPAT levels) header shows a two-line corner label
+     * (WACC → across, ↓ NOPAT down) to make the axes explicit without
+     * the '\' notation that was being clipped on mobile. */
     #tab-epv .sens-tbl th:first-child,
     #tab-epv .sens-tbl td:first-child {
-      width: 80px !important;
-      min-width: 80px !important;
-      max-width: 80px !important;
+      width: 92px !important;
+      min-width: 92px !important;
+      max-width: 92px !important;
       text-align: left;
-      padding: 8px 6px !important;
+      padding: 6px 8px !important;
       overflow: hidden;
-      text-overflow: ellipsis;
       white-space: nowrap;
+    }
+    #tab-epv .sens-tbl th:first-child .sens-corner {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      line-height: 1.15;
+      gap: 2px;
+    }
+    #tab-epv .sens-tbl th:first-child .sens-corner-r,
+    #tab-epv .sens-tbl th:first-child .sens-corner-c {
+      font-size: 8.5px;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.85);
+      font-weight: 600;
+      text-transform: uppercase;
     }
     #tab-epv .sens-tbl th:not(:first-child),
     #tab-epv .sens-tbl td:not(:first-child) {
@@ -1034,8 +1048,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=77">
-<script defer src="/pwa-shell.js?v=77"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=78">
+<script defer src="/pwa-shell.js?v=78"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -2093,7 +2107,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=77"></script>
+<script src="company.js?v=78"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {

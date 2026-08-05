@@ -1688,7 +1688,7 @@ function renderSensitivity() {
   };
 
   let html = `<table class="fin-tbl sens-tbl">
-    <thead><tr><th>NOPAT \\ WACC</th>${waccVals.map(w=>`<th>${fmtDec(w,1)}%</th>`).join('')}</tr></thead><tbody>`;
+    <thead><tr><th><span class="sens-corner"><span class="sens-corner-r">WACC →</span><span class="sens-corner-c">↓ NOPAT</span></span></th>${waccVals.map(w=>`<th>${fmtDec(w,1)}%</th>`).join('')}</tr></thead><tbody>`;
   nopatMults.forEach((m, i) => {
     const n = epv.nopatBase * m;
     const nLbl = n >= 1000 ? `${sym()}${fmtDec(n/1000,1)}B` : `${sym()}${fmt(Math.round(n))}M`;
