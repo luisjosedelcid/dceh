@@ -721,12 +721,14 @@
          - #tab-roic        ROIC history (.tbl-wrap)
          - any future tab that emits a .fin-tbl inside .tbl-wrap.
 
-       Excludes .mult-tbl (Valuation Multiples reshaped as card grid)
-       and .bu-tbl (Reproduction Value build-up — different layout).
+       Excludes .mult-tbl (Valuation Multiples reshaped as card grid),
+       .bu-tbl (Reproduction Value build-up — different layout), and
+       .sens-tbl (EPV Sensitivity heatmap — small square grid meant
+       to fit the viewport without scroll).
        Scope by wrapper class not by tab id so we don't have to update
        CSS every time a new tab adds a fin-tbl. */
-    :is(.tbl-wrap, .fin-tbl-scroll) > .fin-tbl:not(.mult-tbl):not(.bu-tbl),
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl) {
+    :is(.tbl-wrap, .fin-tbl-scroll) > .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl),
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) {
       display: table !important;
       width: max-content !important;
       min-width: 100% !important;
@@ -748,8 +750,8 @@
        that on its own does not cover scrolling text under the pin.
        Tinted rows layer the tint on top of an opaque #FFFFFF base via
        multi-background shorthand. */
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl) thead th:first-child,
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl) tbody td:first-child {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) thead th:first-child,
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tbody td:first-child {
       position: sticky;
       left: 0;
       z-index: 2;
@@ -760,43 +762,71 @@
       box-shadow: 2px 0 0 var(--rule);
     }
     /* thead first-child needs the navy background from the parent */
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl) thead th:first-child {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) thead th:first-child {
       background: var(--navy) !important;
       color: var(--white);
       z-index: 4;
     }
     /* Sticky thead row (year headers) */
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl) thead th {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) thead th {
       position: sticky;
       top: 0;
       z-index: 3;
       background: var(--navy);
     }
     /* Section rows */
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.sec-row td:first-child {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.sec-row td:first-child {
       background: #FFFFFF !important;
     }
     /* Total / subtotal rows: tint on opaque base */
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.tot-row td:first-child,
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.sub-row td:first-child {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.tot-row td:first-child,
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.sub-row td:first-child {
       background:
         linear-gradient(rgba(27,38,66,0.085), rgba(27,38,66,0.085)),
         #FFFFFF !important;
     }
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.mrg-row td:first-child,
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.norm-row td:first-child {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.mrg-row td:first-child,
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.norm-row td:first-child {
       background: #FFFFFF !important;
     }
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.spacer-row td:first-child {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.spacer-row td:first-child {
       background: #FFFFFF !important;
     }
     /* Numeric / percentage columns after the pinned Item: keep compact */
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl) th:not(:first-child),
-    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl) td:not(:first-child) {
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) th:not(:first-child),
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) td:not(:first-child) {
       min-width: 90px;
       white-space: nowrap;
       padding-left: 10px !important;
       padding-right: 10px !important;
+    }
+    /* EPV Sensitivity heatmap: fit the whole 5x5 (or 5xN) grid within
+       the viewport without horizontal scroll. Override the wrapper so
+       it does not force scroll, and shrink cells to distribute evenly. */
+    #tab-epv .tbl-wrap {
+      overflow-x: visible !important;
+    }
+    #tab-epv .sens-tbl {
+      display: table !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      table-layout: fixed;
+      font-size: 11px !important;
+    }
+    #tab-epv .sens-tbl th,
+    #tab-epv .sens-tbl td {
+      min-width: 0 !important;
+      padding: 8px 4px !important;
+      white-space: nowrap;
+      text-align: right;
+    }
+    #tab-epv .sens-tbl th.row-lbl,
+    #tab-epv .sens-tbl td.row-lbl,
+    #tab-epv .sens-tbl td:first-child,
+    #tab-epv .sens-tbl th:first-child {
+      min-width: 0 !important;
+      text-align: left;
+      padding-left: 8px !important;
     }
     /* Mix tables (Distribution by Channel, Manufacturing Sourcing) have
        a Nota last column. Force min-width so the table exceeds viewport
@@ -843,8 +873,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=63">
-<script defer src="/pwa-shell.js?v=63"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=64">
+<script defer src="/pwa-shell.js?v=64"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1902,7 +1932,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=63"></script>
+<script src="company.js?v=64"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
