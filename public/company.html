@@ -574,123 +574,107 @@
     }
 
     /* Health Check table: 5 columns (Metric, Value, Threshold, Status,
-       Rationale) don't fit on a phone. Reshape into per-row cards —
-       Metric label as kicker, then Value / Threshold / Status / Rationale
-       as space-between rows underneath. Category rows (cat) stay as
-       full-width section headers. */
+       Rationale) don't fit on a phone. Keep the tabular layout but let
+       the whole table scroll horizontally inside its wrapper. Freeze the
+       Metric column (first cell) to the left with position:sticky so
+       the user always knows which row they are reading while they scroll
+       Value / Threshold / Status / Rationale into view. */
+    .hc-tbl-wrap,
     main table.hc-tbl {
-      display: block !important;
-      overflow: visible !important;
-      background: transparent !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
     }
-    .hc-tbl thead { display: none !important; }
-    .hc-tbl tbody { display: block !important; }
-    /* Category header rows keep their look but as block */
+    /* The wrapper if the table was placed inside a div; also apply on the
+       table itself so it works both cases. */
+    main table.hc-tbl {
+      display: table !important;
+      width: max-content !important;
+      min-width: 100% !important;
+      background: var(--white);
+      border-collapse: collapse;
+    }
+    .hc-tbl thead { display: table-header-group !important; }
+    .hc-tbl tbody { display: table-row-group !important; }
+    .hc-tbl thead th {
+      background: var(--cream);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gray-mid);
+      font-weight: 500;
+      padding: 8px 12px;
+      text-align: left;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--rule);
+    }
+    .hc-tbl thead th:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: var(--cream);
+      min-width: 170px;
+      box-shadow: 2px 0 0 var(--rule);
+    }
+    /* Category rows */
     .hc-tbl tbody tr.cat {
-      display: block !important;
+      display: table-row !important;
       background: rgba(184,139,71,0.08) !important;
-      padding: 10px 14px !important;
-      margin-top: 14px;
-      border-bottom: 1px solid var(--gold-rule) !important;
     }
     .hc-tbl tbody tr.cat td {
-      display: block !important;
-      padding: 0 !important;
-      border: none !important;
+      display: table-cell !important;
+      padding: 10px 12px !important;
       font-size: 10px !important;
       letter-spacing: 0.18em !important;
       text-transform: uppercase !important;
       color: var(--gold) !important;
       font-weight: 700 !important;
+      border-bottom: 1px solid var(--gold-rule) !important;
+      position: sticky !important;
+      left: 0 !important;
+      background: rgba(184,139,71,0.08) !important;
+      z-index: 1;
     }
-    /* Metric rows */
+    /* Data rows */
     .hc-tbl tbody tr:not(.cat) {
-      display: block !important;
+      display: table-row !important;
       background: var(--white);
-      padding: 12px 14px !important;
-      border-bottom: 1px solid var(--rule) !important;
     }
     .hc-tbl tbody tr:not(.cat) td {
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: baseline !important;
-      padding: 3px 0 !important;
-      border: none !important;
-      text-align: left !important;
+      display: table-cell !important;
+      padding: 10px 12px !important;
       font-size: 12px !important;
-      gap: 12px;
-    }
-    /* First cell (Metric label) becomes a kicker on top spanning full row */
-    .hc-tbl tbody tr:not(.cat) td:first-child {
-      display: block !important;
-      font-size: 13px !important;
-      font-weight: 600 !important;
-      color: var(--navy) !important;
-      margin-bottom: 6px !important;
-    }
-    /* Inline labels on cells 2-5 via ::before */
-    .hc-tbl tbody tr:not(.cat) td:nth-child(2)::before { content: "Value"; }
-    .hc-tbl tbody tr:not(.cat) td:nth-child(3)::before { content: "Threshold"; }
-    .hc-tbl tbody tr:not(.cat) td:nth-child(4)::before { content: "Status"; }
-    .hc-tbl tbody tr:not(.cat) td:nth-child(5)::before { content: "Rationale"; }
-    .hc-tbl tbody tr:not(.cat) td:nth-child(n+2)::before {
-      font-size: 9px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--gray-mid);
-      font-weight: 500;
-      flex: 0 0 auto;
-    }
-    /* Move value/threshold/status onto a second line under the label so we
-       never have to fight iOS Safari flex text-node painting or overflow
-       cropping. Each td:nth-child(n+2) becomes a block that stacks the
-       ::before label above the .hc-cell value. */
-    .hc-tbl tbody tr:not(.cat) td:nth-child(n+2) {
-      display: block !important;
-      padding: 3px 0 !important;
-      text-align: left !important;
-    }
-    .hc-tbl tbody tr:not(.cat) td:nth-child(n+2)::before {
-      display: block !important;
-      margin-bottom: 2px !important;
-      font-size: 9px !important;
-      letter-spacing: 0.14em !important;
-      text-transform: uppercase !important;
-      color: var(--gray-mid) !important;
-      font-weight: 500 !important;
-    }
-    .hc-tbl tbody tr:not(.cat) td:nth-child(n+2) .hc-cell {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
       color: var(--navy);
-      white-space: normal;
-      word-break: break-word;
-      overflow-wrap: anywhere;
+      border-bottom: 1px solid var(--rule) !important;
+      vertical-align: top;
+      white-space: nowrap;
     }
-    /* Threshold values contain nested spans/strong — make sure they render */
-    .hc-tbl tbody tr:not(.cat) td:nth-child(n+2) .hc-cell * {
-      display: inline;
+    /* Freeze the Metric column so it stays visible while user scrolls */
+    .hc-tbl tbody tr:not(.cat) td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      background: var(--white);
+      min-width: 170px;
+      max-width: 190px;
       white-space: normal;
+      font-weight: 600;
+      box-shadow: 2px 0 0 var(--rule);
     }
-    /* Rationale can be long — drop it below on its own block so it wraps */
+    /* Rationale column can be wide but wrap so it does not run forever */
     .hc-tbl tbody tr:not(.cat) td:nth-child(5) {
-      display: block !important;
-      font-size: 11px !important;
-      color: var(--gray-mid) !important;
-      margin-top: 4px;
-      text-align: left !important;
-    }
-    .hc-tbl tbody tr:not(.cat) td:nth-child(5)::before {
-      display: block;
-      margin-bottom: 2px;
-    }
-    .hc-tbl tbody tr:not(.cat) td:nth-child(5) .hc-cell {
-      display: block;
-      text-align: left;
-      font-weight: 400;
-      color: var(--gray-mid);
+      min-width: 220px;
+      max-width: 280px;
       white-space: normal;
+      color: var(--gray-mid);
+      font-size: 11px;
+    }
+    /* Value / Threshold / Status columns keep sensible widths */
+    .hc-tbl tbody tr:not(.cat) td:nth-child(2) { min-width: 90px; }
+    .hc-tbl tbody tr:not(.cat) td:nth-child(3) { min-width: 190px; white-space: nowrap; }
+    .hc-tbl tbody tr:not(.cat) td:nth-child(4) { min-width: 90px; }
+    /* .hc-cell inline in tabular layout — no display block override */
+    .hc-tbl tbody tr:not(.cat) td .hc-cell {
+      display: inline;
     }
 
     /* Quality Radar card: on desktop it lives in a 2-col grid next to the
@@ -755,8 +739,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=55">
-<script defer src="/pwa-shell.js?v=55"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=56">
+<script defer src="/pwa-shell.js?v=56"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1657,7 +1641,7 @@
   </div>
 
   <div class="g2">
-    <div>
+    <div class="hc-tbl-wrap">
       <table class="ht hc-tbl">
         <thead>
           <tr>
@@ -1814,7 +1798,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=55"></script>
+<script src="company.js?v=56"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
