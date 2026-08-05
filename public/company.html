@@ -216,6 +216,26 @@
   .bu-tbl th:nth-child(4), .bu-tbl td:nth-child(4) { width: 130px; text-align: right; }       /* Repro Value */
   .bu-tbl th:nth-child(5), .bu-tbl td:nth-child(5) { width: 280px; }                          /* spacer mirrors Method */
 
+  /* On mobile, collapse the two decorative spacer columns (blank + Method
+   * spacer) so the whole build-up table fits in the viewport. Without
+   * this the total column width forces horizontal scroll and the
+   * left-most Step label ("Total Assets", "Value per Share", etc.)
+   * gets cropped when the user scrolls sideways. */
+  @media (max-width: 820px) {
+    .bu-tbl th:nth-child(3), .bu-tbl td:nth-child(3),
+    .bu-tbl th:nth-child(5), .bu-tbl td:nth-child(5) {
+      width: 0;
+      padding-left: 0;
+      padding-right: 0;
+      display: none;
+    }
+    .bu-tbl th:nth-child(2), .bu-tbl td:nth-child(2),
+    .bu-tbl th:nth-child(4), .bu-tbl td:nth-child(4) {
+      width: 110px;
+    }
+    .bu-tbl .row-lbl { white-space: normal; }
+  }
+
   /* DOC TILE */
   .doc-tile { background: var(--white); border: 1px solid var(--rule); border-top: 2px solid var(--gold); padding: 28px 30px; display: flex; flex-direction: column; gap: 12px; }
   .doc-tile .dt-title { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--navy); }
@@ -906,8 +926,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=72">
-<script defer src="/pwa-shell.js?v=72"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=73">
+<script defer src="/pwa-shell.js?v=73"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1965,7 +1985,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=72"></script>
+<script src="company.js?v=73"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
