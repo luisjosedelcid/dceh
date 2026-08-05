@@ -40,7 +40,7 @@
   .prefill-banner .pf-close:hover{color:var(--ink)}
 
   /* ADD ROW */
-  .add-row{display:grid;grid-template-columns:120px 1fr 2fr 110px;gap:10px;margin-bottom:18px;background:var(--white);padding:10px;border:1px solid var(--rule)}
+  .add-row{display:grid;grid-template-columns:120px 1fr 110px;gap:10px;margin-bottom:18px;background:var(--white);padding:10px;border:1px solid var(--rule)}
   .add-inp{padding:10px 12px;border:1px solid var(--rule);font-family:inherit;font-size:13px;background:var(--cream);outline:none}
   .add-inp:focus{border-color:var(--gold);background:var(--white)}
   .add-inp.ticker{font-weight:600;letter-spacing:0.05em;text-transform:uppercase}
@@ -231,8 +231,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=15">
-<script defer src="/pwa-shell.js?v=15"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=16">
+<script defer src="/pwa-shell.js?v=16"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -416,7 +416,6 @@ function renderApp() {
     <div class="add-row">
       <input class="add-inp ticker" id="add-ticker" placeholder="TICKER" maxlength="8" value="${esc(prefill?.ticker || '')}">
       <input class="add-inp name" id="add-name" placeholder="Company name" value="${esc(prefill?.name || '')}">
-      <input class="add-inp note" id="add-note" placeholder="Initial note (optional)" value="${esc(prefill?.note || '')}">
       <button class="add-btn" onclick="addCard()">+ Add</button>
     </div>
 
@@ -448,7 +447,6 @@ function dismissPrefill() {
   document.getElementById('prefill-slot').innerHTML = '';
   document.getElementById('add-ticker').value = '';
   document.getElementById('add-name').value = '';
-  document.getElementById('add-note').value = '';
 }
 
 function renderBoard() {
@@ -592,19 +590,17 @@ function cardHTML(c) {
 async function addCard() {
   const tk = document.getElementById('add-ticker').value.trim().toUpperCase();
   const nm = document.getElementById('add-name').value.trim();
-  const nt = document.getElementById('add-note').value.trim();
   if (!tk || !nm) { alert('Ticker y nombre requeridos'); return; }
 
   try {
     const resp = await api('/api/admin/pipeline-cards', {
       method: 'POST',
-      body: JSON.stringify({ ticker: tk, name: nm, stage: 'backlog', note: nt || null }),
+      body: JSON.stringify({ ticker: tk, name: nm, stage: 'backlog', note: null }),
     });
     const data = resp.item || resp;
     pipeline.unshift(data);
     document.getElementById('add-ticker').value = '';
     document.getElementById('add-name').value = '';
-    document.getElementById('add-note').value = '';
     if (prefill) dismissPrefill();
     renderBoard();
   } catch (e) {
