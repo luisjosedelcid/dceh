@@ -160,8 +160,12 @@
   .mini-value.pos{color:var(--green)} .mini-value.neg{color:var(--red)}
 
   /* ── Tabs ── */
-  .tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin-bottom:24px}
-  .tab-btn{background:transparent;border:0;border-bottom:2px solid transparent;padding:12px 20px;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:8px}
+  /* Horizontal scroll for the tab row so we can add sleeves (Real Estate,
+     Bank Deposits, Crypto, Data & audit) without truncating on narrow
+     viewports. The scrollbar itself is hidden — users just swipe or drag. */
+  .tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin-bottom:24px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x proximity}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab-btn{background:transparent;border:0;border-bottom:2px solid transparent;padding:12px 20px;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-mid);cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;white-space:nowrap;scroll-snap-align:start}
   .tab-btn:hover{color:var(--navy)}
   .tab-btn.active{color:var(--navy);border-bottom-color:var(--gold)}
   .tab-btn .tab-badge{font-size:9px;padding:2px 6px;background:var(--gold);color:var(--white);font-weight:500;letter-spacing:0.1em;border-radius:2px}
@@ -192,8 +196,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=35">
-<script defer src="/pwa-shell.js?v=35"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=36">
+<script defer src="/pwa-shell.js?v=36"></script>
 <!--PWA:END-->
 </head>
 <body data-pull-refresh="1" data-dce-auth="manual">
@@ -3215,6 +3219,14 @@ const VALID_TABS = new Set(['tab-consolidado','tab-dashboard','tab-data','tab-re
 function switchTab(tabId){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabId));
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('active', p.id===tabId));
+  // Bring the newly-active tab into view inside the horizontally-
+  // scrollable tab strip so the user always sees the sleeve label
+  // they just selected. inline:'nearest' avoids jumping the button
+  // to the far edge when it's already visible.
+  const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+  if (activeBtn) {
+    try { activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' }); } catch (e) {}
+  }
   try{ localStorage.setItem(TAB_STORAGE_KEY, tabId); }catch(e){}
   if(tabId==='tab-dashboard' && equityChart){ try{ equityChart.resize(); }catch(e){} }
   if(tabId==='tab-consolidado' && !CONS_LOADED){ loadConsolidado(); }
