@@ -353,6 +353,32 @@
 
     /* Company Profile card: tighter padding, kv rows one under the other */
     .card { padding: 16px !important; }
+
+    /* Key Financial Metrics: the desktop layout is a 4-column grid of kv
+       pairs, each column with 3 rows. My generic g3/g4 override collapses
+       g4 to 2 columns, but that produced misaligned rows between the two
+       .kv blocks (Operating Income wraps to 2 lines, Operating Margin has
+       no matching partner, dividers don't line up). The kv model is only
+       clean at 1 column here — collapse fully. */
+    .card > .g4 {
+      grid-template-columns: 1fr !important;
+      gap: 0 !important;
+    }
+    /* Restore the horizontal divider between rows when kv blocks are
+       stacked (each block only draws a divider under its own last row,
+       so we need to draw one under every row that lives inside a card). */
+    .card > .g4 > .kv:not(:last-child) > .row:last-child {
+      border-bottom: 1px solid var(--rule);
+    }
+    /* Align labels to a comfortable width so long labels like
+       'Operating Income' or 'FCF Margin' do not force a line wrap when
+       the value is short. Values are numeric (short) in KFM so nowrap is
+       safe there; in Company Profile the value can be a paragraph
+       ('Athleisure premium DTC + Wholesale + Retail'), so scope the
+       nowrap rule to the numeric metrics card only. */
+    .card .kv .row { align-items: baseline; }
+    .card > .g4 .kv .k { flex: 1 1 auto; }
+    .card > .g4 .kv .v { flex: 0 0 auto; white-space: nowrap; }
     .kv .row {
       padding: 10px 0 !important;
       font-size: 12px !important;
@@ -448,8 +474,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=47">
-<script defer src="/pwa-shell.js?v=47"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=48">
+<script defer src="/pwa-shell.js?v=48"></script>
 <!--PWA:END-->
 </head>
 <body>
