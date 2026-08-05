@@ -837,6 +837,30 @@
       white-space: normal;
     }
 
+    /* Probability tab: Expected Value + Scenario Details tables (.pw-t)
+       must fit the viewport on mobile without horizontal overflow. */
+    #tab-probability .pw-section {
+      padding: 16px 12px !important;
+    }
+    #tab-probability table.pw-t {
+      table-layout: fixed;
+      width: 100%;
+      font-size: 11px !important;
+    }
+    #tab-probability table.pw-t th,
+    #tab-probability table.pw-t td {
+      padding: 8px 4px !important;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #tab-probability table.pw-t tr.weighted td {
+      font-size: 12px !important;
+    }
+    #tab-probability table.pw-t tr.weighted td.lab {
+      font-size: 10px !important;
+      letter-spacing: 0.6px !important;
+    }
+
     /* Version banner: tighter padding */
     #version-banner { padding: 8px 14px !important; font-size: 12px !important; }
   }
@@ -873,8 +897,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=64">
-<script defer src="/pwa-shell.js?v=64"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=65">
+<script defer src="/pwa-shell.js?v=65"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1932,7 +1956,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=64"></script>
+<script src="company.js?v=65"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
