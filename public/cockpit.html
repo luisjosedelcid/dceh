@@ -173,15 +173,16 @@
      Fit all 5 KPIs + Last Sync inline so the status bar uses the full width. */
   @media (min-width:721px) and (max-width:1023px){
     /* Promote the two wrappers so all 6 items participate in a single 6-col grid on .status */
-    .status{display:grid;grid-template-columns:repeat(6,1fr);gap:0;padding:12px 16px;align-items:center}
+    .status{display:grid;grid-template-columns:repeat(6,1fr);gap:0;padding:14px 16px;align-items:start}
     .status .kpis-main{display:contents}
     .status .kpis-sync{display:contents}
-    .status .item{min-width:0;padding:0 12px;border-right:1px solid var(--line);flex:none}
+    .status .item{min-width:0;padding:0 10px;border-right:1px solid var(--line);flex:none;align-items:flex-start}
     .status .item:first-child{padding-left:0}
     .status .item:last-child{border-right:none;padding-right:0}
-    .status .lbl{font-size:8px;letter-spacing:.10em;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .status .val{font-size:17px}
-    .status .val.muted{font-size:11px}
+    /* Allow labels to wrap onto 2 lines instead of truncating with ellipsis */
+    .status .lbl{font-size:8.5px;letter-spacing:.08em;line-height:1.25;white-space:normal;overflow:visible;min-height:2em;display:block}
+    .status .val{font-size:18px;margin-top:2px}
+    .status .val.muted{font-size:12px;line-height:1.3}
   }
   @media (max-width:720px){
     header{padding:0 20px}
