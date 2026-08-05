@@ -9,7 +9,7 @@
  *
  * Bump SW_VERSION whenever the app shell needs a fresh install.
  */
-const SW_VERSION = 'dce-v95';
+const SW_VERSION = 'dce-v96';
 const SHELL_CACHE = `dce-shell-${SW_VERSION}`;
 const RUNTIME_CACHE = `dce-runtime-${SW_VERSION}`;
 const API_CACHE     = `dce-api-${SW_VERSION}`;
