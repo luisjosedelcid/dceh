@@ -73,6 +73,12 @@
     max-width: 100%;
   }
 
+  /* IPS allocation bands: hide the Status column on narrow viewports.
+     The Actual/Reading value is already colored green/amber/red to
+     signal the band state, so the trailing text badge is redundant
+     on mobile and only forced a horizontal scroll. */
+  .ips-bands-table .ips-status { display: none !important; }
+
   /* GENERIC: any div that uses inline grid 3-5 cols → single col */
   /* This catches the home nav cards and any KPI rows */
   div[style*="grid-template-columns:repeat(3"],

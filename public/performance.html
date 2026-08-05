@@ -172,7 +172,7 @@
   .tab-pane{display:none}
   .tab-pane.active{display:block}
 </style>
-<link rel="stylesheet" href="/responsive.css?v=1">
+<link rel="stylesheet" href="/responsive.css?v=2">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 <script src="/dce-auth.js" defer></script>
     <script src="/nyse-clock.js" defer></script>
@@ -196,8 +196,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=41">
-<script defer src="/pwa-shell.js?v=41"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=42">
+<script defer src="/pwa-shell.js?v=42"></script>
 <!--PWA:END-->
 </head>
 <body data-pull-refresh="1" data-dce-auth="manual">
@@ -320,7 +320,7 @@
                 <th class="right">Min</th>
                 <th class="right">Max</th>
                 <th class="right">Actual</th>
-                <th>Status</th>
+                <th class="ips-status">Status</th>
               </tr>
             </thead>
             <tbody id="cons-ips-tbody"></tbody>
@@ -388,7 +388,7 @@
               <th>Component</th>
               <th class="right">Band</th>
               <th class="right">Reading</th>
-              <th>Status</th>
+              <th class="ips-status">Status</th>
             </tr>
           </thead>
           <tbody id="ips-bands-tbody"></tbody>
@@ -1614,11 +1614,15 @@ function renderIpsBands(j) {
     const badgeCls = inBand ? 'ok' : 'out';
     const badgeTxt = inBand ? 'In band' : 'OUT';
     const tr = document.createElement('tr');
+    // Tint the Reading value with the band color too so mobile users
+    // who don't see the Status badge column (.ips-status hidden on
+    // narrow viewports) still get the in/out-of-band signal.
+    const readingColor = inBand ? 'var(--green)' : 'var(--red)';
     tr.innerHTML = `
       <td>${escHtml(b.label)}</td>
       <td class="right" style="color:var(--gray-txt)">${bandLabel}</td>
-      <td class="right" style="font-weight:600">${pct}</td>
-      <td><span class="ips-badge ${badgeCls}">${badgeTxt}</span></td>
+      <td class="right" style="font-weight:600;color:${readingColor}">${pct}</td>
+      <td class="ips-status"><span class="ips-badge ${badgeCls}">${badgeTxt}</span></td>
     `;
     tbody.appendChild(tr);
   });
@@ -2992,12 +2996,14 @@ function renderConsolidado(eqK, eqHoldings){
       if(nearMin || nearMax){ status = 'Near limit'; color = '#B88B47'; }
       else { status = 'OK — within band'; color = 'var(--green)'; }
     }
+    // Color the Actual cell too so mobile users who don't see the Status
+    // column (hidden on narrow viewports) still get the band signal.
     ipsHtml += '<tr>'
       +'<td>'+b.label+'</td>'
       +'<td class="right">'+(b.min*100).toFixed(0)+'%</td>'
       +'<td class="right">'+(b.max*100).toFixed(0)+'%</td>'
-      +'<td class="right" style="font-weight:600">'+(b.actual*100).toFixed(2)+'%</td>'
-      +'<td style="color:'+color+';font-weight:600;font-size:11px">'+status+'</td>'
+      +'<td class="right" style="font-weight:600;color:'+color+'">'+(b.actual*100).toFixed(2)+'%</td>'
+      +'<td class="ips-status" style="color:'+color+';font-weight:600;font-size:11px">'+status+'</td>'
       +'</tr>';
   }
   // Iliquidez consolidada = RE + PE
@@ -3010,8 +3016,8 @@ function renderConsolidado(eqK, eqHoldings){
     +'<td><em>Consolidated illiquidity (max)</em></td>'
     +'<td class="right">—</td>'
     +'<td class="right">50%</td>'
-    +'<td class="right" style="font-weight:600">'+(illiq*100).toFixed(2)+'%</td>'
-    +'<td style="color:'+illiqColor+';font-weight:600;font-size:11px">'+illiqStatus+'</td>'
+    +'<td class="right" style="font-weight:600;color:'+illiqColor+'">'+(illiq*100).toFixed(2)+'%</td>'
+    +'<td class="ips-status" style="color:'+illiqColor+';font-weight:600;font-size:11px">'+illiqStatus+'</td>'
     +'</tr>';
   ipsTbody.innerHTML = ipsHtml;
 
