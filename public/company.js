@@ -299,9 +299,22 @@ function buildNav() {
       return '';
     }
     if (t.external) {
-      if (t.external) {
-        return `<button onclick="window.open('${t.external}','_blank')" style="${t.style||''}">${t.label}</button>`;
+      // Same-origin PDFs are wrapped through /pdfview.html so the PWA
+      // standalone user (installed iOS app) gets an in-app Back button.
+      // Other links (docx, xlsx, http) keep window.open for native handling.
+      var extUrl = t.external;
+      var isPdf = /\.pdf(\?|#|$)/i.test(extUrl);
+      var isRel = extUrl.charAt(0) === '/';
+      if (isPdf && isRel) {
+        var qs = new URLSearchParams({
+          src:   extUrl,
+          title: t.label,
+          back:  window.location.pathname + window.location.search + window.location.hash
+        });
+        var target = '/pdfview.html?' + qs.toString();
+        return `<button onclick="window.location.href='${target}'" style="${t.style||''}">${t.label}</button>`;
       }
+      return `<button onclick="window.open('${extUrl}','_blank')" style="${t.style||''}">${t.label}</button>`;
     }
     if (t.home) {
       return `<button onclick="window.location.href='/'" style="${t.style||''}">${t.label}</button>`;

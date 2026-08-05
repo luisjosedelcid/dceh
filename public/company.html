@@ -903,8 +903,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=67">
-<script defer src="/pwa-shell.js?v=67"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=68">
+<script defer src="/pwa-shell.js?v=68"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1962,7 +1962,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=67"></script>
+<script src="company.js?v=68"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
@@ -2017,15 +2017,45 @@ function renderDocTiles() {
   ];
   const el = document.getElementById('doc-tiles-container');
   if (!el) return;
-  el.innerHTML = tiles.map(t => `
+  // Wrap PDF/DOCX opens through the in-app viewer so PWA standalone users
+  // (iPad Mini / iPhone installed app) get a Back button. Excel keeps
+  // download semantics. External non-PDF links open in a new tab.
+  function wrapUrl(t) {
+    if (!t.url) return null;
+    if (t.download) return { href: t.url, mode: 'download' };
+    // Only route same-origin PDFs through the viewer (docx / xlsx handle native)
+    var isPdf = /\.pdf(\?|#|$)/i.test(t.url);
+    var isRel = t.url.charAt(0) === '/';
+    if (isPdf && isRel) {
+      var qs = new URLSearchParams({
+        src:   t.url,
+        title: t.label,
+        back:  window.location.pathname + window.location.search + window.location.hash
+      });
+      return { href: '/pdfview.html?' + qs.toString(), mode: 'internal' };
+    }
+    return { href: t.url, mode: 'external' };
+  }
+  el.innerHTML = tiles.map(t => {
+    const w = wrapUrl(t);
+    let btnHtml;
+    if (!w) {
+      btnHtml = `<span class="coming-soon">Coming Soon</span>`;
+    } else if (w.mode === 'download') {
+      btnHtml = `<a href="${w.href}" download style="background:${t.accent}">${t.cta || 'Download'}</a>`;
+    } else if (w.mode === 'internal') {
+      btnHtml = `<a href="${w.href}" style="background:${t.accent}">${t.cta || 'Open Document'}</a>`;
+    } else {
+      btnHtml = `<a href="${w.href}" target="_blank" rel="noopener" style="background:${t.accent}">${t.cta || 'Open Document'}</a>`;
+    }
+    return `
     <div class="doc-tile" style="border-top-color:${t.accent}">
       <div class="dt-title">${t.label}</div>
       <div class="dt-desc">${t.desc}</div>
-      ${t.url
-        ? `<a href="${t.url}" ${t.download ? 'download' : 'target="_blank"'} style="background:${t.accent}">${t.cta || 'Open Document'}</a>`
-        : `<span class="coming-soon">Coming Soon</span>`}
+      ${btnHtml}
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 // Expose sym and fmt to inline oninput handlers
