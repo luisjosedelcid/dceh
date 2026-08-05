@@ -511,34 +511,14 @@
     });
   }
 
-  // Settings gear link — only visible to admins, mounted next to Sign Out.
-  // Hidden on /settings.html itself to avoid self-link clutter.
+  // Settings gear link — REMOVED 2026-08-05: cluttered the header next to
+  // Sign Out on iPad / desktop. Settings is now reachable exclusively from
+  // the Menu tab in the mobile v6 nav and from the standard hnav Menu
+  // dropdown on desktop. The mount helpers are kept as no-ops so any
+  // legacy call sites (below) continue to work without changes.
   let _settingsLinkEl = null;
-  function _mountSettingsLink(target) {
-    if (!target) return null;
-    if (_settingsLinkEl && _settingsLinkEl.parentElement) return _settingsLinkEl;
-    if (window.location.pathname === '/settings.html' || window.location.pathname === '/settings') return null;
-    const a = document.createElement('a');
-    a.href = '/settings.html';
-    a.className = 'dce-settings-link';
-    a.title = 'Settings';
-    a.setAttribute('aria-label', 'Settings');
-    a.innerHTML = '\u2699';  // gear glyph
-    a.style.cssText = 'display:none;align-items:center;justify-content:center;width:28px;height:28px;font-size:16px;color:rgba(255,255,255,0.5);text-decoration:none;border:1px solid transparent;border-radius:3px;margin-left:4px;transition:color .15s, border-color .15s';
-    a.addEventListener('mouseenter', () => { a.style.color = 'var(--gold,#b88b47)'; a.style.borderColor = 'rgba(184,139,71,0.30)'; });
-    a.addEventListener('mouseleave', () => { a.style.color = 'rgba(255,255,255,0.5)'; a.style.borderColor = 'transparent'; });
-    target.appendChild(a);
-    _settingsLinkEl = a;
-    _refreshSettingsLink();
-    return a;
-  }
-  function _refreshSettingsLink() {
-    if (!_settingsLinkEl) return;
-    const u = user();
-    const isAdm = isAdmin && isAdmin();
-    _settingsLinkEl.style.display = (u && isAdm) ? 'inline-flex' : 'none';
-  }
-  onChange(_refreshSettingsLink);
+  function _mountSettingsLink(_target) { return null; }
+  function _refreshSettingsLink() { /* no-op */ }
 
   function _autoMount() {
     // Always inject shared CSS (nav padding override, modal styles), even in 'manual' mode.
