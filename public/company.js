@@ -428,7 +428,7 @@ function renderOverview() {
   setEl('kf-sbc',       M(ov.sbc));
 
   function yoyHtml(v) {
-    if (v == null) return '<span class="v" style="color:var(--gray-mid)">Pendiente</span>';
+    if (v == null) return '<span class="v" style="color:var(--gray-mid)">Pending</span>';
     const sign = v >= 0 ? '+' : '';
     const cls  = v >= 0 ? 'green' : 'red';
     return `<span class="${cls}">${sign}${(v*100).toFixed(1)}%</span>`;
@@ -457,7 +457,7 @@ function renderOverview() {
     { key:'dividendYield', label:'Dividend Yield', kind:'pct' }
   ];
   function fmtMul(v, kind) {
-    if (v == null) return '<span style="color:var(--gray-mid);font-style:italic">Pendiente</span>';
+    if (v == null) return '<span style="color:var(--gray-mid);font-style:italic">Pending</span>';
     return kind === 'pct' ? `${(v*100).toFixed(2)}%` : `${v.toFixed(2)}×`;
   }
   function deltaHtml(snap, live) {
@@ -1572,8 +1572,8 @@ function renderWACCComponents() {
   // WACC Validation cross-check
   const v = w.validation || {};
   setEl('wacc-val-dce',         Pct((w.waccFinal||w.ke)*100));
-  setEl('wacc-val-damodaran',   v.damodaranSector != null ? Pct(v.damodaranSector*100) : 'Pendiente');
-  setEl('wacc-val-peers',       v.peerAvg         != null ? Pct(v.peerAvg*100)         : 'Pendiente');
+  setEl('wacc-val-damodaran',   v.damodaranSector != null ? Pct(v.damodaranSector*100) : 'Pending');
+  setEl('wacc-val-peers',       v.peerAvg         != null ? Pct(v.peerAvg*100)         : 'Pending');
   // Implied cost: NOPAT_base / Price·Shares  → if market priced at EPV, what discount rate would equal it?
   const epv = D.epv;
   const px  = (typeof currentPrice === 'number' && currentPrice > 0) ? currentPrice : (D.overview.stockPrice || 0);
@@ -1582,9 +1582,9 @@ function renderWACCComponents() {
     const mktEquity = px * shares;
     const mktOps    = mktEquity - (epv.excessCash||0) - (epv.ltInv||0) - (epv.debt||0) - (epv.leases||0) - (epv.minorityInterest||0);
     const implied   = mktOps > 0 ? (epv.nopatBase / mktOps) * 100 : null;
-    setEl('wacc-val-implied', implied != null ? Pct(implied) : 'Pendiente');
+    setEl('wacc-val-implied', implied != null ? Pct(implied) : 'Pending');
   } else {
-    setEl('wacc-val-implied', 'Pendiente');
+    setEl('wacc-val-implied', 'Pending');
   }
 }
 
@@ -1740,8 +1740,8 @@ function renderROIC() {
   const dIC = roic.icHistory[N-1] - roic.icHistory[N-2];
   setEl('roic-marginal-sub', `ΔNOPAT ${M(dN)} / ΔIC ${M(dIC)}`);
 
-  setEl('roic-gcapex-2y', roic.growthCapex2y != null ? M(roic.growthCapex2y) : 'Pendiente');
-  setEl('roic-gcapex-3y', roic.growthCapex3y != null ? M(roic.growthCapex3y) : 'Pendiente');
+  setEl('roic-gcapex-2y', roic.growthCapex2y != null ? M(roic.growthCapex2y) : 'Pending');
+  setEl('roic-gcapex-3y', roic.growthCapex3y != null ? M(roic.growthCapex3y) : 'Pending');
   setEl('roic-selected', Pct(roic.roic3yr));
 
   // ===== CHARTS =====
@@ -2135,12 +2135,12 @@ function updateIRRCalc() {
 
   // ===== REINVESTMENT =====
   if (capexH.length === 0 || daH.length === 0) {
-    setEl('irr-reinv-gcapex', '<span class="dim">Pendiente</span>');
+    setEl('irr-reinv-gcapex', '<span class="dim">Pending</span>');
   } else {
     setEl('irr-reinv-gcapex', M(growthCapex));
   }
   setEl('irr-reinv-wc',    M(dWC));
-  setEl('irr-reinv-sm',    smGrowth > 0 ? M(smGrowth) : '<span class="dim">Pendiente</span>');
+  setEl('irr-reinv-sm',    smGrowth > 0 ? M(smGrowth) : '<span class="dim">Pending</span>');
   setEl('irr-reinv-rd',    rdGrowth > 0 ? M(rdGrowth) : '<span class="dim">N/A</span>');
   setEl('irr-reinv-total', M(totalReinv));
   setEl('irr-reinv-rate',  Pct(reinvRate));
@@ -2573,9 +2573,9 @@ function renderProbability() {
   if (irr.impliedIrr == null) {
     document.getElementById('probability-body').innerHTML = `
       <div class="card" style="max-width:760px;padding:28px 32px">
-        <div style="font-size:11px;letter-spacing:1.8px;color:#b88b47;font-weight:700;text-transform:uppercase;margin-bottom:12px">Probability Worksheet · Pendiente</div>
+        <div style="font-size:11px;letter-spacing:1.8px;color:#b88b47;font-weight:700;text-transform:uppercase;margin-bottom:12px">Probability Worksheet · Pending</div>
         <div style="font-size:14px;color:#0d1b2a;line-height:1.6">
-          Falta el Base IRR (<code>irr.impliedIrr</code>) en el JSON del modelo.
+          Missing Base IRR (<code>irr.impliedIrr</code>) in the model JSON.
         </div>
       </div>`;
     return;

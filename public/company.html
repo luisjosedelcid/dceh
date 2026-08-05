@@ -438,6 +438,80 @@
       max-width: 100%;
     }
 
+    /* Valuation Multiples table: 4 columns don't fit on a phone.
+       Reshape the table into a stack of cards — one card per row —
+       with the multiple label on top and a 3-column grid underneath
+       for Snapshot / Live / Δ Re-rating. */
+    main table.mult-tbl {
+      display: block !important;
+      overflow: visible !important;
+      background: transparent !important;
+    }
+    .mult-tbl thead { display: none !important; }
+    .mult-tbl tbody { display: block !important; }
+    .mult-tbl tbody tr {
+      display: block !important;
+      background: var(--white);
+      border-bottom: 1px solid var(--rule) !important;
+      padding: 12px 16px 14px !important;
+    }
+    .mult-tbl tbody tr:last-child { border-bottom: none !important; }
+    .mult-tbl tbody td {
+      display: block !important;
+      padding: 0 !important;
+      border: none !important;
+      text-align: left !important;
+    }
+    /* First cell = multiple label */
+    .mult-tbl tbody td:first-child {
+      font-size: 10px !important;
+      font-weight: 500 !important;
+      letter-spacing: 0.18em !important;
+      text-transform: uppercase !important;
+      color: var(--gray-mid) !important;
+      margin-bottom: 8px !important;
+    }
+    /* Cells 2-4 (Snapshot / Live / Δ) laid out on a shared row via
+       an anonymous flex box we inject with a wrapping <div>. Since we
+       cannot restructure DOM in CSS, use a flex-friendly layout on
+       the tr itself and pin cells side-by-side. */
+    .mult-tbl tbody tr {
+      display: grid !important;
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "label"
+        "vals";
+      gap: 6px 0;
+    }
+    .mult-tbl tbody td:first-child { grid-area: label; }
+    .mult-tbl tbody td:nth-child(2),
+    .mult-tbl tbody td:nth-child(3),
+    .mult-tbl tbody td:nth-child(4) {
+      grid-area: unset;
+    }
+    /* Wrap the three value cells with a labeled prefix using ::before */
+    .mult-tbl tbody td:nth-child(2)::before { content: "Snapshot "; }
+    .mult-tbl tbody td:nth-child(3)::before { content: "Live "; }
+    .mult-tbl tbody td:nth-child(4)::before { content: "Δ Re-rating "; }
+    .mult-tbl tbody td:nth-child(n+2)::before {
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gray-mid);
+      font-weight: 500;
+      margin-right: 8px;
+    }
+    .mult-tbl tbody td:nth-child(n+2) {
+      grid-column: 1 / -1;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: baseline !important;
+      padding: 4px 0 !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      color: var(--navy) !important;
+    }
+
     /* Version banner: tighter padding */
     #version-banner { padding: 8px 14px !important; font-size: 12px !important; }
   }
@@ -474,8 +548,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=48">
-<script defer src="/pwa-shell.js?v=48"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=49">
+<script defer src="/pwa-shell.js?v=49"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -652,7 +726,7 @@
   <!-- VALUATION MULTIPLES -->
   <div class="slbl">Valuation Multiples<span id="mult-live-flag" style="font-size:9px;font-weight:500;letter-spacing:0.15em;color:var(--gray-mid);margin-left:14px;text-transform:none">Snapshot vs Live</span></div>
   <div class="card" style="margin-bottom:24px;padding:0;overflow:hidden">
-    <table class="fin-tbl" style="width:100%">
+    <table class="fin-tbl mult-tbl" style="width:100%">
       <thead>
         <tr>
           <th style="text-align:left;padding:10px 18px">Multiple</th>
