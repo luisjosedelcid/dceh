@@ -143,9 +143,17 @@
   .audit-detail{color:var(--gray-mid);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .audit-folder{font-size:10px;color:var(--gray-mid);letter-spacing:0.08em;text-transform:uppercase;text-align:right}
   @media (max-width:720px){
-    .audit-row{grid-template-columns:1fr;gap:4px;padding:12px}
+    /* Compact 2-line log entry: [date + badge] on line 1,
+     * [actor + detail] on line 2, folder inline as a small chip.
+     * Reduces row height ~55% so ~10 entries fit before Load More. */
+    .audit-row{grid-template-columns: 1fr auto; gap: 2px 8px; padding: 8px 12px; font-size: 11px}
     .audit-row.head{display:none}
-    .audit-folder{text-align:left}
+    .audit-row .audit-ts{grid-column: 1; font-size: 10px; color: var(--gray-mid); letter-spacing: 0.02em}
+    .audit-row > div:nth-child(2){grid-column: 2; grid-row: 1; justify-self: end}
+    .audit-row .audit-action{font-size: 9px !important; padding: 2px 6px !important; letter-spacing: 0.08em !important}
+    .audit-row .audit-actor{grid-column: 1 / -1; font-size: 12px; font-weight: 600; line-height: 1.25; margin-top: 1px}
+    .audit-row .audit-detail{grid-column: 1 / -1; font-size: 10.5px; line-height: 1.3; white-space: normal; overflow: visible; margin-top: 1px}
+    .audit-row .audit-folder{grid-column: 1 / -1; text-align: left; font-size: 9px; margin-top: 1px}
   }
 
   /* HISTORY MODAL */
@@ -182,8 +190,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=86">
-<script defer src="/pwa-shell.js?v=86"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=87">
+<script defer src="/pwa-shell.js?v=87"></script>
 <!--PWA:END-->
 </head>
 <body data-dce-auth="manual">
