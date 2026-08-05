@@ -236,8 +236,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=17">
-<script defer src="/pwa-shell.js?v=17"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=18">
+<script defer src="/pwa-shell.js?v=18"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -420,8 +420,8 @@ function renderApp() {
 
     <div class="add-row">
       <input class="add-inp ticker" id="add-ticker" placeholder="TICKER" maxlength="8" value="${esc(prefill?.ticker || '')}">
-      <input class="add-inp name" id="add-name" placeholder="Company name" value="${esc(prefill?.name || '')}">
-      <button class="add-btn" onclick="addCard()">+ Add</button>
+      <input class="add-inp name" id="add-name" placeholder="Company name (auto)" value="${esc(prefill?.name || '')}">
+      <button class="add-btn" id="add-btn" onclick="addCard()">+ Add</button>
     </div>
 
     <div class="stats" id="stats"></div>
@@ -594,8 +594,27 @@ function cardHTML(c) {
 // ============================================================
 async function addCard() {
   const tk = document.getElementById('add-ticker').value.trim().toUpperCase();
-  const nm = document.getElementById('add-name').value.trim();
-  if (!tk || !nm) { alert('Ticker y nombre requeridos'); return; }
+  let nm = document.getElementById('add-name').value.trim();
+  if (!tk) { alert('Ticker requerido'); return; }
+
+  const btn = document.getElementById('add-btn');
+  const originalLabel = btn ? btn.textContent : '+ Add';
+
+  // Auto-resolve company name via Finnhub profile2 when the user left it
+  // blank. Fall back to the ticker itself if the lookup fails so the
+  // card always ends up with a non-empty name (DB requires it).
+  if (!nm) {
+    if (btn) { btn.textContent = '…'; btn.disabled = true; }
+    try {
+      const r = await fetch(`/api/finnhub-quote?profile=1&symbol=${encodeURIComponent(tk)}`);
+      if (r.ok) {
+        const p = await r.json();
+        nm = (p && typeof p.name === 'string' && p.name.trim()) ? p.name.trim() : '';
+      }
+    } catch (_) { /* offline / rate-limited — fall through */ }
+    if (!nm) nm = tk; // guaranteed non-empty fallback
+    if (btn) { btn.textContent = originalLabel; btn.disabled = false; }
+  }
 
   try {
     const resp = await api('/api/admin/pipeline-cards', {
