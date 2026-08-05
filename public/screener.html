@@ -129,8 +129,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=23">
-<script defer src="/pwa-shell.js?v=23"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=24">
+<script defer src="/pwa-shell.js?v=24"></script>
 <!--PWA:END-->
 </head>
 <body data-pull-refresh="1">
@@ -286,8 +286,9 @@
     /* Freeze the Ticker column on wide tables so it stays visible while
        the user scrolls horizontally on mobile. Applies to both <th>
        and <td>. Right-edge shadow signals the column is floating over
-       scrolled content. Colors come from stbl striping so it looks
-       continuous. */
+       scrolled content. Uses a single flat background across all rows
+       (no zebra striping on the sticky column) so it reads as one
+       continuous frozen strip instead of a checkered pattern. */
     .stbl th.ticker-cell,
     .stbl td.ticker-cell {
       position:sticky;left:0;z-index:2;
@@ -295,8 +296,6 @@
       box-shadow:2px 0 6px -3px rgba(27,38,66,0.18);
     }
     .stbl thead th.ticker-cell{background:var(--navy);z-index:3}
-    .stbl tbody tr:nth-child(even) td.ticker-cell{background:#fbf8f1}
-    .stbl tbody tr:hover td.ticker-cell{background:#fcfaf5}
 
     /* RADAR ADD-ROW (Find > Screener > Radar tab) */
     .wl-add-row{
