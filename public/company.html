@@ -731,13 +731,18 @@
       -webkit-overflow-scrolling: touch;
       max-width: 100%;
     }
-    /* Sticky Item column (first td/th) */
+    /* Sticky Item column (first td/th) — MUST be opaque so the content
+       of scrolling year columns never bleeds through. The tot-row and
+       sub-row row-highlight is only rgba(27,38,66,0.085), which is a
+       tint (~91.5% transparent) that on its own does NOT cover the
+       underlying scrolled text. Layer an opaque white base underneath
+       via background: <tint>, <opaque> shorthand. */
     #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) thead th:first-child,
     #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) tbody td:first-child {
       position: sticky;
       left: 0;
       z-index: 2;
-      background: var(--white);
+      background: #FFFFFF;
       min-width: 170px;
       max-width: 200px;
       white-space: normal;
@@ -759,16 +764,24 @@
     /* Section rows (sec-row) need matching sticky background so the pinned
        Item cell stays readable when it crosses under them */
     #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.sec-row td:first-child {
-      background: var(--white) !important;
+      background: #FFFFFF !important;
     }
-    /* Total / subtotal / margin rows: match their row bg on the pinned cell */
+    /* Total / subtotal rows: the row highlight is a tint. Composite it
+       with an opaque white base so the pinned cell is fully opaque. */
     #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.tot-row td:first-child,
     #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.sub-row td:first-child {
-      background: rgba(27,38,66,0.085) !important;
+      background:
+        linear-gradient(rgba(27,38,66,0.085), rgba(27,38,66,0.085)),
+        #FFFFFF !important;
     }
     #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.mrg-row td:first-child,
     #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.norm-row td:first-child {
-      background: var(--white) !important;
+      background: #FFFFFF !important;
+    }
+    /* Spacer rows are also transparent by default — give them an opaque
+       white base so scrolling year columns don't bleed through the pin */
+    #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) tr.spacer-row td:first-child {
+      background: #FFFFFF !important;
     }
     /* Numeric year columns: keep them compact */
     #tab-financials .fin-tbl:not(.mult-tbl):not(.bu-tbl) th:not(:first-child),
@@ -815,8 +828,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=59">
-<script defer src="/pwa-shell.js?v=59"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=60">
+<script defer src="/pwa-shell.js?v=60"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1874,7 +1887,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=59"></script>
+<script src="company.js?v=60"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
