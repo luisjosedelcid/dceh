@@ -273,7 +273,151 @@
     .wave-deco { display: none; }
   }
 
-  @media (max-width: 900px) {
+  /* ═══════════════════════════════════════════════════════════════
+     MOBILE HARDENING (≤720px) — the company dashboard was designed for
+     desktop widths; on phones the dense header, 5-KPI strip, 3-column
+     profile card, 4-across market data grid, and horizontal tabs all
+     collide. Rework the layout without touching the HTML markup.
+     ════════════════════════════════════════════════════════════════ */
+  @media (max-width: 720px) {
+
+    /* --- header: stack brand block on top of a 3-KPI hero strip --- */
+    header {
+      padding: 12px 16px 16px !important;
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 14px;
+    }
+    .hbrand {
+      padding: 0 !important;
+      border-right: none !important;
+      margin-right: 0 !important;
+      gap: 12px;
+    }
+    /* Kill the tall vertical rule between logo and subject on mobile */
+    .hbrand > div[style*="width:1px"] { display: none !important; }
+    .logo { font-size: 18px; }
+    .hsubject .lbl { font-size: 8px; letter-spacing: 0.18em; }
+    .hsubject .ttl { font-size: 14px; line-height: 1.25; }
+
+    /* KPI strip: use a horizontal-scroll rail so long numbers never clip.
+       Users can swipe to see all 5 KPIs. */
+    .hright {
+      display: flex !important;
+      margin-left: 0 !important;
+      gap: 0 !important;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+      padding-bottom: 4px;
+      /* Hide scrollbar visually on iOS */
+      scrollbar-width: none;
+    }
+    .hright::-webkit-scrollbar { display: none; }
+    .hkpi {
+      flex: 0 0 auto;
+      min-width: 96px !important;
+      padding: 10px 14px !important;
+      text-align: left !important;
+      scroll-snap-align: start;
+      border-left: 1px solid rgba(255,255,255,0.08) !important;
+    }
+    .hkpi:first-child { border-left: none !important; padding-left: 0 !important; }
+    .hkpi + .hkpi { padding-left: 14px !important; }
+    .hkpi .val { font-size: 18px !important; white-space: nowrap; }
+    .hkpi .sub { font-size: 8px !important; letter-spacing: 0.08em; white-space: nowrap; }
+    /* Hide the trailing Last Review block on mobile — too much for the strip */
+    .hkpi[style*="border-left"] { display: none !important; }
+    /* Kill the sign-out mount (accessible from the Menu tab) */
+    div[data-dce-mount-signout] { display: none !important; }
+
+    /* Kill the giant faded background wave on small viewports — it competes
+       with content and adds no info */
+    .wave-deco { display: none !important; }
+
+    /* --- main container gets tighter horizontal padding --- */
+    main { padding: 20px 14px 40px !important; }
+
+    /* --- section labels: leave a little more breathing room --- */
+    .slbl { font-size: 9px; margin-bottom: 12px; padding-bottom: 8px; }
+
+    /* --- Company Profile card: 3-col g3 with kv pairs collapses to a single
+           column list. The desktop layout stacks 3 columns of key/value pairs
+           side by side; on a 375-wide phone that squashes labels into vertical
+           multi-line towers. Force one column and align key/value on a single
+           row. --- */
+    .g3, .g4 { grid-template-columns: 1fr !important; gap: 0 !important; }
+    /* Bring back the g4 as a 2-col grid only for Market Data-style cards */
+    .g4 { grid-template-columns: repeat(2,1fr) !important; gap: 10px !important; }
+    .g2 { grid-template-columns: 1fr !important; }
+
+    /* Company Profile card: tighter padding, kv rows one under the other */
+    .card { padding: 16px !important; }
+    .kv .row {
+      padding: 10px 0 !important;
+      font-size: 12px !important;
+      gap: 12px;
+    }
+    .kv .k {
+      font-size: 11px !important;
+      letter-spacing: 0.02em;
+      flex: 0 0 42%;
+      white-space: normal;
+    }
+    .kv .v {
+      font-size: 12px !important;
+      text-align: right;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    /* Market Data cards: compact */
+    .card .clbl { font-size: 9px !important; letter-spacing: 0.1em; }
+    .card .cval { font-size: 18px !important; }
+    .card .csub { font-size: 10px !important; }
+
+    /* --- Nav tabs: horizontal scroll with snap so all tabs remain reachable --- */
+    nav#main-nav {
+      padding: 0 14px !important;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x proximity;
+      scrollbar-width: none;
+      display: flex;
+      flex-wrap: nowrap !important;
+    }
+    nav#main-nav::-webkit-scrollbar { display: none; }
+    nav#main-nav a, nav#main-nav button, nav#main-nav .tab-btn {
+      flex: 0 0 auto;
+      scroll-snap-align: start;
+      white-space: nowrap;
+    }
+
+    /* Charts: cap height and let them scale */
+    canvas { max-height: 260px !important; }
+
+    /* Chart cards */
+    .chart-card { padding: 12px !important; }
+    .chart-card .clbl { font-size: 10px !important; }
+
+    /* Sliders section (EPV assumptions) — stack */
+    input[type="range"].slider { width: 100% !important; }
+
+    /* Tables in company.html — give them a horizontal scroll wrapper via
+       display:block so wide tables (Financials tab) don't blow the viewport */
+    main table {
+      display: block !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+      max-width: 100%;
+    }
+
+    /* Version banner: tighter padding */
+    #version-banner { padding: 8px 14px !important; font-size: 12px !important; }
+  }
+
+  /* Legacy ≤900px — keep desktop-ish tablet behavior for iPad landscape only */
+  @media (min-width: 721px) and (max-width: 900px) {
     header { padding: 0 16px; flex-wrap: wrap; }
     main   { padding: 20px 16px 32px; }
     nav    { padding: 0 16px; }
@@ -304,8 +448,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=46">
-<script defer src="/pwa-shell.js?v=46"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=47">
+<script defer src="/pwa-shell.js?v=47"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -405,7 +549,7 @@
       <div class="csub" id="md-price-sub">—</div>
     </div>
     <div class="card">
-      <div class="clbl">Acciones Diluidas (M)</div>
+      <div class="clbl">Diluted Shares (M)</div>
       <div class="cval" id="md-shares">—</div>
       <div class="csub" id="md-shares-sub">—</div>
     </div>
