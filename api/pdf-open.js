@@ -33,7 +33,10 @@ const PREFIX = 'proxy';   // reports/proxy/<mtime>__<filename>
 async function objectExists(baseUrl, key, objectPath) {
   const r = await fetch(`${baseUrl}/storage/v1/object/info/${BUCKET}/${objectPath}`, {
     method: 'GET',
-    headers: { 'Authorization': `Bearer ${key}` },
+    headers: {
+      'Authorization': `Bearer ${key}`,
+      'apikey':        key,
+    },
   });
   return r.status === 200;
 }
@@ -44,6 +47,7 @@ async function uploadObject(baseUrl, key, objectPath, buffer, mime) {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${key}`,
+      'apikey':        key,
       'Content-Type':  mime || 'application/pdf',
       'x-upsert':      'true',
       'Cache-Control': '3600',
@@ -89,7 +93,7 @@ module.exports = async function handler(req, res) {
     }
 
     const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!SUPABASE_URL || !SUPABASE_KEY) {
       // No Supabase env — fall back to same-origin. Desktop still works;
       // PWA standalone loses QuickLook but at least the doc loads.
