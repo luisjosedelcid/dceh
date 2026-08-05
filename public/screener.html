@@ -348,6 +348,15 @@
     }
     #scr-results td.num { text-align:right; font-variant-numeric:tabular-nums; }
     #scr-results tr:hover td { background:#fcfaf5; }
+    /* Sticky-left Ticker column for the Screener results table.
+       Mirrors the pattern used in the Sector Tracker (.stbl) tables. */
+    #scr-results th.ticker-cell,#scr-results td.ticker-cell{
+      position:sticky;left:0;z-index:2;
+      background:var(--white);
+      box-shadow:2px 0 6px -3px rgba(27,38,66,0.18);
+    }
+    #scr-results thead th.ticker-cell{background:#fafafa;z-index:3}
+    #scr-results tr:hover td.ticker-cell{background:#fcfaf5}
 
     /* Freeze the Ticker column on wide tables so it stays visible while
        the user scrolls horizontally on mobile. Applies to both <th>
@@ -755,7 +764,7 @@ function renderScreenerResults(rows, count) {
   const body = rows.map(r => {
     const nm = _scrEsc(r.company_name || '');
     return `<tr>
-      <td style="font-weight:700;color:var(--navy)">${_scrEsc(r.ticker)}</td>
+      <td class="ticker-cell" style="font-weight:700;color:var(--navy)">${_scrEsc(r.ticker)}</td>
       <td>${nm}</td>
       <td style="color:var(--gray-mid);font-size:10px">${_scrEsc(r.sector || '—')}</td>
       <td class="num">$${_scrFmtN(r.market_cap)}</td>
