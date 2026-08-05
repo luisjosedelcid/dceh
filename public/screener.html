@@ -195,8 +195,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=28">
-<script defer src="/pwa-shell.js?v=28"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=29">
+<script defer src="/pwa-shell.js?v=29"></script>
 <!--PWA:END-->
 </head>
 <body data-pull-refresh="1">
@@ -543,7 +543,9 @@
       </div>
       <div class="sup-field">
         <label for="if-ticker">Ticker:</label>
-        <input type="text" id="if-ticker" placeholder="e.g. AAPL" maxlength="6" style="width:90px;text-transform:uppercase">
+        <select id="if-ticker" onchange="loadIdeaFeed()">
+          <option value="">All tickers</option>
+        </select>
       </div>
       <button id="if-refresh-btn" onclick="loadIdeaFeed()" style="margin-left:auto">↻ Refresh</button>
     </div>
@@ -2078,11 +2080,13 @@ async function loadIdeaFeed() {
 
   const days   = document.getElementById('if-days').value || '21';
   const srcId  = document.getElementById('if-source').value || '';
+  // Ticker filter is applied client-side so we can also enumerate all
+  // tickers present in the current Window + Source result set and
+  // repopulate the dropdown after each fetch.
   const ticker = (document.getElementById('if-ticker').value || '').trim().toUpperCase();
 
   const params = new URLSearchParams({ days });
   if (srcId)  params.set('source_id', srcId);
-  if (ticker) params.set('ticker', ticker);
 
   let data;
   try {
@@ -2108,8 +2112,34 @@ async function loadIdeaFeed() {
     for (const s of data.sources) _ifSourcesIndex[s.id] = s;
   }
 
-  // Counts
-  const items = data.items || [];
+  // Rebuild the Ticker dropdown from the CURRENT (unfiltered by ticker)
+  // result set so users can only pick tickers that actually have
+  // mentions in the selected Window + Source. Preserves the current
+  // selection if it's still present; otherwise falls back to "all".
+  const allItems = data.items || [];
+  const tickerSel = document.getElementById('if-ticker');
+  if (tickerSel) {
+    const tkCounts = new Map();
+    for (const it of allItems) {
+      for (const t of (it.tickers || [])) {
+        const up = String(t).toUpperCase();
+        tkCounts.set(up, (tkCounts.get(up) || 0) + 1);
+      }
+    }
+    const sorted = [...tkCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    const prev = tickerSel.value;
+    tickerSel.innerHTML = '<option value="">All tickers</option>' +
+      sorted.map(([tk, n]) => `<option value="${tk}">${tk} (${n})</option>`).join('');
+    // Restore selection if still valid; otherwise fall back to "all"
+    if (prev && tkCounts.has(prev)) tickerSel.value = prev;
+    else tickerSel.value = '';
+  }
+
+  // Client-side ticker filter (applied AFTER the dropdown is repopulated
+  // so removing a filter re-shows all rows without a round-trip).
+  const items = ticker
+    ? allItems.filter(it => (it.tickers || []).some(t => String(t).toUpperCase() === ticker))
+    : allItems;
   const countEl = document.getElementById('ideafeed-count');
   if (countEl) countEl.textContent = items.length;
   const lastEl = document.getElementById('ideafeed-last');
@@ -2283,7 +2313,8 @@ async function renderIdeaFeedTickers(items, status, cont) {
   }
 }
 
-// Submit ticker filter on Enter
+// Ticker filter is now a <select> whose onchange already fires
+// loadIdeaFeed(); no Enter-key handler needed.
 document.addEventListener('DOMContentLoaded', () => {
   const t = document.getElementById('if-ticker');
   if (t) t.addEventListener('keydown', e => { if (e.key === 'Enter') loadIdeaFeed(); });
