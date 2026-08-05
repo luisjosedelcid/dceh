@@ -41,6 +41,10 @@
   /* FILTERS */
   .filters{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
   .filter{font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:8px 16px;background:var(--white);border:1px solid var(--rule);color:var(--gray-mid);cursor:pointer;transition:all .2s}
+  .cal-ticker-select{font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:8px 12px;background:var(--white);border:1px solid var(--rule);color:var(--gray-mid);cursor:pointer;transition:all .2s;min-width:130px}
+  .cal-ticker-select:hover{border-color:var(--gold-rule);color:var(--navy)}
+  .cal-ticker-select.active{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+  .cal-ticker-select:focus{outline:none;border-color:var(--gold)}
   .filter:hover{border-color:var(--gold-rule);color:var(--navy)}
   .filter.active{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
 
@@ -202,8 +206,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=31">
-<script defer src="/pwa-shell.js?v=31"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=32">
+<script defer src="/pwa-shell.js?v=32"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -257,8 +261,11 @@
     <button class="filter" data-filter="reported">Reported</button>
     <button class="filter" data-filter="all">All</button>
     <span style="border-left:1px solid var(--rule);margin:0 6px"></span>
-    <span id="ticker-filters" style="display:flex;gap:6px;flex-wrap:wrap">
+    <span id="ticker-filters" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
       <button class="filter active" data-tk="ALL">All Companies</button>
+      <select id="ticker-select" class="cal-ticker-select" aria-label="Filter by ticker">
+        <option value="">Ticker…</option>
+      </select>
     </span>
   </div>
 
@@ -372,17 +379,23 @@
     render();
   }
 
-  // Build ticker filter buttons dynamically from the data.
-  // ALL is always first; the rest are derived from events sorted alpha.
+  // Build ticker filter as: [All Companies] button + <select> of
+  // individual tickers derived from events, sorted alpha. Keeps
+  // the ALL toggle prominent and moves the per-ticker picker into
+  // a compact dropdown so mobile doesn't get a giant pill grid.
   function renderTickerFilters() {
     const wrap = document.getElementById('ticker-filters');
     if (!wrap || !DATA || !DATA.events) return;
     const tickers = Array.from(new Set(DATA.events.map(e => e.ticker).filter(Boolean))).sort();
     const active = filters.ticker;
-    let html = `<button class="filter ${active==='ALL'?'active':''}" data-tk="ALL">All Companies</button>`;
+    const isAll = active === 'ALL';
+    let html = `<button class="filter ${isAll?'active':''}" data-tk="ALL">All Companies</button>`;
+    html += `<select id="ticker-select" class="cal-ticker-select ${isAll?'':'active'}" aria-label="Filter by ticker">`;
+    html += `<option value="">Ticker…</option>`;
     for (const tk of tickers) {
-      html += `<button class="filter ${active===tk?'active':''}" data-tk="${tk}">${tk}</button>`;
+      html += `<option value="${tk}" ${active===tk?'selected':''}>${tk}</option>`;
     }
+    html += `</select>`;
     wrap.innerHTML = html;
   }
 
@@ -490,7 +503,7 @@
     container.innerHTML = html;
   }
 
-  // Filter clicks
+  // Filter clicks (status buttons + All-Companies pill)
   document.getElementById('filters').addEventListener('click', (ev) => {
     const btn = ev.target.closest('button');
     if (!btn) return;
@@ -499,10 +512,22 @@
       btn.classList.add('active');
       filters.status = btn.dataset.filter;
     } else if (btn.dataset.tk) {
-      document.querySelectorAll('#filters [data-tk]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
       filters.ticker = btn.dataset.tk;
+      // renderTickerFilters() rebuilds the pill + dropdown with the
+      // right active state; no need to hand-toggle classes here.
+      renderTickerFilters();
     }
+    render();
+  });
+
+  // Per-ticker dropdown — delegated to survive the innerHTML rebuild
+  // performed by renderTickerFilters().
+  document.getElementById('filters').addEventListener('change', (ev) => {
+    const sel = ev.target.closest('#ticker-select');
+    if (!sel) return;
+    const val = sel.value;
+    filters.ticker = val ? val : 'ALL';
+    renderTickerFilters();
     render();
   });
 
