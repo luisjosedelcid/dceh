@@ -582,6 +582,7 @@
     .hc-tbl-wrap,
     main table.hc-tbl {
       overflow-x: auto !important;
+      overflow-y: visible !important;
       -webkit-overflow-scrolling: touch;
     }
     /* The wrapper if the table was placed inside a div; also apply on the
@@ -606,16 +607,22 @@
       text-align: left;
       white-space: nowrap;
       border-bottom: 1px solid var(--rule);
-    }
-    .hc-tbl thead th:first-child {
+      /* Freeze the whole header row to the top while user scrolls */
       position: sticky;
+      top: 0;
+      z-index: 3;
+    }
+    /* Metric header intersection cell: sticky in both axes */
+    .hc-tbl thead th:first-child {
       left: 0;
-      z-index: 2;
+      z-index: 4;
       background: var(--cream);
       min-width: 170px;
       box-shadow: 2px 0 0 var(--rule);
     }
-    /* Category rows */
+    /* Category rows: sticky-top under the header so the current section
+       (FINANCIAL STRENGTH / PROFITABILITY / GROWTH / APPAREL...) stays
+       visible while scrolling through its metric rows. */
     .hc-tbl tbody tr.cat {
       display: table-row !important;
       background: rgba(184,139,71,0.08) !important;
@@ -630,9 +637,10 @@
       font-weight: 700 !important;
       border-bottom: 1px solid var(--gold-rule) !important;
       position: sticky !important;
+      top: 32px !important;
       left: 0 !important;
       background: rgba(184,139,71,0.08) !important;
-      z-index: 1;
+      z-index: 2;
     }
     /* Data rows */
     .hc-tbl tbody tr:not(.cat) {
@@ -739,8 +747,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=56">
-<script defer src="/pwa-shell.js?v=56"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=57">
+<script defer src="/pwa-shell.js?v=57"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1798,7 +1806,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=56"></script>
+<script src="company.js?v=57"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
