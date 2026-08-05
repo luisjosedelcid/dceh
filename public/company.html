@@ -1168,14 +1168,20 @@
     #version-banner { padding: 8px 14px !important; font-size: 12px !important; }
   }
 
-  /* Legacy ≤900px — keep desktop-ish tablet behavior for iPad landscape only */
-  @media (min-width: 721px) and (max-width: 900px) {
+  /* Compact tablet 721–1023px — iPad Mini portrait (768), iPad Pro 11" portrait (834) */
+  @media (min-width: 721px) and (max-width: 1023px) {
     header { padding: 0 16px; flex-wrap: wrap; }
     main   { padding: 20px 16px 32px; }
     nav    { padding: 0 16px; }
-    .g4, .g3 { grid-template-columns: repeat(2,1fr); }
-    .g2 { grid-template-columns: 1fr; }
+    /* Give tablet enough columns to avoid wasted lateral space */
+    .g4 { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .g3 { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .g2 { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .hright { gap: 14px; }
+    /* Health scorecard: force 3-across so PASS/MONITOR/FAIL align in one row */
+    .g3.hc-scorecard { grid-template-columns: repeat(3, 1fr) !important; }
+    /* Company Profile g3: keep 3 columns of kv pairs */
+    .card > .g3 { gap: 0 20px !important; }
   }
 </style>
 <script src="/dce-auth.js" defer></script>
@@ -1200,8 +1206,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=87">
-<script defer src="/pwa-shell.js?v=87"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=88">
+<script defer src="/pwa-shell.js?v=88"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -2259,7 +2265,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=84"></script>
+<script src="company.js?v=88"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
