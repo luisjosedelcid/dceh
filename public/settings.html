@@ -66,6 +66,17 @@
 
   .empty-files{padding:24px;text-align:center;color:var(--gray-mid);font-size:12px;font-style:italic}
   .loading-files{padding:24px;text-align:center;color:var(--gray-mid);font-size:11px;letter-spacing:0.1em;text-transform:uppercase}
+  /* Settings tables (users, analysts, sources) scroll horizontally on
+   * narrow viewports so the whole row is reachable without breaking
+   * the page layout. Each table sets its own min-width appropriate
+   * for its column set. */
+  .settings-tblwrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px; }
+  .settings-tbl { border-collapse: collapse; }
+  @media (max-width: 720px) {
+    .settings-tblwrap { margin: 0 -8px; padding: 0 8px 8px; }
+    .settings-tbl th, .settings-tbl td { padding: 6px 8px !important; font-size: 11px !important; }
+    .settings-tbl th { font-size: 10px !important; }
+  }
 
   /* UPLOAD ZONE */
   .upload-zone{border-top:1px dashed var(--gold-rule);padding:14px 24px;background:rgba(184,139,71,0.02);display:none}
@@ -154,8 +165,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=84">
-<script defer src="/pwa-shell.js?v=84"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=85">
+<script defer src="/pwa-shell.js?v=85"></script>
 <!--PWA:END-->
 </head>
 <body data-dce-auth="manual">
@@ -904,7 +915,7 @@ async function loadUsersAdmin() {
     if (!r.ok) throw new Error(data.error || 'Error');
     const items = data.items || [];
     if (items.length === 0) { cont.innerHTML = '<div class="loading-files">No users.</div>'; return; }
-    let html = '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--navy);color:var(--white)">'
+    let html = '<div class="settings-tblwrap"><table class="settings-tbl" style="width:100%;border-collapse:collapse;font-size:12px;min-width:560px"><thead><tr style="background:var(--navy);color:var(--white)">'
       + '<th style="text-align:left;padding:8px 10px">Email / Name</th>'
       + '<th style="text-align:left;padding:8px 10px">Role</th>'
       + '<th style="padding:8px 10px">Active</th>'
@@ -937,7 +948,7 @@ async function loadUsersAdmin() {
         </td>
       </tr>`;
     }
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
     cont.innerHTML = html;
   } catch (e) {
     cont.innerHTML = '<div class="loading-files" style="color:var(--red)">Error: ' + escapeHtml(e.message) + '</div>';
@@ -964,7 +975,7 @@ async function loadAnalystsAdmin() {
       cont.innerHTML = '<div class="loading-files">No analysts yet. Add one below.</div>';
       return;
     }
-    let html = '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--navy);color:var(--white)">'
+    let html = '<div class="settings-tblwrap"><table class="settings-tbl" style="width:100%;border-collapse:collapse;font-size:12px;min-width:620px"><thead><tr style="background:var(--navy);color:var(--white)">'
       + '<th style="text-align:left;padding:8px 10px">Analyst</th>'
       + '<th style="text-align:left;padding:8px 10px">Initials</th>'
       + '<th style="text-align:left;padding:8px 10px">Email</th>'
@@ -993,7 +1004,7 @@ async function loadAnalystsAdmin() {
         </td>
       </tr>`;
     }
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
     cont.innerHTML = html;
   } catch (e) {
     cont.innerHTML = '<div class="loading-files" style="color:var(--red)">Error: ' + escapeHtml(e.message) + '</div>';
@@ -1346,7 +1357,7 @@ async function loadIdeaFeedSources() {
     const kindLabels = { blog: 'Blog', substack: 'Substack', podcast: 'Podcast', twitter: 'Twitter', other: 'Other' };
     const activeCount = items.filter(s => s.active !== false).length;
     let html = `<div style="font-size:11px;color:var(--gray-mid);margin-bottom:8px;letter-spacing:0.06em">${items.length} source${items.length===1?'':'s'} · ${activeCount} active</div>`;
-    html += '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--navy);color:var(--white)">'
+    html += '<div class="settings-tblwrap"><table class="settings-tbl" style="width:100%;border-collapse:collapse;font-size:12px;min-width:640px"><thead><tr style="background:var(--navy);color:var(--white)">'
       + '<th style="text-align:left;padding:8px 10px">Name</th>'
       + '<th style="text-align:left;padding:8px 10px">Kind</th>'
       + '<th style="text-align:left;padding:8px 10px">URL</th>'
@@ -1376,7 +1387,7 @@ async function loadIdeaFeedSources() {
         </td>
       </tr>`;
     }
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
     cont.innerHTML = html;
   } catch (e) {
     cont.innerHTML = '<div class="loading-files" style="color:var(--red)">Error: ' + escapeHtml(e.message) + '</div>';
