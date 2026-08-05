@@ -469,7 +469,13 @@
   function init() {
     if (!isMobile()) return;
     buildTabBar();
-    buildShareBtn();
+    // Native Share FAB removed by user request — the browser's own
+    // share UI (iOS Safari share sheet, Android Chrome menu > Share)
+    // is always available, so a floating in-app clone was redundant.
+    // buildShareBtn();  // intentionally disabled
+    // Purge any Share FAB left over from a prior cached shell version.
+    const stale = document.getElementById('dce-share-fab');
+    if (stale) stale.remove();
     initPullToRefresh();
     // Padding at page bottom so content doesn't hide behind tab bar
     document.body.classList.add('dce-has-tabbar');
