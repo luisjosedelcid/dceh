@@ -243,6 +243,51 @@
     .live-recalc-item .csub { font-size: 8.5px; letter-spacing: 0.08em; }
   }
 
+  /* IMPLIED IRR SUMMARY — 3 KPI cards (Total Equity Return / Margin of
+   * Safety / EV/NOPAT Actual). Stays 3-across on mobile so the top of
+   * the tab shows the headline verdict at a glance instead of a tall
+   * stack that pushes assumptions below the fold. */
+  .irr-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .irr-summary-item {
+    padding: 12px 14px !important;
+    min-width: 0;
+  }
+  .irr-summary-item .clbl {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gray-mid);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .irr-summary-item .cval {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  .irr-summary-item .cval.gold  { color: var(--gold); }
+  .irr-summary-item .cval.green { color: var(--green); }
+  .irr-summary-sub {
+    font-size: 10px;
+    color: var(--gray-mid);
+    margin-top: 6px;
+    line-height: 1.25;
+  }
+  @media (max-width: 720px) {
+    .irr-summary-grid { gap: 8px; }
+    .irr-summary-item { padding: 10px 8px !important; }
+    .irr-summary-item .clbl { font-size: 8.5px; letter-spacing: 0.06em; }
+    .irr-summary-item .cval { font-size: 18px; }
+    .irr-summary-sub { font-size: 9px; }
+  }
+
   /* BUILD-UP TABLE — mirrors RV col widths exactly: Book in col2, blank col3 (where Adj % sits above), Repro in col4 */
   .bu-tbl { table-layout: fixed; width: 100%; }
   .bu-tbl th:nth-child(1), .bu-tbl td:nth-child(1) { width: auto; }                           /* Step label */
@@ -1048,8 +1093,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=78">
-<script defer src="/pwa-shell.js?v=78"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=79">
+<script defer src="/pwa-shell.js?v=79"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1737,21 +1782,21 @@
       <span id="irr-price-toggle-info" style="font-size:10.5px;color:var(--gray-mid)">—</span>
     </div>
   </div>
-  <div class="g3" style="margin-bottom:18px">
-    <div class="card accent">
+  <div class="irr-summary-grid" style="margin-bottom:18px">
+    <div class="card accent irr-summary-item">
       <div class="clbl">Total Equity Return</div>
       <div class="cval green" id="irr-total">—</div>
-      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px" id="irr-total-sub">Recalculated in real time</div>
+      <div class="irr-summary-sub" id="irr-total-sub">Recalculated in real time</div>
     </div>
-    <div class="card accent">
+    <div class="card accent irr-summary-item">
       <div class="clbl">Margin of Safety</div>
       <div class="cval" id="irr-mos">—</div>
-      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px" id="irr-mos-sub">vs. Hurdle Rate —</div>
+      <div class="irr-summary-sub" id="irr-mos-sub">vs. Hurdle Rate —</div>
     </div>
-    <div class="card accent">
+    <div class="card accent irr-summary-item">
       <div class="clbl">EV / NOPAT Actual</div>
       <div class="cval gold" id="irr-actual-mult">—</div>
-      <div style="font-size:10.5px;color:var(--gray-mid);margin-top:4px" id="irr-actual-mult-sub">—</div>
+      <div class="irr-summary-sub" id="irr-actual-mult-sub">—</div>
     </div>
   </div>
 
@@ -2107,7 +2152,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=78"></script>
+<script src="company.js?v=79"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
