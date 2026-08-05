@@ -301,8 +301,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=32">
-<script defer src="/pwa-shell.js?v=32"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=33">
+<script defer src="/pwa-shell.js?v=33"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -770,11 +770,27 @@ const state = { items: [], filterType: '' };
 function showTab(name, btn) {
   document.querySelectorAll('.mode-pane').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.mode-tab').forEach(el => el.classList.remove('active'));
-  document.getElementById('pane-' + name).classList.add('active');
-  if (btn) btn.classList.add('active');
+  const pane = document.getElementById('pane-' + name);
+  if (!pane) return;
+  pane.classList.add('active');
+  const tab = btn || document.querySelector(`.mode-tab[data-tab="${name}"]`);
+  if (tab) tab.classList.add('active');
   if (name === 'lessons') renderLessons();
   if (name === 'reunderwriting') loadReunderwriting();
 }
+
+// Hash-based deep-link into a specific tab (e.g. /journal.html#reunderwriting
+// from the cockpit Re-underwriting card). Runs once DOMContentLoaded fires
+// and again on hashchange so back/forward navigation switches tabs too.
+function _applyJournalHash() {
+  const raw = (location.hash || '').replace(/^#/, '').trim();
+  if (!raw) return;
+  // Whitelist the known tab names so a bad hash can't blow up showTab.
+  const known = ['all', 'reunderwriting', 'lessons'];
+  if (known.includes(raw)) showTab(raw);
+}
+document.addEventListener('DOMContentLoaded', _applyJournalHash);
+window.addEventListener('hashchange', _applyJournalHash);
 
 function setTypeFilter(type, chip) {
   state.filterType = type;
