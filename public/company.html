@@ -208,6 +208,41 @@
   .rv-tbl th:nth-child(4), .rv-tbl td:nth-child(4) { width: 130px; text-align: right; }       /* Repro Value */
   .rv-tbl th:nth-child(5), .rv-tbl td:nth-child(5) { width: 280px; text-align: left; font-size: 10px; }  /* Method */
 
+  /* LIVE RECALCULATION CARD — dedicated 3-metric row that stays as a
+   * row on mobile (unlike .g3 which collapses to 1 column). Each metric
+   * gets its label on top and the value below, densely packed so the
+   * whole card fits above the fold on iPhone. */
+  .live-recalc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 8px 0 0;
+  }
+  .live-recalc-item { min-width: 0; }
+  .live-recalc-item .csub {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gray-mid);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .live-recalc-item .cval {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+  }
+  .live-recalc-item .cval.gold { color: var(--gold); }
+  @media (max-width: 720px) {
+    .live-recalc-grid { gap: 8px; }
+    .live-recalc-item .cval { font-size: 17px; }
+    .live-recalc-item .csub { font-size: 8.5px; letter-spacing: 0.08em; }
+  }
+
   /* BUILD-UP TABLE — mirrors RV col widths exactly: Book in col2, blank col3 (where Adj % sits above), Repro in col4 */
   .bu-tbl { table-layout: fixed; width: 100%; }
   .bu-tbl th:nth-child(1), .bu-tbl td:nth-child(1) { width: auto; }                           /* Step label */
@@ -222,6 +257,8 @@
    * left-most Step label ("Total Assets", "Value per Share", etc.)
    * gets cropped when the user scrolls sideways. */
   @media (max-width: 820px) {
+    /* Collapse the two decorative spacer columns (blank + Method spacer)
+     * so the whole build-up table fits the viewport width. */
     .bu-tbl th:nth-child(3), .bu-tbl td:nth-child(3),
     .bu-tbl th:nth-child(5), .bu-tbl td:nth-child(5) {
       width: 0;
@@ -229,11 +266,33 @@
       padding-right: 0;
       display: none;
     }
+    /* Force the whole table to fit its wrapper — override the generic
+     * .fin-tbl thead th:first-child { min-width:200px } that would
+     * otherwise push the total width past the viewport and re-trigger
+     * horizontal scroll (which crops the Step label). */
+    .bu-tbl {
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+    .bu-tbl thead th:first-child,
+    .bu-tbl tbody td:first-child {
+      min-width: 0 !important;
+      max-width: none !important;
+    }
+    .bu-tbl th:nth-child(1), .bu-tbl td:nth-child(1) {
+      width: auto;
+    }
     .bu-tbl th:nth-child(2), .bu-tbl td:nth-child(2),
     .bu-tbl th:nth-child(4), .bu-tbl td:nth-child(4) {
-      width: 110px;
+      width: 90px;
+      padding-left: 6px;
+      padding-right: 6px;
     }
-    .bu-tbl .row-lbl { white-space: normal; }
+    .bu-tbl .row-lbl { white-space: normal; font-size: 11px; padding-left: 6px; padding-right: 4px; }
+    .bu-tbl .num-cell { font-size: 11px; }
+    /* Kill horizontal scroll on the build-up wrapper on mobile since the
+     * table now fits — the Step label is short enough to read in place. */
+    .tbl-wrap:has(.bu-tbl) { overflow-x: visible !important; }
   }
 
   /* DOC TILE */
@@ -975,8 +1034,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=76">
-<script defer src="/pwa-shell.js?v=76"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=77">
+<script defer src="/pwa-shell.js?v=77"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1370,14 +1429,14 @@
       </div>
     </div>
   </div>
-  <div class="card" style="margin-bottom:24px">
+  <div class="card live-recalc-card" style="margin-bottom:24px">
     <div class="clbl">Live Recalculation</div>
-    <div class="g3" style="margin:6px 0 0;gap:12px">
-      <div><div class="csub">GAAP OI (LTM)</div><div class="cval" id="sens-gaap" style="font-size:20px">—</div></div>
-      <div><div class="csub">Pre-Tax Adjusted OI</div><div class="cval" id="sens-pre" style="font-size:20px">—</div></div>
-      <div><div class="csub">Recalculated NOPAT</div><div class="cval gold" id="sens-nopat" style="font-size:20px">—</div></div>
+    <div class="live-recalc-grid">
+      <div class="live-recalc-item"><div class="csub">GAAP OI (LTM)</div><div class="cval" id="sens-gaap">—</div></div>
+      <div class="live-recalc-item"><div class="csub">Pre-Tax Adjusted OI</div><div class="cval" id="sens-pre">—</div></div>
+      <div class="live-recalc-item"><div class="csub">Recalculated NOPAT</div><div class="cval gold" id="sens-nopat">—</div></div>
     </div>
-    <div class="csub" id="sens-delta" style="margin-top:10px;font-style:italic">Δ vs published: —</div>
+    <div class="csub" id="sens-delta" style="margin-top:12px;font-style:italic">Δ vs published: —</div>
   </div>
 
   <!-- ▸ BLOQUE 8 — Methodology Footnotes -->
@@ -2034,7 +2093,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=76"></script>
+<script src="company.js?v=77"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {
