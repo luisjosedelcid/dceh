@@ -739,7 +739,7 @@ function renderScreenerResults(rows, count) {
   const meta = `<div style="font-family:Archivo,sans-serif;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:10px">${rows.length} results${count > rows.length ? ` (of ${count})` : ''}</div>`;
   const head = `
     <thead><tr>
-      <th>Ticker</th>
+      <th class="ticker-cell">Ticker</th>
       <th>Company</th>
       <th>Sector</th>
       <th style="text-align:right">MCap</th>
@@ -947,7 +947,7 @@ function renderSector(sector) {
     <div style="overflow-x:auto">
       <table class="stbl sortable" data-default-sort="12" data-default-dir="desc">
         <thead><tr>
-          <th data-sort="text">Ticker</th><th data-sort="text">Company</th><th data-sort="number">Price</th>
+          <th class="ticker-cell" data-sort="text">Ticker</th><th data-sort="text">Company</th><th data-sort="number">Price</th>
           <th data-sort="number">Q (Abs)</th><th data-sort="number">Q (Rel)</th><th data-sort="number">Quality</th><th data-sort="number">Q Δ</th>
           <th data-sort="number">V (Abs)</th><th data-sort="number">V (Rel)</th><th data-sort="number">Valuation</th>
           <th data-sort="percent">IRR</th><th data-sort="mktcap">Mkt Cap</th>
@@ -963,7 +963,7 @@ function renderSector(sector) {
     <div style="overflow-x:auto">
       <table class="stbl sortable">
         <thead><tr>
-          <th data-sort="text">Ticker</th><th data-sort="percent">ROIC 3yr</th><th data-sort="percent">ROIC Trend</th>
+          <th class="ticker-cell" data-sort="text">Ticker</th><th data-sort="percent">ROIC 3yr</th><th data-sort="percent">ROIC Trend</th>
           <th data-sort="number">GM CV</th><th data-sort="percent">Op Margin</th><th data-sort="multiplier">FCF Conv</th>
           <th data-sort="percent">Rev CAGR 5y</th><th data-sort="percent">EPS CAGR 5y</th><th data-sort="percent">FCF/sh CAGR</th>
           <th data-sort="multiplier">ND/EBITDA</th><th data-sort="percent">GW+Int %TA</th><th data-sort="percent">Capex/Rev</th>
@@ -977,7 +977,7 @@ function renderSector(sector) {
     <div style="overflow-x:auto">
       <table class="stbl sortable">
         <thead><tr>
-          <th data-sort="text">Ticker</th><th data-sort="multiplier">EV/EBIT</th><th data-sort="multiplier">P/E</th>
+          <th class="ticker-cell" data-sort="text">Ticker</th><th data-sort="multiplier">EV/EBIT</th><th data-sort="multiplier">P/E</th>
           <th data-sort="multiplier">EV/EBITDA</th><th data-sort="percent">FCF Yield</th><th data-sort="percent">Earn Yield</th>
           <th data-sort="percent">EY Spread</th><th data-sort="multiplier">PEG</th>
           <th data-sort="percent">Base IRR</th><th data-sort="percent">Full IRR</th><th data-sort="mktcap">Mkt Cap ($M)</th>
@@ -1778,7 +1778,7 @@ function renderNewBuys() {
     <div style="overflow-x:auto">
       <table class="stbl">
         <thead><tr>
-          <th>Ticker</th><th>Company</th><th>New</th><th>Add</th><th>Total $ moved</th><th>Funds making moves</th><th>Action</th>
+          <th class="ticker-cell">Ticker</th><th>Company</th><th>New</th><th>Add</th><th>Total $ moved</th><th>Funds making moves</th><th>Action</th>
         </tr></thead>
         <tbody>`;
 
@@ -1898,7 +1898,7 @@ function renderAggregate() {
     <div style="overflow-x:auto">
       <table class="stbl">
         <thead><tr>
-          <th>Ticker</th><th>Company</th><th>Funds</th><th>Total $</th>
+          <th class="ticker-cell">Ticker</th><th>Company</th><th>Funds</th><th>Total $</th>
           <th>New</th><th>Add</th><th>Trim</th><th>Hold</th><th>Holders</th><th>Action</th>
         </tr></thead>
         <tbody>`;
@@ -1967,7 +1967,7 @@ function renderByFund() {
     <div style="overflow-x:auto">
       <table class="stbl">
         <thead><tr>
-          <th>Ticker</th><th>Company</th><th>Shares</th><th>Δ Shares</th><th>% Δ</th>
+          <th class="ticker-cell">Ticker</th><th>Company</th><th>Shares</th><th>Δ Shares</th><th>% Δ</th>
           <th>Value</th><th>Allocation</th><th>Δ Alloc</th><th>Action</th><th>Shortlist</th>
         </tr></thead>
         <tbody>`;
