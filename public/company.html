@@ -797,9 +797,22 @@
       z-index: 3;
       background: var(--navy);
     }
-    /* Section rows */
+    /* Section rows have a single <td colspan=N+1>. The td cannot be
+     * sticky (max-width would collide with colspan), so the section
+     * label is emitted inside a <span class="sec-lbl"> and THAT span
+     * is sticky-pinned to the left edge of the scroll viewport. */
     :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.sec-row td:first-child {
       background: #FFFFFF !important;
+      position: static;
+      max-width: none;
+      min-width: 0;
+      box-shadow: none;
+      padding-left: 10px;
+    }
+    :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.sec-row td .sec-lbl {
+      position: sticky;
+      left: 10px;
+      display: inline-block;
     }
     /* Total / subtotal rows: tint on opaque base */
     :is(.tbl-wrap, .fin-tbl-scroll) .fin-tbl:not(.mult-tbl):not(.bu-tbl):not(.sens-tbl) tr.tot-row td:first-child,
@@ -926,8 +939,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=73">
-<script defer src="/pwa-shell.js?v=73"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=74">
+<script defer src="/pwa-shell.js?v=74"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -1985,7 +1998,7 @@
   <div class="fr">Columbia Model · For internal use only · Not investment advice</div>
 </footer>
 
-<script src="company.js?v=73"></script>
+<script src="company.js?v=74"></script>
 <script>
 /* ── Post-load: init WACC display after data is ready ── */
 document.addEventListener('DOMContentLoaded', () => {

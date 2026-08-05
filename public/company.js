@@ -781,7 +781,7 @@ function renderTable(containerId, rows, years, fin) {
   let html = `<div class="fin-tbl-scroll"><table class="fin-tbl"><thead><tr><th>Item</th>${years.map(y=>`<th>${y}</th>`).join('')}</tr></thead><tbody>`;
   rows.forEach(r => {
     if (r.t === 'spacer') { html += `<tr class="spacer-row"><td colspan="${years.length+1}"></td></tr>`; return; }
-    if (r.t === 'section') { html += `<tr class="sec-row"><td colspan="${years.length+1}">${r.l}</td></tr>`; return; }
+    if (r.t === 'section') { html += `<tr class="sec-row"><td colspan="${years.length+1}"><span class="sec-lbl">${r.l}</span></td></tr>`; return; }
     const cls = r.t === 'total' ? 'tot-row' : r.t === 'subtotal' ? 'sub-row' : r.t === 'margin' ? 'mrg-row' : 'norm-row';
     // Margin rows render indented so they read as a child of the driver row above
     const lblStyle = r.t === 'margin' ? ' style="padding-left:22px"' : '';
