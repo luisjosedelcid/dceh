@@ -45,13 +45,27 @@
   .page-sub { font-size: 13px; color: var(--gray-mid); font-weight: 300; margin-bottom: 32px; }
 
   /* TABLE */
-  .universe-tbl { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--rule); font-size: 13px; }
+  .universe-tbl { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--white); border: 1px solid var(--rule); font-size: 13px; }
   .universe-tbl th { background: var(--navy); color: var(--white); font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; padding: 12px 16px; text-align: right; position: sticky; top: 0; z-index: 2; }
   .universe-tbl th:first-child { text-align: left; width: 220px; }
   .universe-tbl th.col-price { min-width: 120px; }
-  .universe-tbl td { padding: 14px 16px; border-bottom: 1px solid rgba(27,38,66,0.06); text-align: right; font-variant-numeric: tabular-nums; vertical-align: middle; }
+  .universe-tbl td { padding: 14px 16px; border-bottom: 1px solid rgba(27,38,66,0.06); text-align: right; font-variant-numeric: tabular-nums; vertical-align: middle; background: var(--white); }
   .universe-tbl td:first-child { text-align: left; font-weight: 600; }
-  .universe-tbl tr:hover { background: rgba(184,139,71,0.04); }
+  .universe-tbl tr:hover td { background: rgba(184,139,71,0.04); }
+  /* Freeze the Company column so the ticker stays visible while the user
+     scrolls the metric columns horizontally. Sticky headers already stick
+     to the top; here we add left-side stickiness. z-index layering:
+       - top-left corner (th:first-child): 3 (above both axes)
+       - other th (top row):                2 (already set)
+       - td:first-child (left column):      1 (above scrolling cells)
+     A subtle right-border on the sticky column plus a matching
+     box-shadow gives a clear edge hint when there's more table to
+     the right. */
+  .universe-tbl th:first-child,
+  .universe-tbl td:first-child { position: sticky; left: 0; }
+  .universe-tbl th:first-child { z-index: 3; box-shadow: 1px 0 0 rgba(255,255,255,0.06); }
+  .universe-tbl td:first-child { z-index: 1; box-shadow: 1px 0 0 rgba(27,38,66,0.08), 4px 0 6px -4px rgba(27,38,66,0.12); }
+  .universe-tbl tr.summary td:first-child { background: #f4f2ec; }
 
   .ticker { font-size: 18px; font-weight: 700; color: var(--navy); letter-spacing: -0.02em; }
   .ticker-sub { font-size: 11px; color: var(--gray-mid); font-weight: 300; margin-top: 2px; }
@@ -182,6 +196,12 @@
     header { padding: 0 20px; }
     .universe-tbl { font-size: 11px; }
     .universe-tbl th, .universe-tbl td { padding: 10px 10px; }
+    /* Narrow the sticky Company column so the metric columns get
+       usable scroll runway on a phone. 150px still fits ticker +
+       two-line company name (e.g. "Uber Technologies, Inc. · NYSE
+       · Mobility — Marketplace") after wrapping. */
+    .universe-tbl th:first-child { width: 150px; min-width: 150px; }
+    .universe-tbl td:first-child { max-width: 150px; }
     .modal-row { grid-template-columns:1fr; }
   }
 </style>
@@ -207,8 +227,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=38">
-<script defer src="/pwa-shell.js?v=38"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=39">
+<script defer src="/pwa-shell.js?v=39"></script>
 <!--PWA:END-->
 </head>
 <body>
