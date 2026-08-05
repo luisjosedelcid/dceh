@@ -227,8 +227,8 @@
 <link rel="apple-touch-startup-image" href="/splash/iphone-xsmax.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-11.png?v=1" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="/splash/iphone-se.png?v=1" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-<link rel="stylesheet" href="/pwa-shell.css?v=45">
-<script defer src="/pwa-shell.js?v=45"></script>
+<link rel="stylesheet" href="/pwa-shell.css?v=46">
+<script defer src="/pwa-shell.js?v=46"></script>
 <!--PWA:END-->
 </head>
 <body>
@@ -679,9 +679,13 @@ function renderDashboardCell(c) {
   const hasGenerated = watchState.dashboardTickers && watchState.dashboardTickers.has(String(c.ticker).toUpperCase());
   if (hasGenerated) {
     const url = `/company.html?ticker=${encodeURIComponent(c.ticker)}`;
-    return `<a class="dash-link gold" href="${url}" target="_blank" rel="noopener" title="Published dashboard">Dashboard →</a>`;
+    // No target="_blank" for internal dashboards: on iOS, opening a new tab
+    // gives it its own sessionStorage, which loses the Face-ID unlock flag
+    // and forces re-auth. Same-tab navigation preserves the unlock; users
+    // return via the bottom nav.
+    return `<a class="dash-link gold" href="${url}" title="Published dashboard">Dashboard →</a>`;
   }
-  return c.link ? `<a class="dash-link" href="${c.link}">Dashboard →</a>` : '<span style="color:var(--gray-mid);font-size:11px">—</span>';
+  return c.link ? `<a class="dash-link" href="${c.link}" target="_blank" rel="noopener">Dashboard →</a>` : '<span style="color:var(--gray-mid);font-size:11px">—</span>';
 }
 
 // ═══ PRICE ALERTS ═══
@@ -1127,7 +1131,7 @@ function renderWatchCard(it) {
     <div class="watch-card${triggered ? ' triggered' : ''}">
       <div class="wc-head">
         <div>
-          <div class="wc-tkr">${escHtml(it.ticker)}${u ? `<span style="font-size:11px;font-weight:300;color:var(--gray-mid);margin-left:8px;">${escHtml(u.name)}</span>` : ''}${watchState.dashboardTickers.has(String(it.ticker).toUpperCase()) ? `<a class="wc-dash" href="/company.html?ticker=${encodeURIComponent(it.ticker)}" target="_blank" rel="noopener" title="Open dashboard">Dashboard</a>` : ''}</div>
+          <div class="wc-tkr">${escHtml(it.ticker)}${u ? `<span style="font-size:11px;font-weight:300;color:var(--gray-mid);margin-left:8px;">${escHtml(u.name)}</span>` : ''}${watchState.dashboardTickers.has(String(it.ticker).toUpperCase()) ? `<a class="wc-dash" href="/company.html?ticker=${encodeURIComponent(it.ticker)}" title="Open dashboard">Dashboard</a>` : ''}</div>
         </div>
         <div class="wc-status ${triggered ? 'triggered' : 'active'}">${triggered ? 'Buy Zone' : (inZone ? 'In Zone *' : 'Active')}</div>
       </div>
