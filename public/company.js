@@ -2199,7 +2199,7 @@ function renderHealth() {
     let html = '';
     hc.metrics.forEach(m => {
       if (m.category !== lastCat) {
-        html += `<tr class="cat"><td colspan="5">${m.category}</td></tr>`;
+        html += `<tr class="cat"><td colspan="5"><span class="cat-lbl">${m.category}</span></td></tr>`;
         lastCat = m.category;
       }
       const statusCls = m.status === 'pass' ? 'pass' : m.status === 'fail' ? 'fail' : 'monitor';
