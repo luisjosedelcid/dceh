@@ -498,6 +498,23 @@
       <div class="loading-files" style="padding:24px;text-align:center;color:var(--gray-mid)">Sign in as admin to view rules</div>
     </div>
     <div id="discipline-msg" style="margin-top:12px;font-size:12px;min-height:18px"></div>
+
+    <div style="margin-top:28px;padding-top:18px;border-top:1px solid var(--rule)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+        <div>
+          <div style="font-size:13px;color:var(--ink);font-weight:600;margin-bottom:4px">Current evaluation</div>
+          <div style="font-size:11px;color:var(--gray-mid);max-width:680px;line-height:1.5">
+            Evaluates the 6 rules against the latest portfolio snapshot, pre-mortems, and re-underwriting due list. Daily push alert fires at 09:00 Madrid time only if there are violations.
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn ghost" type="button" id="btn-discipline-eval" style="font-size:11px">Evaluate now</button>
+          <button class="btn ghost" type="button" id="btn-discipline-push-test" style="font-size:11px">Send test push</button>
+        </div>
+      </div>
+      <div id="discipline-eval-body" style="background:var(--white);border:1px solid var(--rule);padding:14px;font-size:12px;color:var(--gray-mid)">Click “Evaluate now” to run.</div>
+      <div id="discipline-eval-msg" style="margin-top:10px;font-size:12px;min-height:18px"></div>
+    </div>
   </div>
 
 </main>
@@ -966,6 +983,71 @@ async function saveDisciplineRule(ruleKey, rawValue) {
 }
 
 document.getElementById('btn-discipline-refresh')?.addEventListener('click', loadDisciplineRules);
+
+// ────────────────────────────────────────────────────────────────
+// DISCIPLINE EVAL (runs the evaluator against current state)
+// ────────────────────────────────────────────────────────────────
+async function runDisciplineEval(sendPush) {
+  const body = document.getElementById('discipline-eval-body');
+  const msg = document.getElementById('discipline-eval-msg');
+  const token = localStorage.getItem('dce_admin_token') || '';
+  if (!isAdmin()) {
+    body.innerHTML = '<div style="color:var(--gray-mid)">Admin only.</div>';
+    return;
+  }
+  msg.style.color = 'var(--gray-mid)';
+  msg.textContent = sendPush ? 'Evaluating and sending push…' : 'Evaluating…';
+  try {
+    const opts = sendPush
+      ? { method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ send: true }) }
+      : { headers: { 'x-admin-token': token } };
+    const r = await fetch('/api/admin-discipline-eval', opts);
+    const data = await r.json();
+    if (!r.ok || !data.ok) throw new Error(data.error || 'Eval failed');
+
+    const { summary, violations, evaluated_at } = data;
+    const when = new Date(evaluated_at).toLocaleString();
+    let html = '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--rule)">'
+      + '<div><span style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray-mid)">Rules</span> <b style="font-size:14px;color:var(--ink);margin-left:4px">' + summary.total_rules + '</b></div>'
+      + '<div><span style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray-mid)">FAIL</span> <b style="font-size:14px;color:' + (summary.fails ? 'var(--red,#a93226)' : 'var(--ink)') + ';margin-left:4px">' + summary.fails + '</b></div>'
+      + '<div><span style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray-mid)">WARN</span> <b style="font-size:14px;color:' + (summary.warns ? '#a56a00' : 'var(--ink)') + ';margin-left:4px">' + summary.warns + '</b></div>'
+      + '<div style="margin-left:auto;font-size:11px;color:var(--gray-mid)">' + when + '</div>'
+      + '</div>';
+
+    if (!violations.length) {
+      html += '<div style="color:#1e6e3a">All 6 rules healthy. No push would fire.</div>';
+    } else {
+      const ordered = [...violations.filter(v => v.level === 'FAIL'), ...violations.filter(v => v.level === 'WARN')];
+      html += '<div style="display:flex;flex-direction:column;gap:6px">';
+      for (const v of ordered) {
+        const color = v.level === 'FAIL' ? 'var(--red,#a93226)' : '#a56a00';
+        html += '<div style="padding:8px 10px;border-left:3px solid ' + color + ';background:rgba(0,0,0,0.02)">'
+          + '<span style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:' + color + '">' + v.level + '</span> '
+          + '<span style="color:var(--ink)">' + v.message + '</span> '
+          + '<span style="font-size:10px;color:var(--gray-mid);margin-left:6px">(' + v.rule_key + ')</span>'
+          + '</div>';
+      }
+      html += '</div>';
+    }
+    body.innerHTML = html;
+
+    if (sendPush && data.sent) {
+      const totalSent = (data.results || []).reduce((s, r) => s + (r.sent || 0), 0);
+      msg.style.color = '#1e6e3a';
+      msg.textContent = '✓ Push sent (delivered: ' + totalSent + ').';
+    } else if (sendPush) {
+      msg.style.color = 'var(--gray-mid)';
+      msg.textContent = 'No violations — push not sent.';
+    } else {
+      msg.textContent = '';
+    }
+  } catch (e) {
+    msg.style.color = '#a93226';
+    msg.textContent = 'Error: ' + (e.message || e);
+  }
+}
+document.getElementById('btn-discipline-eval')?.addEventListener('click', () => runDisciplineEval(false));
+document.getElementById('btn-discipline-push-test')?.addEventListener('click', () => runDisciplineEval(true));
 
 // ────────────────────────────────────────────────────────────────
 // USERS ADMIN (admin role only)

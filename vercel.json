@@ -151,6 +151,10 @@
       "schedule": "0 */6 * * *"
     },
     {
+      "path": "/api/cron/discipline-alerts",
+      "schedule": "0 7 * * *"
+    },
+    {
       "path": "/api/cron/journal-reviews",
       "schedule": "0 13 * * *"
     },
