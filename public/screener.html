@@ -13,6 +13,8 @@
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--cream);color:var(--ink);font-family:'Archivo','Helvetica Neue',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+  /* Loading spinner used by shortlist "Loading…" state (backlog #25) */
+  @keyframes sl-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
   header{background:var(--navy);border-bottom:2px solid var(--gold);padding:0 48px;display:flex;align-items:center;min-height:64px;justify-content:space-between}
   .logo{font-size:20px;font-weight:700;color:var(--white)}.logo span{color:var(--gold);font-weight:300}
@@ -1409,14 +1411,34 @@ async function loadShortlist() {
     refreshAllSnapshotButtons(items || []);
   } catch (e) {
     console.error('Shortlist load error:', e);
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);padding:24px">Error loading shortlist</td></tr>`;
+    const isTimeout = e && e.message === 'timeout';
+    const msg = isTimeout
+      ? 'Shortlist took too long to load (>12s). Server may be waking up.'
+      : ('Error loading shortlist: ' + (e.message || 'unknown'));
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);padding:24px;font-size:12px">
+      <div style="margin-bottom:12px">${msg}</div>
+      <button type="button" onclick="loadShortlist()" style="font-size:10px;font-weight:700;color:var(--gold);background:var(--white);letter-spacing:0.15em;text-transform:uppercase;border:1px solid var(--gold);padding:6px 14px;cursor:pointer;font-family:inherit">↻ Retry</button>
+    </td></tr>`;
   }
 }
 
 // ─── Company Snapshot integration ────────────────────────────────────────
 async function refreshAllSnapshotButtons(items) {
   const tk = _wlAuthToken();
-  if (!tk) return;
+  if (!tk) {
+    // Not authenticated — flip every "Loading…" button to a friendly login
+    // hint so the shortlist doesn't sit there forever (backlog #25).
+    (items || []).forEach(it => {
+      const btn = document.getElementById(`snap-${it.ticker}`);
+      if (!btn) return;
+      btn.textContent = 'LOG IN';
+      btn.style.color = 'var(--gray-mid)';
+      btn.style.borderColor = 'var(--rule)';
+      btn.disabled = true;
+      btn.title = 'Log in to generate snapshots';
+    });
+    return;
+  }
   await Promise.all((items || []).map(it => refreshSnapshotButton(it.ticker, tk)));
 }
 
@@ -1430,6 +1452,7 @@ async function refreshSnapshotButton(ticker, tk) {
   btn.textContent = 'GENERATE';
   btn.style.color = 'var(--gold)';
   btn.style.borderColor = 'var(--gold)';
+  btn.disabled = false;
 }
 
 async function handleSnapshot(btn, ticker) {

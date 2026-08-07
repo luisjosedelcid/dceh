@@ -95,6 +95,16 @@
   .subfolder-tag{display:inline-block;font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;background:var(--gold-dim);color:var(--gold);white-space:nowrap}
   .subfolder-count{font-size:11px;color:var(--gray-mid);flex-shrink:0;min-width:60px;text-align:right;letter-spacing:0.02em}
   .subfolder-actions{display:none;gap:4px;flex-shrink:0}
+  /* Inline expand chevron on root folders that contain subfolders (backlog #22) */
+  .subfolder-chevron{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;font-size:11px;color:var(--gold);flex-shrink:0;margin-right:2px;cursor:pointer;border:1px solid transparent;transition:all .15s;user-select:none}
+  .subfolder-chevron:hover{background:rgba(184,139,71,0.08);border-color:var(--gold-rule)}
+  .subfolder-chevron.expanded{transform:rotate(90deg)}
+  .subfolder-inline{margin:6px 0 14px 34px;padding-left:16px;border-left:1px dashed var(--gold-rule);display:none}
+  .subfolder-inline.open{display:flex;flex-direction:column;gap:4px}
+  .subfolder-inline .sub-item{display:flex;align-items:center;gap:12px;padding:8px 12px;background:var(--white);border:1px solid var(--rule);text-decoration:none;color:var(--ink);font-size:12px;transition:all .15s;cursor:pointer}
+  .subfolder-inline .sub-item:hover{border-color:var(--gold-rule);background:rgba(184,139,71,0.03)}
+  .subfolder-inline .sub-item-name{flex:1;min-width:0;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .subfolder-inline .sub-item-count{font-size:10px;color:var(--gray-mid);letter-spacing:0.02em;flex-shrink:0}
   .subfolder:hover .subfolder-actions{display:flex}
   .subfolder-actions button{font-size:9px;padding:3px 8px;border:1px solid var(--gold-rule);background:var(--white);color:var(--gold);cursor:pointer;line-height:1;font-family:inherit}
   .subfolder-actions button.del{color:var(--red);border-color:rgba(155,35,53,0.30)}
@@ -883,7 +893,8 @@ function renderRoot() {
   grid.innerHTML = ROOTS.map((f, idx) => {
     const num = String(idx + 1).padStart(2, '0');
     const count = countFilesRecursive(f);
-    const subCount = childrenOf(f.id).length;
+    const subs = childrenOf(f.id);
+    const subCount = subs.length;
     const countLabel = `${count} ${count === 1 ? 'file' : 'files'}${subCount > 0 ? ` · ${subCount} sub` : ''}`;
     const actions = admin
       ? `<div class="subfolder-actions" onclick="event.stopPropagation()">
@@ -892,7 +903,20 @@ function renderRoot() {
          </div>` : '';
     const cleanName = f.name.replace(/^\d+\s*/, '');
     const desc = f.description ? `<div class="subfolder-detail">${escapeHtml(f.description)}</div>` : '';
+    const chev = subCount > 0
+      ? `<div class="subfolder-chevron" data-chevron-for="${f.id}" title="Expand subfolders" onclick="event.stopPropagation();toggleInlineSubs('${f.id}')">▸</div>`
+      : '<div class="subfolder-chevron" style="visibility:hidden"></div>';
+    const inlineSubs = subCount > 0
+      ? `<div class="subfolder-inline" id="inline-subs-${f.id}">${subs.map(sf => {
+            const fc = countFilesRecursive(sf);
+            return `<div class="sub-item" onclick="event.stopPropagation();openFolder('${sf.id}')">
+              <div class="sub-item-name">${escapeHtml(sf.name)}</div>
+              <div class="sub-item-count">${fc} ${fc === 1 ? 'file' : 'files'}</div>
+            </div>`;
+          }).join('')}</div>`
+      : '';
     return `<div class="subfolder" data-id="${f.id}"${admin ? ' draggable="true"' : ''} onclick="openFolder('${f.id}')">
+      ${chev}
       <div class="subfolder-num">${num}</div>
       <div class="subfolder-info">
         <div class="subfolder-name">${escapeHtml(cleanName)}</div>
@@ -900,10 +924,21 @@ function renderRoot() {
       </div>
       <div class="subfolder-count">${countLabel}</div>
       ${actions}
-    </div>`;
+    </div>${inlineSubs}`;
   }).join('');
   if (admin) attachDnD(grid, '.subfolder', ROOTS, null);
 }
+
+// Toggle inline subfolder expansion at root (backlog #22)
+function toggleInlineSubs(folderId) {
+  const chevron = document.querySelector(`[data-chevron-for="${folderId}"]`);
+  const inline = document.getElementById(`inline-subs-${folderId}`);
+  if (!inline || !chevron) return;
+  const isOpen = inline.classList.toggle('open');
+  chevron.classList.toggle('expanded', isOpen);
+  chevron.title = isOpen ? 'Collapse subfolders' : 'Expand subfolders';
+}
+window.toggleInlineSubs = toggleInlineSubs;
 
 function renderFolder(id) {
   const folder = BY_ID.get(id);
