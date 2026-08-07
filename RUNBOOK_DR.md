@@ -1,6 +1,6 @@
 # DCE Holdings — Disaster Recovery Runbook
 
-Última actualización: 2026-05-05
+Última actualización: 2026-08-07
 
 Este documento describe cómo recuperar el sistema ante distintos escenarios de desastre. Está pensado para ser leído **bajo presión** — secciones cortas, comandos copy-paste.
 
@@ -10,10 +10,104 @@ Este documento describe cómo recuperar el sistema ante distintos escenarios de 
 
 | Capa | Qué cubre | Frecuencia | Retención | Dónde |
 |------|-----------|------------|-----------|-------|
+| 0. Backup nightly integrado | 44 tablas críticas JSON + mirror bucket dataroom | Diario 03:30 UTC | 30 días + 12 meses (first-of-month) | Bucket privado `backups` en Supabase |
 | 1. Supabase Pro nativo | DB completa (snapshots) | Diario | 7 días | Dashboard Supabase |
 | 2. GitHub Actions backup | DB + Storage + migrations | Semanal (domingo 04:00 UTC) | 8 semanas | Repo `luisjosedelcid/dceh-backups` |
 | 3. Repo principal | Código fuente | Cada commit | Permanente | Repo `luisjosedelcid/dceh` |
 | 4. Vercel deployments | Builds anteriores | Cada deploy | 100 deploys | Vercel dashboard |
+
+---
+
+## Capa 0 — Backup nightly integrado (v111, 2026-08-07)
+
+**Qué hace**: cron `/api/cron/backup-nightly` corre diario a 03:30 UTC. Dump JSON de 44 tablas críticas + copia completa del bucket `dataroom` (todos los PDFs, memos, briefs). Cada corrida escribe fila en `backup_log`.
+
+**Layout en bucket `backups`** (privado, service-role-only):
+
+```
+backups/
+  nightly/2026-08-07/
+    manifest.json
+    tables/decision_journal.json
+    tables/transactions.json
+    tables/... (44 archivos)
+    dataroom/<folder_id>/<epoch>__<filename>.pdf
+  monthly/2026-08/
+    ref.json   # apunta al nightly/2026-08-01 preservado
+```
+
+**Retención**:
+- `nightly/` — últimos 30 días. Purga automática al final de cada corrida.
+- `monthly/` — primer día de cada mes se marca vía `monthly/<YYYY-MM>/ref.json`, protegiendo el `nightly/<YYYY-MM-01>/` correspondiente de la purga. Se conservan 12 meses.
+
+**Cómo verificar que corrió anoche**:
+
+```bash
+# Vía portal admin
+Open https://www.dceholdings.app/admin.html → tarjeta "Último backup"
+
+# Vía SQL
+SELECT run_id, started_at, status, tables_dumped, rows_total, files_mirrored,
+       pg_size_pretty(bytes_total::numeric) AS bytes
+FROM backup_log ORDER BY started_at DESC LIMIT 10;
+```
+
+**Cómo disparar backup manual**:
+
+```bash
+curl -X POST https://www.dceholdings.app/api/admin/backup-status \
+  -H "x-admin-token: $ADMIN_TOKEN"
+```
+
+### Restaurar una tabla desde nightly backup
+
+```bash
+# 1. Bajar el dump JSON desde el bucket (requiere SERVICE_ROLE_KEY)
+DATE=2026-08-07
+TABLE=decision_journal
+curl -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+     -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+     "$SUPABASE_URL/storage/v1/object/backups/nightly/$DATE/tables/$TABLE.json" \
+     -o /tmp/$TABLE.json
+
+# 2. Inspeccionar
+jq '.row_count, .dumped_at' /tmp/$TABLE.json
+
+# 3. Restaurar filas (asumiendo que la tabla está vacía o quieres upsert)
+#    Extraer rows[] y hacer upsert vía PostgREST:
+jq '.rows' /tmp/$TABLE.json > /tmp/$TABLE.rows.json
+curl -X POST "$SUPABASE_URL/rest/v1/$TABLE" \
+     -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+     -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+     -H "Content-Type: application/json" \
+     -H "Prefer: resolution=merge-duplicates" \
+     --data-binary @/tmp/$TABLE.rows.json
+```
+
+### Restaurar un PDF perdido del Data Room
+
+```bash
+# El mirror preserva el mismo storage_path bajo backups/nightly/<fecha>/dataroom/
+SRC_PATH="5547da9d-61d1-40ed-9ab2-c896d5c5f460/1786097371__2026-04_Monthly_Close.pdf"
+curl -X POST "$SUPABASE_URL/storage/v1/object/copy" \
+     -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+     -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "bucketId": "backups",
+       "sourceKey": "nightly/2026-08-07/dataroom/'$SRC_PATH'",
+       "destinationBucket": "dataroom",
+       "destinationKey": "'$SRC_PATH'"
+     }'
+```
+
+### Test de restore trimestral (obligatorio)
+
+1. Bajar dump JSON de `decision_journal` de nightly de ayer.
+2. Crear branch de Supabase: `list_branches` → `create_branch`.
+3. Restaurar filas en el branch usando el snippet de arriba.
+4. Comparar `SELECT count(*), max(created_at)` entre branch y producción; debe coincidir con `row_count` del dump.
+5. Borrar branch. Anotar fecha del test en `docs/DR_TESTS.md`.
 
 ---
 

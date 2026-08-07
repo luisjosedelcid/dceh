@@ -205,6 +205,10 @@
     {
       "path": "/api/cron/crypto-snapshot",
       "schedule": "15 0 * * *"
+    },
+    {
+      "path": "/api/cron/backup-nightly",
+      "schedule": "30 3 * * *"
     }
   ],
   "functions": {
@@ -234,6 +238,9 @@
     },
     "api/cron/crypto-snapshot.js": {
       "maxDuration": 30
+    },
+    "api/cron/backup-nightly.js": {
+      "maxDuration": 300
     }
   }
 }
