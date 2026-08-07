@@ -3,13 +3,13 @@
 // Returns: { versions: [{ ts, archivePath, url, sizeBytes, actor }] }
 // Lists archived versions of a given filename plus the current live one.
 
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
 
   // Role check: only admins can view archived report versions
-  const auth = await requireRole(req, ['admin']);
+  const auth = await requireCapability(req, 'DB-03');
   if (!auth.ok) { res.status(auth.status).json({ error: auth.error }); return; }
 
   const SUPABASE_URL = process.env.SUPABASE_URL;

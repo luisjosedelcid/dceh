@@ -8,7 +8,7 @@
 'use strict';
 
 const { sbSelect, sbInsert } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 module.exports = async (req, res) => {
   try {
@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
 
     // ── GET: list ───────────────────────────────────────────────────────────
     if (method === 'GET') {
-      const auth = await requireRole(req, ['any']);
+      const auth = await requireCapability(req, 'PMM-01');
       if (!auth.ok) {
         res.status(auth.status).end(JSON.stringify({ ok: false, error: auth.error }));
         return;
@@ -79,7 +79,7 @@ module.exports = async (req, res) => {
 
     // ── POST: create premortem (admin only) ─────────────────────────────────
     if (method === 'POST') {
-      const auth = await requireRole(req, ['admin']);
+      const auth = await requireCapability(req, 'PMM-03');
       if (!auth.ok) {
         res.status(auth.status).end(JSON.stringify({ ok: false, error: auth.error }));
         return;

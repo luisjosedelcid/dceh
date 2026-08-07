@@ -7,11 +7,11 @@
 // screener_refresh_log for progress.
 // ═══════════════════════════════════════════════════════════════════
 
-const { requireRole } = require('../_require-role.js');
+const { requireCapability } = require('../_require-capability.js');
 const { runScreenerRefresh } = require('../cron/screener-refresh.js');
 
 module.exports = async (req, res) => {
-  const auth = await requireRole(req, ['admin']);
+  const auth = await requireCapability(req, 'SC-02');
   if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
 
   if (req.method !== 'POST') {

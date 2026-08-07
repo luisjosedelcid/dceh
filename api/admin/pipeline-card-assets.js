@@ -2,14 +2,14 @@
 // DELETE /api/admin/pipeline-card-assets?id=<row_id>  (soft delete: active=false)
 // Auth: admin or analyst.
 
-const { requireRole } = require('../_require-role');
+const { requireCapability } = require('../_require-capability');
 const { sbSelect, sbUpdate } = require('../_supabase');
 const { removeDataroomMirror } = require('../_pipeline_dataroom_mirror');
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
 
-  const auth = await requireRole(req, ['admin', 'analyst']);
+  const auth = await requireCapability(req, 'PL-07');
   if (!auth.ok) {
     res.status(auth.status).json({ error: auth.error });
     return;

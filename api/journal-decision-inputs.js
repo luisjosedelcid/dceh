@@ -15,7 +15,7 @@
 //      is no longer needed, or to force a re-run from research).
 
 const { sbSelect, sbUpsert, sbDelete } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 const TICKER_RE = /^[A-Z][A-Z0-9.\-]{0,9}$/;
 
@@ -50,7 +50,7 @@ module.exports = async (req, res) => {
 
     // -------- POST (admin) -------------------------------------------------
     if (req.method === 'POST') {
-      const auth = await requireRole(req, ['admin']);
+      const auth = await requireCapability(req, 'DJ-08');
       if (!auth.ok) {
         res.statusCode = auth.status || 401;
         return res.end(JSON.stringify({ ok: false, error: auth.error || 'Unauthorized' }));
@@ -108,7 +108,7 @@ module.exports = async (req, res) => {
 
     // -------- DELETE (admin) -----------------------------------------------
     if (req.method === 'DELETE') {
-      const auth = await requireRole(req, ['admin']);
+      const auth = await requireCapability(req, 'DJ-08');
       if (!auth.ok) {
         res.statusCode = auth.status || 401;
         return res.end(JSON.stringify({ ok: false, error: auth.error || 'Unauthorized' }));

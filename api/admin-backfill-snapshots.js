@@ -1,12 +1,12 @@
 // POST /api/admin-backfill-snapshots — recomputes the full daily series and upserts
 // every row into portfolio_snapshots. Requires admin role.
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const { sbUpsert } = require('./_supabase');
 const { loadAndCompute } = require('./_perf-load');
 
 module.exports = async (req, res) => {
   try {
-    const auth = await requireRole(req, ['admin']);
+    const auth = await requireCapability(req, 'SY-04');
     if (!auth.ok) {
       res.status(auth.status).end(JSON.stringify({ ok: false, error: auth.error }));
       return;

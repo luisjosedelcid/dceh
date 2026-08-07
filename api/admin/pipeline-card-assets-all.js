@@ -2,7 +2,7 @@
 // Returns all active deliverables across every card (no signed URLs \u2014 for badges).
 // Auth: admin or analyst.
 
-const { requireRole } = require('../_require-role');
+const { requireCapability } = require('../_require-capability');
 const { sbSelect } = require('../_supabase');
 
 module.exports = async (req, res) => {
@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
-  const auth = await requireRole(req, ['admin', 'analyst']);
+  const auth = await requireCapability(req, 'PL-07');
   if (!auth.ok) {
     res.status(auth.status).json({ error: auth.error });
     return;

@@ -11,7 +11,7 @@
 const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const { valueCryptoLive } = require('./_crypto-prices');
 const { valueCryptoAtDate } = require('./_crypto-history');
 
@@ -48,7 +48,7 @@ function fmtHold(months) {
 
 module.exports = async (req, res) => {
   try {
-    const auth = await requireRole(req, ['any']);
+    const auth = await requireCapability(req, 'RP-04');
     if (!auth.ok) {
       res.status(auth.status).json({ error: auth.error });
       return;

@@ -8,7 +8,7 @@
 'use strict';
 
 const { sbSelect } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const { loadAndCompute } = require('./_perf-load');
 const { classifyAssetClass } = require('./_perf-calc');
 
@@ -74,7 +74,7 @@ async function getAnchorsByTicker(tickers) {
 
 module.exports = async (req, res) => {
   try {
-    const auth = await requireRole(req, ['any']);
+    const auth = await requireCapability(req, 'PF-06');
     if (!auth.ok) {
       res.status(auth.status).end(JSON.stringify({ ok: false, error: auth.error }));
       return;

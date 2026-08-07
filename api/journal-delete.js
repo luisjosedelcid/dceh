@@ -17,7 +17,7 @@
 //  - Other tables (trades, premortems) may FK to decision_journal.id.
 
 const { sbUpdate, sbSelect } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const pipelineStage = require('./_pipeline-stage');
 const { reactivatePremortemForTicker } = require('./_premortem-archive');
 
@@ -29,7 +29,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const auth = await requireRole(req, ['admin']);
+    const auth = await requireCapability(req, 'DJ-07');
     if (!auth.ok) {
       res.status(auth.status || 401).json({ error: auth.error || 'Unauthorized' });
       return;

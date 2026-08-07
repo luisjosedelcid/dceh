@@ -9,11 +9,11 @@
 'use strict';
 
 const { sbSelect } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 module.exports = async (req, res) => {
   try {
-    const auth = await requireRole(req, ['any']);
+    const auth = await requireCapability(req, 'IV-01');
     if (!auth.ok) {
       res.status(auth.status || 401).json({ error: auth.error || 'Unauthorized' });
       return;

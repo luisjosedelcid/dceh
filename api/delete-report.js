@@ -1,7 +1,7 @@
 // DELETE /api/delete-report?folder=monthly|committee|annual&filename=foo.pdf
 // Header: x-admin-token: <token>
 
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const { sbInsert } = require('./_supabase');
 
 module.exports = async (req, res) => {
@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
   }
 
   // Role check: only admins can delete reports
-  const auth = await requireRole(req, ['admin']);
+  const auth = await requireCapability(req, 'RP-08');
   if (!auth.ok) { res.status(auth.status).json({ error: auth.error }); return; }
 
   const SUPABASE_URL = process.env.SUPABASE_URL;

@@ -14,7 +14,7 @@
 
 const bcrypt = require('bcryptjs');
 const { sbSelect, sbInsert, sbUpdate } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability, loadCapabilitiesForUser } = require('./_require-capability');
 
 function audit(actor_email, action, detail) {
   return sbInsert('report_audit', {
@@ -45,7 +45,7 @@ module.exports = async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
 
   try {
-    const auth = await requireRole(req, ['any']);
+    const auth = await requireCapability(req, 'AU-04');
     if (!auth.ok) {
       res.statusCode = auth.status;
       res.end(JSON.stringify({ error: auth.error }));
@@ -54,13 +54,17 @@ module.exports = async function handler(req, res) {
     const me = auth.user; // { email, role, displayName }
 
     if (req.method === 'GET') {
-      // Return fresh row (last_login etc.)
-      const rows = await sbSelect(
-        'admin_users',
-        `select=email,display_name,job_title,role,is_active,created_at,last_login&email=eq.${encodeURIComponent(me.email)}&limit=1`
-      );
+      // Return fresh row (last_login etc.) + capabilities array for UI show/hide.
+      const [rows, capsResult] = await Promise.all([
+        sbSelect(
+          'admin_users',
+          `select=email,display_name,job_title,role,is_active,created_at,last_login&email=eq.${encodeURIComponent(me.email)}&limit=1`
+        ),
+        loadCapabilitiesForUser(req),
+      ]);
+      const capabilities = capsResult.ok ? capsResult.capabilities : [];
       res.statusCode = 200;
-      res.end(JSON.stringify({ ok: true, user: rows[0] || me }));
+      res.end(JSON.stringify({ ok: true, user: rows[0] || me, capabilities }));
       return;
     }
 

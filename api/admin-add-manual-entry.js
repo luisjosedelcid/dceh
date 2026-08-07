@@ -6,7 +6,7 @@
 // Source = 'manual', external_id = sha hash so re-submitting same entry is no-op.
 
 const crypto = require('crypto');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const { sbInsert } = require('./_supabase');
 
 const TX_KINDS = new Set(['BUY', 'SELL']);
@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
-  const auth = await requireRole(req, ['admin']);
+  const auth = await requireCapability(req, 'PF-02');
   if (!auth.ok) {
     res.status(auth.status).json({ error: auth.error });
     return;

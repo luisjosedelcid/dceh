@@ -19,7 +19,7 @@
 // Auth: admin or analyst (read-only).
 // ═══════════════════════════════════════════════════════════════════
 
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const { sbSelect } = require('./_supabase');
 
 module.exports = async (req, res) => {
@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
-  const auth = await requireRole(req, ['admin', 'analyst']);
+  const auth = await requireCapability(req, 'IM-04');
   if (!auth.ok) {
     res.status(auth.status).json({ error: auth.error });
     return;

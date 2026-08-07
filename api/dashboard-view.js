@@ -8,7 +8,7 @@
 // Access: requires a valid admin/analyst token (via x-admin-token header
 // OR ?token= query param, so <a href> from Universe works without headers).
 
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const { sbSelect } = require('./_supabase');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
     req.headers['x-admin-token'] = qToken;
   }
 
-  const auth = await requireRole(req, ['admin', 'analyst', 'any']);
+  const auth = await requireCapability(req, 'DB-01');
   if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
 
   const ticker = (req.query.ticker || '').toString().trim();

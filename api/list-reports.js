@@ -2,7 +2,7 @@
 // Admin-only endpoint — quarterly/financial reports are restricted to role='admin'.
 // Returns: { files: [{ name, size, updated_at, url }] }
 
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {
@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
   }
 
   // Role check: only admins can view financial reports
-  const auth = await requireRole(req, ['admin']);
+  const auth = await requireCapability(req, 'RP-01');
   if (!auth.ok) {
     res.status(auth.status).json({ error: auth.error });
     return;

@@ -25,9 +25,12 @@
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { sbSelect, sbInsert, sbUpdate } = require('../_supabase');
-const { requireRole } = require('../_require-role');
+const { requireCapability } = require('../_require-capability');
 
-const VALID_ROLES = ['admin', 'analyst', 'viewer'];
+const VALID_ROLES = ['admin', 'cio', 'analyst', 'viewer'];
+// Roles considered "privileged" — must always have ≥1 active user across them.
+// 'admin' is legacy (pre-RBAC); 'cio' is the new privileged role.
+const PRIVILEGED_ROLES = ['admin', 'cio'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RESET_TTL_HOURS = 24;
 
@@ -59,9 +62,11 @@ async function getUserByEmail(email) {
 }
 
 async function countActiveAdmins() {
+  // Counts active users with any privileged role (admin OR cio).
+  const inList = PRIVILEGED_ROLES.map((r) => `"${r}"`).join(',');
   const rows = await sbSelect(
     'admin_users',
-    'select=email&role=eq.admin&is_active=eq.true&limit=50'
+    `select=email&role=in.(${inList})&is_active=eq.true&limit=50`
   );
   return rows.length;
 }
@@ -110,14 +115,14 @@ async function updateUser({ email, patch, actor, actorRole }) {
     if (!VALID_ROLES.includes(patch.role)) {
       throw httpErr(400, `role must be one of: ${VALID_ROLES.join(', ')}`);
     }
-    // Self-protection: admin can't demote themselves
-    if (actor === email && target.role === 'admin' && patch.role !== 'admin') {
-      throw httpErr(403, 'Cannot demote yourself from admin');
+    // Self-protection: privileged user (admin/cio) can't demote themselves
+    if (actor === email && PRIVILEGED_ROLES.includes(target.role) && !PRIVILEGED_ROLES.includes(patch.role)) {
+      throw httpErr(403, 'Cannot demote yourself from privileged role');
     }
-    // If demoting another admin, make sure ≥1 admin remains
-    if (target.role === 'admin' && patch.role !== 'admin') {
+    // If demoting a privileged user, make sure ≥1 privileged user remains
+    if (PRIVILEGED_ROLES.includes(target.role) && !PRIVILEGED_ROLES.includes(patch.role)) {
       const admins = await countActiveAdmins();
-      if (admins <= 1) throw httpErr(403, 'At least one active admin must remain');
+      if (admins <= 1) throw httpErr(403, 'At least one active CIO (or legacy admin) must remain');
     }
     update.role = patch.role;
     auditParts.push(`role=${patch.role}`);
@@ -126,9 +131,9 @@ async function updateUser({ email, patch, actor, actorRole }) {
     if (actor === email && patch.is_active === false) {
       throw httpErr(403, 'Cannot deactivate yourself');
     }
-    if (target.role === 'admin' && patch.is_active === false) {
+    if (PRIVILEGED_ROLES.includes(target.role) && patch.is_active === false) {
       const admins = await countActiveAdmins();
-      if (admins <= 1) throw httpErr(403, 'At least one active admin must remain');
+      if (admins <= 1) throw httpErr(403, 'At least one active CIO (or legacy admin) must remain');
     }
     update.is_active = patch.is_active;
     auditParts.push(`is_active=${patch.is_active}`);
@@ -220,7 +225,7 @@ module.exports = async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
 
   try {
-    const auth = await requireRole(req, ['admin']);
+    const auth = await requireCapability(req, 'US-01');
     if (!auth.ok) {
       res.statusCode = auth.status;
       res.end(JSON.stringify({ error: auth.error }));

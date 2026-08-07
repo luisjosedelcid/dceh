@@ -9,7 +9,7 @@
 //   - Inserts a row in report_audit (action='upload'; if archived, also action='archive').
 //   - Sends an email notification via Resend (best-effort).
 
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const { sbInsert } = require('./_supabase');
 const { sendUploadEmail } = require('./_notify');
 
@@ -51,7 +51,7 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const auth = await requireRole(req, ['admin']);
+  const auth = await requireCapability(req, 'RP-07');
   if (!auth.ok) {
     res.status(auth.status).json({ error: auth.error });
     return;

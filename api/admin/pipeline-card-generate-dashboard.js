@@ -6,7 +6,7 @@
 // POST /api/admin/pipeline-card-generate-dashboard?card_id=<uuid>
 
 const XLSX = require('xlsx');
-const { requireRole } = require('../_require-role');
+const { requireCapability } = require('../_require-capability');
 const { sbInsert, sbSelect, sbUpdate } = require('../_supabase');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -245,7 +245,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const auth = await requireRole(req, ['admin', 'analyst']);
+  const auth = await requireCapability(req, 'PL-08');
   if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
   const userEmail = auth.user?.email || 'unknown';
 

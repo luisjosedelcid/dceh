@@ -20,13 +20,13 @@
 'use strict';
 
 const { sbInsert, sbUpdate, sbSelect } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 const VALID_ANCHORS = new Set(['RV', 'EPV']);
 
 module.exports = async (req, res) => {
   try {
-    const auth = await requireRole(req, ['admin']);
+    const auth = await requireCapability(req, 'WL-02');
     if (!auth.ok) {
       res.status(auth.status).end(JSON.stringify({ ok: false, error: auth.error }));
       return;

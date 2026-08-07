@@ -11,7 +11,7 @@
 // already in UNIVERSE will appear here.
 // ═══════════════════════════════════════════════════════════════════
 
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const { sbSelect } = require('./_supabase');
 
 // Pull a nested numeric value defensively. Returns null if missing.
@@ -94,7 +94,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
-  const auth = await requireRole(req, ['admin', 'analyst', 'any']);
+  const auth = await requireCapability(req, 'DB-02');
   if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
 
   try {

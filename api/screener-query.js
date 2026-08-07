@@ -7,10 +7,10 @@
 // Filters `screener_snapshot` by the standard MVP fields and returns
 // rows ordered by the requested column.
 //
-// Requires an authenticated admin/analyst JWT (via requireRole).
+// Requires an authenticated user with capability SC-01.
 // ═══════════════════════════════════════════════════════════════════
 
-const { requireRole } = require('./_require-role.js');
+const { requireCapability } = require('./_require-capability.js');
 const { sbSelect } = require('./_supabase.js');
 
 const SORT_MAP = {
@@ -26,7 +26,7 @@ const SORT_MAP = {
 };
 
 module.exports = async (req, res) => {
-  const auth = await requireRole(req, ['any']);
+  const auth = await requireCapability(req, 'SC-01');
   if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
 
   try {

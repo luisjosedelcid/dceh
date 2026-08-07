@@ -5,14 +5,14 @@
 //   Admin-only. Idempotent.
 // ═══════════════════════════════════════════════════════════════════
 
-const { requireRole } = require('../_require-role');
+const { requireCapability } = require('../_require-capability');
 const { sbSelect } = require('../_supabase');
 const { mirrorPipelineToDataroom } = require('../_pipeline_dataroom_mirror');
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
 
-  const auth = await requireRole(req, ['admin']);
+  const auth = await requireCapability(req, 'SY-05');
   if (!auth.ok) {
     res.status(auth.status).json({ error: auth.error });
     return;

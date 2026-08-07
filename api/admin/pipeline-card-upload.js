@@ -23,7 +23,7 @@
 //   7. Return { ok, item }.
 // ═══════════════════════════════════════════════════════════════════
 
-const { requireRole } = require('../_require-role');
+const { requireCapability } = require('../_require-capability');
 const { sbSelect, sbInsert, sbUpdate } = require('../_supabase');
 const { mirrorPipelineToDataroom, removeDataroomMirror } = require('../_pipeline_dataroom_mirror');
 
@@ -65,7 +65,7 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const auth = await requireRole(req, ['admin', 'analyst']);
+  const auth = await requireCapability(req, 'PL-06');
   if (!auth.ok) {
     res.status(auth.status).json({ error: auth.error });
     return;

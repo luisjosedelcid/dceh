@@ -5,7 +5,7 @@
 
 'use strict';
 
-const { requireRole } = require('../_require-role');
+const { requireCapability } = require('../_require-capability');
 const { sbUpsert } = require('../_supabase');
 
 async function readJson(req) {
@@ -25,7 +25,7 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    const auth = await requireRole(req, ['any']);
+    const auth = await requireCapability(req, 'AU-04');
     if (!auth.ok) {
       res.status(auth.status).json({ error: auth.error });
       return;

@@ -8,11 +8,11 @@
 // Restricted: exposes NAV, holdings, contributions and equity curve.
 const { sbSelect } = require('./_supabase');
 const { loadAndCompute } = require('./_perf-load');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 module.exports = async (req, res) => {
   try {
-    const auth = await requireRole(req, ['any']);
+    const auth = await requireCapability(req, 'PF-05');
     if (!auth.ok) {
       res.status(auth.status || 401).json({ ok: false, error: auth.error || 'Unauthorized' });
       return;

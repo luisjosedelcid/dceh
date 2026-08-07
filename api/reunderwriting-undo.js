@@ -19,11 +19,11 @@
 
 const { sbSelect, sbDelete, sbUpdate } = require('./_supabase');
 
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 module.exports = async (req, res) => {
   try {
-    const auth = await requireRole(req, ['admin']);
+    const auth = await requireCapability(req, 'RU-05');
     if (!auth.ok) {
       res.status(auth.status).end(JSON.stringify({ ok: false, error: auth.error }));
       return;

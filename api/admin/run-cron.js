@@ -9,7 +9,7 @@
 'use strict';
 
 const path = require('path');
-const { requireRole } = require('../_require-role');
+const { requireCapability } = require('../_require-capability');
 
 const ALLOWED = new Set([
   'price-alerts',
@@ -42,7 +42,7 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    const auth = await requireRole(req, ['admin']);
+    const auth = await requireCapability(req, 'SY-02');
     if (!auth.ok) {
       res.status(auth.status).json({ error: auth.error });
       return;

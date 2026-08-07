@@ -8,7 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 const {
   NAVY, GOLD, GRAY, LIGHT, GREEN, RED, NEAR_BLACK, WHITE, CREAM, ROW_ALT,
@@ -66,7 +66,7 @@ function fmtMonths(months) {
 // ─── Handler ──────────────────────────────────────────────────────
 module.exports = async (req, res) => {
   try {
-    const auth = await requireRole(req, ['any']);
+    const auth = await requireCapability(req, 'RP-05');
     if (!auth.ok) {
       res.status(auth.status).json({ error: auth.error });
       return;

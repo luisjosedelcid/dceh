@@ -28,7 +28,7 @@
 //     register a decision from the UI without going through chat.
 
 const { sbInsert } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const pipelineStage = require('./_pipeline-stage');
 const { archivePremortemForTicker } = require('./_premortem-archive');
 const { mirrorDecisionToDataroom } = require('./_decision-dataroom-mirror');
@@ -48,7 +48,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const auth = await requireRole(req, ['admin']);
+    const auth = await requireCapability(req, 'DJ-03');
     if (!auth.ok) {
       res.status(auth.status || 401).json({ error: auth.error || 'Unauthorized' });
       return;

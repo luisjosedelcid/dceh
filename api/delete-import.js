@@ -10,7 +10,7 @@
 // Returns: { ok: true, batch_id, tx_deleted, cf_deleted }
 
 const { sbDelete, sbSelect, sbUpdate } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 // Loose UUID v4 validator
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const auth = await requireRole(req, ['admin']);
+    const auth = await requireCapability(req, 'IM-03');
     if (!auth.ok) {
       res.status(auth.status || 401).json({ error: auth.error || 'Unauthorized' });
       return;

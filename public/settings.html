@@ -294,10 +294,10 @@
         <div class="section-meta">Admin · Analyst · Viewer</div>
       </div>
       <div class="section-desc">
-        Manage who can sign in to dceholdings.app. Roles: <strong>admin</strong> (full control + user management), <strong>analyst</strong> (read/write on research, journal, dataroom), <strong>viewer</strong> (read-only).
+        Manage who can sign in to dceholdings.app. Roles: <strong>CIO</strong> (full control + user management + signs decisions), <strong>Analyst</strong> (produces research, no BUY/SELL/PASS signing), <strong>Viewer</strong> (read-only outputs).
       </div>
       <div style="padding:0 24px 22px">
-        <div id="u-admin-list" style="margin-bottom:18px"><div class="loading-files">Sign in as admin to manage users</div></div>
+        <div id="u-admin-list" style="margin-bottom:18px"><div class="loading-files">Sign in as CIO to manage users</div></div>
 
         <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:18px 0 10px">Add new user</h4>
         <form onsubmit="return addUser(event)" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px">
@@ -305,7 +305,7 @@
           <input type="text" name="display_name" required placeholder="Display name" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
           <select name="role" required style="padding:8px;border:1px solid var(--rule);font-family:inherit">
             <option value="analyst">Analyst</option>
-            <option value="admin">Admin</option>
+            <option value="cio">CIO</option>
             <option value="viewer">Viewer</option>
           </select>
           <input type="password" name="password" required minlength="8" placeholder="Initial password (min 8 chars)" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
@@ -584,16 +584,16 @@ const USER_KEY = 'dce_admin_user';
 
 // ── Role gate ────────────────────────────────────────────────────────
 // Reporting Hub contains financial reports and the audit log — restricted
-// to role='admin'. Other authenticated roles (analyst, viewer) get redirected.
+// to CIO (role='cio' or legacy 'admin'). Analyst/Viewer get redirected.
 (function enforceRoleGate() {
   try {
     const raw = localStorage.getItem(USER_KEY);
     if (!raw) return; // not signed in — page will prompt login as before
     const u = JSON.parse(raw);
-    // Backwards-compat: legacy sessions without role are treated as admin
+    // Backwards-compat: legacy sessions without role are treated as admin/cio
     const role = (u && u.role) ? u.role : 'admin';
-    if (role !== 'admin') {
-      alert('Restricted access: the Reporting Hub is only available to administrators.');
+    if (role !== 'admin' && role !== 'cio') {
+      alert('Restricted access: this section is only available to the CIO.');
       window.location.href = '/';
     }
   } catch (e) { /* ignore */ }
@@ -644,7 +644,7 @@ function refreshAdminUI() {
   const label = document.getElementById('admin-label');
   const btn = document.getElementById('btn-admin');
   const u = currentUser();
-  const isAdminRole = admin && u && u.role === 'admin';
+  const isAdminRole = admin && u && (u.role === 'admin' || u.role === 'cio');
 
   // Show 'Users' tab only to actual admins (not analysts/viewers)
   document.querySelectorAll('.admin-only').forEach(el => {
@@ -1081,8 +1081,8 @@ async function loadUsersAdmin() {
   const cont = document.getElementById('u-admin-list');
   if (!cont) return;
   const u = currentUser();
-  if (!isAdmin() || !u || u.role !== 'admin') {
-    cont.innerHTML = '<div class="loading-files">Sign in as admin to manage users</div>';
+  if (!isAdmin() || !u || (u.role !== 'admin' && u.role !== 'cio')) {
+    cont.innerHTML = '<div class="loading-files">Sign in as CIO to manage users</div>';
     return;
   }
   cont.innerHTML = '<div class="loading-files">Loading…</div>';
@@ -1111,9 +1111,10 @@ async function loadUsersAdmin() {
         </td>
         <td style="padding:8px 10px">
           <select onchange="updateUserRole('${safeEmail}', this.value)" ${isMe ? 'disabled' : ''} style="padding:4px 8px;border:1px solid var(--rule);font-family:inherit;font-size:11px">
-            <option value="admin"   ${it.role==='admin'?'selected':''}>Admin</option>
+            <option value="cio"     ${it.role==='cio'?'selected':''}>CIO</option>
             <option value="analyst" ${it.role==='analyst'?'selected':''}>Analyst</option>
             <option value="viewer"  ${it.role==='viewer'?'selected':''}>Viewer</option>
+            <option value="admin"   ${it.role==='admin'?'selected':''}>Admin (legacy)</option>
           </select>
         </td>
         <td style="padding:8px 10px;text-align:center">
@@ -1138,8 +1139,8 @@ async function loadAnalystsAdmin() {
   const cont = document.getElementById('an-list');
   if (!cont) return;
   const u = currentUser();
-  if (!isAdmin() || !u || u.role !== 'admin') {
-    cont.innerHTML = '<div class="loading-files">Sign in as admin to manage analysts</div>';
+  if (!isAdmin() || !u || (u.role !== 'admin' && u.role !== 'cio')) {
+    cont.innerHTML = '<div class="loading-files">Sign in as CIO to manage analysts</div>';
     return;
   }
   cont.innerHTML = '<div class="loading-files">Loading…</div>';

@@ -9,7 +9,7 @@
 //
 // Pagination: classic limit/offset; total comes from PostgREST count=exact header.
 
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 const ALLOWED_ACTIONS = ['login', 'upload', 'archive', 'delete', 'purge'];
 
@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
   }
 
   // Role check: only admins can view audit log
-  const auth = await requireRole(req, ['admin']);
+  const auth = await requireCapability(req, 'US-06');
   if (!auth.ok) {
     res.status(auth.status).json({ error: auth.error });
     return;

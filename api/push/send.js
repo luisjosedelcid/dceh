@@ -9,7 +9,7 @@
 
 'use strict';
 
-const { requireRole } = require('../_require-role');
+const { requireCapability } = require('../_require-capability');
 const { sendPushToUser, sendPushBroadcast } = require('../_push');
 
 async function readJson(req) {
@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    const auth = await requireRole(req, ['admin']);
+    const auth = await requireCapability(req, 'SL-02');
     if (!auth.ok) {
       res.status(auth.status).json({ error: auth.error });
       return;

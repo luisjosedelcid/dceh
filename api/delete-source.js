@@ -11,7 +11,7 @@
 // Returns: { ok: true, table, source, count }
 
 const { sbDelete, sbSelect } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 const ALLOWED_TABLES = new Set(['transactions', 'cashflows']);
 
@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const auth = await requireRole(req, ['admin']);
+    const auth = await requireCapability(req, 'IF-04');
     if (!auth.ok) {
       res.status(auth.status || 401).json({ error: auth.error || 'Unauthorized' });
       return;

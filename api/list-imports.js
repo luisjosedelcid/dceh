@@ -9,7 +9,7 @@
 // Also reports legacy rows (batch_id IS NULL) as a synthetic entry per
 // source so the admin can clean them up too.
 
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const { sbSelect } = require('./_supabase');
 
 module.exports = async (req, res) => {
@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
-  const auth = await requireRole(req, ['admin', 'analyst']);
+  const auth = await requireCapability(req, 'IM-01');
   if (!auth.ok) {
     res.status(auth.status).json({ error: auth.error });
     return;

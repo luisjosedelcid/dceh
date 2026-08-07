@@ -17,7 +17,7 @@
 // actually execute against each documented committee decision".
 
 const { sbSelect, sbInsert, sbDelete } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const pipelineStage = require('./_pipeline-stage');
 
 const ALLOWED_TYPES = ['BUY', 'ADD', 'TRIM', 'SELL'];
@@ -28,12 +28,12 @@ module.exports = async (req, res) => {
       return handleGet(req, res);
     }
     if (req.method === 'POST') {
-      const auth = await requireRole(req, ['admin']);
+      const auth = await requireCapability(req, 'PF-04');
       if (!auth.ok) return res.status(auth.status).json({ ok: false, error: auth.error });
       return handlePost(req, res, auth.user);
     }
     if (req.method === 'DELETE') {
-      const auth = await requireRole(req, ['admin']);
+      const auth = await requireCapability(req, 'PF-04');
       if (!auth.ok) return res.status(auth.status).json({ ok: false, error: auth.error });
       return handleDelete(req, res);
     }

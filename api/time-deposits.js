@@ -3,11 +3,11 @@
 // POST /api/time-deposits            → create a new deposit (admin only)
 // POST /api/time-deposits { action:'redeem', id } → mark redeemed (admin only)
 //
-// Auth: mirrors /api/performance (HMAC admin token via requireRole).
+// Auth: HMAC admin token via requireCapability (PF-08 read, PF-09 write).
 
 const { loadAndValueTimeDeposits, redeemTimeDeposit } = require('./_time-deposits');
 const { sbInsert } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 function parseBody(req) {
   // Vercel usually parses JSON into req.body already. Prefer that, then fall
@@ -35,8 +35,8 @@ async function handler(req, res) {
   try {
     // GET: any authenticated user (same bar as /api/performance).
     // POST: admin only — creates / redeems portfolio capital rows.
-    const allowed = req.method === 'GET' ? ['any'] : ['admin'];
-    const auth = await requireRole(req, allowed);
+    const capNeeded = req.method === 'GET' ? 'PF-08' : 'PF-09';
+    const auth = await requireCapability(req, capNeeded);
     if (!auth.ok) {
       res.setHeader('content-type', 'application/json');
       res.status(auth.status).end(JSON.stringify({ ok: false, error: auth.error }));

@@ -25,7 +25,7 @@
 // Note: interest_pending stays at 0 until we add a cash_sweep_rate setting.
 
 const { sbSelect } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -104,7 +104,7 @@ async function computePendingDividends() {
 
 const handler = async (req, res) => {
   try {
-    const auth = await requireRole(req, ['any']);
+    const auth = await requireCapability(req, 'PF-07');
     if (!auth.ok) {
       res.status(auth.status || 401).json({ ok: false, error: auth.error || 'Unauthorized' });
       return;

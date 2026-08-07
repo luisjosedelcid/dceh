@@ -11,7 +11,7 @@
 // Returns: { ok: true, id }
 
 const { sbDelete, sbSelect } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const auth = await requireRole(req, ['admin']);
+    const auth = await requireCapability(req, 'PF-03');
     if (!auth.ok) {
       res.status(auth.status || 401).json({ error: auth.error || 'Unauthorized' });
       return;

@@ -10,7 +10,7 @@
 // (date|action|symbol|qty|amount|fees) so re-importing the same CSV is a no-op.
 
 const crypto = require('crypto');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const { sbUpsert, sbInsert } = require('./_supabase');
 const { parseSchwabCsv } = require('./_schwab-parser');
 
@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const auth = await requireRole(req, ['admin']);
+  const auth = await requireCapability(req, 'IM-02');
   if (!auth.ok) {
     res.status(auth.status).json({ error: auth.error });
     return;

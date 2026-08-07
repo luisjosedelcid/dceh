@@ -5,13 +5,13 @@
 
 'use strict';
 
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const { evaluateAll } = require('./_premortem-eval');
 const { sendPremortemAlert } = require('./_notify');
 
 module.exports = async (req, res) => {
   try {
-    const auth = await requireRole(req, ['admin']);
+    const auth = await requireCapability(req, 'PMM-04');
     if (!auth.ok) {
       res.status(auth.status).end(JSON.stringify({ ok: false, error: auth.error }));
       return;

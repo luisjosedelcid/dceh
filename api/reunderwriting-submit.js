@@ -50,7 +50,7 @@
 'use strict';
 
 const { sbSelect, sbInsert, sbUpdate } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const { sendThesisBrokenAlert } = require('./_notify');
 const pipelineStage = require('./_pipeline-stage');
 const { archivePremortemForTicker } = require('./_premortem-archive');
@@ -70,7 +70,7 @@ const ACTION_TO_DECISION_TYPE = {
 
 module.exports = async (req, res) => {
   try {
-    const auth = await requireRole(req, ['admin']);
+    const auth = await requireCapability(req, 'RU-04');
     if (!auth.ok) {
       res.status(auth.status).end(JSON.stringify({ ok: false, error: auth.error }));
       return;

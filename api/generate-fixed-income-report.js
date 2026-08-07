@@ -7,7 +7,7 @@
 
 const PDFDocument = require('pdfkit');
 const { loadAndValueTimeDeposits } = require('./_time-deposits');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 const {
   NAVY, GOLD, GRAY, LIGHT, GREEN, RED, NEAR_BLACK, WHITE, CREAM, ROW_ALT,
@@ -17,7 +17,7 @@ const {
 
 module.exports = async (req, res) => {
   try {
-    const auth = await requireRole(req, ['any']);
+    const auth = await requireCapability(req, 'RP-06');
     if (!auth.ok) {
       res.status(auth.status).json({ error: auth.error });
       return;

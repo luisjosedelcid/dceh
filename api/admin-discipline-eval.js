@@ -9,7 +9,7 @@
 
 'use strict';
 
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 const { evaluateDiscipline } = require('./_discipline-eval');
 const { sendPushToUser } = require('./_push');
 const { sbSelect } = require('./_supabase');
@@ -30,7 +30,7 @@ async function getAdminEmails() {
 
 module.exports = async (req, res) => {
   try {
-    const auth = await requireRole(req, ['admin']);
+    const auth = await requireCapability(req, 'DR-03');
     if (!auth.ok) {
       res.status(auth.status).end(JSON.stringify({ ok: false, error: auth.error }));
       return;

@@ -6,7 +6,7 @@
 'use strict';
 
 const { sbInsert, sbUpdate } = require('./_supabase');
-const { requireRole } = require('./_require-role');
+const { requireCapability } = require('./_require-capability');
 
 const VALID_CATEGORIES = ['business','financial','management','macro','valuation','risk'];
 const VALID_TRIGGER_TYPES = ['quantitative','qualitative_llm','qualitative_manual'];
@@ -15,7 +15,7 @@ const VALID_STATUS = ['monitoring','triggered','resolved','invalidated'];
 module.exports = async (req, res) => {
   try {
     const method = (req.method || 'GET').toUpperCase();
-    const auth = await requireRole(req, ['admin']);
+    const auth = await requireCapability(req, 'FM-02');
     if (!auth.ok) {
       res.status(auth.status).end(JSON.stringify({ ok: false, error: auth.error }));
       return;
