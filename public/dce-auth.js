@@ -401,6 +401,11 @@
     { id:'performance', label:'Performance', href:'/performance.html', single:true },
     // { id:'reporting', label:'Reporting', href:'/reporting.html', single:true }, // archived 2026-05-08: Generate Report movido a /performance.html, monthly close vive en Data Room.
     { id:'dataroom',  label:'Data Room', href:'/dataroom.html',  single:true },
+    // Menu group — admin/user-scoped destinations. Introduced 2026-08-07 to expose
+    // Settings again on desktop after the gear was removed on 2026-08-05.
+    { id:'menu', label:'Menu', items:[
+      { href:'/settings.html', label:'Settings', desc:'Users, idea feed sources, login audit, discipline rules' },
+    ]},
   ];
 
   function _normalizePath(p) {
@@ -609,6 +614,13 @@
     try {
       const sel = ADMIN_ONLY_HREFS.map(h => `a[href="${h}"]`).join(',');
       document.querySelectorAll(sel).forEach(a => { a.style.display = 'none'; });
+      // Hide any nav dropdown group whose visible items are all admin-only
+      document.querySelectorAll('.hnav .dce-group').forEach(g => {
+        const items = g.querySelectorAll('.dce-dropdown a');
+        if (!items.length) return;
+        const anyVisible = Array.from(items).some(a => a.style.display !== 'none');
+        if (!anyVisible) g.style.display = 'none';
+      });
     } catch (e) { /* ignore */ }
   }
   // Re-apply on cross-tab login/logout
