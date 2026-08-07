@@ -167,6 +167,94 @@
     return STATIC_PAGES.map(p => ({ ...p, meta: 'Page' }));
   }
 
+  // Read admin token from dceAuth (falls back to raw localStorage read if the
+  // helper hasn't loaded yet). All three fetchers below silently return an
+  // empty list when there's no token, so the search modal still works
+  // logged out — it just won't include journal / data room / pipeline rows.
+  function _adminToken() {
+    try {
+      if (window.dceAuth && typeof window.dceAuth.token === 'function') {
+        return window.dceAuth.token() || null;
+      }
+    } catch {}
+    try { return localStorage.getItem('dce_admin_token'); } catch { return null; }
+  }
+
+  async function fetchJournalEntries() {
+    const tk = _adminToken();
+    if (!tk) return [];
+    try {
+      const r = await fetch('/api/admin/journal', { headers: { 'x-admin-token': tk } });
+      if (!r.ok) return [];
+      const data = await r.json();
+      return (data.items || []).map(e => {
+        const dt = e.decision_date || (e.created_at || '').slice(0, 10);
+        const type = (e.decision_type || '').toUpperCase();
+        const thesis = (e.thesis || '').replace(/\s+/g, ' ').slice(0, 240);
+        return {
+          type: 'journal',
+          title: `${e.ticker || 'N/A'} — ${type}${dt ? '  ·  ' + dt : ''}`,
+          desc: thesis || '—',
+          url: '/journal.html',
+          keywords: `${e.ticker || ''} ${type} journal decision ${thesis}`,
+          meta: type || 'Journal',
+        };
+      });
+    } catch { return []; }
+  }
+
+  async function fetchDataRoomFiles() {
+    const tk = _adminToken();
+    if (!tk) return [];
+    try {
+      const [filesRes, foldersRes] = await Promise.all([
+        fetch('/api/admin/dataroom-uploaded-files', { headers: { 'x-admin-token': tk } }),
+        fetch('/api/admin/dataroom-folders',        { headers: { 'x-admin-token': tk } }),
+      ]);
+      if (!filesRes.ok) return [];
+      const filesData = await filesRes.json();
+      const foldersMap = new Map();
+      if (foldersRes.ok) {
+        const fd = await foldersRes.json();
+        (fd.items || fd.folders || []).forEach(f => foldersMap.set(f.id, f.name));
+      }
+      return (filesData.items || []).map(f => {
+        const folderName = foldersMap.get(f.folder_id) || 'Data Room';
+        const cleanName = (f.name || f.filename || 'file').replace(/\.(pdf|docx?|xlsx?)$/i, '');
+        return {
+          type: 'dataroom',
+          title: cleanName,
+          desc: `${folderName} · ${(f.mime_type || 'file').split('/').pop().toUpperCase()}`,
+          url: f.url || '/dataroom.html',
+          external: true,
+          keywords: `${cleanName} ${folderName} ${f.detail || ''} data room`,
+          meta: folderName,
+        };
+      });
+    } catch { return []; }
+  }
+
+  async function fetchPipelineCards() {
+    const tk = _adminToken();
+    if (!tk) return [];
+    try {
+      const r = await fetch('/api/admin/pipeline-cards', { headers: { 'x-admin-token': tk } });
+      if (!r.ok) return [];
+      const data = await r.json();
+      return (data.items || []).map(c => {
+        const stage = (c.stage || 'backlog').toUpperCase();
+        return {
+          type: 'research',
+          title: `${c.ticker} — ${c.name || c.ticker}`,
+          desc: `Research pipeline · ${stage}` + (c.note ? '  ·  ' + String(c.note).replace(/\s+/g,' ').slice(0,120) : ''),
+          url: '/research.html',
+          keywords: `${c.ticker} ${c.name || ''} ${stage} pipeline workflow kanban ${c.note || ''}`,
+          meta: stage,
+        };
+      });
+    } catch { return []; }
+  }
+
   async function fetchEarnings() {
     const out = [];
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -205,15 +293,21 @@
     if (INDEX) return INDEX;
     if (indexPromise) return indexPromise;
     indexPromise = (async () => {
-      const [companies, supDocs, earnings] = await Promise.all([
+      const [companies, supDocs, earnings, journal, dataroom, research] = await Promise.all([
         fetchCompanies(),
         fetchSupabaseDocs(),
         fetchEarnings(),
+        fetchJournalEntries(),
+        fetchDataRoomFiles(),
+        fetchPipelineCards(),
       ]);
       INDEX = [
         ...buildStaticPagesIndex(),
         ...companies,
+        ...research,
+        ...journal,
         ...buildStaticDocsIndex(),
+        ...dataroom,
         ...supDocs,
         ...earnings,
       ];
@@ -276,12 +370,15 @@
   // ──────────────────────────────────────────────────────────
   let overlay, input, resultsEl, footerEl, currentResults = [], activeIdx = 0;
 
-  const ICONS = { page: '◧', company: '◆', doc: '▤', event: '▸' };
+  const ICONS = { page: '◧', company: '◆', doc: '▤', event: '▸', journal: '◉', dataroom: '▣', research: '△' };
   const GROUPS = [
-    { type: 'page',    label: 'Pages' },
-    { type: 'company', label: 'Companies' },
-    { type: 'event',   label: 'Earnings' },
-    { type: 'doc',     label: 'Documents' },
+    { type: 'page',     label: 'Pages' },
+    { type: 'company',  label: 'Companies' },
+    { type: 'research', label: 'Research pipeline' },
+    { type: 'journal',  label: 'Decision journal' },
+    { type: 'event',    label: 'Earnings' },
+    { type: 'dataroom', label: 'Data Room' },
+    { type: 'doc',      label: 'Documents (static)' },
   ];
 
   function buildModal() {
