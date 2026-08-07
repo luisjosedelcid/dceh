@@ -235,6 +235,7 @@
     <button class="tab active" data-tab="activity" type="button" id="tab-activity">Activity log</button>
     <button class="tab" data-tab="ideafeed" type="button" id="tab-ideafeed">Idea Feed sources</button>
     <button class="tab admin-only" data-tab="users" type="button" id="tab-users" style="display:none">Users</button>
+    <button class="tab admin-only" data-tab="rbac" type="button" id="tab-rbac" style="display:none">Permisos</button>
     <button class="tab admin-only" data-tab="audit" type="button" id="tab-audit" style="display:none">Login audit</button>
     <button class="tab admin-only" data-tab="system" type="button" id="tab-system" style="display:none">System</button>
     <button class="tab" data-tab="account" type="button" id="tab-account">My account</button>
@@ -344,6 +345,32 @@
       </div>
     </div>
   </div><!-- /tab-panel users -->
+
+  <!-- TAB: RBAC MATRIX (admin only) -->
+  <div class="tab-panel" data-panel="rbac">
+    <div class="section" style="border-top-color:var(--gold)">
+      <div class="section-head">
+        <div class="section-name">Permisos por rol (RBAC)</div>
+        <div class="section-meta" id="rbac-meta">—</div>
+      </div>
+      <div class="section-desc">
+        Matriz granular de capacidades. Marca la casilla para conceder una capacidad a un rol. El rol <strong>CIO</strong> siempre tiene todas las capacidades y no se puede modificar. Los cambios se guardan al pulsar <em>Guardar cambios</em> y quedan auditados.
+      </div>
+      <div style="padding:0 24px 22px">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+          <input type="text" id="rbac-search" placeholder="Buscar por ID (DJ-03) o descripción…" style="flex:1;min-width:220px;padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:12px">
+          <select id="rbac-domain-filter" style="padding:8px;border:1px solid var(--rule);font-family:inherit;font-size:12px">
+            <option value="">Todos los dominios</option>
+          </select>
+          <span id="rbac-dirty-badge" style="display:none;font-size:11px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase">• Cambios sin guardar</span>
+          <button class="btn" type="button" onclick="rbacReset()" id="rbac-btn-reset" style="font-size:11px;padding:6px 12px" disabled>Descartar</button>
+          <button class="btn" type="button" onclick="rbacSave()" id="rbac-btn-save" style="font-size:11px;padding:6px 12px;background:var(--navy);color:var(--white)" disabled>Guardar cambios</button>
+        </div>
+        <div id="rbac-status" style="font-size:11px;font-style:italic;margin-bottom:10px;min-height:14px"></div>
+        <div id="rbac-matrix-container" style="overflow-x:auto"><div class="loading-files">Cargando matriz…</div></div>
+      </div>
+    </div>
+  </div><!-- /tab-panel rbac -->
 
   <!-- TAB: LOGIN AUDIT (admin only) -->
   <div class="tab-panel" data-panel="audit">
@@ -737,6 +764,7 @@ document.querySelectorAll('.tab').forEach(t => {
       loadUsersAdmin();
       loadAnalystsAdmin();
     }
+    if (t.dataset.tab === 'rbac') loadRbacMatrix();
     if (t.dataset.tab === 'audit') loadAuditLog();
     if (t.dataset.tab === 'account') loadMyAccount();
     if (t.dataset.tab === 'discipline') loadDisciplineRules();
@@ -1390,6 +1418,189 @@ async function sendUserResetLink(emailEnc) {
     window.prompt('Copy this reset link (valid ' + data.expires_in_hours + 'h):', data.reset_url);
   } catch (e) {
     alert('Error: ' + e.message);
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+// RBAC MATRIX (CIO only via capability US-07)
+// ────────────────────────────────────────────────────────────────
+let rbacState = {
+  capabilities: [],
+  roles: ['cio','analyst','viewer'],
+  originalMatrix: {},
+  currentMatrix: {},
+  loaded: false,
+};
+
+async function loadRbacMatrix() {
+  const container = document.getElementById('rbac-matrix-container');
+  const meta = document.getElementById('rbac-meta');
+  const u = currentUser();
+  if (!isAdmin() || !u || (u.role !== 'admin' && u.role !== 'cio')) {
+    container.innerHTML = '<div class="loading-files">Sign in as CIO to manage permissions</div>';
+    return;
+  }
+  container.innerHTML = '<div class="loading-files">Cargando matriz…</div>';
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const r = await fetch('/api/admin/capabilities', { headers: { 'x-admin-token': token } });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    rbacState.capabilities = data.capabilities || [];
+    rbacState.roles = data.roles || ['cio','analyst','viewer'];
+    rbacState.originalMatrix = {};
+    rbacState.currentMatrix = {};
+    for (const role of rbacState.roles) {
+      const set = new Set(data.matrix[role] || []);
+      rbacState.originalMatrix[role] = new Set(set);
+      rbacState.currentMatrix[role] = new Set(set);
+    }
+    rbacState.loaded = true;
+    populateRbacDomainFilter();
+    renderRbacMatrix();
+    updateRbacDirtyState();
+    meta.textContent = `${rbacState.capabilities.length} capacidades · ${rbacState.roles.length} roles`;
+  } catch (e) {
+    container.innerHTML = '<div class="loading-files" style="color:var(--red)">Error: ' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+function populateRbacDomainFilter() {
+  const sel = document.getElementById('rbac-domain-filter');
+  const domains = [...new Set(rbacState.capabilities.map(c => c.domain))].sort();
+  sel.innerHTML = '<option value="">Todos los dominios</option>' +
+    domains.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+  sel.onchange = renderRbacMatrix;
+  const searchInput = document.getElementById('rbac-search');
+  searchInput.oninput = renderRbacMatrix;
+}
+
+function renderRbacMatrix() {
+  if (!rbacState.loaded) return;
+  const container = document.getElementById('rbac-matrix-container');
+  const search = (document.getElementById('rbac-search').value || '').trim().toLowerCase();
+  const domain = document.getElementById('rbac-domain-filter').value;
+
+  const filtered = rbacState.capabilities.filter(c => {
+    if (domain && c.domain !== domain) return false;
+    if (search) {
+      const hay = (c.id + ' ' + (c.description||'') + ' ' + (c.endpoint||'')).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="loading-files">Sin resultados con este filtro</div>';
+    return;
+  }
+
+  const byDomain = {};
+  for (const c of filtered) {
+    if (!byDomain[c.domain]) byDomain[c.domain] = [];
+    byDomain[c.domain].push(c);
+  }
+
+  let html = '<table class="settings-tbl" style="width:100%;border-collapse:collapse;font-size:11px;min-width:720px">';
+  html += '<thead><tr style="background:var(--navy);color:var(--white);position:sticky;top:0;z-index:2">';
+  html += '<th style="text-align:left;padding:8px 10px">ID</th>';
+  html += '<th style="text-align:left;padding:8px 10px">Descripción</th>';
+  html += '<th style="text-align:left;padding:8px 10px;font-size:10px;letter-spacing:0.08em;text-transform:uppercase">Endpoint</th>';
+  for (const role of rbacState.roles) {
+    html += `<th style="padding:8px 10px;text-align:center;text-transform:uppercase;letter-spacing:0.1em;font-size:10px">${escapeHtml(role)}</th>`;
+  }
+  html += '</tr></thead><tbody>';
+
+  for (const d of Object.keys(byDomain).sort()) {
+    html += `<tr style="background:var(--paper)"><td colspan="${3 + rbacState.roles.length}" style="padding:6px 10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;font-size:10px;color:var(--gold)">${escapeHtml(d)} · ${byDomain[d].length}</td></tr>`;
+    for (const c of byDomain[d]) {
+      html += '<tr style="border-bottom:1px solid var(--rule)">';
+      html += `<td style="padding:6px 10px;font-family:monospace;font-size:11px">${escapeHtml(c.id)}</td>`;
+      html += `<td style="padding:6px 10px">${escapeHtml(c.description || '')}</td>`;
+      html += `<td style="padding:6px 10px;font-family:monospace;font-size:10px;color:var(--gray-mid)">${escapeHtml(c.endpoint || '')}</td>`;
+      for (const role of rbacState.roles) {
+        const isCio = role === 'cio';
+        const granted = rbacState.currentMatrix[role].has(c.id);
+        const changed = granted !== rbacState.originalMatrix[role].has(c.id);
+        const bgStyle = changed ? 'background:rgba(184,139,71,0.15);' : '';
+        html += `<td style="padding:6px 10px;text-align:center;${bgStyle}">`;
+        html += `<input type="checkbox" ${granted ? 'checked' : ''} ${isCio ? 'disabled' : ''} onchange="rbacToggle('${role}','${c.id}',this.checked)" title="${isCio ? 'CIO tiene todas las capacidades (inmutable)' : ''}">`;
+        html += '</td>';
+      }
+      html += '</tr>';
+    }
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function rbacToggle(role, capId, checked) {
+  if (role === 'cio') return;
+  if (checked) rbacState.currentMatrix[role].add(capId);
+  else rbacState.currentMatrix[role].delete(capId);
+  updateRbacDirtyState();
+  renderRbacMatrix();
+}
+
+function computeRbacDiff() {
+  const changes = [];
+  for (const role of rbacState.roles) {
+    if (role === 'cio') continue;
+    const orig = rbacState.originalMatrix[role];
+    const curr = rbacState.currentMatrix[role];
+    for (const id of curr) if (!orig.has(id)) changes.push({ role, capability_id: id, granted: true });
+    for (const id of orig) if (!curr.has(id)) changes.push({ role, capability_id: id, granted: false });
+  }
+  return changes;
+}
+
+function updateRbacDirtyState() {
+  const diff = computeRbacDiff();
+  const dirty = diff.length > 0;
+  document.getElementById('rbac-btn-save').disabled = !dirty;
+  document.getElementById('rbac-btn-reset').disabled = !dirty;
+  const badge = document.getElementById('rbac-dirty-badge');
+  badge.style.display = dirty ? '' : 'none';
+  badge.textContent = dirty ? `• ${diff.length} cambio${diff.length===1?'':'s'} sin guardar` : '';
+}
+
+function rbacReset() {
+  if (!confirm('¿Descartar todos los cambios sin guardar?')) return;
+  for (const role of rbacState.roles) {
+    rbacState.currentMatrix[role] = new Set(rbacState.originalMatrix[role]);
+  }
+  renderRbacMatrix();
+  updateRbacDirtyState();
+  document.getElementById('rbac-status').textContent = '';
+}
+
+async function rbacSave() {
+  const diff = computeRbacDiff();
+  if (diff.length === 0) return;
+  const summary = diff.slice(0, 5).map(c => `${c.role} · ${c.capability_id} → ${c.granted?'GRANT':'REVOKE'}`).join('\n');
+  const more = diff.length > 5 ? `\n… y ${diff.length-5} más` : '';
+  if (!confirm(`Se aplicarán ${diff.length} cambio${diff.length===1?'':'s'}:\n\n${summary}${more}\n\n¿Continuar?`)) return;
+  const btn = document.getElementById('rbac-btn-save');
+  btn.disabled = true;
+  const status = document.getElementById('rbac-status');
+  status.textContent = 'Guardando…';
+  status.style.color = 'var(--gray-mid)';
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const r = await fetch('/api/admin/capabilities', {
+      method: 'PATCH',
+      headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ changes: diff }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    status.textContent = `✓ ${data.applied} cambio${data.applied===1?'':'s'} aplicado${data.applied===1?'':'s'}`;
+    status.style.color = 'var(--green, #2c7a3e)';
+    await loadRbacMatrix();
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = 'var(--red)';
+    btn.disabled = false;
   }
 }
 
