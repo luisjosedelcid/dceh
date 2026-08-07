@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // DCE Holdings — Purge old login_attempts rows.
-// Runs daily; deletes rows older than 24h.
+// Runs daily; deletes rows older than 90 days.
+// (Was 24h until 2026-08-07 when audit log feature landed.)
 // Auth: x-cron-secret header OR x-vercel-cron header.
 // ═══════════════════════════════════════════════════════════════════
 
@@ -17,7 +18,7 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
   try {
     await sbDelete('login_attempts', `attempted_at=lt.${encodeURIComponent(cutoff)}`);
     res.status(200).json({ ok: true, cutoff });

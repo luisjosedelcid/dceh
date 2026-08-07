@@ -235,6 +235,7 @@
     <button class="tab active" data-tab="activity" type="button" id="tab-activity">Activity log</button>
     <button class="tab" data-tab="ideafeed" type="button" id="tab-ideafeed">Idea Feed sources</button>
     <button class="tab admin-only" data-tab="users" type="button" id="tab-users" style="display:none">Users</button>
+    <button class="tab admin-only" data-tab="audit" type="button" id="tab-audit" style="display:none">Login audit</button>
     <button class="tab" data-tab="account" type="button" id="tab-account">My account</button>
     <button class="tab" data-tab="discipline" type="button" id="tab-discipline">Discipline rules</button>
   </div>
@@ -342,6 +343,50 @@
       </div>
     </div>
   </div><!-- /tab-panel users -->
+
+  <!-- TAB: LOGIN AUDIT (admin only) -->
+  <div class="tab-panel" data-panel="audit">
+    <div class="section" style="border-top-color:var(--gold)">
+      <div class="section-head">
+        <div class="section-name">Login audit</div>
+        <div class="section-meta" id="audit-window-meta">Last 30 days</div>
+      </div>
+      <div class="section-desc">
+        Every login attempt (password, PIN, passkey) is recorded with outcome, IP, user agent and failure reason. Retention: 90 days.
+      </div>
+      <div style="padding:0 24px 22px">
+        <div id="audit-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;font-size:12px">
+          <div class="loading-files" style="grid-column:span 4">Sign in as admin to view audit log</div>
+        </div>
+
+        <form onsubmit="return refreshAuditLog(event)" style="display:grid;grid-template-columns:0.7fr 1.3fr 0.7fr 0.9fr 0.6fr;gap:10px;font-size:12px;margin-bottom:14px;align-items:center">
+          <select id="audit-days" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+            <option value="1">Last 24h</option>
+            <option value="7">Last 7 days</option>
+            <option value="30" selected>Last 30 days</option>
+            <option value="90">Last 90 days</option>
+          </select>
+          <input type="email" id="audit-email" placeholder="Filter by email (optional)" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+          <select id="audit-success" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+            <option value="">All outcomes</option>
+            <option value="true">Success only</option>
+            <option value="false">Failures only</option>
+          </select>
+          <select id="audit-method" style="padding:8px;border:1px solid var(--rule);font-family:inherit">
+            <option value="">All methods</option>
+            <option value="password">Password</option>
+            <option value="pin">PIN</option>
+            <option value="passkey">Passkey</option>
+          </select>
+          <button class="btn" type="submit">Refresh</button>
+        </form>
+
+        <div id="audit-table-wrap" style="overflow-x:auto">
+          <div class="loading-files">Loading…</div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /tab-panel audit -->
 
   <!-- TAB: MY ACCOUNT -->
   <div class="tab-panel" data-panel="account">
@@ -650,6 +695,7 @@ document.querySelectorAll('.tab').forEach(t => {
       loadUsersAdmin();
       loadAnalystsAdmin();
     }
+    if (t.dataset.tab === 'audit') loadAuditLog();
     if (t.dataset.tab === 'account') loadMyAccount();
     if (t.dataset.tab === 'discipline') loadDisciplineRules();
   });
@@ -1668,6 +1714,109 @@ loadAudit({ reset: true });
 
   refresh();
 })();
+
+// ══════════════════════════════════════════════════════════
+// LOGIN AUDIT (admin only)
+// ══════════════════════════════════════════════════════════
+function refreshAuditLog(ev) {
+  if (ev && ev.preventDefault) ev.preventDefault();
+  loadAuditLog();
+  return false;
+}
+
+async function loadAuditLog() {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const statsEl = document.getElementById('audit-stats');
+  const tableWrap = document.getElementById('audit-table-wrap');
+  const meta = document.getElementById('audit-window-meta');
+  if (!token) {
+    statsEl.innerHTML = '<div class="loading-files" style="grid-column:span 4">Sign in as admin to view audit log</div>';
+    tableWrap.innerHTML = '';
+    return;
+  }
+  const days   = document.getElementById('audit-days').value || '30';
+  const email  = document.getElementById('audit-email').value.trim().toLowerCase();
+  const succ   = document.getElementById('audit-success').value;
+  const method = document.getElementById('audit-method').value;
+  const qs = new URLSearchParams({ days, limit: '200' });
+  if (email)  qs.set('email', email);
+  if (succ)   qs.set('success', succ);
+  if (method) qs.set('method', method);
+
+  meta.textContent = 'Last ' + days + (days === '1' ? ' day' : ' days');
+  tableWrap.innerHTML = '<div class="loading-files">Loading…</div>';
+
+  try {
+    const r = await fetch('/api/admin/audit-logins?' + qs.toString(), { headers: { 'x-admin-token': token } });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      statsEl.innerHTML = '<div class="loading-files" style="grid-column:span 4;color:#b23">' + escapeHtml(err.error || 'Query failed') + '</div>';
+      tableWrap.innerHTML = '';
+      return;
+    }
+    const data = await r.json();
+    renderAuditStats(data.stats || {});
+    renderAuditTable(data.items || []);
+  } catch (e) {
+    statsEl.innerHTML = '<div class="loading-files" style="grid-column:span 4;color:#b23">Network error</div>';
+    tableWrap.innerHTML = '';
+  }
+}
+
+function renderAuditStats(s) {
+  const el = document.getElementById('audit-stats');
+  function card(label, value, color) {
+    return '<div style="padding:12px 14px;background:var(--white);border:1px solid var(--rule);border-left:3px solid ' + (color || 'var(--gold)') + '">' +
+      '<div style="font-family:Archivo,sans-serif;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:4px">' + escapeHtml(label) + '</div>' +
+      '<div style="font-size:22px;font-weight:700;color:var(--navy);letter-spacing:-0.02em">' + escapeHtml(String(value)) + '</div>' +
+    '</div>';
+  }
+  const reasons = s.by_reason || {};
+  const reasonTop = Object.entries(reasons).sort((a,b) => b[1] - a[1])[0];
+  const reasonLabel = reasonTop ? (reasonTop[0] + ' (' + reasonTop[1] + ')') : '—';
+  el.innerHTML =
+    card('Total attempts', s.total || 0) +
+    card('Successful',     s.success || 0, '#5a8a3a') +
+    card('Failed',          s.failed || 0,  '#b23') +
+    card('Top failure',     reasonLabel);
+}
+
+function renderAuditTable(items) {
+  const wrap = document.getElementById('audit-table-wrap');
+  if (!items.length) {
+    wrap.innerHTML = '<div class="loading-files">No attempts in this window.</div>';
+    return;
+  }
+  const rows = items.map(r => {
+    const when = new Date(r.attempted_at);
+    const whenStr = when.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+    const okBadge = r.success
+      ? '<span style="display:inline-block;padding:2px 6px;background:#e7f2dc;color:#3a6a1e;font-size:10px;font-weight:600;border-radius:2px">OK</span>'
+      : '<span style="display:inline-block;padding:2px 6px;background:#fce4e4;color:#a52020;font-size:10px;font-weight:600;border-radius:2px">FAIL</span>';
+    const reason = r.failure_reason ? escapeHtml(r.failure_reason) : '—';
+    const ua = r.user_agent ? escapeHtml(String(r.user_agent).slice(0, 60) + (r.user_agent.length > 60 ? '…' : '')) : '—';
+    return '<tr>' +
+      '<td style="padding:6px 10px;font-family:monospace;font-size:11px;color:var(--gray-mid);white-space:nowrap">' + escapeHtml(whenStr) + '</td>' +
+      '<td style="padding:6px 10px;font-size:11px">' + escapeHtml(r.email || '—') + '</td>' +
+      '<td style="padding:6px 10px;font-family:monospace;font-size:11px;color:var(--gray-mid)">' + escapeHtml(r.ip || '—') + '</td>' +
+      '<td style="padding:6px 10px;font-size:11px">' + escapeHtml(r.auth_method || 'password') + '</td>' +
+      '<td style="padding:6px 10px">' + okBadge + '</td>' +
+      '<td style="padding:6px 10px;font-family:monospace;font-size:11px;color:#a52020">' + reason + '</td>' +
+      '<td style="padding:6px 10px;font-size:11px;color:var(--gray-mid)" title="' + escapeHtml(r.user_agent || '') + '">' + ua + '</td>' +
+    '</tr>';
+  }).join('');
+  wrap.innerHTML =
+    '<table style="width:100%;border-collapse:collapse;font-size:11px">' +
+    '<thead><tr style="background:var(--navy);color:var(--white)">' +
+      '<th style="padding:8px 10px;text-align:left;font-family:Archivo;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Timestamp</th>' +
+      '<th style="padding:8px 10px;text-align:left;font-family:Archivo;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Email</th>' +
+      '<th style="padding:8px 10px;text-align:left;font-family:Archivo;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">IP</th>' +
+      '<th style="padding:8px 10px;text-align:left;font-family:Archivo;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Method</th>' +
+      '<th style="padding:8px 10px;text-align:left;font-family:Archivo;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Outcome</th>' +
+      '<th style="padding:8px 10px;text-align:left;font-family:Archivo;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Failure reason</th>' +
+      '<th style="padding:8px 10px;text-align:left;font-family:Archivo;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">User agent</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table>';
+}
 </script>
 <script src="/search.js" defer></script>
 </body>

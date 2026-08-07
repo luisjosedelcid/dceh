@@ -7,7 +7,28 @@
 
 const bcrypt = require('bcryptjs');
 const { signToken } = require('../_admin-auth');
-const { sbSelect, sbUpdate } = require('../_supabase');
+const { sbSelect, sbUpdate, sbInsert } = require('../_supabase');
+
+function getClientIp(req) {
+  const xff = (req.headers['x-forwarded-for'] || '').toString();
+  if (xff) return xff.split(',')[0].trim();
+  const xri = (req.headers['x-real-ip'] || '').toString();
+  if (xri) return xri.trim();
+  return (req.socket && req.socket.remoteAddress) || 'unknown';
+}
+
+async function recordAttempt({ email, ip, success, userAgent, failureReason }) {
+  try {
+    await sbInsert('login_attempts', {
+      email: (email || '').toLowerCase().slice(0, 200),
+      ip: String(ip || 'unknown').slice(0, 64),
+      success: !!success,
+      user_agent: userAgent ? String(userAgent).slice(0, 200) : null,
+      auth_method: 'pin',
+      failure_reason: success ? null : (failureReason || null),
+    });
+  } catch { /* best-effort */ }
+}
 
 const MAX_ATTEMPTS = 5;
 const LOCK_MINUTES = 15;
@@ -27,6 +48,8 @@ module.exports = async (req, res) => {
   const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
   const email = String(body.email || '').toLowerCase();
   const pin = String(body.pin || '');
+  const ip = getClientIp(req);
+  const ua = req.headers['user-agent'] || null;
 
   if (!email || !/^\d{6}$/.test(pin)) {
     res.status(400).json({ error: 'Invalid input' });
@@ -46,6 +69,7 @@ module.exports = async (req, res) => {
   ]);
 
   if (!pinRows.length || !userRows.length) {
+    await recordAttempt({ email, ip, success: false, userAgent: ua, failureReason: 'unknown_email' });
     res.status(401).json({ error: 'Invalid credentials' });
     return;
   }
@@ -54,6 +78,7 @@ module.exports = async (req, res) => {
 
   // Check lockout
   if (pinRow.locked_until && new Date(pinRow.locked_until).getTime() > Date.now()) {
+    await recordAttempt({ email, ip, success: false, userAgent: ua, failureReason: 'rate_limited' });
     const remainingSec = Math.ceil((new Date(pinRow.locked_until).getTime() - Date.now()) / 1000);
     res.status(429).json({ error: `Locked. Try again in ${Math.ceil(remainingSec/60)} min` });
     return;
@@ -68,6 +93,7 @@ module.exports = async (req, res) => {
       patch.failed_attempts = 0;
     }
     try { await sbUpdate('admin_user_pins', `email=eq.${encodeURIComponent(email)}`, patch); } catch (_) {}
+    await recordAttempt({ email, ip, success: false, userAgent: ua, failureReason: 'bad_password' });
     res.status(401).json({ error: 'Invalid credentials', attemptsLeft: Math.max(0, MAX_ATTEMPTS - attempts) });
     return;
   }
@@ -80,6 +106,7 @@ module.exports = async (req, res) => {
       last_used_at: new Date().toISOString(),
     });
   } catch (_) {}
+  await recordAttempt({ email, ip, success: true, userAgent: ua });
 
   const { token, expiresAt } = signToken(email, ADMIN_TOKEN_SECRET);
   res.status(200).json({

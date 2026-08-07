@@ -28,13 +28,15 @@ function getClientIp(req) {
   return (req.socket && req.socket.remoteAddress) || 'unknown';
 }
 
-async function recordAttempt({ email, ip, success, userAgent }) {
+async function recordAttempt({ email, ip, success, userAgent, failureReason }) {
   try {
     await sbInsert('login_attempts', {
       email: (email || '').toLowerCase().slice(0, 200),
       ip: String(ip || 'unknown').slice(0, 64),
       success: !!success,
       user_agent: userAgent ? String(userAgent).slice(0, 200) : null,
+      auth_method: 'password',
+      failure_reason: success ? null : (failureReason || null),
     });
   } catch { /* best-effort */ }
 }
@@ -84,7 +86,7 @@ module.exports = async (req, res) => {
 
   // ── Rate limit gate ───────────────────────────────────────
   if (await isRateLimited({ email: emailIn, ip })) {
-    await recordAttempt({ email: emailIn, ip, success: false, userAgent: ua });
+    await recordAttempt({ email: emailIn, ip, success: false, userAgent: ua, failureReason: 'rate_limited' });
     res.setHeader('Retry-After', String(RATE_WINDOW_MIN * 60));
     res.status(429).json({ error: 'Too many attempts. Try again later.' });
     return;
@@ -115,7 +117,8 @@ module.exports = async (req, res) => {
   }
 
   if (!matched) {
-    await recordAttempt({ email: emailIn, ip, success: false, userAgent: ua });
+    const reason = users.length === 0 ? 'unknown_email' : 'bad_password';
+    await recordAttempt({ email: emailIn, ip, success: false, userAgent: ua, failureReason: reason });
     await new Promise(r => setTimeout(r, 400));
     res.status(401).json({ error: 'Invalid email or password' });
     return;

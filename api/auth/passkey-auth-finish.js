@@ -12,7 +12,28 @@ const {
   fromB64Url,
 } = require('../_webauthn');
 const { signToken } = require('../_admin-auth');
-const { sbSelect, sbUpdate, sbDelete } = require('../_supabase');
+const { sbSelect, sbUpdate, sbDelete, sbInsert } = require('../_supabase');
+
+function getClientIp(req) {
+  const xff = (req.headers['x-forwarded-for'] || '').toString();
+  if (xff) return xff.split(',')[0].trim();
+  const xri = (req.headers['x-real-ip'] || '').toString();
+  if (xri) return xri.trim();
+  return (req.socket && req.socket.remoteAddress) || 'unknown';
+}
+
+async function recordAttempt({ email, ip, success, userAgent, failureReason }) {
+  try {
+    await sbInsert('login_attempts', {
+      email: (email || '').toLowerCase().slice(0, 200),
+      ip: String(ip || 'unknown').slice(0, 64),
+      success: !!success,
+      user_agent: userAgent ? String(userAgent).slice(0, 200) : null,
+      auth_method: 'passkey',
+      failure_reason: success ? null : (failureReason || null),
+    });
+  } catch { /* best-effort */ }
+}
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -28,6 +49,8 @@ module.exports = async (req, res) => {
 
   const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
   const response = body.response;
+  const ip = getClientIp(req);
+  const ua = req.headers['user-agent'] || null;
   if (!response || !response.id) {
     res.status(400).json({ error: 'Missing response' });
     return;
@@ -40,6 +63,7 @@ module.exports = async (req, res) => {
     `select=id,email,credential_id,public_key,counter,transports&credential_id=eq.${encodeURIComponent(credentialId)}&limit=1`
   );
   if (!creds.length) {
+    await recordAttempt({ email: null, ip, success: false, userAgent: ua, failureReason: 'unknown_email' });
     res.status(404).json({ error: 'Unknown credential' });
     return;
   }
@@ -52,6 +76,7 @@ module.exports = async (req, res) => {
     `select=email,display_name,role&email=eq.${encodeURIComponent(email)}&is_active=eq.true&limit=1`
   );
   if (!users.length) {
+    await recordAttempt({ email, ip, success: false, userAgent: ua, failureReason: 'user_inactive' });
     res.status(403).json({ error: 'User inactive' });
     return;
   }
@@ -65,10 +90,12 @@ module.exports = async (req, res) => {
   // Pick the newest matching challenge (email match or anon)
   const ch = challenges.find(c => c.email === email || c.email === '__anon__');
   if (!ch) {
+    await recordAttempt({ email, ip, success: false, userAgent: ua, failureReason: 'no_challenge' });
     res.status(400).json({ error: 'No pending authentication challenge' });
     return;
   }
   if (new Date(ch.expires_at).getTime() < Date.now()) {
+    await recordAttempt({ email, ip, success: false, userAgent: ua, failureReason: 'challenge_expired' });
     res.status(400).json({ error: 'Challenge expired' });
     return;
   }
@@ -90,11 +117,13 @@ module.exports = async (req, res) => {
       requireUserVerification: true,
     });
   } catch (e) {
+    await recordAttempt({ email, ip, success: false, userAgent: ua, failureReason: 'verify_error' });
     res.status(400).json({ error: 'Verification failed', detail: String(e.message || e).slice(0, 200) });
     return;
   }
 
   if (!verification.verified) {
+    await recordAttempt({ email, ip, success: false, userAgent: ua, failureReason: 'bad_assertion' });
     res.status(400).json({ error: 'Assertion not verified' });
     return;
   }
@@ -114,6 +143,8 @@ module.exports = async (req, res) => {
 
   // Consume challenge
   try { await sbDelete('admin_webauthn_challenges', `id=eq.${ch.id}`); } catch (_) {}
+
+  await recordAttempt({ email, ip, success: true, userAgent: ua });
 
   // Emit admin token (same mechanism as password login)
   const { token, expiresAt } = signToken(email, ADMIN_TOKEN_SECRET);
