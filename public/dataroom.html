@@ -196,15 +196,32 @@
     .subfolder-name{font-size:12px}
     .subfolder-count{min-width:auto;font-size:10px}
 
-    /* File rows: compact and no horizontal overflow */
-    .file-item{padding:12px 12px;gap:10px;flex-wrap:wrap}
-    .file-type{font-size:8px;padding:3px 6px;min-width:36px}
-    .file-name{font-size:12px}
-    .file-detail{font-size:10px}
-    .file-uploaded{font-size:9px;margin-right:8px}
-    .file-action{font-size:9px;letter-spacing:0.08em}
-    /* Action buttons visible without hover on touch */
-    .file-del-btn, .file-rename-btn{opacity:1}
+    /* File rows on mobile: two-row grid.
+       Row 1: [badge] [title + description]
+       Row 2: [date .......... action rename delete]
+       This matches the clean look of subfolder rows in /research and avoids
+       the wrap-chaos we had when flexing 5 heterogeneous children on 375px. */
+    .file-item{
+      display:grid;
+      grid-template-columns:44px 1fr auto auto auto auto;
+      grid-template-areas:
+        "badge info info info info info"
+        ".     date action rename del ..";
+      column-gap:8px;
+      row-gap:10px;
+      padding:12px 12px;
+      align-items:center
+    }
+    .file-item > .file-type{grid-area:badge;align-self:start;margin-top:2px;font-size:9px;padding:4px 6px;min-width:0;width:44px;text-align:center;box-sizing:border-box}
+    .file-item > .file-info{grid-area:info;min-width:0}
+    .file-name{font-size:13px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3;margin-bottom:2px}
+    .file-detail{font-size:11px;line-height:1.35;color:var(--gray-mid);white-space:normal}
+    .file-item > .file-uploaded{grid-area:date;font-size:10px;margin-right:0;justify-self:start}
+    .file-item > .file-action{grid-area:action;font-size:10px;letter-spacing:0.1em;justify-self:end;margin-left:auto}
+    .file-item > .file-rename-btn{grid-area:rename;opacity:1;margin-left:0}
+    .file-item > .file-del-btn{grid-area:del;opacity:1;margin-left:0}
+    /* .file-draggable has the same visible children as .file-item plus a rename button;
+       both share the grid shape defined above. */
 
     /* Modals */
     .modal{padding:20px 20px;max-width:calc(100vw - 32px)}
