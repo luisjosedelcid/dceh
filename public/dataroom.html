@@ -166,6 +166,54 @@
   .modal-error{color:var(--red);font-size:11px;margin-top:12px;min-height:14px}
 
   footer{background:var(--navy);padding:16px 48px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.08em}
+
+  /* ── Mobile (0–720px) ────────────────────────────────────────────
+     Range-based breakpoint. Tablet (721–1023) and desktop (1024+) keep desktop defaults.
+     Do not overlap with parent responsive.css — those rules are for cockpit/nav, not dataroom. */
+  @media (max-width: 720px) {
+    main{padding:20px 16px 40px;max-width:100%;overflow-x:hidden}
+    h1{font-size:26px}
+    .sub{font-size:12px}
+
+    /* Top row: breadcrumb + toolbar stack, no side scroll */
+    .top-row{flex-direction:column;align-items:stretch;gap:12px;margin-bottom:18px}
+    .breadcrumb{font-size:12px;flex-wrap:wrap;line-height:1.6}
+
+    /* Toolbar: 2 columns grid so 4 buttons wrap 2×2, buttons fill width */
+    .toolbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+    .toolbar .btn{padding:10px 8px;font-size:10px;letter-spacing:0.08em;justify-content:center;text-align:center;line-height:1.2;width:100%}
+
+    /* Search bar */
+    .search-bar{flex-direction:column;align-items:stretch;gap:8px}
+    .search-bar input{width:100%;box-sizing:border-box}
+
+    /* Folder grid: 1 column on mobile */
+    .folder-grid{grid-template-columns:1fr}
+
+    /* Subfolder rows */
+    .subfolder{padding:10px 12px;gap:8px}
+    .subfolder-num{min-width:20px;font-size:8px}
+    .subfolder-name{font-size:12px}
+    .subfolder-count{min-width:auto;font-size:10px}
+
+    /* File rows: compact and no horizontal overflow */
+    .file-item{padding:12px 12px;gap:10px;flex-wrap:wrap}
+    .file-type{font-size:8px;padding:3px 6px;min-width:36px}
+    .file-name{font-size:12px}
+    .file-detail{font-size:10px}
+    .file-uploaded{font-size:9px;margin-right:8px}
+    .file-action{font-size:9px;letter-spacing:0.08em}
+    /* Action buttons visible without hover on touch */
+    .file-del-btn, .file-rename-btn{opacity:1}
+
+    /* Modals */
+    .modal{padding:20px 20px;max-width:calc(100vw - 32px)}
+    .modal .row{flex-direction:column-reverse;gap:8px}
+    .modal .row .btn{width:100%;justify-content:center}
+
+    /* Footer */
+    footer{padding:12px 16px;flex-direction:column;gap:4px;text-align:center;font-size:9px}
+  }
 </style>
 <link rel="stylesheet" href="/responsive.css?v=4"><script src="/dce-auth.js" defer></script>
     <script src="/nyse-clock.js" defer></script>
