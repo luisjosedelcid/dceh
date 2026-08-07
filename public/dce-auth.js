@@ -146,6 +146,17 @@
       .dce-admin-btn:hover{background:rgba(255,255,255,0.12);border-color:#fff}
       .dce-admin-btn.is-admin{background:#b88b47;color:#1b2642;border-color:#b88b47}
       .dce-admin-btn.is-admin:hover{background:#d4aa6a;border-color:#d4aa6a}
+      /* Signed-in badge: circular initials (replaces "Sign out" text) */
+      .dce-admin-btn.dce-initials{width:32px;height:32px;padding:0;border-radius:50%;
+        display:inline-flex;align-items:center;justify-content:center;
+        background:#b88b47;color:#1b2642;border:1px solid #b88b47;
+        font-family:'Archivo',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;
+        line-height:1;transition:all .18s}
+      .dce-admin-btn.dce-initials:hover{background:#d4aa6a;border-color:#d4aa6a;
+        transform:scale(1.05);box-shadow:0 2px 8px rgba(184,139,71,0.45)}
+      @media (max-width: 720px){
+        .dce-admin-btn.dce-initials{width:28px;height:28px;font-size:10px}
+      }
       /* Inline placement (preferred): inside nav */
       .hnav .dce-admin-btn,header .dce-admin-btn{margin-left:8px}
       /* Allow nav to wrap so Search + Sign Out don't overflow on narrow viewports */
@@ -276,17 +287,34 @@
 
   function openLoginModal() { _showModal(); }
 
+  function _computeInitials(u) {
+    // Prefer displayName; fall back to email localpart.
+    let source = '';
+    if (u && u.displayName) source = String(u.displayName);
+    else if (u && u.email) source = String(u.email).split('@')[0].replace(/[._-]+/g, ' ');
+    if (!source.trim()) return 'DCE';
+    const parts = source.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
   function _refreshButton() {
     if (!_btnEl) return;
     const adm = isAdmin();
     _btnEl.classList.toggle('is-admin', adm);
+    _btnEl.classList.toggle('dce-initials', adm);
     if (adm) {
       const u = user();
-      const who = u && u.displayName ? u.displayName.split(' ')[0] : 'Admin';
-      _btnEl.textContent = `Sign out`;
-      _btnEl.title = `Signed in as ${who} — click to sign out`;
+      const who = u && u.displayName ? u.displayName : (u && u.email) || 'Admin';
+      const initials = _computeInitials(u);
+      _btnEl.textContent = initials;
+      _btnEl.setAttribute('aria-label', `Signed in as ${who}`);
+      _btnEl.title = `${who} \u2014 click to sign out`;
     } else {
       _btnEl.textContent = 'Sign in';
+      _btnEl.removeAttribute('aria-label');
       _btnEl.title = 'Sign in as admin to edit alerts, upload files, etc.';
     }
   }
