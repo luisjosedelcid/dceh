@@ -217,19 +217,31 @@
 </head>
 <body data-pull-refresh="1" data-dce-auth="manual">
 <script>
-// ── Role gate ────────────────────────────────────────────────────────
-// Performance contains portfolio P&L and is restricted to role='admin'.
-// Analysts and viewers are redirected to home.
-(function enforceRoleGate(){
+// ── Capability gate ──────────────────────────────────────────────────
+// Performance contains portfolio P&L. Requires capability PF-05
+// ("Ver performance del portafolio"). Enforced server-side too via
+// requireCapability('PF-05') in api/performance.js.
+// Legacy sessions with role='admin' fall through as full access.
+(function enforceCapabilityGate(){
   try {
     const raw = localStorage.getItem('dce_admin_user');
     if (!raw) return; // not signed in — fall through to normal flow
     const u = JSON.parse(raw);
     const role = (u && u.role) ? u.role : 'admin'; // legacy sessions = admin
-    if (role !== 'admin') {
-      alert('Restricted access: Performance is only available to administrators.');
-      window.location.replace('/');
-    }
+    // Admin (legacy) always has full access. CIO has all 105 caps by design.
+    if (role === 'admin' || role === 'cio') return;
+    // For analyst/viewer, ask /api/me for the effective capabilities list.
+    const token = localStorage.getItem('dce_admin_token') || '';
+    fetch('/api/me', {
+      headers: token ? { 'x-admin-token': token } : {}
+    }).then(r => r.ok ? r.json() : { capabilities: [] })
+      .then(res => {
+        const caps = Array.isArray(res && res.capabilities) ? res.capabilities : [];
+        if (!caps.includes('PF-05')) {
+          alert('Acceso restringido: no tienes permiso para ver Performance (PF-05).');
+          window.location.replace('/');
+        }
+      }).catch(() => { /* fail-open: server-side gate still applies */ });
   } catch(e) { /* ignore */ }
 })();
 </script>
