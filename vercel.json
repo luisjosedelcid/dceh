@@ -209,6 +209,10 @@
     {
       "path": "/api/cron/backup-nightly",
       "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/cron/dr-snapshot-weekly",
+      "schedule": "0 5 * * 0"
     }
   ],
   "functions": {
@@ -241,6 +245,15 @@
     },
     "api/cron/backup-nightly.js": {
       "maxDuration": 300
+    },
+    "api/cron/dr-snapshot-weekly.js": {
+      "maxDuration": 300
+    },
+    "api/admin/dr-snapshot.js": {
+      "maxDuration": 300
+    },
+    "api/admin/dr-fire-drill.js": {
+      "maxDuration": 60
     }
   }
 }

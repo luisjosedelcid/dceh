@@ -80,6 +80,9 @@ const CRITICAL_TABLES = [
   // Prices (large but critical for auditability)
   'prices_daily',
   'fx_daily',
+  // DR telemetry
+  'dr_test_log',
+  'dr_snapshot_log',
 ];
 
 // ── Helpers ────────────────────────────────────────────────────────

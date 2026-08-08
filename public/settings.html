@@ -503,6 +503,24 @@
           <button class="btn ghost" id="btn-orphans-purge" type="button" style="display:none;color:#8b2626;border-color:#8b2626">Limpiar todos</button>
         </div>
         <div id="orphans-result" style="font-size:12px"></div>
+
+        <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:32px 0 10px">Disaster Recovery</h4>
+        <div style="font-size:11px;color:var(--gray-mid);margin-bottom:14px;line-height:1.55">Snapshot completo del sitio (código + DB + archivos + config) para restaurar todo si Supabase, Vercel o ambos desaparecen. Automático los domingos 05:00 UTC hacia el repo <code>dceh-backups</code>. On-demand desde aquí.</div>
+
+        <div id="dr-health" style="padding:12px 14px;border-radius:10px;background:#f5f6fa;border:1px solid #e5e7eb;margin-bottom:14px;font-size:12px">Cargando estado…</div>
+
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+          <button class="btn ghost" id="btn-dr-snapshot" type="button">Crear snapshot ahora</button>
+          <button class="btn ghost" id="btn-dr-drill" type="button">Correr simulacro (fire drill)</button>
+        </div>
+        <div id="dr-result" style="font-size:12px"></div>
+
+        <h5 style="font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--navy);margin:20px 0 8px">Historial de snapshots</h5>
+        <div id="dr-snapshots-list" style="font-size:11.5px"></div>
+
+        <h5 style="font-family:'Archivo',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--navy);margin:20px 0 8px">Historial de simulacros</h5>
+        <div id="dr-drills-list" style="font-size:11.5px"></div>
+
       </div>
     </div>
   </div><!-- /tab-panel system -->
@@ -2446,13 +2464,152 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnScan) btnScan.addEventListener('click', scanOrphans);
   if (btnPurge) btnPurge.addEventListener('click', purgeOrphans);
 
+  const btnDrSnap = document.getElementById('btn-dr-snapshot');
+  const btnDrDrill = document.getElementById('btn-dr-drill');
+  if (btnDrSnap) btnDrSnap.addEventListener('click', triggerDrSnapshot);
+  if (btnDrDrill) btnDrDrill.addEventListener('click', triggerDrDrill);
+
   // Load when tab is activated
   document.querySelectorAll('.tab').forEach(t => {
     t.addEventListener('click', () => {
-      if (t.dataset.tab === 'system') loadBackupStatus();
+      if (t.dataset.tab === 'system') {
+        loadBackupStatus();
+        loadDrStatus();
+      }
     });
   });
 });
+
+// ─── Disaster Recovery panel ────────────────────────────────────────────
+function drFormatBytes(b) {
+  if (!b) return '—';
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  if (b < 1073741824) return (b/1048576).toFixed(1) + ' MB';
+  return (b/1073741824).toFixed(2) + ' GB';
+}
+function drFormatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toISOString().slice(0,10) + ' ' + d.toISOString().slice(11,16) + ' UTC';
+}
+function drStatusBadge(status) {
+  const map = {
+    success: { bg:'#e7f5ec', fg:'#2c6b3f', label:'Éxito' },
+    partial: { bg:'#fef3c7', fg:'#8b5a1a', label:'Parcial' },
+    failed:  { bg:'#fde8e8', fg:'#8b2626', label:'Falló' },
+    running: { bg:'#e0e7ff', fg:'#3b4a80', label:'Corriendo' },
+  };
+  const s = map[status] || { bg:'#f3f4f6', fg:'#555', label: status || '—' };
+  return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;background:${s.bg};color:${s.fg};font-weight:600;font-size:10.5px;letter-spacing:0.03em">${s.label}</span>`;
+}
+async function loadDrStatus() {
+  const box = document.getElementById('dr-health');
+  const snapList = document.getElementById('dr-snapshots-list');
+  const drillList = document.getElementById('dr-drills-list');
+  if (!box) return;
+  try {
+    const r = await adminFetch('/api/admin/dr-status');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    const healthMap = {
+      healthy: { c:'#2c6b3f', bg:'#e7f5ec', msg:'Sistema DR sano. Snapshots al día, simulacro reciente.' },
+      'no-snapshot': { c:'#8b2626', bg:'#fde8e8', msg:'CRÍTICO: no hay ningún snapshot exitoso todavía.' },
+      'snapshot-stale': { c:'#8b5a1a', bg:'#fef3c7', msg:'Snapshot vencido (>14 días). Crea uno ahora.' },
+      'no-drill-yet': { c:'#8b5a1a', bg:'#fef3c7', msg:'Aún no has corrido un fire drill. Recomendado: uno trimestral.' },
+      'drill-overdue': { c:'#8b5a1a', bg:'#fef3c7', msg:'Fire drill vencido (>120 días). Corre uno.' },
+      'drill-partial': { c:'#8b5a1a', bg:'#fef3c7', msg:'Último simulacro con advertencias. Revisa el detalle.' },
+      unknown: { c:'#555', bg:'#f3f4f6', msg:'Sin datos suficientes.' },
+    };
+    const h = healthMap[d.health] || healthMap.unknown;
+    let html = `<div style="padding:10px;border-radius:8px;background:${h.bg};color:${h.c};font-weight:600;margin-bottom:8px">${h.msg}</div>`;
+    if (d.latest_snapshot) {
+      html += `<div style="margin-bottom:6px"><strong>Último snapshot:</strong> ${drFormatDate(d.latest_snapshot.finished_at || d.latest_snapshot.started_at)} · hace ${d.latest_snapshot.age_days} días · ${drFormatBytes(d.latest_snapshot.bytes_total)} · ${d.latest_snapshot.tables_included} tablas · ${d.latest_snapshot.files_included} archivos · ${drStatusBadge(d.latest_snapshot.status)}</div>`;
+      html += `<div style="margin-bottom:6px;font-size:10.5px;color:var(--gray-mid)">Destino: ${d.latest_snapshot.destination || 'supabase'} · checksum: <code>${(d.latest_snapshot.checksum || '—').slice(0,16)}…</code></div>`;
+    }
+    if (d.latest_drill) {
+      const nextTxt = d.latest_drill.next_recommended_in_days <= 0
+        ? `<span style="color:#8b2626;font-weight:600">simulacro vencido hace ${Math.abs(d.latest_drill.next_recommended_in_days)} días</span>`
+        : `próximo recomendado en ${d.latest_drill.next_recommended_in_days} días`;
+      html += `<div><strong>Último fire drill:</strong> ${drFormatDate(d.latest_drill.finished_at || d.latest_drill.started_at)} · hace ${d.latest_drill.age_days} días · ${drStatusBadge(d.latest_drill.status)} · ${nextTxt}</div>`;
+    } else {
+      html += `<div><em>Fire drill: nunca corrido.</em></div>`;
+    }
+    box.innerHTML = html;
+
+    if (d.snapshots_history.length === 0) {
+      snapList.innerHTML = '<div style="color:var(--gray-mid)">No hay snapshots todavía.</div>';
+    } else {
+      snapList.innerHTML = '<table style="width:100%;border-collapse:collapse">'
+        + '<thead><tr style="background:#f5f6fa;text-align:left"><th style="padding:6px 8px">Fecha</th><th style="padding:6px 8px">Tipo</th><th style="padding:6px 8px">Destino</th><th style="padding:6px 8px">Tamaño</th><th style="padding:6px 8px">Tablas</th><th style="padding:6px 8px">Archivos</th><th style="padding:6px 8px">Estado</th></tr></thead>'
+        + '<tbody>'
+        + d.snapshots_history.map(s => `<tr style="border-bottom:1px solid #eef0f4"><td style="padding:6px 8px">${drFormatDate(s.started_at)}</td><td style="padding:6px 8px">${s.kind}</td><td style="padding:6px 8px">${s.destination || '—'}</td><td style="padding:6px 8px">${drFormatBytes(s.bytes_total)}</td><td style="padding:6px 8px">${s.tables_included || '—'}</td><td style="padding:6px 8px">${s.files_included || '—'}</td><td style="padding:6px 8px">${drStatusBadge(s.status)}</td></tr>`).join('')
+        + '</tbody></table>';
+    }
+
+    if (d.drills_history.length === 0) {
+      drillList.innerHTML = '<div style="color:var(--gray-mid)">No hay simulacros todavía. Corre uno para verificar que tu backup se puede restaurar.</div>';
+    } else {
+      drillList.innerHTML = '<table style="width:100%;border-collapse:collapse">'
+        + '<thead><tr style="background:#f5f6fa;text-align:left"><th style="padding:6px 8px">Fecha</th><th style="padding:6px 8px">Tipo</th><th style="padding:6px 8px">Tablas</th><th style="padding:6px 8px">Archivos</th><th style="padding:6px 8px">Estado</th><th style="padding:6px 8px">Error</th></tr></thead>'
+        + '<tbody>'
+        + d.drills_history.map(x => `<tr style="border-bottom:1px solid #eef0f4"><td style="padding:6px 8px">${drFormatDate(x.started_at)}</td><td style="padding:6px 8px">${x.kind}</td><td style="padding:6px 8px">${x.tables_verified || '—'}</td><td style="padding:6px 8px">${x.files_verified || '—'}</td><td style="padding:6px 8px">${drStatusBadge(x.status)}</td><td style="padding:6px 8px;font-size:10.5px;color:#8b2626">${x.error || ''}</td></tr>`).join('')
+        + '</tbody></table>';
+    }
+  } catch (e) {
+    box.innerHTML = `<div style="color:#8b2626">Error cargando estado DR: ${e.message}</div>`;
+  }
+}
+async function triggerDrSnapshot() {
+  const box = document.getElementById('dr-result');
+  const btn = document.getElementById('btn-dr-snapshot');
+  if (!confirm('¿Crear snapshot completo ahora?\n\nPuede tardar 30-90 segundos.')) return;
+  btn.disabled = true; btn.textContent = 'Generando snapshot…';
+  box.innerHTML = '<div style="padding:10px;background:#e0e7ff;color:#3b4a80;border-radius:8px">Generando snapshot… no cierres esta ventana.</div>';
+  try {
+    const r = await adminFetch('/api/admin/dr-snapshot', { method:'POST', body: JSON.stringify({ kind:'manual' }) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'Snapshot falló');
+    box.innerHTML = `<div style="padding:12px;background:#e7f5ec;color:#2c6b3f;border-radius:8px"><strong>Snapshot completado:</strong> ${d.snapshot_name}<br>${drFormatBytes(d.bytes_total)} · ${d.tables_included} tablas · ${d.files_included} archivos · ${d.duration_seconds}s<br><a href="${d.download_url}" target="_blank" style="color:var(--navy);text-decoration:underline">⬇ Descargar (link válido 15 min)</a></div>`;
+    await loadDrStatus();
+  } catch (e) {
+    box.innerHTML = `<div style="padding:10px;background:#fde8e8;color:#8b2626;border-radius:8px">Error: ${e.message}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Crear snapshot ahora';
+  }
+}
+async function triggerDrDrill() {
+  const box = document.getElementById('dr-result');
+  const btn = document.getElementById('btn-dr-drill');
+  if (!confirm('¿Correr simulacro de restore ahora?\n\nVerifica que el snapshot más reciente es descomprimible, completo y coherente con la DB en vivo. No modifica nada. Puede tardar 30-60 segundos.')) return;
+  btn.disabled = true; btn.textContent = 'Corriendo simulacro…';
+  box.innerHTML = '<div style="padding:10px;background:#e0e7ff;color:#3b4a80;border-radius:8px">Verificando snapshot más reciente…</div>';
+  try {
+    const r = await adminFetch('/api/admin/dr-fire-drill', { method:'POST', body: JSON.stringify({ kind:'manual' }) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'Fire drill falló');
+    const statusColor = d.status === 'success' ? '#e7f5ec' : d.status === 'partial' ? '#fef3c7' : '#fde8e8';
+    const statusFg = d.status === 'success' ? '#2c6b3f' : d.status === 'partial' ? '#8b5a1a' : '#8b2626';
+    let html = `<div style="padding:12px;background:${statusColor};color:${statusFg};border-radius:8px"><strong>Simulacro ${d.status}:</strong> snapshot ${d.snapshot_date} · ${d.duration_seconds}s</div>`;
+    if (d.warnings && d.warnings.length) {
+      html += `<div style="margin-top:8px;padding:10px;background:#fef3c7;color:#8b5a1a;border-radius:8px;font-size:11.5px"><strong>Advertencias:</strong><ul style="margin:6px 0 0 20px">${d.warnings.map(w=>`<li>${w}</li>`).join('')}</ul></div>`;
+    }
+    if (d.errors && d.errors.length) {
+      html += `<div style="margin-top:8px;padding:10px;background:#fde8e8;color:#8b2626;border-radius:8px;font-size:11.5px"><strong>Errores:</strong><ul style="margin:6px 0 0 20px">${d.errors.map(w=>`<li>${w}</li>`).join('')}</ul></div>`;
+    }
+    if (d.tables_diff && d.tables_diff.length) {
+      html += `<div style="margin-top:8px;font-size:11.5px"><strong>Diffs vs live DB:</strong><ul style="margin:6px 0 0 20px">${d.tables_diff.map(t=>`<li>${t.table}: snapshot ${t.snapshot} → live ${t.live} (${t.delta > 0 ? '+' : ''}${t.delta}) — ${t.note}</li>`).join('')}</ul></div>`;
+    }
+    box.innerHTML = html;
+    await loadDrStatus();
+  } catch (e) {
+    box.innerHTML = `<div style="padding:10px;background:#fde8e8;color:#8b2626;border-radius:8px">Error: ${e.message}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Correr simulacro (fire drill)';
+  }
+}
 </script>
 <script src="/search.js" defer></script>
 </body>
