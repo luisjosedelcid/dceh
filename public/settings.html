@@ -120,6 +120,28 @@
 
     /* Safety net: settings main must never scroll horizontally. */
     main{overflow-x: hidden}
+
+    /* Tab bar: 8 tabs total (Activity log, Idea Feed, Users, Permisos,
+     * Login audit, System, My account, Discipline rules). Desktop shows
+     * them in one row. On mobile they overflow off-screen with no way to
+     * reach them. Convert to horizontal-scroll (native iOS pattern). */
+    .tabs{
+      overflow-x: auto;
+      overflow-y: hidden;
+      flex-wrap: nowrap;
+      scrollbar-width: none; /* Firefox */
+      -webkit-overflow-scrolling: touch;
+      margin: 0 -16px 20px; /* bleed to viewport edge for full-width scroll */
+      padding: 0 16px;
+    }
+    .tabs::-webkit-scrollbar{display:none} /* WebKit / iOS Safari */
+    .tab{
+      flex-shrink: 0;
+      padding: 12px 14px;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
   }
 
   /* UPLOAD ZONE */
