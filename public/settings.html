@@ -142,6 +142,16 @@
       letter-spacing: 0.1em;
       white-space: nowrap;
     }
+
+    /* Login audit table: 7 columns can't fit at 375px, so it scrolls
+     * horizontally inside its wrapper. Contain it firmly inside the
+     * viewport (max-width:100%) so the page never scrolls sideways. */
+    #audit-table-wrap{
+      max-width: 100%;
+      -webkit-overflow-scrolling: touch;
+      /* Right-edge shadow as a hint that content continues off-screen. */
+      box-shadow: inset -12px 0 12px -12px rgba(0,0,0,0.15);
+    }
   }
 
   /* UPLOAD ZONE */
