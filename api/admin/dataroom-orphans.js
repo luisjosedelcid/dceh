@@ -13,7 +13,7 @@ const { verifyAdminToken } = require('../_admin-auth');
 const { sbSelect, sbDelete } = require('../_supabase.js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 async function headStorageObject(bucket, path) {
   // HEAD via GET with range 0-0 is the cheapest way to probe existence.
