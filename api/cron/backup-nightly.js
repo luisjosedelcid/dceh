@@ -156,7 +156,18 @@ async function copyStorageObject(fromBucket, fromPath, toBucket, toPath, supabas
       destinationKey: toPath,
     }),
   });
-  return r.ok;
+  if (r.ok) return { ok: true };
+  // Distinguish orphan (source file missing) from real errors.
+  // Supabase returns 404 or 400 with body containing "not found" / "NoSuchKey"
+  // when the source object does not exist.
+  const txt = await r.text().catch(() => '');
+  const bodyLower = txt.toLowerCase();
+  const isOrphan =
+    r.status === 404 ||
+    bodyLower.includes('not found') ||
+    bodyLower.includes('nosuchkey') ||
+    bodyLower.includes('object not found');
+  return { ok: false, status: r.status, body: txt.slice(0, 200), orphan: isOrphan };
 }
 
 async function listStorageFolder(bucket, prefix, supabaseUrl, serviceKey, limit = 1000) {
@@ -240,6 +251,7 @@ module.exports = async (req, res) => {
     files_mirrored: 0,
     bytes_dataroom: 0,
     errors: [],
+    orphans: [],
   };
 
   // ── Dump tables ──────────────────────────────────────────────
@@ -274,12 +286,24 @@ module.exports = async (req, res) => {
         if (!f.storage_path) continue;
         try {
           if (!dry) {
-            const ok = await copyStorageObject(
+            const res = await copyStorageObject(
               'dataroom', f.storage_path,
               'backups', `${basePath}/dataroom/${f.storage_path}`,
               SUPABASE_URL, SUPABASE_SERVICE_KEY
             );
-            if (!ok) throw new Error('copy failed');
+            if (!res.ok) {
+              if (res.orphan) {
+                // Source object missing in storage but row still in dataroom_files.
+                // Track as orphan (data-integrity issue) — not a backup failure.
+                stats.orphans.push({
+                  path: f.storage_path,
+                  file_id: f.id || null,
+                  filename: f.filename || null,
+                });
+                continue;
+              }
+              throw new Error(`copy failed: ${res.status} ${res.body || ''}`.trim());
+            }
           }
           stats.files_mirrored += 1;
           stats.bytes_dataroom += Number(f.size_bytes || 0);
@@ -456,9 +480,19 @@ module.exports = async (req, res) => {
   stats.purged_monthly = purgedMonthly;
 
   // ── Close log row ────────────────────────────────────────────
+  // Orphans (source file missing in bucket) are a data-integrity issue,
+  // NOT a backup failure. They're tracked in stats.orphans and surfaced
+  // in the error field for visibility, but do not degrade status.
   const status = stats.errors.length === 0
     ? 'success'
     : (stats.tables_dumped > 0 ? 'partial' : 'failed');
+
+  const errorSummary = (() => {
+    const parts = [];
+    if (stats.errors.length) parts.push(`${stats.errors.length} errors`);
+    if (stats.orphans.length) parts.push(`${stats.orphans.length} orphans`);
+    return parts.length ? parts.join(' + ') : null;
+  })();
 
   if (logRow && logRow.id) {
     try {
@@ -470,7 +504,7 @@ module.exports = async (req, res) => {
         files_mirrored: stats.files_mirrored,
         bytes_total: stats.bytes_tables + stats.bytes_dataroom,
         storage_path: basePath,
-        error: stats.errors.length ? `${stats.errors.length} errors` : null,
+        error: errorSummary,
         detail: { stats, dry },
       });
     } catch {}

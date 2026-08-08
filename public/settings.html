@@ -495,6 +495,14 @@
         </div>
         <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:0 0 10px">Historial (últimas 30 corridas)</h4>
         <div id="backup-log-table" style="font-size:12px"></div>
+
+        <h4 style="font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--navy);margin:26px 0 10px">Data Room · archivos huérfanos</h4>
+        <div style="font-size:11px;color:var(--gray-mid);margin-bottom:10px">Filas en <code>dataroom_files</code> cuyo objeto ya no existe en el bucket. No rompen el backup, pero ensucian el conteo. Escanea bajo demanda.</div>
+        <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="btn ghost" id="btn-orphans-scan" type="button">Escanear huérfanos</button>
+          <button class="btn ghost" id="btn-orphans-purge" type="button" style="display:none;color:#8b2626;border-color:#8b2626">Limpiar todos</button>
+        </div>
+        <div id="orphans-result" style="font-size:12px"></div>
       </div>
     </div>
   </div><!-- /tab-panel system -->
@@ -2262,7 +2270,17 @@ async function loadBackupStatus() {
             <div style="font-size:11px;color:#546074;margin-top:4px">${last.storage_path || ''}</div>
           </div>
         </div>
-        ${last.error ? `<div style="margin-top:10px;padding:8px;background:#f9e4e4;border:1px solid #8b2626;color:#8b2626;font-size:11px">Error: ${last.error}</div>` : ''}
+        ${(() => {
+          if (!last.error) return '';
+          // 'X orphans' = data-integrity, not backup failure. Yellow, informational.
+          // 'X errors + Y orphans' or 'X errors' = real failures. Red.
+          const isOrphanOnly = /^\d+\s+orphans$/.test(String(last.error).trim());
+          const bg = isOrphanOnly ? '#faf3dc' : '#f9e4e4';
+          const border = isOrphanOnly ? '#8a6c1f' : '#8b2626';
+          const fg = isOrphanOnly ? '#5f4a10' : '#8b2626';
+          const label = isOrphanOnly ? 'Aviso' : 'Error';
+          return `<div style="margin-top:10px;padding:8px;background:${bg};border:1px solid ${border};color:${fg};font-size:11px">${label}: ${last.error}</div>`;
+        })()}
       `;
     }
 
@@ -2330,12 +2348,103 @@ async function triggerBackupNow() {
   }
 }
 
+// ═════════════════════════════════════════════════════════════════════
+// Data Room orphans (System tab)
+// ═════════════════════════════════════════════════════════════════════
+
+async function scanOrphans() {
+  const box = document.getElementById('orphans-result');
+  const purgeBtn = document.getElementById('btn-orphans-purge');
+  const scanBtn = document.getElementById('btn-orphans-scan');
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) {
+    box.innerHTML = '<div class="loading-files">Sign in as admin first.</div>';
+    return;
+  }
+  scanBtn.disabled = true;
+  scanBtn.textContent = 'Escaneando…';
+  box.innerHTML = '<div class="loading-files">Probando cada storage_path contra el bucket…</div>';
+  try {
+    const r = await fetch('/api/admin/dataroom-orphans', { headers: { 'x-admin-token': token } });
+    if (!r.ok) {
+      const t = await r.text();
+      box.innerHTML = `<div style="padding:10px;background:#f9e4e4;border:1px solid #8b2626;color:#8b2626">Error ${r.status}: ${escapeHtml(t.slice(0, 200))}</div>`;
+      return;
+    }
+    const j = await r.json();
+    if (!j.orphan_count && !j.unknown_count) {
+      box.innerHTML = `<div style="padding:10px;background:#e7f2dc;border:1px solid #3a6a1e;color:#3a6a1e">Sin huérfanos. ${j.total_scanned} filas escaneadas.</div>`;
+      purgeBtn.style.display = 'none';
+      return;
+    }
+    const rows = j.orphans.map(o => `
+      <tr style="border-top:1px solid var(--rule)">
+        <td style="padding:6px 10px;font-size:11px">${escapeHtml(o.filename || o.name || '—')}</td>
+        <td style="padding:6px 10px;font-family:'Roboto Mono',monospace;font-size:10px;color:var(--gray-mid);word-break:break-all">${escapeHtml(o.storage_path || '')}</td>
+        <td style="padding:6px 10px;font-size:10px;color:#8b2626">${escapeHtml(o.reason || '')}</td>
+      </tr>
+    `).join('');
+    box.innerHTML = `
+      <div style="margin-bottom:10px;padding:10px;background:#faf3dc;border:1px solid #8a6c1f;color:#5f4a10;font-size:11px">
+        ${j.orphan_count} huérfanos · ${j.unknown_count} desconocidos · ${j.total_scanned} filas totales escaneadas
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="background:var(--navy);color:var(--white)">
+          <th style="padding:8px 10px;text-align:left;font-family:Archivo;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Filename</th>
+          <th style="padding:8px 10px;text-align:left;font-family:Archivo;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Storage path</th>
+          <th style="padding:8px 10px;text-align:left;font-family:Archivo;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600">Razón</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+    if (j.orphan_count > 0) purgeBtn.style.display = 'inline-block';
+  } catch (e) {
+    box.innerHTML = `<div style="padding:10px;background:#f9e4e4;border:1px solid #8b2626;color:#8b2626">${escapeHtml(String(e))}</div>`;
+  } finally {
+    scanBtn.disabled = false;
+    scanBtn.textContent = 'Escanear huérfanos';
+  }
+}
+
+async function purgeOrphans() {
+  if (!confirm('¿Borrar TODOS los huérfanos identificados en el último escaneo? Esta acción es irreversible.')) return;
+  const box = document.getElementById('orphans-result');
+  const purgeBtn = document.getElementById('btn-orphans-purge');
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return;
+  purgeBtn.disabled = true;
+  purgeBtn.textContent = 'Limpiando…';
+  try {
+    const r = await fetch('/api/admin/dataroom-orphans', {
+      method: 'DELETE',
+      headers: { 'x-admin-token': token },
+    });
+    const j = await r.json();
+    if (!r.ok) {
+      box.innerHTML = `<div style="padding:10px;background:#f9e4e4;border:1px solid #8b2626;color:#8b2626">Error ${r.status}: ${escapeHtml(j.error || '')}</div>`;
+      return;
+    }
+    box.innerHTML = `<div style="padding:10px;background:#e7f2dc;border:1px solid #3a6a1e;color:#3a6a1e">${j.deleted_count || 0} filas huérfanas eliminadas.</div>`;
+    purgeBtn.style.display = 'none';
+  } catch (e) {
+    box.innerHTML = `<div style="padding:10px;background:#f9e4e4;border:1px solid #8b2626;color:#8b2626">${escapeHtml(String(e))}</div>`;
+  } finally {
+    purgeBtn.disabled = false;
+    purgeBtn.textContent = 'Limpiar todos';
+  }
+}
+
 // Wire up tab switch + buttons
 document.addEventListener('DOMContentLoaded', () => {
   const btnRefresh = document.getElementById('btn-backup-refresh');
   const btnNow = document.getElementById('btn-backup-now');
   if (btnRefresh) btnRefresh.addEventListener('click', loadBackupStatus);
   if (btnNow) btnNow.addEventListener('click', triggerBackupNow);
+
+  const btnScan = document.getElementById('btn-orphans-scan');
+  const btnPurge = document.getElementById('btn-orphans-purge');
+  if (btnScan) btnScan.addEventListener('click', scanOrphans);
+  if (btnPurge) btnPurge.addEventListener('click', purgeOrphans);
 
   // Load when tab is activated
   document.querySelectorAll('.tab').forEach(t => {
