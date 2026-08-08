@@ -93,6 +93,33 @@
     /* Section body padding: reduce lateral padding so cards use the
      * whole viewport width. */
     .section > div[style*="padding:0 24px"] { padding: 0 12px 18px !important; }
+
+    /* Discipline gate threshold rows: rendered by JS as inline-styled
+     * grids with 4 fixed columns (1fr 140px 80px 100px). That grid
+     * overflows 375px and the Save button falls off the right edge,
+     * causing horizontal page scroll. Override to a 2-row layout:
+     *   Row 1: full-width description block
+     *   Row 2: [input] [unit label] [Save] — all visible.
+     * Overrides need !important because inline styles otherwise win. */
+    #discipline-body > div{
+      grid-template-columns: 1fr auto auto !important;
+      grid-template-areas:
+        "info info info"
+        "input unit save" !important;
+      gap: 8px 10px !important;
+      padding: 12px !important;
+      align-items: center !important;
+    }
+    #discipline-body > div > div:first-child{grid-area: info; min-width: 0}
+    #discipline-body > div > input[type="number"]{grid-area: input; width: 100%; min-width: 0; box-sizing: border-box; justify-self: stretch}
+    #discipline-body > div > div:nth-of-type(2){grid-area: unit; white-space: nowrap}
+    #discipline-body > div > button{grid-area: save; justify-self: end; white-space: nowrap}
+
+    /* Also compact the 'Current evaluation' twin buttons row so they wrap cleanly. */
+    #discipline-eval-body{padding:12px !important;font-size:11px !important}
+
+    /* Safety net: settings main must never scroll horizontally. */
+    main{overflow-x: hidden}
   }
 
   /* UPLOAD ZONE */
